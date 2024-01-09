@@ -1,0 +1,47 @@
+databackend:
+    type: opensearch
+
+opensearch:
+    host: $OPENSEARCH_HOST
+    port: $OPENSEARCH_PORT
+    user: $OPENSEARCH_USER
+    pass: $OPENSEARCH_PASS
+    index: $OPENSEARCH_INDEX
+    field_mapping:
+        "imageurl": "<your image property>"
+        "created": "<your date created property>"
+        "showTitle": "<your title property>"
+        "crid": "<your external id property>"
+        "duration": "<your duration property>"
+
+c2c_config:
+    c2c_models:
+        # Example for opensearch endpoint
+        Dummy-C2C-Model:
+            display_name: '<your model name for display in frontend>'
+            handler: 'ModelClass@path'
+            endpoint: 'opensearch://<your opensearch endpoint>'
+            start_color: '#5F84A2' # dark blue
+            reco_color: '#B7D0E1' # light blue
+            default: True # enabled at startup
+
+# optional if no u2c models available
+u2c_config:
+    u2c_models:
+        # Example for sagemaker endpoint
+        Dummy-U2C-Model:
+            display_name: '<your model name for display in frontend>'
+            handler: 'ModelClass@path'
+            endpoint: 'sagemaker://<your endpoint>'
+            role_arn: '<your sagemaker models role arn>'
+            start_color: '#4B6043' # dark green
+            reco_color: '#75975E' # light green
+            default: False
+    clustering_models:
+        # Example for sagemaker endpoint
+        Dummy-Clustering-Model:
+            display_name: '<your model name for display in frontend>'
+            handler: 'ModelClass@path'
+            endpoint: 'sagemaker://<your endpoint>'
+            avatar: 'assets/img/user-dummy-pic.png'
+            default: False

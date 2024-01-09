@@ -1,0 +1,7 @@
+boto3
+envyaml
+opensearch-py
+pandas
+panel
+pytest
+s3fs

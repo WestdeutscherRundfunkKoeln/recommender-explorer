@@ -1,0 +1,9 @@
+opensearch-py==2.1.1
+envyaml
+pathvalidate
+sentence-transformers
+numpy
+pandas
+boto3
+s3fs
+protobuf<=3.20.1

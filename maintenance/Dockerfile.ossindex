@@ -1,0 +1,16 @@
+# USE AWS image due to docker-hub rate limits
+FROM public.ecr.aws/docker/library/python:3.10-slim-bullseye
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENV OPENSEARCH_HOST = $(OPENSEARCH_HOST)
+ENV OPENSEARCH_USER = $(OPENSEARCH_USER)
+ENV OPENSEARCH_PASS = $(OPENSEARCH_PASS)
+ENV INDEX_SAMPLE = $(INDEX_SAMPLE)
+ENV INDEX_PREFIX = $(INDEX_PREFIX)
+
+ENTRYPOINT ["python", "create_oss_index.py"]

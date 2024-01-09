@@ -1,0 +1,33 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - git --version
+      - aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 479925605595.dkr.ecr.eu-central-1.amazonaws.com
+      - REPOSITORY_URI="479925605595.dkr.ecr.eu-central-1.amazonaws.com/recommender-explorer"
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_STAGE_TAG=$CODEPIPELINE_IMAGE_STAGE_TAG
+      - IMAGE_TAG=$COMMIT_HASH
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - echo Building for stage $IMAGE_STAGE_TAG 
+#### Start building image
+      - docker build -t "$REPOSITORY_URI:$IMAGE_STAGE_TAG" .
+#### Tag local image with git hash
+      - docker tag "$REPOSITORY_URI:$IMAGE_STAGE_TAG" "$REPOSITORY_URI:$IMAGE_STAGE_TAG-$IMAGE_TAG"
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+ #### Push both images to remote repo
+      - docker push "$REPOSITORY_URI:$IMAGE_STAGE_TAG"
+      - docker push "$REPOSITORY_URI:$IMAGE_STAGE_TAG-$IMAGE_TAG"
+      - echo Writing image definitions file...
+      - printf '[{"name":"panel-server","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_STAGE_TAG-$IMAGE_TAG > imagedefinitions.json
+artifacts:
+    files: imagedefinitions.json

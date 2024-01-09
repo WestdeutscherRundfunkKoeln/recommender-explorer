@@ -1,0 +1,15 @@
+# USE AWS image due to docker-hub rate limits
+FROM public.ecr.aws/docker/library/python:3.10-slim-bullseye
+
+WORKDIR /app
+
+COPY clean_old_oss_indices.py clean_old_oss_indices.py
+
+RUN pip install opensearch-py==2.1.1
+
+ENV OPENSEARCH_HOST = $(OPENSEARCH_HOST)
+ENV OPENSEARCH_USER = $(OPENSEARCH_USER)
+ENV OPENSEARCH_PASS = $(OPENSEARCH_PASS)
+
+ENTRYPOINT ["python", "clean_old_oss_indices.py"]
+

@@ -1,0 +1,57 @@
+categories_MDP2:
+    categories_documentation:
+        'genres': [
+            "Dokumentation/Reportage", "Doku-Drama", "Dokumentation", "Dokumentarfilm", "Reportage", "Doku-Soap"
+            ]
+        'subgenres': [
+            "Auslands-Doku", "Food-Doku", "Geschichts-Doku", "Gesellschafts-Doku", "Investigativ-Doku", "Kultur-Doku",
+            "Natur-/Tier-Doku", "Politik-Doku", "Wirtschafts-Doku", "Portrait-Doku", "Reise-Doku", "Religions-Doku",
+            "Sport-Doku", "True-Crime-Doku", "Wissens-Doku"
+            ]
+        'Erzählweise': 'Genres Doku'
+        'Inhalt': 'Subgenres Doku'
+
+    categories_information:
+        'genres': [
+            "Nachrichten/Information", "Magazin", "Nachrichten", "Sondersendung"
+            ]
+        'subgenres': [
+            "Auslands-Sendung", "Gesundheits-Sendung", "Kultur-Sendung", "Nachrichten-Sendung", "People-Sendung",
+            "Politik-Sendung", "Sport-Sendung", "Verbraucher-Sendung", "Wirtschafts-Sendung"
+            ]
+        'Erzählweise': 'Genres Information'
+        'Inhalt': 'Subgenres Information'
+
+    'categories_fiction':
+        'genres': [
+            'Crime', 'Drama', 'Familie', 'Komödie', 'Romantik', 'Thriller'
+            ]
+        'subgenres': [
+            "Abenteuer", "Action", "Animation", "Beziehungsdrama", "Biopic", "Comedy", "Coming-Of-Age", "Dramedy", "Fantasy",
+            "Heimat", "Historie", "Horror", "Krimi", "Märchen", "Musical", "Mystery", "Parodie", "Politthriller",
+            "Psycho-thriller", "Roadmovie", "Romance", "Schwarze Komödie", "Sci-Fi", "Sitcom", "Soap", "TV-Komödie"
+            ]
+        'Erzählweise': 'Genres Fiktion'
+        'Inhalt': 'Subgenres Fiktion'
+
+    'categories_show':
+        'genres': [
+            'Bühnen-Show', 'Game-Show', 'Late-Night-Show', 'Reality-Show', 'Sketch-Show', 'Talk-Show'
+            ]
+        'subgenres': [
+            "Comedy-Show", "Competition-Show", "Dating-Show", "Gesellschafts-Show", "Kinder-Show", "Koch-Show",
+            "Kultur-Show", "Literatur-Show", "Musik-Show", "Politik-Show", "Quiz-Show", "Satire-Show", "Stand-Up-Show",
+            "Wissens-Show"
+            ]
+        'Erzählweise': 'Genres Show'
+        'Inhalt': 'Subgenres Show'
+
+    'categories_live':
+        'genres': [
+            'Live', 'ReLive'
+            ]
+        'subgenres': [
+            "Live-Festakt", "Live-Gottesdienst", "Live-Interview", "Live-Konzert", "Live-Sport", "Live-Theater", "Live-Lesung"
+            ]
+        'Erzählweise': 'Genres Live'
+        'Inhalt': 'Subgenres Live'
