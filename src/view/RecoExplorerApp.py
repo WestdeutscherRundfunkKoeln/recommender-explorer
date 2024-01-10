@@ -977,7 +977,7 @@ class RecoExplorerApp:
     def assemble_components(self):
 
         # Models
-        if constants.MODEL_CONFIG_U2C in self.config: # Todo: refactor bootstrapping of application to make this more generic
+        if constants.MODEL_CONFIG_U2C in self.config: # TODO: refactor bootstrapping of application to make this more generic
             self.model_choice = pn.Accordion(
                 ('Content-2-Content', self.c2c_choice),
                 ('User-2-Content', self.u2c_model_choice)

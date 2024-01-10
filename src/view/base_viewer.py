@@ -3,7 +3,7 @@ from dto.item import ItemDto
 import panel as pn
 
 #
-# Tobias - base viewer not currently in use - use it!
+# TODO - base viewer not currently in use - use it!
 #
 class BaseViewer(ABC):
 

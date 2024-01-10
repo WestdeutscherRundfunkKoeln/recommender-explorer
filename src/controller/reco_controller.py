@@ -56,7 +56,7 @@ class RecommendationController():
         self.callbacks = collections.defaultdict(dict)
         self.page_number = 1
         #
-        # Tobias - refactor this.
+        # TODO - refactor this into model code
         #
         self.num_NN = 5  # num start items to fetch from backend per call
         self.num_items = 0  # num start items to fetch from backend per call
@@ -130,7 +130,7 @@ class RecommendationController():
         return self.model_type
 
     #
-    # Tobias - refactor this to another place
+    # TODO - refactor this into a factory class or similar
     #
     def get_item_viewer(self, item_dto: ItemDto):
         matches = re.search('^(.*)@(.*)$', item_dto.viewer)
