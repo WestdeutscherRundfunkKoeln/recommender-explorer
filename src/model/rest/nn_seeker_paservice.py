@@ -34,7 +34,7 @@ class NnSeekerPaService(NnSeekerRest):
         nn_dists = []
 
         #
-        # add better status and error handling
+        # TODO - add better status and error handling
         #
         if status == 200:
             for reco in pa_recos['recommendations']:
@@ -63,7 +63,7 @@ class NnSeekerPaService(NnSeekerRest):
         nn_dists = []
 
         #
-        # add better status and error handling
+        # TODO - add better status and error handling
         #
         if status == 200:
             for reco in pa_recos['recommendations']:
