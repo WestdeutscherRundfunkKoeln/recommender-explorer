@@ -26,7 +26,7 @@ def test_get_items_one_u2c_model_succeeds(u2c_controller: RecommendationControll
     {'validator': '_check_date', 'label': 'dateinput', 'accessor': 'get_items_by_date', 'has_paging': True},
     ['All-Mini-LM-en', constants.MODEL_CONFIG_C2C]
 )])
-def test_get_items_one_c2c_model_by_date_succeeds(c2c_controller: RecommendationController, caplog) -> None:
+def test_get_items_one_c2c_model_by_date_succeeds(c2c_controller: RecommendationController) -> None:
     items = c2c_controller.get_items()
     assert isinstance(items, tuple)
 
