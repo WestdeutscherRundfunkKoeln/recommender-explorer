@@ -27,7 +27,6 @@ def test_get_items_one_u2c_model_succeeds(u2c_controller: RecommendationControll
     ['All-Mini-LM-en', constants.MODEL_CONFIG_C2C]
 )])
 def test_get_items_one_c2c_model_by_date_succeeds(c2c_controller: RecommendationController, caplog) -> None:
-    caplog.set_level(logging.INFO)
     items = c2c_controller.get_items()
     assert isinstance(items, tuple)
 
