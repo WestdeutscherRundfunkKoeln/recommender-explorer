@@ -123,7 +123,7 @@ class CollabModelClient(U2CSeeker):
             self.__retrieve_training_properties(train_job_descriptor)
 
         except Exception as e:
-            logger.warn("Fehler beim Ermitteln der Modell-Parameter [" + str(e) + ']')
+            logger.warning("Fehler beim Ermitteln der Modell-Parameter [" + str(e) + ']')
             self.model_properties['Error'] = 'Es ist ein Fehler beim Ermitteln der Modellparameter aufgetreten'
 
         return self.model_properties

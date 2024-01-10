@@ -34,14 +34,14 @@ class NnSeekerPaService(NnSeekerRest):
         nn_dists = []
 
         #
-        # add better status and error handling
+        # TODO - add better status and error handling
         #
         if status == 200:
             for reco in pa_recos['recommendations']:
                 nn_dists.append(reco['score'])
                 recomm_content_ids.append(reco['asset']['assetId'])
         else:
-            logger.warn('discarding not found item [' + params['assetId'] + ']')
+            logger.warning('discarding not found item [' + params['assetId'] + ']')
 
         return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP
 
@@ -63,14 +63,14 @@ class NnSeekerPaService(NnSeekerRest):
         nn_dists = []
 
         #
-        # add better status and error handling
+        # TODO - add better status and error handling
         #
         if status == 200:
             for reco in pa_recos['recommendations']:
                 nn_dists.append(reco['score'])
                 recomm_content_ids.append(reco['asset']['assetId'])
         else:
-            logger.warn('discarding not found item [' + params['assetId'] + ']')
+            logger.warning('discarding not found item [' + params['assetId'] + ']')
 
         return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP
 

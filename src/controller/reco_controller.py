@@ -56,7 +56,7 @@ class RecommendationController():
         self.callbacks = collections.defaultdict(dict)
         self.page_number = 1
         #
-        # Tobias - refactor this.
+        # TODO - refactor this into model code
         #
         self.num_NN = 5  # num start items to fetch from backend per call
         self.num_items = 0  # num start items to fetch from backend per call
@@ -130,7 +130,7 @@ class RecommendationController():
         return self.model_type
 
     #
-    # Tobias - refactor this to another place
+    # TODO - refactor this into a factory class or similar
     #
     def get_item_viewer(self, item_dto: ItemDto):
         matches = re.search('^(.*)@(.*)$', item_dto.viewer)
@@ -156,7 +156,7 @@ class RecommendationController():
             item_dtos, num_items = self.item_accessor.get_items_by_ids(item_dto, crids, 'externalid')
             return item_dtos
         except EmptySearchError as e:
-            logger.warn('couldn\'t find item from user history')
+            logger.warning('couldn\'t find item from user history')
 
     def get_items(self) -> tuple[list, list[list], str]:
         self.set_mode()
@@ -345,7 +345,7 @@ class RecommendationController():
         for component in active_components:
             accessor_method.add(component.params['accessor'])
         if len(accessor_method) > 1:
-            logger.warn("Can't have different accessors for same active component group")
+            logger.warning("Can't have different accessors for same active component group")
         return list(accessor_method)[0]
 
     def _validate_input_data(self, active_components):
@@ -425,7 +425,7 @@ class RecommendationController():
             elif action == 'clean':
                 script_term = self._prepare_query_bool_script_statement(value)
             else:
-                logger.warn('Received unknown filter action [' + action + ']. Omitting.')
+                logger.warning('Received unknown filter action [' + action + ']. Omitting.')
 
         if bool_terms:
             transposed['bool'] = bool_terms

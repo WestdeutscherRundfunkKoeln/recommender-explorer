@@ -21,15 +21,12 @@ def test_get_items_one_u2c_model_succeeds(u2c_controller: RecommendationControll
     # assert users are correct
     assert len(users) == len(set(users))
 
-
-
 @pytest.mark.parametrize("selection_type, start_component, model", [(
     '_by_date',
     {'validator': '_check_date', 'label': 'dateinput', 'accessor': 'get_items_by_date', 'has_paging': True},
     ['All-Mini-LM-en', constants.MODEL_CONFIG_C2C]
 )])
-def test_get_items_one_c2c_model_by_date_succeeds(c2c_controller: RecommendationController, caplog) -> None:
-    caplog.set_level(logging.INFO)
+def test_get_items_one_c2c_model_by_date_succeeds(c2c_controller: RecommendationController) -> None:
     items = c2c_controller.get_items()
     assert isinstance(items, tuple)
 

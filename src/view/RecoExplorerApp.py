@@ -731,18 +731,18 @@ class RecoExplorerApp:
 
     #
     def trigger_reco_filter_choice(self, event):
-        logger.warn(event)
+        logger.info(event)
         self.toggle_visibility(event)
         self.get_items_with_parameters()
 
     def trigger_start_filter_choice(self, event):
-        logger.warn(event)
+        logger.info(event)
         self.toggle_visibility(event)
         self.get_items_with_parameters()
 
     #
     def trigger_item_pagination(self, event):
-        logger.warn(event)
+        logger.info(event)
         if event.obj.name == self.RIGHT_ARROW:
             self.controller.increase_page_number()
         elif event.obj.name == self.LEFT_ARROW:
@@ -752,14 +752,14 @@ class RecoExplorerApp:
 
     #
     def trigger_item_filter_choice(self, event):
-        logger.warn(event)
+        logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
         self.get_items_with_parameters()
 
     #
     def trigger_model_choice(self, event):
-        logger.warn(event)
+        logger.info(event)
         if self.model_choice.active[0] == 0:
             self.controller.reset_component('model_choice', constants.MODEL_CONFIG_U2C, [])
         elif self.model_choice.active[0] == 1:
@@ -769,13 +769,13 @@ class RecoExplorerApp:
         self.get_items_with_parameters()
 
     def trigger_user_cluster_choice(self, event):
-        logger.warn(event)
+        logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
         self.get_items_with_parameters()
 
     def trigger_user_filter_choice(self, event):
-        logger.warn(event)
+        logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
         self.get_items_with_parameters()
@@ -783,7 +783,7 @@ class RecoExplorerApp:
     #
     def trigger_item_selection(self, event):
         # if the "new" parameter of the event contains a string, load that string
-        logger.warn(event)
+        logger.info(event)
         if event.new:
             self.get_items_with_parameters()
             self.pagination[4] = self.controller.get_num_pages()
@@ -795,7 +795,7 @@ class RecoExplorerApp:
 
     #
     def trigger_item_reset(self, event):
-        logger.warn(event)
+        logger.info(event)
         self.controller.reset_defaults(event.obj.params['resets'])
         self.controller.reset_page_number()
         self.item_grid.objects = {}
@@ -804,13 +804,13 @@ class RecoExplorerApp:
 
     #
     def trigger_reco_reset(self, event):
-        logger.warn(event)
+        logger.info(event)
         self.controller.reset_defaults(event.obj.params['resets'])
         self.controller.reset_page_number()
         self.get_items_with_parameters()
 
     def trigger_model_reset(self, event):
-        logger.warn(event)
+        logger.info(event)
         self.model_choice.active = [0]
         self.controller.reset_defaults(event.obj.params['resets'])
         self.controller.reset_page_number()
@@ -819,7 +819,7 @@ class RecoExplorerApp:
         self.draw_pagination()
 
     def trigger_modal(self, event):
-        logger.warn(event)
+        logger.info(event)
         item = event.obj.params['item']
         button = event.obj.params['button']
 
@@ -863,7 +863,7 @@ class RecoExplorerApp:
 
     #
     def toggle_start_components(self, event):
-        logger.warn(event)
+        logger.info(event)
         # disable a component depending on the value of another component
         if event.obj.name == 'Startvideo' and event.new == 'Datum':
             self.startdate.visible = self.enddate.visible = self.genres.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = True
@@ -881,7 +881,7 @@ class RecoExplorerApp:
 
     #
     def toggle_model_choice(self, event):
-        logger.warn(event)
+        logger.info(event)
         active_block = event.obj.active[0]
         self.put_navigational_block(1, self.source_block[active_block])
         if active_block == 0:
@@ -899,7 +899,7 @@ class RecoExplorerApp:
                 component.params['active'] = True
 
     def toggle_genre_selection_by_upper_genre(self, event):
-        logger.warn(event)
+        logger.info(event)
         if event.obj.params['label'] == 'erzaehlweiseCategory' or event.obj.params['label'] == 'value_erzaehlweiseCategory':
             category = 'genres'
             if event.obj.params['label'] == 'erzaehlweiseCategory':
@@ -977,7 +977,7 @@ class RecoExplorerApp:
     def assemble_components(self):
 
         # Models
-        if constants.MODEL_CONFIG_U2C in self.config: # Todo: refactor bootstrapping of application to make this more generic
+        if constants.MODEL_CONFIG_U2C in self.config: # TODO: refactor bootstrapping of application to make this more generic
             self.model_choice = pn.Accordion(
                 ('Content-2-Content', self.c2c_choice),
                 ('User-2-Content', self.u2c_model_choice)
@@ -1085,10 +1085,10 @@ class RecoExplorerApp:
         except (EmptySearchError, ModelValidationError) as e:
             self.item_grid[0, 0] = pn.pane.Alert(str(e), alert_type='warning')
         except DateValidationError as e:
-            logger.warn(str(e))
+            logger.info(str(e))
         except Exception as e:
             self.item_grid[0,0] = pn.pane.Alert(str(e), alert_type='danger')
-            logger.warn(traceback.print_exc())
+            logger.warning(traceback.print_exc())
         self.disablePageButtons()
 
     #
