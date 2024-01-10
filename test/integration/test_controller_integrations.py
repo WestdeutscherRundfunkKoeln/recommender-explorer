@@ -21,8 +21,6 @@ def test_get_items_one_u2c_model_succeeds(u2c_controller: RecommendationControll
     # assert users are correct
     assert len(users) == len(set(users))
 
-
-
 @pytest.mark.parametrize("selection_type, start_component, model", [(
     '_by_date',
     {'validator': '_check_date', 'label': 'dateinput', 'accessor': 'get_items_by_date', 'has_paging': True},

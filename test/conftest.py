@@ -1,41 +1,42 @@
 import pytest
+import logging
 import constants
 from envyaml import EnvYAML
 from controller.reco_controller import RecommendationController
 from test.test_util import mock_user_component, mock_model_component, mock_date_component
 
-@pytest.fixture
-def config() -> EnvYAML:
-    return get_config()
+logger = logging.getLogger(__name__)
 
+def pytest_addoption(parser):
+    parser.addoption("--config", action="store", default="./config_default.yaml")
 
-def get_config(location: bool|str=False) -> EnvYAML:
-    if not location:
-        configuration_file_name = './config/config_default.yaml'
-    else:
-        configuration_file_name = location.removeprefix('config=')
+@pytest.fixture(scope="session")
+def config(pytestconfig):
+    config_loc = pytestconfig.getoption("config")
+    return get_config(config_loc)
 
-    config = EnvYAML(configuration_file_name)
+def get_config(config) -> EnvYAML:
+    config = EnvYAML(config)
     return config
 
 @pytest.fixture
-def controller(start_component: list) -> RecommendationController:
-    controller = RecommendationController(get_config())
+def controller(start_component: list, config: str) -> RecommendationController:
+    controller = RecommendationController(config)
     user_choice = mock_user_component(start_component)
     controller.model_type = constants.MODEL_TYPE_U2C
     controller.register('user_choice', user_choice)
     return controller
 
 @pytest.fixture
-def u2c_controller(start_component: list, model: list) -> RecommendationController:
-    controller = RecommendationController(get_config())
+def u2c_controller(start_component: list, model: list, config: str) -> RecommendationController:
+    controller = RecommendationController(config)
     user_choice = mock_user_component(start_component)
     controller.register('user_choice', user_choice)
     controller.register('model_choice', mock_model_component(model))
     return controller
 @pytest.fixture
-def c2c_controller(selection_type: str, start_component: list, model: list) -> RecommendationController:
-    controller = RecommendationController(get_config())
+def c2c_controller(selection_type: str, start_component: list, model: list, config: str) -> RecommendationController:
+    controller = RecommendationController(config)
     if selection_type == '_by_date':
         for position in ['start', 'end']:
             date_choice = mock_date_component(start_component, position)
