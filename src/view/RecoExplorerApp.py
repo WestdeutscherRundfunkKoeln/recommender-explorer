@@ -920,10 +920,7 @@ class RecoExplorerApp:
             if event.type == 'changed' and event.obj.params.get(action, False):
                 value_trigger, on_component = event.obj.params[action]
                 component = getattr(self, on_component)
-                try:
-                    new_event = event.new[0]
-                except:
-                    new_event = event.new
+                new_event = event.new
 
                 if value_trigger == new_event:
                     component.visible = True
