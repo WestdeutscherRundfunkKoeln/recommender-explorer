@@ -479,7 +479,7 @@ class RecommendationController():
         expr = ''
 
         for idx, one_element in enumerate(values):
-            expr = expr + expr_template.replace('###', one_element)
+            expr = expr + expr_template.replace('###', values)
             if (idx + 1) < len(values):
                 expr = expr + ' && '
 
