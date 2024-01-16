@@ -2,7 +2,7 @@ import pytest
 import logging
 import constants
 from src.controller.reco_controller import RecommendationController
-from test.test_util import mock_start_filter_component, mock_start_and_reco_items_with_duplicates
+from test.test_util import mock_start_filter_component, mock_reco_filter_component, mock_start_and_reco_items_with_duplicates
 
 
 logger = logging.getLogger(__name__)
@@ -54,4 +54,26 @@ def test_get_items_one_c2c_model_by_date_with_thematic_start_filter_succeeds(
             if item.position == 'reco':
                 continue
             assert expected_start_theme in item.thematicCategories
+
+
+@pytest.mark.parametrize("selection_type, start_component, model", [(
+    '_by_date',
+    {'validator': '_check_date', 'label': 'dateinput', 'accessor': 'get_items_by_date', 'has_paging': True},
+    ['All-Mini-LM-en', constants.MODEL_CONFIG_C2C]
+)])
+def test_get_items_one_c2c_model_by_date_with_reco_sorting_succeeds(
+        c2c_controller: RecommendationController) -> None:
+
+    sorting = {
+        'label': 'sort_recos',
+        'selected_value': ['desc']
+    }
+    mock_reco_filter = mock_reco_filter_component(sorting)
+    c2c_controller.register('reco_filter', mock_reco_filter)
+    c2c_controller.set_num_items(10)
+    response = c2c_controller.get_items()
+    assert isinstance(response, tuple)
+    models, items, config_identifier = response
+    # Todo: assert timestamps are sorted
+
 

@@ -1,6 +1,8 @@
 import logging
+import constants
 
 from model.rest.nn_seeker_rest import NnSeekerRest
+from dto.item import ItemDto
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +17,18 @@ class NnSeekerPaService(NnSeekerRest):
         self.__configuration_c2c = "zdfRecosOn"
         self.__configuration_u2c = "forYou"
         self.__explain = False
+        self.__config = config
         super().__init__()
 
-    def get_k_NN(self, item, k, nn_filter):
-        content_id = item['crid']
+    def get_k_NN(self, item: ItemDto, k, nn_filter) -> tuple[list, list, str]:
+        content_id = item.crid
+
+        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-Dev']['properties']
+
         headers = {
-            "ARD": "access"
+            header_props['auth_header']: header_props['auth_header_value']
         }
+
         params = {
             "configuration": self.__configuration_c2c,
             "limit": self.__max_num_neighbours,
@@ -54,7 +61,7 @@ class NnSeekerPaService(NnSeekerRest):
         params = {
             "configuration": self.__configuration_u2c,
             "explain": True,
-            "userId": 1 #user_id
+            "userId": user_id
         }
 
         status, pa_recos = super().post_2_endpoint(self.__base_uri, headers, params)

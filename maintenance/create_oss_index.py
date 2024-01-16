@@ -16,10 +16,21 @@ from oss_utils import ModelConfig, Embedder, safe_value, get_approx_knn_mapping
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+
 S3_BUCKET = 'dateneinheiten-ard-recommender-test'
-S3_BASE_PA_DATA_FILE = 'paservice/ard_content_prod_latest.json.gz'
-S3_SUBGENRE_LUT_FILE = 'paservice/ard_luts/mediathek_subgenre_lut_2023-02-21.json'
-S3_THEMATIC_LUT_FILE = 'paservice/ard_luts/mediathek_thematic_lut_2023-02-21.json'
+
+# mediathek
+#S3_BASE_PA_DATA_FILE = 'paservice/ard_content_prod_latest.json.gz'
+#S3_SUBGENRE_LUT_FILE = 'paservice/ard_luts/mediathek_subgenre_lut_2023-02-21.json'
+#S3_THEMATIC_LUT_FILE = 'paservice/ard_luts/mediathek_thematic_lut_2023-02-21.json'
+
+# audiothek
+S3_BASE_PA_DATA_FILE = 'at-paservice/audiothek_content_prod_latest.json.gz'
+S3_SUBGENRE_LUT_FILE = 'at-paservice/ard_luts/audiothek_subgenre_lut_2024_01_11.json'
+S3_THEMATIC_LUT_FILE = 'at-paservice/ard_luts/audiothek_thematic_lut_2024_01_11.json'
+
+
+#SAMPLE_SIZE = 1000
 SAMPLE_SIZE = 1000
 
 
@@ -33,7 +44,10 @@ def load_and_preprocess_data(s3_bucket,
     df = pd.read_json(res, lines=True, compression='gzip')
 
     if sample:
+        print("Sampling " + str(SAMPLE_SIZE) + " items")
         df = df.iloc[0:SAMPLE_SIZE].copy()
+    else:
+        print("Processing full dataset")
 
     df["availableFrom"] = pd.to_datetime(
         df["availableFrom"], errors="coerce", utc=True
@@ -168,7 +182,7 @@ def upload_data_oss(df, client, embedding_field_names, embedding_sizes, index_pr
     current_idx_alias = index_prefix + '_idx_current'
     logger.info(f"Target index name: {target_idx_name}")
     logger.info(f"Target index alias: {current_idx_alias}")
-    
+
     # make sure the index doesn't exists yet
     delete_oss_index(client, target_idx_name)
 
@@ -214,10 +228,13 @@ if __name__ == "__main__":
     logger.info(f"Index sample: {index_sample}")
     logger.info(f"Index prefix: {index_prefix}")
 
+
     host = os.environ.get('OPENSEARCH_HOST')
     auth = (os.environ.get('OPENSEARCH_USER'),
             os.environ.get('OPENSEARCH_PASS'))
-    
+
+    logger.info('Host: ' + host)
+
     logger.info("Preprocess data")
     df = load_and_preprocess_data(S3_BUCKET, 
                                   S3_BASE_PA_DATA_FILE, 
@@ -225,12 +242,15 @@ if __name__ == "__main__":
                                   S3_THEMATIC_LUT_FILE, 
                                   index_sample)
 
+
     logger.info("Calculate embeddings")
     df, embedding_field_names, embedding_sizes = calc_embeddings(df)
     
     logger.info("Postprocess data")
     df = postprocess_data(df)
-    
+
+    print(df["subgenreCategories"])
+
     # initialize OSS client
     oss_client = OpenSearch(
         hosts=[{"host": host, "port": 443}],
@@ -242,4 +262,8 @@ if __name__ == "__main__":
     )
     
     logger.info("Upload new index to OSS")
+    print(
+        "index prefix [" + index_prefix + "]\n"
+        "embedding field names [" + '_'.join(embedding_field_names) + "]"
+    )
     upload_data_oss(df, oss_client, embedding_field_names, embedding_sizes, index_prefix)

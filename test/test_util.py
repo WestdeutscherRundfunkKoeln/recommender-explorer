@@ -11,6 +11,14 @@ def mock_start_filter_component(filter_values: dict) -> object:
     item_filter.visible = True
     return item_filter
 
+def mock_reco_filter_component(filter_values: dict) -> object:
+    item_filter = lambda : None
+    item_filter.params = {}
+    item_filter.params['label'] = filter_values['label']
+    item_filter.value = filter_values['selected_value']
+    item_filter.visible = True
+    return item_filter
+
 def mock_date_component(date_values: dict, position: str) -> object:
     date_choice = lambda: None
     date_choice.params = {}
