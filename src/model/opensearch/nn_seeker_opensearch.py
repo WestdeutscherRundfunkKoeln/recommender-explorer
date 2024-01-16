@@ -128,6 +128,7 @@ class NnSeekerOpenSearch(NnSeeker):
             ]
             query['track_scores'] = True
 
+        logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
 
         hits = response['hits']['hits']
@@ -150,7 +151,8 @@ class NnSeekerOpenSearch(NnSeeker):
             }
           }
         }
-        
+
+        logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         embedding = response['hits']['hits'][0]['_source'][self.embedding_field_name]
                

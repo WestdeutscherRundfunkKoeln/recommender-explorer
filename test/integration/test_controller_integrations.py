@@ -74,6 +74,6 @@ def test_get_items_one_c2c_model_by_date_with_reco_sorting_succeeds(
     response = c2c_controller.get_items()
     assert isinstance(response, tuple)
     models, items, config_identifier = response
-    # Todo: assert timestamps are sorted
+    # Todo: assert items are sorted
 
 

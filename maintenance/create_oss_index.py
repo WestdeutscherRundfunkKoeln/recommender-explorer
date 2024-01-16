@@ -1,14 +1,15 @@
 import json
+import sys
+import os
+from envyaml import EnvYAML
 from datetime import datetime
-import numpy as np
 import pandas as pd
 from opensearchpy import OpenSearch, RequestsHttpConnection, helpers
 import itertools
-import datetime
 import boto3
 import logging
-import os
 import datetime
+
 from tqdm import tqdm
 from hashlib import sha256
 from oss_utils import ModelConfig, Embedder, safe_value, get_approx_knn_mapping
@@ -16,23 +17,7 @@ from oss_utils import ModelConfig, Embedder, safe_value, get_approx_knn_mapping
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-
-S3_BUCKET = 'dateneinheiten-ard-recommender-test'
-
-# mediathek
-#S3_BASE_PA_DATA_FILE = 'paservice/ard_content_prod_latest.json.gz'
-#S3_SUBGENRE_LUT_FILE = 'paservice/ard_luts/mediathek_subgenre_lut_2023-02-21.json'
-#S3_THEMATIC_LUT_FILE = 'paservice/ard_luts/mediathek_thematic_lut_2023-02-21.json'
-
-# audiothek
-S3_BASE_PA_DATA_FILE = 'at-paservice/audiothek_content_prod_latest.json.gz'
-S3_SUBGENRE_LUT_FILE = 'at-paservice/ard_luts/audiothek_subgenre_lut_2024_01_11.json'
-S3_THEMATIC_LUT_FILE = 'at-paservice/ard_luts/audiothek_thematic_lut_2024_01_11.json'
-
-
-#SAMPLE_SIZE = 1000
 SAMPLE_SIZE = 1000
-
 
 def load_and_preprocess_data(s3_bucket,
                              s3_base_pa_data_filename,
@@ -83,13 +68,8 @@ def load_and_preprocess_data(s3_bucket,
 
     return df
 
+def calc_embeddings(df, model_names):
 
-def calc_embeddings(df):
-    model_names = [
-        'T-Systems-onsite/german-roberta-sentence-transformer-v2',
-        'all-MiniLM-L6-v2',
-        'sentence-transformers/distiluse-base-multilingual-cased-v1'  # ZDF
-    ]
     inc_titles = [True]
     inc_descs = [True]
     inc_keywords = [False]
@@ -223,8 +203,18 @@ def upload_data_oss(df, client, embedding_field_names, embedding_sizes, index_pr
 
         
 if __name__ == "__main__":
+
+    if not len(sys.argv[1:]):
+        exit("You must provide a configuration file for indexing")
+
+    configuration_file_name = sys.argv[1:][0].removeprefix('config=')
+    config = EnvYAML(configuration_file_name)
+    indexing_sources = config['indexing_sources']
+    c2c_models = indexing_sources['models_to_index']
+
     index_sample = os.environ.get('INDEX_SAMPLE') == 'True'
     index_prefix = os.environ.get('INDEX_PREFIX')
+
     logger.info(f"Index sample: {index_sample}")
     logger.info(f"Index prefix: {index_prefix}")
 
@@ -236,20 +226,20 @@ if __name__ == "__main__":
     logger.info('Host: ' + host)
 
     logger.info("Preprocess data")
-    df = load_and_preprocess_data(S3_BUCKET, 
-                                  S3_BASE_PA_DATA_FILE, 
-                                  S3_SUBGENRE_LUT_FILE, 
-                                  S3_THEMATIC_LUT_FILE, 
-                                  index_sample)
+    df = load_and_preprocess_data(
+        indexing_sources['base_data_bucket'],
+        indexing_sources['base_data_file'],
+        indexing_sources['subgenre_lut_file'],
+        indexing_sources['thematic_lut_file'],
+        index_sample
+    )
 
 
     logger.info("Calculate embeddings")
-    df, embedding_field_names, embedding_sizes = calc_embeddings(df)
+    df, embedding_field_names, embedding_sizes = calc_embeddings(df, c2c_models)
     
     logger.info("Postprocess data")
     df = postprocess_data(df)
-
-    print(df["subgenreCategories"])
 
     # initialize OSS client
     oss_client = OpenSearch(
