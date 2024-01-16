@@ -595,7 +595,7 @@ class RecoExplorerApp:
             name='Duplikatfilter',
             options={'Doppelte Crid': ['filterDuplicateCrid', 'crid'],
                      'Identische Description': ['filterDuplicateDescription', 'description'],
-                     'Identische ImageUrl': ['filterDuplicateImageUrl', 'imageurl']},
+                     'Identische ImageUrl': ['filterDuplicateImageUrl', 'teaserimage']},
             size=3
         )
 
@@ -1092,7 +1092,6 @@ class RecoExplorerApp:
     def render(self):
         self.assemble_components()
         return pn.template.BootstrapTemplate(
-             # site="CC AI & Analytics",
              site_url="./",
              title="Recommender Explorer",
              sidebar=[self.nav_controls],

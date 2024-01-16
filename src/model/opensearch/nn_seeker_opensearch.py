@@ -53,18 +53,14 @@ class NnSeekerOpenSearch(NnSeeker):
     def __get_nn_by_embedding(self, embedding, k, filter_criteria):
         return self.__get_exact__nn_by_embedding(embedding, k, filter_criteria)
 
-    
-    
     def __get_exact__nn_by_embedding(self, embedding, k, filter_criteria):
-
         query = self.__compose_exact_nn_by_embedding_query(embedding, k, filter_criteria)
-
+        logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         hits = response['hits']['hits']
         nn_dists = [(hit['_score']-1) for hit in hits]
         ids = [hit['_source']['id'] for hit in hits]
         return ids, nn_dists
-
 
     def __compose_exact_nn_by_embedding_query(self, embedding, k, reco_filter):
         query = {
@@ -101,7 +97,7 @@ class NnSeekerOpenSearch(NnSeeker):
         if reco_filter.get('sort'):
             query['sort'] = [
                 {
-                    self.field_mapping['created']: {"order": reco_filter['sort'][0]}
+                    self.field_mapping['created']: {"order": reco_filter['sort']}
                 }
             ]
             query['track_scores'] = True
@@ -132,6 +128,7 @@ class NnSeekerOpenSearch(NnSeeker):
             ]
             query['track_scores'] = True
 
+        logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
 
         hits = response['hits']['hits']
@@ -154,7 +151,8 @@ class NnSeekerOpenSearch(NnSeeker):
             }
           }
         }
-        
+
+        logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         embedding = response['hits']['hits'][0]['_source'][self.embedding_field_name]
                

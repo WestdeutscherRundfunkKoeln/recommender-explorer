@@ -1,3 +1,10 @@
+indexing_sources:
+    base_data_bucket: '<your base data bucket for indexing>'
+    base_data_file: '<your base data file for indexing>'
+    subgenre_lut_file: '<your subgenre categories lookup file for indexing>'
+    thematic_lut_file: '<your thematic categories lookup file for indexing>'
+    models_to_index: '<a list of model names to use for indexing>'
+
 databackend:
     type: opensearch
 
