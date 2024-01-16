@@ -54,9 +54,11 @@ class NnSeekerPaService(NnSeekerRest):
 
     def get_recos_user(self, user, n_recos):
 
+        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-Dev']['properties']
+
         user_id = user.id
         headers = {
-            "ARD": "access"
+            header_props['auth_header']: header_props['auth_header_value']
         }
         params = {
             "configuration": self.__configuration_u2c,
