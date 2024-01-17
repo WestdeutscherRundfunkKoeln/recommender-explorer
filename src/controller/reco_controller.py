@@ -315,10 +315,10 @@ class RecommendationController():
         )
         return (
             self.item_accessor.get_items_by_ids(
-            item_dto, kidxs[:self.num_NN],
-            field,
-            constants.MODEL_TYPE_C2C)[0],
-            nn_dists[:self.num_NN]
+                item_dto, kidxs[:self.num_NN],
+                field,
+                constants.MODEL_TYPE_C2C)[0],
+                nn_dists[:self.num_NN]
         )
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
@@ -440,17 +440,17 @@ class RecommendationController():
 
         return bool_terms
 
-    def _prepare_query_term_condition_statement(self, value, start_item, reco_filter, bool_terms):
+    def _prepare_query_term_condition_statement(self, value: list, start_item: ItemDto, reco_filter: dict, bool_terms: dict) -> dict:
 
         transposed_values = []
 
         logic, field = value.split('_')
         operator = self.FILTER_LOGIC_MATRIX[logic]  ## contains "must"
         if logic != "choose":
-            if isinstance(start_item[self.FILTER_FIELD_MATRIX[field]], list):
+            if isinstance(start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]), list):
                 transposed_values.extend(start_item[self.FILTER_FIELD_MATRIX[field]])
             else:
-                transposed_values.append(start_item[self.FILTER_FIELD_MATRIX[field]])
+                transposed_values.append(start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]))
         else:  ## we're in "choose_genre", or "choose_subgenre" etc..
             if field == "erzählweise":
                 reco_filter['value_genreCategory'] = self.get_genres_and_subgenres_from_upper_category(reco_filter['value_erzaehlweiseCategory'], 'genres')
