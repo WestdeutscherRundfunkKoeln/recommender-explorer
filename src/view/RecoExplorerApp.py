@@ -8,6 +8,7 @@ from exceptions.date_validation_error import DateValidationError
 from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
 from datetime import datetime
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,9 @@ class RecoExplorerApp:
 
         # config
         self.config = config
+
+        # mandant
+        self.set_mandant()
 
         # start items
         self.start_items = []
@@ -75,6 +79,13 @@ class RecoExplorerApp:
         self.set_c2c_model_definitions()
         self.set_u2c_model_definitions()
 
+    def set_mandant(self):
+        url = pn.state.location.search
+        match = re.search(r'(?<=\bmandant=)[^&]+', url)
+        if match:
+            self.mandant = match.group(0)
+        else:
+            self.mandant = 'mediathek'
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -890,6 +901,12 @@ class RecoExplorerApp:
             self.put_navigational_block(2, self.filter_block[1])
         self.assemble_navigation_elements()
 
+    def toggle_client_choice(self, event):
+        logger.info(event)
+        self.mandant = event.obj.value
+        pn.state.location.update_query(mandant=self.mandant)
+        pn.state.location.reload = True
+
     def toggle_user_choice(self, event):
         active_component = event.obj.objects[event.obj.active[0]]
         for component in self.controller.components['user_choice'].values():
@@ -973,6 +990,16 @@ class RecoExplorerApp:
     #
     def assemble_components(self):
 
+        # Client
+        self.client_choice = pn.widgets.RadioButtonGroup(
+            name='',
+            options={'ARD Mediathek': 'mediathek',
+                     'ARD Audiothek': 'audiothek'},
+            value=self.mandant)
+
+        self.put_navigational_block(0, ['### Mandant', self.client_choice])
+        client_choice_watcher = self.client_choice.param.watch(self.toggle_client_choice, 'value', onlychanged=True)
+
         # Models
         if constants.MODEL_CONFIG_U2C in self.config: # TODO: refactor bootstrapping of application to make this more generic
             self.model_choice = pn.Accordion(
@@ -987,7 +1014,7 @@ class RecoExplorerApp:
         self.model_choice.active = [0]
         self.model_choice.toggle = True
 
-        self.put_navigational_block(0, ['### Modelle wählen', self.model_choice, self.model_resetter])
+        self.put_navigational_block(1, ['### Modelle wählen', self.model_choice, self.model_resetter])
         model_choice_watcher = self.model_choice.param.watch(self.toggle_model_choice, 'active', onlychanged=True)
 
         # Item source
@@ -1015,7 +1042,7 @@ class RecoExplorerApp:
         self.source_block[0] = ['### Start-Video bestimmen', self.item_source, self.item_resetter]
         self.source_block[1] = ['### Start-User bestimmen', self.user_source, self.item_resetter]
 
-        self.put_navigational_block(1, self.source_block[0])
+        self.put_navigational_block(2, self.source_block[0])
 
         # Postprocessing and Filtering
         self.reco_items = pn.Accordion(
@@ -1033,7 +1060,7 @@ class RecoExplorerApp:
         self.filter_block[0] = ['### Empfehlungen beeinflussen', self.reco_items, self.reco_resetter]
         self.filter_block[1] = []
 
-        self.put_navigational_block(2, self.filter_block[0])
+        self.put_navigational_block(3, self.filter_block[0])
         self.assemble_navigation_elements()
 
         # empty screen hinweis
