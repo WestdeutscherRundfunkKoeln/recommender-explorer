@@ -1060,7 +1060,7 @@ class RecoExplorerApp:
         self.filter_block[0] = ['### Empfehlungen beeinflussen', self.reco_items, self.reco_resetter]
         self.filter_block[1] = []
 
-        self.put_navigational_block(3, self.filter_block[0])
+        self.put_navigational_block(2, self.filter_block[0])
         self.assemble_navigation_elements()
 
         # empty screen hinweis

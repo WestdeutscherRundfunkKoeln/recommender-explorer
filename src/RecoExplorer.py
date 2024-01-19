@@ -1,34 +1,29 @@
+import panel as pn
 import sys
-
+import logging
 from envyaml import EnvYAML
 from view.RecoExplorerApp import RecoExplorerApp
-import re
-import panel as pn
+from util.file_utils import get_config_from_search, get_config_from_arg
+
+logger = logging.getLogger(__name__)
 
 def getExplorerInstance():
     return RecoExplorerApp(config).render()
 
 #
-# start like so: panel serve RecoExplorer.py --autoreload --show
-# or so: panel serve RecoExplorer.py --autoreload --show --args config=./config/config_local.yaml
+# start like so: panel serve RecoExplorer.py --args config=<path_to_my_config.yaml>
 #
+if not sys.argv[1:][0]:
+    exit('Unable to start Reco Explorer - no configwas passed.')
 
-# Set default suffix for config
-config_default = 'mediathek'
+try:
+    config_full_path = get_config_from_arg(sys.argv[1:][0])
 
-# Find config suffix in url
-url = pn.state.location.search
-match = re.search(r'(?<=\bmandant=)[^&]+', url)
-if match:
-    config_suffix = match.group(0)
-else:
-    config_suffix = config_default
-config_file = 'config_' + config_suffix + '.yaml'
+    # replace config from url param, if given
+    if pn.state.location.search:
+        config_full_path = get_config_from_search(pn.state.location.search, config_full_path)
 
-if not len(sys.argv[1:]):
-    configuration_file_name = '../recommender-explorer-config/' + config_file
-else:
-    configuration_file_name = sys.argv[1:][0].removeprefix('config=')
-
-config = EnvYAML(configuration_file_name)
-getExplorerInstance().server_doc()
+    config = EnvYAML(config_full_path)
+    getExplorerInstance().server_doc()
+except Exception as e:
+    exit(e)
