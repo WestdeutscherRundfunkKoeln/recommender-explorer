@@ -8,7 +8,7 @@ import re
 logger = logging.getLogger(__name__)
 
 def get_all_config_files() -> list:
-    all_configs = glob.glob('../recommender-explorer-config/config_[a-z]*.yaml')
+    all_configs = glob.glob('config_[a-z]*.yaml')
     return all_configs
 
 def get_config_from_arg(arg) -> str:
