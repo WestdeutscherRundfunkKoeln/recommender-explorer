@@ -7,8 +7,9 @@ from exceptions.empty_search_error import EmptySearchError
 from exceptions.date_validation_error import DateValidationError
 from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
+from util.file_utils import get_all_config_files, get_client_ident_from_search, get_config_from_arg, get_client_from_path, get_client_options
+import sys
 from datetime import datetime
-import re
 
 
 logger = logging.getLogger(__name__)
@@ -38,8 +39,8 @@ class RecoExplorerApp:
         # config
         self.config = config
 
-        # mandant
-        self.set_mandant()
+        # client
+        self.set_client()
 
         # start items
         self.start_items = []
@@ -79,13 +80,20 @@ class RecoExplorerApp:
         self.set_c2c_model_definitions()
         self.set_u2c_model_definitions()
 
-    def set_mandant(self):
-        url = pn.state.location.search
-        match = re.search(r'(?<=\bmandant=)[^&]+', url)
-        if match:
-            self.mandant = match.group(0)
+    def set_client(self):
+        # Check if there are multiple config files. If yes, make config widget visible.
+        all_configs=get_all_config_files()
+        if all_configs:
+            self.client_choice_visibility = True
         else:
-            self.mandant = 'mediathek'
+            self.client_choice_visibility = False
+
+        # Check if client is defined in url params, otherwise choose config that was passed
+        if pn.state.location.search:
+            self.client = get_client_ident_from_search(pn.state.location.search)
+        else:
+            config_full_path = get_config_from_arg(sys.argv[1:][0])
+            self.client = get_client_from_path(config_full_path)
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -903,8 +911,8 @@ class RecoExplorerApp:
 
     def toggle_client_choice(self, event):
         logger.info(event)
-        self.mandant = event.obj.value
-        pn.state.location.update_query(mandant=self.mandant)
+        self.client = event.obj.value
+        pn.state.location.update_query(client=self.client)
         pn.state.location.reload = True
 
     def toggle_user_choice(self, event):
@@ -989,16 +997,15 @@ class RecoExplorerApp:
             self.nav_controls.append(pn.layout.Divider())
     #
     def assemble_components(self):
-
         # Client
         self.client_choice = pn.widgets.RadioButtonGroup(
             name='',
-            options={'ARD Mediathek': 'mediathek',
-                     'ARD Audiothek': 'audiothek'},
-            value=self.mandant)
+            options=get_client_options(),
+            value=self.client)
 
-        self.put_navigational_block(0, ['### Mandant', self.client_choice])
-        client_choice_watcher = self.client_choice.param.watch(self.toggle_client_choice, 'value', onlychanged=True)
+        if self.client_choice_visibility:
+            self.put_navigational_block(0, ['### Client', self.client_choice])
+            client_choice_watcher = self.client_choice.param.watch(self.toggle_client_choice, 'value', onlychanged=True)
 
         # Models
         if constants.MODEL_CONFIG_U2C in self.config: # TODO: refactor bootstrapping of application to make this more generic
