@@ -81,17 +81,12 @@ class RecoExplorerApp:
         # Check if there are multiple config files. If yes, make config widget visible.
         all_configs = get_all_config_files(self.config_full_path)
 
-        if all_configs:
+        if len(all_configs) > 1:
             self.client_choice_visibility = True
         else:
             self.client_choice_visibility = False
 
-        # Check if client is defined in url params, otherwise choose config that was passed
-        if pn.state.location.search:
-            self.client = get_client_ident_from_search(pn.state.location.search)
-        else:
-            config_full_path = get_config_from_arg(sys.argv[1:][0])
-            self.client = get_client_from_path(config_full_path)
+        self.client = get_client_from_path(self.config_full_path)
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -898,17 +893,18 @@ class RecoExplorerApp:
     def toggle_model_choice(self, event):
         logger.info(event)
         active_block = event.obj.active[0]
-        self.put_navigational_block(1, self.source_block[active_block])
+        self.put_navigational_block(2, self.source_block[active_block])
         if active_block == 0:
-            self.put_navigational_block(2, self.filter_block[0])
+            self.put_navigational_block(3, self.filter_block[0])
         else:
-            self.put_navigational_block(2, self.filter_block[1])
+            self.put_navigational_block(3, self.filter_block[1])
         self.assemble_navigation_elements()
 
     def toggle_client_choice(self, event):
         logger.info(event)
         self.client = event.obj.value
         pn.state.location.update_query(client=self.client)
+        # await this call?
         pn.state.location.reload = True
 
     def toggle_user_choice(self, event):
@@ -1000,7 +996,7 @@ class RecoExplorerApp:
             value=self.client)
 
         if self.client_choice_visibility:
-            self.put_navigational_block(0, ['### Client', self.client_choice])
+            self.put_navigational_block(0, ['### Mandant', self.client_choice])
             client_choice_watcher = self.client_choice.param.watch(self.toggle_client_choice, 'value', onlychanged=True)
 
         # Models
@@ -1063,7 +1059,7 @@ class RecoExplorerApp:
         self.filter_block[0] = ['### Empfehlungen beeinflussen', self.reco_items, self.reco_resetter]
         self.filter_block[1] = []
 
-        self.put_navigational_block(2, self.filter_block[0])
+        self.put_navigational_block(3, self.filter_block[0])
         self.assemble_navigation_elements()
 
         # empty screen hinweis
