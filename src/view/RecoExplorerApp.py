@@ -2,12 +2,13 @@ import panel as pn
 import logging
 import traceback
 import constants
+from envyaml import EnvYAML
 from controller.reco_controller import RecommendationController
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.date_validation_error import DateValidationError
 from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
-from datetime import datetime
+from util.file_utils import get_all_config_files
 import re
 
 
@@ -19,27 +20,28 @@ logger = logging.getLogger(__name__)
 class RecoExplorerApp:
 
     #
-    def __init__(self, config):
+    def __init__(self, config_full_path):
+
+        # basic setup
+        self.config = EnvYAML(config_full_path)
+        self.config_full_path = config_full_path
+        self.controller = RecommendationController(self.config)
 
         pn.extension(sizing_mode="stretch_width")
         pn.extension('floatpanel')
 
-        self.ITEM_TYPE_START_ELEMENT = 'Start-Element'
-        self.ITEM_TYPE_RECOMMENDATION = 'Empfehlung'
         self.RIGHT_ARROW = '\u25b6'
         self.LEFT_ARROW = '\u25c0'
 
         # display mode
-        self.display_mode = 'single' # one of 'single' or 'multi'
+        self.display_mode = constants.DISPLAY_MODE_SINGLE
 
         # display mode
         self.model_type = constants.MODEL_CONFIG_C2C
 
-        # config
-        self.config = config
-
         # mandant
         self.set_mandant()
+        logger.warning(get_all_config_files(self.config_full_path))
 
         # start items
         self.start_items = []
@@ -55,9 +57,6 @@ class RecoExplorerApp:
         #
         self.nav_controls = pn.WidgetBox()
         self.navigational_components = {}
-
-        #
-        self.controller = RecommendationController(self.config)
 
         #
         self.define_item_pagination()
@@ -78,6 +77,8 @@ class RecoExplorerApp:
         # init some of the component values
         self.set_c2c_model_definitions()
         self.set_u2c_model_definitions()
+
+
 
     def set_mandant(self):
         url = pn.state.location.search

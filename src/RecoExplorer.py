@@ -1,14 +1,13 @@
 import panel as pn
 import sys
 import logging
-from envyaml import EnvYAML
 from view.RecoExplorerApp import RecoExplorerApp
 from util.file_utils import get_config_from_search, get_config_from_arg
 
 logger = logging.getLogger(__name__)
 
 def getExplorerInstance():
-    return RecoExplorerApp(config).render()
+    return RecoExplorerApp(config_full_path).render()
 
 #
 # start like so: panel serve RecoExplorer.py --args config=<path_to_my_config.yaml>
@@ -23,7 +22,6 @@ try:
     if pn.state.location.search:
         config_full_path = get_config_from_search(pn.state.location.search, config_full_path)
 
-    config = EnvYAML(config_full_path)
     getExplorerInstance().server_doc()
 except Exception as e:
     exit(e)
