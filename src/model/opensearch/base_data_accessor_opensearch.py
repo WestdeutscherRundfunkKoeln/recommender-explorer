@@ -12,7 +12,7 @@ from datetime import datetime
 from model.base_data_accessor import BaseDataAccessor
 from exceptions.empty_search_error import EmptySearchError
 from dto.item import ItemDto
-from util.dto_utils import content_fields, update_from_props
+from util.dto_utils import content_fields, update_from_props, get_primary_idents
 
 logger = logging.getLogger(__name__)
 
@@ -64,18 +64,8 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
     def get_item_by_urn( self, item: ItemDto, urn, filter = {} ):
         urn = urn.strip()
-        primary_field = self.config['opensearch']['primary_field']
-        mapped_primary_field = self.config['opensearch']['field_mapping'][primary_field]
-        oss_col = mapped_primary_field
-        # apply field mapping if defined
-#        if column in self.field_mapping.keys():
-#            new_col = self.field_mapping[column]
-#            logger.info(f'mapping col {column} to {new_col}')
-#            column = new_col
-
-        # term filter applies to keyword subcolumn
-#        oss_col = column + '.keyword'
-
+        prim_id, prim_val = get_primary_idents(self.config)
+        oss_col = prim_val + '.keyword'
         query = {
             "size": 10,  # duplicate crids max occur in data, return max 10
             "_source": {"exclude": "embedding"},
@@ -84,9 +74,8 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             },
         }
 
-        logger.warning(query)
+        logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
-        logger.warning(response)
         return self.__get_items_from_response(item, response)
 
     def get_item_by_crid( self, item: ItemDto, crid, filter = {} ):

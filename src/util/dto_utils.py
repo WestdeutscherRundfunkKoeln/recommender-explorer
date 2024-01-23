@@ -32,3 +32,7 @@ def dto_from_model(model: dict, position: str, item_type: str, provenance: str) 
     i_type = item_type + '_type'
     class_ = getattr(sys.modules[__name__], model[i_type])
     return class_(position, item_type, provenance)
+
+def get_primary_idents(config: dict) -> tuple[str, str]:
+    primary_field = config['opensearch']['primary_field']
+    return primary_field, config['opensearch']['field_mapping'][primary_field]
