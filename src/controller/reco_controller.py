@@ -67,7 +67,7 @@ class RecommendationController():
         self.model_type = ''
         self.model_config = ''
         self.user_cluster = []  # refactor once clustering endpoint is better
-        self.config_MDP2 = EnvYAML('./config/config_MDP2.yaml')
+        self.config_MDP2 = EnvYAML('./config/mdp2_lookup.yaml')
 
     def register(self, component_group, component, watcher=None, callback=None):
         self.components[component_group][component.params['label']] = component

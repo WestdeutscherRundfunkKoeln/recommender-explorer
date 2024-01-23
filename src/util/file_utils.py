@@ -3,6 +3,7 @@ import re
 import glob
 import os
 import constants
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ def get_config_from_arg(arg) -> str:
         raise Exception('Config file not found at path [' + full_path + ']')
 
 def get_config_from_search(search, config_full_path) -> str:
-    client_ident = _get_client_ident_from_search(search)
+    client_ident = get_client_ident_from_search(search)
     path, name = _segment_arg_config(config_full_path)
     full_path = path + '/' + _replace_config(name, client_ident)
     if os.path.isfile(full_path):
@@ -27,7 +28,16 @@ def get_config_from_search(search, config_full_path) -> str:
     else:
         raise Exception('Config file from param not found at path [' + full_path + ']')
 
-def _get_client_ident_from_search(search) -> str:
+def get_client_from_path(full_path):
+    match = re.search(r'/config_(\w+)\.yaml$', full_path)
+
+    # Check if a match is found and return the config name
+    if match:
+        return match.group(1)
+    else:
+        raise Exception('Client could not be matched from path [' + full_path + ']')
+
+def get_client_ident_from_search(search) -> str:
     app_ident = ''
     for pair in search.removeprefix('?').split('&'):
         param, val = list(pair.split('='))
@@ -37,6 +47,15 @@ def _get_client_ident_from_search(search) -> str:
         return app_ident
     else:
         raise Exception('Client identifier not found')
+
+def get_client_options(config_full_path):
+    all_configs = get_all_config_files(config_full_path)
+    options = {}
+    for config_path in all_configs:
+        client = get_client_from_path(config_path)
+        key = client.capitalize() # Capitalize the first letter of the client for the key
+        options[key] = client
+    return options
 
 def _segment_arg_config(config_name) -> tuple[str, str]:
     configuration_string = config_name.removeprefix('config=')
