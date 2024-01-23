@@ -2,13 +2,14 @@ import panel as pn
 import logging
 import traceback
 import constants
+from envyaml import EnvYAML
 from controller.reco_controller import RecommendationController
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.date_validation_error import DateValidationError
 from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
-from datetime import datetime
-
+from util.file_utils import get_all_config_files, get_client_ident_from_search, get_config_from_arg, get_client_from_path, get_client_options
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -18,24 +19,28 @@ logger = logging.getLogger(__name__)
 class RecoExplorerApp:
 
     #
-    def __init__(self, config):
+    def __init__(self, config_full_path):
+
+        # basic setup
+        self.config = EnvYAML(config_full_path)
+        self.config_full_path = config_full_path
+        self.controller = RecommendationController(self.config)
 
         pn.extension(sizing_mode="stretch_width")
         pn.extension('floatpanel')
 
-        self.ITEM_TYPE_START_ELEMENT = 'Start-Element'
-        self.ITEM_TYPE_RECOMMENDATION = 'Empfehlung'
         self.RIGHT_ARROW = '\u25b6'
         self.LEFT_ARROW = '\u25c0'
 
         # display mode
-        self.display_mode = 'single' # one of 'single' or 'multi'
+        self.display_mode = constants.DISPLAY_MODE_SINGLE
 
         # display mode
         self.model_type = constants.MODEL_CONFIG_C2C
 
-        # config
-        self.config = config
+
+        # client
+        self.set_client()
 
         # start items
         self.start_items = []
@@ -51,9 +56,6 @@ class RecoExplorerApp:
         #
         self.nav_controls = pn.WidgetBox()
         self.navigational_components = {}
-
-        #
-        self.controller = RecommendationController(self.config)
 
         #
         self.define_item_pagination()
@@ -75,6 +77,16 @@ class RecoExplorerApp:
         self.set_c2c_model_definitions()
         self.set_u2c_model_definitions()
 
+    def set_client(self):
+        # Check if there are multiple config files. If yes, make config widget visible.
+        all_configs = get_all_config_files(self.config_full_path)
+
+        if len(all_configs) > 1:
+            self.client_choice_visibility = True
+        else:
+            self.client_choice_visibility = False
+
+        self.client = get_client_from_path(self.config_full_path)
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -91,12 +103,10 @@ class RecoExplorerApp:
         else:
             logger.error('u2c feature disabled')
 
-    ## all the pn component definitions comes here
+    ### all the pn component definitions come here
     def define_item_pagination(self):
         self.pagination = pn.Row()
         self.floating_elements = pn.Row(height=0, width=0)
-
-    ### all the pn component definitions comes here
 
     #
     def define_start_item_filtering(self):
@@ -883,12 +893,19 @@ class RecoExplorerApp:
     def toggle_model_choice(self, event):
         logger.info(event)
         active_block = event.obj.active[0]
-        self.put_navigational_block(1, self.source_block[active_block])
+        self.put_navigational_block(2, self.source_block[active_block])
         if active_block == 0:
-            self.put_navigational_block(2, self.filter_block[0])
+            self.put_navigational_block(3, self.filter_block[0])
         else:
-            self.put_navigational_block(2, self.filter_block[1])
+            self.put_navigational_block(3, self.filter_block[1])
         self.assemble_navigation_elements()
+
+    def toggle_client_choice(self, event):
+        logger.info(event)
+        self.client = event.obj.value
+        pn.state.location.update_query(client=self.client)
+        # await this call?
+        pn.state.location.reload = True
 
     def toggle_user_choice(self, event):
         active_component = event.obj.objects[event.obj.active[0]]
@@ -972,6 +989,15 @@ class RecoExplorerApp:
             self.nav_controls.append(pn.layout.Divider())
     #
     def assemble_components(self):
+        # Client
+        self.client_choice = pn.widgets.RadioButtonGroup(
+            name='',
+            options=get_client_options(self.config_full_path),
+            value=self.client)
+
+        if self.client_choice_visibility:
+            self.put_navigational_block(0, ['### Mandant', self.client_choice])
+            client_choice_watcher = self.client_choice.param.watch(self.toggle_client_choice, 'value', onlychanged=True)
 
         # Models
         if constants.MODEL_CONFIG_U2C in self.config: # TODO: refactor bootstrapping of application to make this more generic
@@ -987,7 +1013,7 @@ class RecoExplorerApp:
         self.model_choice.active = [0]
         self.model_choice.toggle = True
 
-        self.put_navigational_block(0, ['### Modelle wählen', self.model_choice, self.model_resetter])
+        self.put_navigational_block(1, ['### Modelle wählen', self.model_choice, self.model_resetter])
         model_choice_watcher = self.model_choice.param.watch(self.toggle_model_choice, 'active', onlychanged=True)
 
         # Item source
@@ -1015,7 +1041,7 @@ class RecoExplorerApp:
         self.source_block[0] = ['### Start-Video bestimmen', self.item_source, self.item_resetter]
         self.source_block[1] = ['### Start-User bestimmen', self.user_source, self.item_resetter]
 
-        self.put_navigational_block(1, self.source_block[0])
+        self.put_navigational_block(2, self.source_block[0])
 
         # Postprocessing and Filtering
         self.reco_items = pn.Accordion(
@@ -1033,7 +1059,7 @@ class RecoExplorerApp:
         self.filter_block[0] = ['### Empfehlungen beeinflussen', self.reco_items, self.reco_resetter]
         self.filter_block[1] = []
 
-        self.put_navigational_block(2, self.filter_block[0])
+        self.put_navigational_block(3, self.filter_block[0])
         self.assemble_navigation_elements()
 
         # empty screen hinweis
