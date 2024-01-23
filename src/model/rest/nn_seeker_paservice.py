@@ -21,7 +21,11 @@ class NnSeekerPaService(NnSeekerRest):
         super().__init__()
 
     def get_k_NN(self, item: ItemDto, k, nn_filter) -> tuple[list, list, str]:
-        content_id = item.crid
+
+        prim = self.__config['opensearch']['primary_field']
+        field = self.__config['opensearch']['field_mapping'][prim]
+
+        content_id =  item.__getattribute__(field)
 
         header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-Dev']['properties']
 
@@ -48,6 +52,7 @@ class NnSeekerPaService(NnSeekerRest):
                 nn_dists.append(reco['score'])
                 recomm_content_ids.append(reco['asset']['assetId'])
         else:
+            logger.warning(status)
             logger.warning('discarding not found item [' + params['assetId'] + ']')
 
         return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP

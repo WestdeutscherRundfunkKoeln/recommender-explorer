@@ -283,7 +283,7 @@ class RecoExplorerApp:
         # startvideo selector
         self.startvid = pn.widgets.RadioBoxGroup(
             name='Startvideo',
-            options=['Datum', 'Crid', 'URL'],
+            options=['Datum', 'Primary Id', 'URL'],
             value='Datum'
         )
 
@@ -326,14 +326,14 @@ class RecoExplorerApp:
 
         # crid input
         self.crid_input = pn.widgets.TextInput(
-            name='Crid',
-            placeholder='crid://',
+            name='Content Id',
+            placeholder=self.config['opensearch']['primary_field'],
             visible=False
         )
 
         self.crid_input.params = {
-            'validator': '_check_crid',
-            'accessor': 'get_item_by_crid',
+            'validator': '_check_' + self.config['opensearch']['primary_field'],
+            'accessor': 'get_item_by_' + self.config['opensearch']['primary_field'],
             'label': 'cridinput',
             'has_paging': False,
             'reset_to': ''
@@ -879,7 +879,7 @@ class RecoExplorerApp:
             self.startdate.visible = self.enddate.visible = self.genres.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = True
             self.crid_input.visible = self.url_input.visible = False
             self.crid_input.value = self.url_input.value = ''
-        elif event.obj.name == 'Startvideo' and event.new == 'Crid':
+        elif event.obj.name == 'Startvideo' and event.new == 'Primary Id':
             self.startdate.visible = self.enddate.visible = self.url_input.visible = self.genres.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = False
             self.crid_input.visible = True
             self.url_input.value = ''

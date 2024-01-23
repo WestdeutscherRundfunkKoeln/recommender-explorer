@@ -19,17 +19,20 @@ logger = logging.getLogger(__name__)
 class BaseDataAccessorOpenSearch(BaseDataAccessor):    
 
     def __init__( self, config ):
-        auth = (config['opensearch.user'], config['opensearch.pass'])
+
+        self.config = config
+
+        auth = (self.config['opensearch.user'], self.config['opensearch.pass'])
         
         self.client = OpenSearch(
-            hosts = [{'host': config['opensearch.host'], 'port': config['opensearch.port']}],
+            hosts = [{'host': config['opensearch.host'], 'port': self.config['opensearch.port']}],
             http_auth = auth,
             use_ssl = True,
             verify_certs = True,
             connection_class = RequestsHttpConnection
         )
-        self.target_idx_name = config['opensearch.index']
-        self.field_mapping = config['opensearch.field_mapping']
+        self.target_idx_name = self.config['opensearch.index']
+        self.field_mapping = self.config['opensearch.field_mapping']
         self.embedding_field_name = 'embedding'
         
         self.max_items_per_fetch = 500
@@ -59,7 +62,34 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         return self.get_item_by_crid(crid)
 
 
-    def get_item_by_crid( self, crid, filter = {} ):
+    def get_item_by_urn( self, item: ItemDto, urn, filter = {} ):
+        urn = urn.strip()
+        primary_field = self.config['opensearch']['primary_field']
+        mapped_primary_field = self.config['opensearch']['field_mapping'][primary_field]
+        oss_col = mapped_primary_field
+        # apply field mapping if defined
+#        if column in self.field_mapping.keys():
+#            new_col = self.field_mapping[column]
+#            logger.info(f'mapping col {column} to {new_col}')
+#            column = new_col
+
+        # term filter applies to keyword subcolumn
+#        oss_col = column + '.keyword'
+
+        query = {
+            "size": 10,  # duplicate crids max occur in data, return max 10
+            "_source": {"exclude": "embedding"},
+            "query": {
+                "match": {oss_col: urn},
+            },
+        }
+
+        logger.warning(query)
+        response = self.client.search(body=query, index=self.target_idx_name)
+        logger.warning(response)
+        return self.__get_items_from_response(item, response)
+
+    def get_item_by_crid( self, item: ItemDto, crid, filter = {} ):
         crid = crid.strip()
         column = 'crid'
         #apply field mapping if defined
@@ -81,7 +111,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
-        return self.__get_items_from_response(response)
+        return self.__get_items_from_response(item, response)
 
     def get_items_by_date( self, item: ItemDto, start_date, end_date, item_filter = {}, offset = 10, size = -1) -> tuple[pd.DataFrame, int]:
         # handle valid size range
