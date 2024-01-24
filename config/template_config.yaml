@@ -50,5 +50,6 @@ u2c_config:
             display_name: '<your model name for display in frontend>'
             handler: 'ModelClass@path'
             endpoint: 'sagemaker://<your endpoint>'
+            role_arn: '<your sagemaker models role arn>'
             avatar: 'assets/img/user-dummy-pic.png'
             default: False
