@@ -3,6 +3,7 @@ import constants
 
 from model.rest.nn_seeker_rest import NnSeekerRest
 from dto.item import ItemDto
+from util.dto_utils import get_primary_idents
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class NnSeekerPaService(NnSeekerRest):
 
         self.__max_num_neighbours = 16
         self.__base_uri = ''
-        self.__configuration_c2c = "zdfRecosOn"
+        self.__configuration_c2c = "relatedItems"
         self.__configuration_u2c = "forYou"
         self.__explain = False
         self.__config = config
@@ -55,7 +56,10 @@ class NnSeekerPaService(NnSeekerRest):
             logger.warning(status)
             logger.warning('discarding not found item [' + params['assetId'] + ']')
 
-        return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP
+        logger.warning("returning recomm_content_ids")
+        logger.warning(recomm_content_ids)
+        logger.warning("identifier prop: " + field)
+        return recomm_content_ids, nn_dists, field #self.ITEM_IDENTIFIER_PROP
 
     def get_recos_user(self, user, n_recos):
 
