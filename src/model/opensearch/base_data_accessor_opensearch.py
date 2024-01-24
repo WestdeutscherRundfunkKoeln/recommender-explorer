@@ -52,6 +52,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
+        logger.info(response)
         return self.__get_items_from_response(item, response, provenance)
 
     def get_item_by_url(self, url, filter = {} ):

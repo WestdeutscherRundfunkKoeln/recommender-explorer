@@ -28,7 +28,7 @@ class NnSeekerPaService(NnSeekerRest):
 
         content_id =  item.__getattribute__(field)
 
-        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-Dev']['properties']
+        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-AT-Dev']['properties']
 
         headers = {
             header_props['auth_header']: header_props['auth_header_value']
