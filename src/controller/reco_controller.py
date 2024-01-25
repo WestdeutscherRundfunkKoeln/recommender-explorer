@@ -233,7 +233,7 @@ class RecommendationController():
         has_paging = [x.params.get('has_paging', False) for x in active_components]
         if any(has_paging):
             accessor_values.extend([(self.get_page_number() * self.get_num_items()), self.get_num_items()])
-        logger.warning('calling ' + accessor_method + ' with values ' + str(accessor_values))
+        logger.info('calling ' + accessor_method + ' with values ' + str(accessor_values))
         function_pointer = getattr(self.item_accessor, accessor_method)
         search_result, total_hits = function_pointer(*accessor_values)
         return total_hits, search_result

@@ -22,7 +22,6 @@ class NnSeekerRest(NnSeeker):
             backoff_factor=self.__backoff_factor
         )
 
-        # http = ProxyManager(proxy_url='http://proxy.wdr.de:8080', retries=retries)
         http = PoolManager(retries=retries)
 
         logger.info('calling [' + base_uri + '] with params ' + json.dumps(post_params))

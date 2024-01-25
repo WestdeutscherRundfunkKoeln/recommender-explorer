@@ -23,12 +23,11 @@ class NnSeekerPaService(NnSeekerRest):
 
     def get_k_NN(self, item: ItemDto, k, nn_filter) -> tuple[list, list, str]:
 
-        prim = self.__config['opensearch']['primary_field']
-        field = self.__config['opensearch']['field_mapping'][prim]
+        primary_ident, oss_field = get_primary_idents(self.__config)
 
-        content_id =  item.__getattribute__(field)
+        content_id =  item.__getattribute__(oss_field)
 
-        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-AT-Dev']['properties']
+        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service']['properties']
 
         headers = {
             header_props['auth_header']: header_props['auth_header_value']
@@ -53,17 +52,13 @@ class NnSeekerPaService(NnSeekerRest):
                 nn_dists.append(reco['score'])
                 recomm_content_ids.append(reco['asset']['assetId'])
         else:
-            logger.warning(status)
-            logger.warning('discarding not found item [' + params['assetId'] + ']')
+            logger.warning('Got status code [' + str(status) + ']. Discarding this item [' + params['assetId'] + ']')
 
-        logger.warning("returning recomm_content_ids")
-        logger.warning(recomm_content_ids)
-        logger.warning("identifier prop: " + field)
-        return recomm_content_ids, nn_dists, field #self.ITEM_IDENTIFIER_PROP
+        return recomm_content_ids, nn_dists, oss_field
 
     def get_recos_user(self, user, n_recos):
 
-        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-Dev']['properties']
+        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service']['properties']
 
         user_id = user.id
         headers = {
