@@ -5,6 +5,8 @@ from view.RecoExplorerApp import RecoExplorerApp
 from util.file_utils import get_config_from_search, get_config_from_arg
 
 logger = logging.getLogger(__name__)
+logging.basicConfig()
+logging.getLogger().setLevel(logging.WARNING)
 
 def getExplorerInstance():
     return RecoExplorerApp(config_full_path).render()
