@@ -3,10 +3,7 @@ import constants
 
 from model.rest.nn_seeker_rest import NnSeekerRest
 from dto.item import ItemDto
-<<<<<<< HEAD
 from util.dto_utils import get_primary_idents
-=======
->>>>>>> main
 
 logger = logging.getLogger(__name__)
 
