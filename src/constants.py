@@ -31,3 +31,8 @@ MODEL_CONFIG_U2C = 'u2c_config'
 
 DISPLAY_MODE_MULTI = 'multi'
 DISPLAY_MODE_SINGLE = 'single'
+
+#
+# System constants
+#
+CLIENT_IDENTIFIER = 'client'

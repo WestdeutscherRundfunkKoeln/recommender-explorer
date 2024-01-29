@@ -1,19 +1,29 @@
+import panel as pn
 import sys
-
-from envyaml import EnvYAML
+import logging
 from view.RecoExplorerApp import RecoExplorerApp
+from util.file_utils import get_config_from_search, get_config_from_arg
+
+logger = logging.getLogger(__name__)
+logging.basicConfig()
+logging.getLogger().setLevel(logging.WARNING)
 
 def getExplorerInstance():
-    return RecoExplorerApp(config).render()
+    return RecoExplorerApp(config_full_path).render()
 
 #
-# start like so: panel serve RecoExplorer.py --autoreload --show
-# or so: panel serve RecoExplorer.py --autoreload --show --args config=./config/config_local.yaml
+# start like so: panel serve RecoExplorer.py --args config=<path_to_my_config.yaml>
 #
-if not len(sys.argv[1:]):
-    configuration_file_name = './config/config_default.yaml'
-else:
-    configuration_file_name = sys.argv[1:][0].removeprefix('config=')
+if not sys.argv[1:][0]:
+    exit('Unable to start Reco Explorer - no config was passed.')
 
-config = EnvYAML(configuration_file_name)
-getExplorerInstance().server_doc()
+try:
+    config_full_path = get_config_from_arg(sys.argv[1:][0])
+
+    # replace config from url param, if given
+    if pn.state.location.search:
+        config_full_path = get_config_from_search(pn.state.location.search, config_full_path)
+
+    getExplorerInstance().server_doc()
+except Exception as e:
+    exit(e)

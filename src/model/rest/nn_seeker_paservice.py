@@ -3,6 +3,7 @@ import constants
 
 from model.rest.nn_seeker_rest import NnSeekerRest
 from dto.item import ItemDto
+from util.dto_utils import get_primary_idents
 
 logger = logging.getLogger(__name__)
 
@@ -14,16 +15,17 @@ class NnSeekerPaService(NnSeekerRest):
 
         self.__max_num_neighbours = 16
         self.__base_uri = ''
-        self.__configuration_c2c = "zdfRecosOn"
+        self.__configuration_c2c = "relatedItems"
         self.__configuration_u2c = "forYou"
         self.__explain = False
         self.__config = config
         super().__init__()
 
     def get_k_NN(self, item: ItemDto, k, nn_filter) -> tuple[list, list, str]:
-        content_id = item.crid
 
-        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-Dev']['properties']
+        primary_ident, oss_field = get_primary_idents(self.__config)
+        content_id =  item.__getattribute__(oss_field)
+        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service']['properties']
 
         headers = {
             header_props['auth_header']: header_props['auth_header_value']
@@ -48,13 +50,13 @@ class NnSeekerPaService(NnSeekerRest):
                 nn_dists.append(reco['score'])
                 recomm_content_ids.append(reco['asset']['assetId'])
         else:
-            logger.warning('discarding not found item [' + params['assetId'] + ']')
+            logger.warning('Got status code [' + str(status) + ']. Discarding this item [' + params['assetId'] + ']')
 
-        return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP
+        return recomm_content_ids, nn_dists, oss_field
 
     def get_recos_user(self, user, n_recos):
 
-        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service-Dev']['properties']
+        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service']['properties']
 
         user_id = user.id
         headers = {

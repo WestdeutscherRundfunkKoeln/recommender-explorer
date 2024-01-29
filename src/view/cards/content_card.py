@@ -2,6 +2,7 @@ import panel as pn
 import logging
 from dto.content_item import ContentItemDto
 from controller.reco_controller import RecommendationController
+from util.dto_utils import get_primary_idents
 
 logger = logging.getLogger(__name__)
 class ContentCard():
@@ -11,6 +12,8 @@ class ContentCard():
         self.controller = RecommendationController(self.config)
 
     def draw(self, content_dto: ContentItemDto, card):
+
+        id_key, id_val = get_primary_idents(self.config)
 
         base_card_objects = [
                 pn.pane.Markdown(f"""
@@ -22,7 +25,7 @@ class ContentCard():
                        **Themen:** {', '.join(set(content_dto.thematicCategories))}
                        **Sendereihe:** {content_dto.showTitle}
                        **Datum:** {content_dto.createdFormatted}
-                       **Crid:** {content_dto.crid}
+                       **{id_key}:** {content_dto.__getattribute__(id_val)}
                 """),
                 content_dto.description
         ]
