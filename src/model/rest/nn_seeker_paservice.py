@@ -3,7 +3,10 @@ import constants
 
 from model.rest.nn_seeker_rest import NnSeekerRest
 from dto.item import ItemDto
+<<<<<<< HEAD
 from util.dto_utils import get_primary_idents
+=======
+>>>>>>> main
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +27,7 @@ class NnSeekerPaService(NnSeekerRest):
     def get_k_NN(self, item: ItemDto, k, nn_filter) -> tuple[list, list, str]:
 
         primary_ident, oss_field = get_primary_idents(self.__config)
-
         content_id =  item.__getattribute__(oss_field)
-
         header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service']['properties']
 
         headers = {

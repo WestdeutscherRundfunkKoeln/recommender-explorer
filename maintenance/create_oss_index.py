@@ -17,7 +17,7 @@ from oss_utils import ModelConfig, Embedder, safe_value, get_approx_knn_mapping
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-SAMPLE_SIZE = 5000
+SAMPLE_SIZE = 1000
 
 def load_and_preprocess_data(s3_bucket,
                              s3_base_pa_data_filename,
