@@ -1113,6 +1113,10 @@ class RecoExplorerApp:
             logger.warning(traceback.print_exc())
         self.disablePageButtons()
 
+    @staticmethod
+    def render_404():
+        return pn.pane.Markdown(f"""## Unknown location""")
+
     #
     def render(self):
         self.assemble_components()

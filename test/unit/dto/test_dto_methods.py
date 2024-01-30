@@ -9,6 +9,7 @@ from src.util.dto_utils import content_fields, dto_from_classname, dto_from_mode
 
 logger = logging.getLogger(__name__)
 
+
 def test_init_content_dto_from_classname_succeeds() -> None:
     i = dto_from_classname(
         class_name='ContentItemDto',
@@ -41,6 +42,8 @@ def test_init_content_dto_from_model_succeeds(config) -> None:
 
 
 def test_init_user_dto_from_model_succeeds(config) -> None:
+    if not config.get(constants.MODEL_CONFIG_U2C):
+        pytest.skip("configuration does not support u2c integration call")
     first_u2c_model = list(config[constants.MODEL_CONFIG_U2C][constants.MODEL_TYPE_U2C].values())[0]
     u = dto_from_model(
         model=first_u2c_model,
@@ -51,6 +54,8 @@ def test_init_user_dto_from_model_succeeds(config) -> None:
     assert u.viewer == 'UserCard@view.cards.user_card'
 
 def test_init_user_dto_in_bad_position_throws(config) -> None:
+    if not config.get(constants.MODEL_CONFIG_U2C):
+        pytest.skip("configuration does not support u2c integration call")
     first_u2c_model = list(config[constants.MODEL_CONFIG_U2C][constants.MODEL_TYPE_U2C].values())[0]
     with pytest.raises(TypeError):
         dto_from_model(
