@@ -4,6 +4,7 @@ import glob
 import os
 import constants
 import re
+from exceptions.config_error import ConfigError
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ def get_config_from_search(search, config_full_path) -> str:
     if os.path.isfile(full_path):
         return full_path
     else:
-        raise Exception('Config file from param not found at path [' + full_path + ']')
+        raise ConfigError('Config file from search param [' + search + '] not found at path [' + full_path + ']', {})
 
 def get_client_from_path(full_path):
     match = re.search(r'/config_(\w+)\.yaml$', full_path)

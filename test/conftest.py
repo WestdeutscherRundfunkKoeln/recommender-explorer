@@ -21,6 +21,8 @@ def get_config(config) -> EnvYAML:
 
 @pytest.fixture
 def controller(start_component: list, config: str) -> RecommendationController:
+    if not config.get(constants.MODEL_CONFIG_U2C):
+        pytest.skip("configuration does not support u2c integration call")
     controller = RecommendationController(config)
     user_choice = mock_user_component(start_component)
     controller.model_type = constants.MODEL_TYPE_U2C
@@ -29,6 +31,8 @@ def controller(start_component: list, config: str) -> RecommendationController:
 
 @pytest.fixture
 def u2c_controller(start_component: list, model: list, config: str) -> RecommendationController:
+    if not config.get(constants.MODEL_CONFIG_U2C):
+        pytest.skip("configuration does not support u2c integration call")
     controller = RecommendationController(config)
     user_choice = mock_user_component(start_component)
     controller.register('user_choice', user_choice)
