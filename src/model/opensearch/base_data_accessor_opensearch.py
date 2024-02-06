@@ -52,15 +52,14 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
-        logger.info(response)
         return self.__get_items_from_response(item, response, provenance)
 
-    def get_item_by_url(self, url, filter = {} ):
+    def get_item_by_url(self, item: ItemDto, url, filter = {} ):
         last_string = re.search(r'.*/([^/?]+)[?]*', url.strip()).group(1)
         base64_bytes = last_string.encode("ascii")
         crid_bytes = base64.b64decode(base64_bytes + b'==')
         crid = crid_bytes.decode("ascii")
-        return self.get_item_by_crid(crid)
+        return self.get_item_by_crid(item, crid, filter)
 
 
     def get_item_by_urn( self, item: ItemDto, urn, filter = {} ):

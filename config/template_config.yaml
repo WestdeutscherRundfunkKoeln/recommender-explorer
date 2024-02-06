@@ -20,6 +20,7 @@ opensearch:
         "showTitle": "<your title property>"
         "crid": "<your external id property>"
         "duration": "<your duration property>"
+    primary_field: "<your primary field identifier>"
 
 c2c_config:
     c2c_models:
