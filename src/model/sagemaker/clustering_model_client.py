@@ -21,7 +21,7 @@ class ClusteringModelClient:
         json_body = json.dumps({ "action": "list_clusters" })
 
         try:
-            logger.info('Invoking endpoint call to [' + self.__endpoint + ']')
+            logger.info('Invoking clustering endpoint call to [' + self.__endpoint + ']')
             response = self._client.invoke_endpoint(
                 EndpointName=self.__endpoint.removeprefix("sagemaker://"),
                 Body=json_body,
@@ -51,7 +51,7 @@ class ClusteringModelClient:
         json_body = json.dumps(body_dict)
 
         try:
-            logger.info('Invoking endpoint call to [' + self.__endpoint + ']')
+            logger.info('Invoking clustering endpoint call to [' + self.__endpoint + ']')
             response = self._client.invoke_endpoint(
                 EndpointName=self.__endpoint.removeprefix("sagemaker://"),
                 Body=json_body,
