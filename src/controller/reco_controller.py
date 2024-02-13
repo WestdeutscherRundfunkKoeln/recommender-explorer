@@ -454,7 +454,7 @@ class RecommendationController():
         operator = self.FILTER_LOGIC_MATRIX[logic]  ## contains "must"
         if logic != "choose":
             if isinstance(start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]), list):
-                transposed_values.extend(start_item[self.FILTER_FIELD_MATRIX[field]])
+                transposed_values.extend(start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]))
             else:
                 transposed_values.append(start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]))
         else:  ## we're in "choose_genre", or "choose_subgenre" etc..
