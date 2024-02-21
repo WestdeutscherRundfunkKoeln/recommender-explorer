@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+constants
+dataclasses
+pydantic
+envyaml
+opensearch-py
+logging
