@@ -28,12 +28,12 @@ def map_data(data: MediaData) -> RecoExplorerItem: # input = entity
     return mapped_data
 
 @app.post("/ingest-data") #, response_model=RecoExplorerItem)
-def ingest_data(client, data: SophoraData) -> RecoExplorerItem: # input = entity
+def ingest_data(client, data: SophoraData) -> RecoExplorerItem: # CHANGE SOPHORADATA TO JSON, CHECK IN REST OF CODE
     mapped_data = map_data(data).model_dump()
 
 
     # get values from config
-    config_full_path = path + '/config_' + client + '.yaml'
+    config_full_path = path + '/config_' + client + '.yaml' # PER RUNTIME PARAMETER -> CHECK FASTAPI DOCUMENTATION
     config = EnvYAML(config_full_path)
 
     # MOVE THIS TO SEPERATE FILE + pass config
@@ -67,4 +67,4 @@ def ingest_data(client, data: SophoraData) -> RecoExplorerItem: # input = entity
 
     # logger.info('Response: ' + response)
 
-    return mapped_data
+    return mapped_data # RETURN STATUS CODE OR REPORT
