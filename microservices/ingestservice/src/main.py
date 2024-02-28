@@ -19,7 +19,7 @@ data_preprocessor = DataPreprocessor(config)
 
 def request(data, url):
     # TODO: remove timeout when search service is implemented
-    response = httpx.post(url, json=data, timeout = None)
+    response = httpx.post(url, json=data, timeout=None)
     return response.json()
 
 
@@ -35,7 +35,7 @@ def health_check():
 def ingest_item(data: dict):
     mapped_data = data_preprocessor.preprocess_data(data)
     # add data to index
-    search_response = request(mapped_data,f"{BASE_URL_SEARCH}/create-single-document")
+    search_response = request(mapped_data, f"{BASE_URL_SEARCH}/create-single-document")
 
     return search_response
 
@@ -43,11 +43,11 @@ def ingest_item(data: dict):
 @router.post("/ingest-multiple-items")
 def bulk_ingest(bucket):
     item_dict = {}
-    for fname in glob(bucket+"*.json"):
-        with open(fname, 'r') as f:
+    for fname in glob(bucket + "*.json"):
+        with open(fname, "r") as f:
             data = json.load(f)
             mapped_data = data_preprocessor.preprocess_data(data)
-            item_dict[mapped_data['id']] = mapped_data
+            item_dict[mapped_data["id"]] = mapped_data
     search_response = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
 
     return search_response
