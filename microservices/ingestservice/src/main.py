@@ -1,20 +1,18 @@
 #main.py
 
 # Start with
-# FULL_PATH='<your path to config file>' uvicorn microservices.ingestservice.src.main:app --reload
+# FULL_PATH='<your path to config file>' uvicorn src.main:app --reload
 
 from fastapi import FastAPI
-from microservices.ingestservice.dto.recoexplorer_item import RecoExplorerItem
-from microservices.ingestservice.src.map_data import DataMapper
-from microservices.ingestservice.src.oss_accessor import OssAccessor
-from microservices.ingestservice.dto.media_data import MediaData
-from microservices.ingestservice.dto.sophora_data import SophoraData
+from dto.recoexplorer_item import RecoExplorerItem
+from src.map_data import DataMapper
+from src.oss_accessor import OssAccessor
+from dto.media_data import MediaData
+from dto.sophora_data import SophoraData
 from envyaml import EnvYAML
 import os
 
 app = FastAPI(title="Ingest Service")
-
-path = 'microservices/ingestservice/' # THIS NEEDS TO BE CHANGED
 
 @app.post("/map-data", response_model=RecoExplorerItem)
 def map_data(config, data: SophoraData) -> RecoExplorerItem: # input = entity

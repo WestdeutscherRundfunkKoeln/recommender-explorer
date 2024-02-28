@@ -1,0 +1,16 @@
+FROM python:3.10
+#WORKDIR /code
+COPY requirements.txt requirements.txt
+RUN pip install wheel \
+    pip install --no-cache-dir --upgrade -r requirements.txt
+
+COPY src/main.py src/main.py
+COPY src/map_data.py src/map_data.py
+COPY src/oss_accessor.py src/oss_accessor.py
+COPY dto/recoexplorer_item.py dto/recoexplorer_item.py
+COPY dto/media_data.py dto/media_data.py
+COPY dto/sophora_data.py dto/sophora_data.py
+
+COPY config/config_wdr.yaml config.yaml
+
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80"]
