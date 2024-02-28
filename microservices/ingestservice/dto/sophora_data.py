@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from microservices.ingestservice.dto.media_data import MediaData
+from dto.media_data import MediaData
 
 class SophoraData(MediaData):
     # externalId: str
