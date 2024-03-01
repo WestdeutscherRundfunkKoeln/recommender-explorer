@@ -1,10 +1,31 @@
-from typing import Optional
-from pydantic import BaseModel, Extra
-from datetime import datetime
+mapping:
+  '{
+    id: .id,
+    externalid: .externalid,
+    uuid: .uuid,
+    title: .title,
+    description: .description,
+    longDescription: .longDescription,
+    availableFrom: .availableFrom,
+    availableTo: .availableTo,
+    firstPublicationDate: .firstPublicationDate,
+    keywords: .keywords,
+    language: .language,
+    duration: .durationSeconds,
+    thematicCategories: .thematicCategories,
+    genreCategory: .genreCategory,
+    subgenreCategories: .subgenreCategories,
+    filterCategory: .filterCategory,
+    structurePath: .structurePath,
+    site: .site,
+    domain: .domain,
+    teaserimage: .teaserImage.url,
+    fskAgeRating: .fskAgeRating,
+    contentRatings: .contentRatings,
+    geoAvailability: .geoAvailability
+    }'
 
-
-class RecoExplorerItem(BaseModel, extra=Extra.allow):
-    externalid: str
+externalid: str
     id: Optional[str] = ''
     title: str
     description: str
@@ -41,7 +62,3 @@ class RecoExplorerItem(BaseModel, extra=Extra.allow):
     showTitel: Optional[str] = '' # showTitle?
     showType: Optional[str] = ''
     startDate: Optional[datetime] = None
-
-    @property
-    def extra_fields(self) -> set[str]: # accept extra fields from client which are not defined in class
-        return set(self.__dict__) - set(self.__fields__)
