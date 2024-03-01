@@ -1,6 +1,13 @@
 FROM python:3.10
 
 COPY requirements.txt requirements.txt
+RUN apt-get update && apt-get install -y \
+    bison \
+    flex \
+    libtool \
+    make \
+    automake \
+    autoconf
 RUN pip install wheel \
     pip install --no-cache-dir --upgrade -r requirements.txt
 
