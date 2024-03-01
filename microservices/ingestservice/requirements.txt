@@ -5,3 +5,4 @@ dataclasses
 pydantic
 envyaml
 opensearch-py
+pyjq
