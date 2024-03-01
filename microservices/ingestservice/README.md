@@ -4,10 +4,19 @@ TODO: Descripe purpose of service
 # Parameters and configuration options
 TODO:List startup parameters
 
+Set environment variables:
+- OPENSEARCH_HOST
+- OPENSEARCH_PORT
+- OPENSEARCH_USER
+- OPENSEARCH_PASS
+- OPENSEARCH_INDEX
+- MAPPING_DEFINITION_FILE
+- CONFIG_FILE
+
 # Local development 
 Start with application with
 ~~~
-FULL_PATH='<your path to config file>' uvicorn src.main:app --reload
+uvicorn src.main:app --reload
 ~~~
 # Docker container
 from ingestservice directory build as
