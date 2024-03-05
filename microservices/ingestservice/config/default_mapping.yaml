@@ -1,64 +1,24 @@
 mapping:
   '{
-    id: .id,
-    externalid: .externalid,
-    uuid: .uuid,
-    title: .title,
-    description: .description,
-    longDescription: .longDescription,
-    availableFrom: .availableFrom,
-    availableTo: .availableTo,
-    firstPublicationDate: .firstPublicationDate,
-    keywords: .keywords,
-    language: .language,
-    duration: .durationSeconds,
-    thematicCategories: .thematicCategories,
-    genreCategory: .genreCategory,
-    subgenreCategories: .subgenreCategories,
-    filterCategory: .filterCategory,
-    structurePath: .structurePath,
-    site: .site,
-    domain: .domain,
-    teaserimage: .teaserImage.url,
-    fskAgeRating: .fskAgeRating,
-    contentRatings: .contentRatings,
-    geoAvailability: .geoAvailability
+    "id": .id,
+    "externalid": .externalid,
+    "uuid": .uuid,
+    "title": .title,
+    "description": .description,
+    "longDescription": .longDescription,
+    "availableFrom": .availableFrom,
+    "availableTo": .availableTo,
+    "duration": .durationSeconds,
+    "embedText": .embedText,
+    "embedTextHash": .embedTextHash,
+    "thematicCategories": .thematicCategories,
+    "thematicCategoriesIds": .thematicCategoriesIds,
+    "thematicCategoriesTitle": .thematicCategoriesTitle,
+    "genreCategory": .genreCategory,
+    "genreCategoryId": .genreCategoryId,
+    "subgenreCategories": .subgenreCategories,
+    "subgenreCategoriesIds": .subgenreCategoriesIds,
+    "subgenreCategoriesTitle": .subgenreCategoriesTitle,
+    "teaserimage": .teaserImage.url,
+    "geoAvailability": .geoAvailability
     }'
-
-externalid: str
-    id: Optional[str] = ''
-    title: str
-    description: str
-    longDescription: str
-    availableFrom: datetime
-    availableTo: datetime
-    duration: Optional[int] = None
-    thematicCategories: list
-    thematicCategoriesIds: Optional[list] = []
-    thematicCategoriesTitle: Optional[list] = []
-    genreCategory: str
-    genreCategoryId: Optional[str] = ''
-    subgenreCategories: list
-    subgenreCategoriesIds: Optional[list] = []
-    subgenreCategoriesTitle: Optional[list] = []
-    teaserimage: str
-    geoAvailability: Optional[str] = ''
-    embedText: Optional[str] = ''
-    embedTextHash: Optional[str] = ''
-    episodeNumber: Optional[str] = ''
-    hasAudioDescription: Optional[bool] = None
-    hasDefaultVersion: Optional[bool] = None
-    hasSignLanguage: Optional[bool] = None
-    hasSubtitles: Optional[bool] = None
-    isChildContent: Optional[bool] = None
-    isOnlineOnly: Optional[bool] = None
-    isOriginalLanguage: Optional[bool] = None
-    producer: Optional[str] = ''
-    publisherId: Optional[str] = ''
-    seasonNumber: Optional[str] = ''
-    sections: Optional[str] = ''
-    showCrid: Optional[str] = ''
-    showId: Optional[str] = ''
-    showTitel: Optional[str] = '' # showTitle?
-    showType: Optional[str] = ''
-    startDate: Optional[datetime] = None

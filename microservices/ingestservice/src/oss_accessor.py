@@ -41,5 +41,9 @@ class OssAccessor:
 
         return response
 
-    def delete_oss_doc(self):
-        pass
+    def delete_oss_doc(self, id):
+        response = self.oss_client.delete(
+            index=self.target_idx_name,
+            id=id
+        )
+        return response
