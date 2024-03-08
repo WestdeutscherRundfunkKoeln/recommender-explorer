@@ -1,0 +1,14 @@
+opensearch:
+    host: $OPENSEARCH_HOST
+    port: $OPENSEARCH_PORT
+    user: $OPENSEARCH_USER
+    pass: $OPENSEARCH_PASS
+    index: $OPENSEARCH_INDEX
+mapping_definition_file: $MAPPING_DEFINITION_FILE
+models:
+    - "sentence-transformers/distiluse-base-multilingual-cased-v1"
+    - "sentence-transformers/all-MiniLM-L6-v2"
+searchservice:
+    host:
+    path:
+
