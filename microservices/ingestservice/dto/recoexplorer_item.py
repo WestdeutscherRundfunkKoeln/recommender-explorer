@@ -9,8 +9,8 @@ class RecoExplorerItem(BaseModel, extra=Extra.allow):
     title: str
     description: str
     longDescription: str
-    availableFrom: datetime
-    availableTo: datetime
+    availableFrom: str
+    availableTo: str
     duration: Optional[int] = None
     thematicCategories: list
     thematicCategoriesIds: Optional[list] = []

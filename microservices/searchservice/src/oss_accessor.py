@@ -28,12 +28,12 @@ class OssAccessor:
             timeout=600,
         )
 
-    def create_oss_doc(self, mapped_data):
+    def create_oss_doc(self, data):
         # add document to index
         response = self.oss_client.index(
             index=self.target_idx_name,
-            body=mapped_data,
-            id=f"{mapped_data['id']}",
+            body=data,
+            id=f"{data['id']}",
             refresh=True
         )
 
