@@ -30,7 +30,7 @@ def embedding(data: EmbedData):
     try:
         result = text_embedder.embed_text(id, text_to_embed)
     except ValidationError as exc:
-        error_message = repr(exc.errors()[0]['type'])
+        error_message = repr(exc.errors()[0]["type"])
         raise HTTPException(status_code=422, detail=error_message)  # TODO: return here
 
     return result
