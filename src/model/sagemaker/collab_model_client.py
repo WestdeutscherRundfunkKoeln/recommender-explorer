@@ -19,7 +19,7 @@ class CollabModelClient(U2CSeeker):
 
     def __init__( self, config ):
         self.__num_recos = 16
-        self.__endpoint = ''
+        self.__model_config = {}
  
         cross_account_options = self.__get_cross_account_options(
             config[constants.MODEL_CONFIG_U2C][constants.MODEL_TYPE_U2C]['ARD-ALS-Experiments']['role_arn']
@@ -49,9 +49,9 @@ class CollabModelClient(U2CSeeker):
         })
 
         try:
-            logger.info('Invoking endpoint call to [' + self.__endpoint + '] for user_id [' + user_item.id + ']')
+            logger.info('Invoking endpoint call to [' + self.__model_config['endpoint'] + '] for user_id [' + user_item.id + ']')
             response = self.__sm_run_client.invoke_endpoint(
-                EndpointName=self.__endpoint.removeprefix("sagemaker://"),
+                EndpointName=self.__model_config['endpoint'].removeprefix("sagemaker://"),
                 Body=json_body,
                 ContentType="application/json",
             )
@@ -66,11 +66,10 @@ class CollabModelClient(U2CSeeker):
             raise(e)
         except Exception as e:
             logging.error(e)
-            raise EndpointError("Couldn't get a response from endpoint [" + self.__endpoint + ']', {})
+            raise EndpointError("Couldn't get a response from endpoint [" + self.__model_config['endpoint'] + ']', {})
 
-    def set_endpoint(self, endpoint):
-        self.__endpoint = endpoint
-
+    def set_model_config(self, model_config):
+        self.__model_config = model_config
 
     def __get_cross_account_options(self, role_arn):
         sts_client = boto3client("sts")
@@ -84,11 +83,10 @@ class CollabModelClient(U2CSeeker):
             "region_name": "eu-central-1"
         }
 
-    
     def get_model_params(self):
         try:
             # Get the model name, model description from endpoint of this model
-            endpoint_details = self.__sm_client.describe_endpoint(EndpointName=self.__endpoint.removeprefix("sagemaker://"))
+            endpoint_details = self.__sm_client.describe_endpoint(EndpointName=self.__model_config['endpoint'].removeprefix("sagemaker://"))
             endpoint_description = self.__sm_client.describe_endpoint_config(EndpointConfigName=endpoint_details["EndpointConfigName"])
             model_name = endpoint_description['ProductionVariants'][0]['ModelName']
 

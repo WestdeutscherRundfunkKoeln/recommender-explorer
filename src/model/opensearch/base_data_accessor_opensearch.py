@@ -140,7 +140,6 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         oldest_item_in_base_ts = pd.Timestamp(min_date).timestamp()
         return newest_item_in_base_ts, oldest_item_in_base_ts
 
-
     def get_top_k_vals_for_column( self, column, k) -> list:
         
         #apply field mapping if defined

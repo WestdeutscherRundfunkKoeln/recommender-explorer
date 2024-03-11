@@ -14,21 +14,20 @@ class NnSeekerPaService(NnSeekerRest):
     def __init__( self, config ):
 
         self.__max_num_neighbours = 16
-        self.__base_uri = ''
         self.__configuration_c2c = "relatedItems"
         self.__configuration_u2c = "forYou"
         self.__explain = False
+        # TODO: this can probably be removed when primary key handling is depricated after ingest micro service deployment
         self.__config = config
+        self.__model_config = {}
         super().__init__()
 
     def get_k_NN(self, item: ItemDto, k, nn_filter) -> tuple[list, list, str]:
-
         primary_ident, oss_field = get_primary_idents(self.__config)
         content_id =  item.__getattribute__(oss_field)
-        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service']['properties']
-
+        model_props = self.__model_config['properties']
         headers = {
-            header_props['auth_header']: header_props['auth_header_value']
+            model_props['auth_header']: model_props['auth_header_value']
         }
 
         params = {
@@ -37,7 +36,7 @@ class NnSeekerPaService(NnSeekerRest):
             "assetId": content_id
         }
 
-        status, pa_recos = super().post_2_endpoint(self.__base_uri, headers, params)
+        status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
 
         recomm_content_ids = []
         nn_dists = []
@@ -55,12 +54,11 @@ class NnSeekerPaService(NnSeekerRest):
         return recomm_content_ids, nn_dists, oss_field
 
     def get_recos_user(self, user, n_recos):
-
-        header_props = self.__config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]['PA-Service']['properties']
+        model_props = self.__model_config['properties']
 
         user_id = user.id
         headers = {
-            header_props['auth_header']: header_props['auth_header_value']
+            model_props['auth_header']: model_props['auth_header_value']
         }
         params = {
             "configuration": self.__configuration_u2c,
@@ -68,7 +66,9 @@ class NnSeekerPaService(NnSeekerRest):
             "userId": user_id
         }
 
-        status, pa_recos = super().post_2_endpoint(self.__base_uri, headers, params)
+        params["modelType"] = model_props["param_model_type"] if model_props["param_model_type"] else ''
+
+        status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
 
         recomm_content_ids = []
         nn_dists = []
@@ -88,8 +88,8 @@ class NnSeekerPaService(NnSeekerRest):
     def get_max_num_neighbours(self, content_id):
         return self.__max_num_neighbours
 
-    def set_endpoint(self, endpoint):
-        self.__base_uri = endpoint
+    def set_model_config(self, model_config):
+        self.__model_config = model_config
 
     def get_model_params(self):
         model_params = {}

@@ -30,8 +30,8 @@ class NnSeekerOpenSearch(NnSeeker):
         
         self.embedding_field_name = 'embedding_01'
 
-    def set_endpoint( self, endpoint ):
-        self._set_model_name(endpoint.removeprefix("opensearch://"))
+    def set_model_config( self, model_config ):
+        self._set_model_name(model_config['endpoint'].removeprefix("opensearch://"))
 
     def _set_model_name( self, model_name ):
         self.embedding_field_name = model_name
