@@ -17,9 +17,10 @@ class NnSeekerPaService(NnSeekerRest):
         self.__configuration_c2c = "relatedItems"
         self.__configuration_u2c = "forYou"
         self.__explain = False
+        self.__model_config = {}
+
         # TODO: this can probably be removed when primary key handling is depricated after ingest micro service deployment
         self.__config = config
-        self.__model_config = {}
         super().__init__()
 
     def get_k_NN(self, item: ItemDto, k, nn_filter) -> tuple[list, list, str]:
@@ -66,7 +67,8 @@ class NnSeekerPaService(NnSeekerRest):
             "userId": user_id
         }
 
-        params["modelType"] = model_props["param_model_type"] if model_props["param_model_type"] else ''
+        if model_props["param_model_type"]:
+            params["modelType"] = model_props["param_model_type"]
 
         status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
 
