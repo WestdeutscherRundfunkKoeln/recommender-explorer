@@ -15,5 +15,5 @@ class NnSeeker(ABC):
         pass
 
     @abstractmethod
-    def set_endpoint( self, endpoint ):
+    def set_model_config(self, model_config ):
         pass

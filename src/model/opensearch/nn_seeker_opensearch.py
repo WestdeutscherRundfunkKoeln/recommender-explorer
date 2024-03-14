@@ -30,8 +30,8 @@ class NnSeekerOpenSearch(NnSeeker):
         
         self.embedding_field_name = 'embedding_01'
 
-    def set_endpoint( self, endpoint ):
-        self._set_model_name(endpoint.removeprefix("opensearch://"))
+    def set_model_config( self, model_config ):
+        self._set_model_name(model_config['endpoint'].removeprefix("opensearch://"))
 
     def _set_model_name( self, model_name ):
         self.embedding_field_name = model_name
@@ -48,7 +48,6 @@ class NnSeekerOpenSearch(NnSeeker):
     
     def set_max_num_neighbours(self, num_neighbours):
         self.__max_num_neighbours = num_neighbours
-    
     
     def __get_nn_by_embedding(self, embedding, k, filter_criteria):
         return self.__get_exact__nn_by_embedding(embedding, k, filter_criteria)
@@ -104,7 +103,6 @@ class NnSeekerOpenSearch(NnSeeker):
 
         return query
 
-    
     def __get_approx_nn_by_embedding(self, embedding, k, filter_criteria):
 
         query = {
@@ -138,7 +136,6 @@ class NnSeekerOpenSearch(NnSeeker):
 
         return ids,nn_dists
 
-        
     def __get_vec_for_content_id(self, content_id ):
         query = {
           "size": 1,
