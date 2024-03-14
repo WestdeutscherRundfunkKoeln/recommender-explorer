@@ -67,7 +67,7 @@ class NnSeekerPaService(NnSeekerRest):
             "userId": user_id
         }
 
-        if model_props["param_model_type"]:
+        if "param_model_type" in model_props:
             params["modelType"] = model_props["param_model_type"]
 
         status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
