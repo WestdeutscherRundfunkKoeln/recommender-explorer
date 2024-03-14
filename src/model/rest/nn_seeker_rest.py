@@ -21,7 +21,6 @@ class NnSeekerRest(NnSeeker):
             redirect=self.__retry_redirects,
             backoff_factor=self.__backoff_factor
         )
-
         http = PoolManager(retries=retries)
 
         logger.info('calling [' + base_uri + '] with params ' + json.dumps(post_params))
@@ -29,4 +28,5 @@ class NnSeekerRest(NnSeeker):
         response = http.request('POST', base_uri, fields=post_params, headers=headers)
         status_code = response.status
         data = json.loads(response.data.decode('utf-8'))
+
         return status_code, data

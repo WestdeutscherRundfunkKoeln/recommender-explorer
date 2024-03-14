@@ -7,9 +7,9 @@ class U2CSeeker(ABC):
         pass
 
     @abstractmethod
-    def set_endpoint( self, endpoint ):
+    def get_model_params(self):
         pass
 
     @abstractmethod
-    def get_model_params(self):
+    def set_model_config( self, model_config ):
         pass

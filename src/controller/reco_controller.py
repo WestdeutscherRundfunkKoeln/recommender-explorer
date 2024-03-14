@@ -80,7 +80,8 @@ class RecommendationController():
         return self.item_accessor.get_unique_vals_for_column(column=component_name, sort=True)
 
     def get_user_cluster(self):
-        self.user_cluster_accessor.set_endpoint(self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model']['endpoint'])
+        # TODO: improve the model config pass
+        self.user_cluster_accessor.set_model_config(self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model'])
         self.user_cluster = self.user_cluster_accessor.get_user_cluster()
         return list(self.user_cluster.keys())
 
@@ -145,7 +146,7 @@ class RecommendationController():
         module = importlib.import_module(handler_dir)
         class_ = getattr(module, handler_name)
         self.reco_accessor = class_(self.config)
-        self.reco_accessor.set_endpoint(model_info['endpoint'])
+        self.reco_accessor.set_model_config(model_info)
         return True
 
     def get_model_params(self):
@@ -265,7 +266,8 @@ class RecommendationController():
             raise Exception("Unknown user selection widget [" + active_components[0].params.label + ']')
 
     def _get_start_users_by_genre(self, user_dto: UserItemDto, genre_widget, start_idx, end_idx) -> tuple[int, list[UserItemDto]]:
-        self.user_cluster_accessor.set_endpoint(self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model']['endpoint'])
+        # TODO: improve the model config pass
+        self.user_cluster_accessor.set_model_config(self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model'])
         field_map = self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model']['field_mapping']
         response = self.user_cluster_accessor.get_users_by_category(genre_widget.value)
         num_users = len(response[genre_widget.value])
