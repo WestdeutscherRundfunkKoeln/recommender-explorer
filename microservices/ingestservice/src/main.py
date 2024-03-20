@@ -27,6 +27,9 @@ def request(data, url):
     response = httpx.post(url, json=data, timeout=None)
     return response.json()
 
+@app.get("/health-check")
+def health_check():
+    return {"status": "OK"}
 
 router = APIRouter()
 
