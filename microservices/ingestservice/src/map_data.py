@@ -11,8 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 class DataMapper:
 
     def __init__(self, config):
-        mapping_definition = config['mapping_definition']
-        self.mapping = mapping_definition['mapping']
+        self.mapping = config['mapping_definition']
 
     def map_data(self, data) -> RecoExplorerItem: # input = entity
         mapped_data = pyjq.one(self.mapping, data)
