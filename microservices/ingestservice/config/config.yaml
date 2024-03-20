@@ -4,4 +4,4 @@ opensearch:
     user: $OPENSEARCH_USER
     pass: $OPENSEARCH_PASS
     index: $OPENSEARCH_INDEX
-mapping_definition_file: $MAPPING_DEFINITION_FILE
+mapping_definition: $MAPPING_DEFINITION
