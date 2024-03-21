@@ -20,6 +20,9 @@ def request(data, url):
     response = httpx.post(url, json=data, timeout = None) # TODO: remove timeout when search service is implemented
     return response.json()
 
+@app.get("/health-check")
+def health_check():
+    return {"status": "OK"}
 
 @app.post("/ingest-single-item")
 def ingest_item(data: dict):
