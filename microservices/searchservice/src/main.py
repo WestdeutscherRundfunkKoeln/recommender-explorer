@@ -23,6 +23,9 @@ def health_check():
 
 @router.post("/create-single-document")
 def create_document(data: dict):
+    print("---------------")
+    print(data)
+    print("---------------")
     # add data to index
     response = oss_doc_generator.create_oss_doc(data)
     return response

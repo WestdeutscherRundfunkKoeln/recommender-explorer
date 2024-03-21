@@ -35,4 +35,3 @@ class EmbedText:
         httpx.post(
             url=f"{BASE_URL_SEARCH}/create-single-document", json=response
         ).json()
-
