@@ -32,4 +32,7 @@ class EmbedText:
             url=f"{BASE_URL_SEARCH}/create-single-document", json=response
         ).json()
 
+        # Send request to search service to add embedding to index
+        httpx.post(url=URL_SEARCH_SINGLE, json=response).json()
+
         return response
