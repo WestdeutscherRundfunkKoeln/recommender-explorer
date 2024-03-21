@@ -47,3 +47,38 @@ class OssAccessor:
             id=id
         )
         return response
+
+    def bulk_ingest(self, jsonlst):
+        # # Set total number of documents
+        # number_of_docs = len(jsonlst)
+        #
+        # progress = tqdm(unit="docs", total=number_of_docs,
+        #                 leave=True, desc="indexing")
+        # successes = 0
+        for ok, action in helpers.streaming_bulk(
+                client=self.oss_client,
+                index=self.target_idx_name,
+                actions=self.doc_generator(jsonlst),
+        ):
+            print(action)
+
+            # progress.update(1)
+            # successes += ok
+
+    def doc_generator(self, jsonlst): # TODO: review this
+        use_these_keys = []
+        for item in jsonlst:
+            use_these_keys.append([*jsonlst[item]])
+        use_these_keys = list(set([item for items in use_these_keys for item in items]))
+
+        for idx in jsonlst:
+            dictionary=jsonlst[idx]
+            yield {
+                "_index": self.target_idx_name,
+                "_type": "_doc",
+                "_id": f"{dictionary['id']}",
+                "_source": self.filterKeys(dictionary, use_these_keys),
+            }
+
+    def filterKeys(self, document, keys):
+        return {key: document[key] for key in keys}

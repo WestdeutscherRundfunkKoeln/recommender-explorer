@@ -1,29 +1,33 @@
 import logging
 import json
-from envyaml import EnvYAML
 from sentence_transformers import SentenceTransformer
-from pathvalidate import sanitize_filename
 from hashlib import sha256
+import os
+import httpx
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+URL_SEARCH_SINGLE = os.environ.get("URL_SEARCH_SINGLE")
 
 class EmbedText:
 
     def __init__(self, config):
         self.config = config
-        # self.model_name = config['models']['model1']
-        # self.model = SentenceTransformer(self.model_name)
 
     def embed_text(self, id, embed_text):
-        self.model_name = self.config['models'][0]
-        self.model = SentenceTransformer(self.model_name)
         hash = sha256(embed_text.encode('utf-8')).hexdigest()
-        embedding = self.model.encode(embed_text).tolist()
+        response = {'id': id, 'embedTextHash': hash}
 
-        response = {'id': id, 'embedded_text': embed_text, 'hash': hash, 'embedding': embedding}
+        for model in self.config['models']:
+            for model_name, model_path in model.items():
+                self.model = SentenceTransformer(model_path)
+                embedding = self.model.encode(embed_text).tolist()
+                response[model_name] = embedding
 
         logger.info('Response: ' + json.dumps(response, indent=4, default=str))
+
+        # Send request to search service to add embedding to index
+        httpx.post(url=URL_SEARCH_SINGLE, json=response).json()
 
         return response
