@@ -20,6 +20,7 @@ class DataPreprocessor:
         mapping_definition_file = config['mapping_definition_file']
         mapping_file = EnvYAML(mapping_definition_file)
         self.mapping = mapping_file['mapping']
+        # self.mapping = config['mapping_definition']
 
     def preprocess_data(self, data):
         # map data
@@ -42,6 +43,5 @@ class DataPreprocessor:
         # get embedding
         request_payload = {"id": mapped_data["id"],
                            "embedText": mapped_data["embedText"]}
-        httpx.post(URL_EMBEDDING, json=request_payload).json()
+        httpx.post(URL_EMBEDDING, json=request_payload, timeout=None).json()
         # mapped_data.update(embedding_response)
-        return mapped_data
