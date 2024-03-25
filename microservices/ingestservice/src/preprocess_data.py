@@ -17,10 +17,10 @@ URL_EMBEDDING = os.environ.get("URL_EMBEDDING")
 class DataPreprocessor:
 
     def __init__(self, config):
-        mapping_definition_file = config['mapping_definition_file']
-        mapping_file = EnvYAML(mapping_definition_file)
-        self.mapping = mapping_file['mapping']
-        # self.mapping = config['mapping_definition']
+        # mapping_definition_file = config['mapping_definition_file']
+        # mapping_file = EnvYAML(mapping_definition_file)
+        # self.mapping = mapping_file['mapping']
+        self.mapping = config['mapping_definition']
 
     def preprocess_data(self, data):
         # map data
