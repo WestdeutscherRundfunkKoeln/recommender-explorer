@@ -30,7 +30,7 @@ class DataPreprocessor:
             error_message = repr(exc.errors()[0]['type'])
             raise HTTPException(status_code=422, detail=error_message)
         preprocessed_data = json.loads(mapped_data)
-        self.add_embeddings(preprocessed_data)
+        # self.add_embeddings(preprocessed_data)
         return preprocessed_data
 
     def map_data(self, data) -> RecoExplorerItem: # input = entity
@@ -44,4 +44,3 @@ class DataPreprocessor:
         request_payload = {"id": mapped_data["id"],
                            "embedText": mapped_data["embedText"]}
         httpx.post(URL_EMBEDDING, json=request_payload, timeout=None).json()
-        # mapped_data.update(embedding_response)
