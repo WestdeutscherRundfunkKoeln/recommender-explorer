@@ -79,6 +79,16 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         return self.__get_items_from_response(item, response)
 
     def get_item_by_crid( self, item: ItemDto, crid, filter = {} ):
+        """ Builds query to get items based on a crid
+
+        Maps crid parameter to mapped value if given in configuration file.
+        Creates and executes the query for opensearch service.
+
+        :param item: Item Dto from given component
+        :param crid: Value of crid from component
+        :param filter:
+        :return: Response from opensearch service for crid query
+        """
         crid = crid.strip()
         column = 'crid'
         #apply field mapping if defined
@@ -177,6 +187,16 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         return uniq_vals
     
     def __get_items_from_response( self, item: ItemDto, response, provenance=constants.ITEM_PROVENANCE_C2C ) -> tuple[list, int]:
+        """ Gets the resulting items from the opensearch services response
+
+        Gets total items count from search response (hits.total.hits) and iterates
+        over result items (hits.hits._source)
+
+        :param item: Item dto from the given component
+        :param response: Response from opensearch service for created query
+        :param provenance:
+        :return: List of item dtos, total items count
+        """
         total_items = response['hits']['total']['value']
         items = [x['_source'] for x in response['hits']['hits']]
         if total_items < 1 or not len(items):
