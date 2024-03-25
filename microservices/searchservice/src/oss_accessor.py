@@ -30,9 +30,9 @@ class OssAccessor:
 
     def create_oss_doc(self, data):
         # add document to index
-        response = self.oss_client.index(
+        response = self.oss_client.update(
             index=self.target_idx_name,
-            body=data,
+            body={"doc": data, "doc_as_upsert": True},
             id=f"{data['id']}",
             refresh=True
         )
@@ -49,36 +49,21 @@ class OssAccessor:
         return response
 
     def bulk_ingest(self, jsonlst):
-        # # Set total number of documents
-        # number_of_docs = len(jsonlst)
-        #
-        # progress = tqdm(unit="docs", total=number_of_docs,
-        #                 leave=True, desc="indexing")
-        # successes = 0
-        for ok, action in helpers.streaming_bulk(
-                client=self.oss_client,
-                index=self.target_idx_name,
-                actions=self.doc_generator(jsonlst),
-        ):
-            print(action)
-
-            # progress.update(1)
-            # successes += ok
+        for success, info in helpers.parallel_bulk(
+                    client=self.oss_client,
+                    index=self.target_idx_name,
+                    actions=self.doc_generator(jsonlst)
+                ):
+            if not success:
+                print('A document failed:', info)
 
     def doc_generator(self, jsonlst): # TODO: review this
-        use_these_keys = []
-        for item in jsonlst:
-            use_these_keys.append([*jsonlst[item]])
-        use_these_keys = list(set([item for items in use_these_keys for item in items]))
-
         for idx in jsonlst:
-            dictionary=jsonlst[idx]
-            yield {
-                "_index": self.target_idx_name,
-                "_type": "_doc",
-                "_id": f"{dictionary['id']}",
-                "_source": self.filterKeys(dictionary, use_these_keys),
-            }
+            item=jsonlst[idx]
 
-    def filterKeys(self, document, keys):
-        return {key: document[key] for key in keys}
+            yield {
+                "_op_type": "update",
+                "_index": self.target_idx_name,
+                "_id": f"{item['id']}",
+                "_source": {"doc": item, "doc_as_upsert": True}
+            }

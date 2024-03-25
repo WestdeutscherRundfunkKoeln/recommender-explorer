@@ -4,5 +4,11 @@ opensearch:
     user: $OPENSEARCH_USER
     pass: $OPENSEARCH_PASS
     index: $OPENSEARCH_INDEX
+#mapping_definition: $MAPPING_DEFINITION
 mapping_definition_file: $MAPPING_DEFINITION_FILE
+models:
+    - distiluse-base-multilingual-cased-v1: "sentence-transformers/distiluse-base-multilingual-cased-v1"
+    - all-MiniLM-L6-v2: "sentence-transformers/all-MiniLM-L6-v2"
+#    - german-roberta-sentence-transformer-v2: "T-Systems-onsite/german-roberta-sentence-transformer-v2"
+
 
