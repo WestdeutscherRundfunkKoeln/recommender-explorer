@@ -217,7 +217,7 @@ class RecommendationController():
                 continue
         return [model_info['display_name']], all_items, self.model_config
 
-    def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
+    def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]: ######################
         active_components = self._get_active_start_components()
         self._validate_input_data(active_components)
         accessor_method = self._get_data_accessor_method(active_components)
@@ -386,6 +386,10 @@ class RecommendationController():
             raise ValueError('URL must be a string')
         elif not url_field.value.startswith('https://'):
             raise ValueError('URL must be of format https://')
+
+    def _check_text(self, text_field):
+        if not isinstance(text_field.value, str):
+            raise ValueError('Text must be a string')
 
     def _check_category(self, genre_field):
         if genre_field.value not in self.get_item_defaults('genreCategory'):

@@ -27,7 +27,8 @@ class EmbedText:
 
         logger.info('Response: ' + json.dumps(response, indent=4, default=str))
 
-        # Send request to search service to add embedding to index
-        httpx.post(url=URL_SEARCH_SINGLE, json=response).json()
-
         return response
+
+    def add_embedding_to_document(self, embedding):
+        # Send request to search service to add embedding to index
+        httpx.post(url=URL_SEARCH_SINGLE, json=embedding).json()

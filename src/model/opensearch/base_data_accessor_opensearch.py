@@ -103,6 +103,14 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         response = self.client.search(body=query, index=self.target_idx_name)
         return self.__get_items_from_response(item, response)
 
+    def get_item_by_text(self,item: ItemDto, text, filter = {} ):
+        item_dtos = []
+        new_item = copy.copy(item)
+        text_input = {"longDescription": text}
+        new_item = update_from_props(new_item, text_input, self.field_mapping)
+        item_dtos.append(new_item)
+        return item_dtos, 1
+
     def get_items_by_date( self, item: ItemDto, start_date, end_date, item_filter = {}, offset = 10, size = -1) -> tuple[pd.DataFrame, int]:
         # handle valid size range
 
