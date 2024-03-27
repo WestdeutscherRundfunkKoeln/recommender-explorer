@@ -296,7 +296,7 @@ class RecoExplorerApp:
         # startvideo selector
         self.startvid = pn.widgets.RadioBoxGroup(
             name='Startvideo',
-            options=['Datum', self.config['opensearch']['primary_field'].capitalize(), 'URL'],
+            options=['Datum', self.config['opensearch']['primary_field'].capitalize(), 'URL', 'Text'],
             value='Datum'
         )
 
@@ -373,8 +373,27 @@ class RecoExplorerApp:
         self.url_input.param.watch(self.trigger_item_selection, 'value', onlychanged=True)
         self.controller.register('item_choice', self.url_input)
 
+        # text input
+        self.text_input = pn.widgets.TextAreaInput(
+            name='Text',
+            placeholder='Text here',
+            visible=False
+        )
+
+        self.text_input.params = {
+            'validator': '_check_text',
+            'accessor': 'get_item_by_text', #
+            'label': 'text_input', #
+            'has_paging': False,
+            'reset_to': ''
+        }
+
+        self.text_input.param.watch(self.toggle_start_components, 'visible')
+        self.text_input.param.watch(self.trigger_item_selection, 'value', onlychanged=True)
+        self.controller.register('item_choice', self.text_input)
+
         # all input sources as columns
-        self.input_sources = pn.Column(self.startvid, self.crid_input, self.url_input, self.startdate, self.enddate)
+        self.input_sources = pn.Column(self.startvid, self.crid_input, self.url_input, self.text_input, self.startdate, self.enddate)
 
     #
     def define_reco_filtering_selection(self):
@@ -897,17 +916,21 @@ class RecoExplorerApp:
         logger.info(event)
         # disable a component depending on the value of another component
         if event.obj.name == 'Startvideo' and event.new == 'Datum':
-            self.startdate.visible = self.enddate.visible = self.genres.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = True
+            self.startdate.visible = self.enddate.visible = self.genreRadio.visible = self.erzaehlweise.visible = self.subgenreRadio.visible = self.inhalt.visible = self.themes.visible = self.shows.visible = self.text_input.visible = True
             self.crid_input.visible = self.url_input.visible = False
             self.crid_input.value = self.url_input.value = ''
         elif event.obj.name == 'Startvideo' and event.new == self.config['opensearch']['primary_field'].capitalize():
-            self.startdate.visible = self.enddate.visible = self.url_input.visible = self.genres.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = False
+            self.startdate.visible = self.enddate.visible = self.url_input.visible = self.genreRadio.visible = self.erzaehlweise.visible = self.genres.visible = self.subgenreRadio.visible = self.inhalt.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = self.text_input.visible = False
             self.crid_input.visible = True
             self.url_input.value = ''
         elif event.obj.name == 'Startvideo' and event.new == 'URL':
-            self.startdate.visible = self.enddate.visible = self.crid_input.visible = self.genres.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = False
+            self.startdate.visible = self.enddate.visible = self.crid_input.visible = self.genreRadio.visible = self.erzaehlweise.visible = self.genres.visible = self.subgenreRadio.visible = self.inhalt.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = self.text_input.visible = False
             self.crid_input.value = ''
             self.url_input.visible = True
+        elif event.obj.name == 'Startvideo' and event.new == 'Text':
+            self.startdate.visible = self.enddate.visible = self.crid_input.visible = self.genreRadio.visible = self.erzaehlweise.visible = self.genres.visible = self.subgenreRadio.visible = self.inhalt.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = self.url_input.visible = False
+            self.crid_input.value = ''
+            self.text_input.visible = True
         # shorten this, either combine last two elifs or with dict of widget groups
 
     #
