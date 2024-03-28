@@ -1,4 +1,5 @@
 import logging
+import httpx
 
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
@@ -30,6 +31,8 @@ class NnSeekerOpenSearch(NnSeeker):
         
         self.embedding_field_name = 'embedding_01'
 
+        self.url_embedding = "http://localhost:8001/get-embedding" # TODO: env variable? config?
+
     def set_endpoint( self, endpoint ):
         self._set_model_name(endpoint.removeprefix("opensearch://"))
 
@@ -39,24 +42,15 @@ class NnSeekerOpenSearch(NnSeeker):
     def get_k_NN( self, item: ItemDto, k, filter_criteria ) -> tuple[list, list]:
         logger.info(f'Seeking {k} neighours.')
         content_id = item.id
-        # try:
-        embedding = self.__get_vec_for_content_id(content_id)
 
-
-        # except:
-        # import os
-        # import httpx
-        # # URL_EMBEDDING = os.environ.get("URL_EMBEDDING")
-        # URL_EMBEDDING = "http://localhost:8001/get-embedding"
-        # text_to_embed = item.longDescription
-        # request_payload = {"id": "no_id",
-        #                    "embedText": text_to_embed}
-        # response = httpx.post(URL_EMBEDDING, json=request_payload, timeout=None).json()
-        # embedding = response["all-MiniLM-L6-v2"]
-        # print('-------------------embedding-----------------------')
-        # print(embedding)
-        # print('---------------------------')
-
+        try:
+            embedding = self.__get_vec_for_content_id(content_id)
+        except:
+            text_to_embed = item.description
+            request_payload = {"id": "no_id",
+                               "embedText": text_to_embed}
+            response = httpx.post(self.url_embedding, json=request_payload, timeout=None).json()
+            embedding = response["all-MiniLM-L6-v2"] # Todo: embedding = response[self.embedding_field_name]
 
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(embedding, k, filter_criteria)
         return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP

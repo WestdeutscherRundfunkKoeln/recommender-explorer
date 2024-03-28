@@ -894,8 +894,8 @@ class RecoExplorerApp:
         logger.info(event)
         # disable a component depending on the value of another component
         if event.obj.name == 'Startvideo' and event.new == 'Datum':
-            self.startdate.visible = self.enddate.visible = self.genreRadio.visible = self.erzaehlweise.visible = self.subgenreRadio.visible = self.inhalt.visible = self.themes.visible = self.shows.visible = self.text_input.visible = True
-            self.crid_input.visible = self.url_input.visible = False
+            self.startdate.visible = self.enddate.visible = self.genreRadio.visible = self.erzaehlweise.visible = self.subgenreRadio.visible = self.inhalt.visible = self.themes.visible = self.shows.visible = True
+            self.crid_input.visible = self.url_input.visible = self.text_input.visible = False
             self.crid_input.value = self.url_input.value = ''
         elif event.obj.name == 'Startvideo' and event.new == self.config['opensearch']['primary_field'].capitalize():
             self.startdate.visible = self.enddate.visible = self.url_input.visible = self.genreRadio.visible = self.erzaehlweise.visible = self.genres.visible = self.subgenreRadio.visible = self.inhalt.visible = self.subgenres.visible = self.themes.visible = self.shows.visible = self.text_input.visible = False

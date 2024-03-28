@@ -106,7 +106,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
     def get_item_by_text(self,item: ItemDto, text, filter = {} ):
         item_dtos = []
         new_item = copy.copy(item)
-        text_input = {"longDescription": text}
+        text_input = {"description": text}
         new_item = update_from_props(new_item, text_input, self.field_mapping)
         item_dtos.append(new_item)
         return item_dtos, 1
