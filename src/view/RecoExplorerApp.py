@@ -1545,4 +1545,3 @@ class RecoExplorerApp:
             main=[self.floating_elements, self.item_grid, self.pagination],
             header_background=header_background,
         )
-
