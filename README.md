@@ -73,7 +73,7 @@ There are three important things to know:
 - Make sure the change would be welcome (e.g. a bugfix or a useful feature); best do so by proposing it in a GitHub issue on our repository. Also check for similar issues that might already be present. 
 - Create a branch forking the Recommender Explorer repository and do your change
 - Commit and push your changes on that branch
-- In the commit message Describe the problem you fix with this change.
+- In the commit message, describe the problem you fix with this change.
 - Describe the effect that this change has from a user's point of view.
 - Describe the technical details of what you changed. It is important to describe the change in a most understandable way so the reviewer is able to verify that the code is behaving as you intend it to.
 - If your change fixes an issue reported at GitHub, add the following line to the commit message:
