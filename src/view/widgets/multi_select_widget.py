@@ -1,6 +1,6 @@
 import panel as pn
 
-from .. import ui_constants as constants
+from .. import ui_constants as c
 
 
 class MultiSelectionWidget:
@@ -22,59 +22,77 @@ class MultiSelectionWidget:
         """
         option_list = []
         default_option = []
-        for option in multi_select_option_config.get(constants.MULTI_SELECT_OPTIONS_KEY, ''):
-            option_label = option.get(constants.MULTI_SELECT_OPTION_LABEL_KEY)
+        for option in multi_select_option_config.get(c.MULTI_SELECT_OPTIONS_KEY, ''):
+            option_label = option.get(c.MULTI_SELECT_OPTION_LABEL_KEY)
             if option_label is not None:
-                if option.get('item_filter') is not None:
-                    option_dictionary = {option_label: option.get('upper_item_filter')}
-                    option_list.append(option_dictionary)
-                else:
                     option_list.append(option_label)
-            option_get_item_defaults = option.get('get_item_defaults')
+            option_get_item_defaults = option.get(c.MULTI_SELECT_ITEM_DEFAULTS_KEY)
             if option_get_item_defaults is not None:
                 item_defaults = self.controller_instance.get_item_defaults(option_get_item_defaults)
                 for item in item_defaults:
                     option_list.append(item)
-            if option.get(constants.MULTI_SELECT_DEFAULT_OPTION_KEY, False):
+            if option.get(c.MULTI_SELECT_DEFAULT_OPTION_KEY, False):
                 default_option.append(option_label)
         return option_list, default_option
 
-    def create_multi_select_component(self, multi_select_config):
-        """
-        Builds a multi select widget based on the given config from config yaml. This config can contain a label
-        as headline and a list of options.
+    def create_multi_select_options_from_dictionary(self, multi_select_option_config):
+        option_dictionary = {}
+        default_option = []
+        for option in multi_select_option_config.get(c.MULTI_SELECT_OPTIONS_KEY, ''):
+            if option.get(c.MULTI_SELECT_OPTION_LABEL_KEY) and option.get(c.MULTI_SELECT_UPPER_ITEM_FILTER_KEY):
+                option_dictionary[option.get(c.MULTI_SELECT_OPTION_LABEL_KEY)] = option.get(c.MULTI_SELECT_UPPER_ITEM_FILTER_KEY)
+        return option_dictionary, default_option
 
-        Args:
-            multi_select_config (config): config of a text field from config yaml. Can contain: label and a list of options
-
-        Returns:
-            text_input (widget): final widget built from given config
-            :param multi_select_config:
-        """
-        option_list, default_option = self.create_multi_select_options(multi_select_config)
-
-        if len(option_list) < 5:
-            multi_select_size = len(option_list)
+    def build_multi_select_widget(self, options, default_option, label):
+        if len(options) < 5:
+            multi_select_size = len(options)
         else:
             multi_select_size = 5
 
         multi_select_widget = pn.widgets.MultiSelect(
-            options=option_list,
+            options=options,
             value=default_option,
             size=multi_select_size
         )
         multi_select_widget.params = {
-            'label': multi_select_config.get(constants.MULTI_SELECT_LABEL_KEY, constants.FALLBACK_MULTI_SELECT_LABEL_VALUE),
+            'label': label,
             'reset_to': default_option
         }
-        if multi_select_config.get('register_as'):
-            if multi_select_config.get('register_as') == 'model_choice':
-                model_watcher = multi_select_widget.param.watch(self.reco_explorer_app_instance.trigger_model_choice_new, 'value', onlychanged=True)
-                self.controller_instance.register('model_choice', multi_select_widget, model_watcher, self.reco_explorer_app_instance.trigger_model_choice_new)
-            elif multi_select_config.get('register_as') == 'item_filter':
-                multi_select_widget.param.watch(self.reco_explorer_app_instance.trigger_item_filter_choice, 'value', onlychanged=True)
-                self.controller_instance.register('item_filter', multi_select_widget)
-            elif multi_select_config.get('register_as') == 'upper_item_filter':
-                # self.erzaehlweise.param.watch(self.toggle_genre_selection_by_upper_genre, 'value', onlychanged=True)
-                self.controller_instance.register('upper_item_filter', self.reco_explorer_app_instance.erzaehlweise)
         return multi_select_widget
+
+    def create_item_filter_multi_select(self, multi_select_config, multi_select_label):
+        if multi_select_config.get(c.MULTI_SELECT_OPTIONS_DEFAULT_KEY):
+            option_list = self.controller_instance.get_item_defaults(multi_select_config.get(c.MULTI_SELECT_OPTIONS_DEFAULT_KEY))
+            item_filter_widget = self.build_multi_select_widget(option_list, [], multi_select_label)
+            item_filter_widget.param.watch(self.reco_explorer_app_instance.toggle_genre_selection_by_upper_genre, 'value', onlychanged=True)
+            self.controller_instance.register('item_filter', item_filter_widget)
+            return item_filter_widget
+        else:
+            return None
+
+    def create_upper_item_filter_multi_select(self, multi_select_config, multi_select_label):
+        option_dictionary, default_option = self.create_multi_select_options_from_dictionary(multi_select_config)
+        upper_item_filter_widget = self.build_multi_select_widget(option_dictionary, default_option, multi_select_label)
+        upper_item_filter_widget.param.watch(self.reco_explorer_app_instance.toggle_genre_selection_by_upper_genre, 'value', onlychanged=True)
+        self.controller_instance.register('upper_item_filter', upper_item_filter_widget)
+        return upper_item_filter_widget
+
+    def create_model_choice_multi_select(self, multi_select_config, multi_select_label):
+        option_list, default_option = self.create_multi_select_options(multi_select_config)
+        model_choice_widget = self.build_multi_select_widget(option_list, default_option, multi_select_label)
+        model_watcher = model_choice_widget.param.watch(self.reco_explorer_app_instance.trigger_model_choice_new, 'value', onlychanged=True)
+        self.controller_instance.register('model_choice', model_choice_widget, model_watcher, self.reco_explorer_app_instance.trigger_model_choice_new)
+        return model_choice_widget
+
+    def create_multi_select_component(self, multi_select_config):
+        multi_select_label = multi_select_config.get(c.MULTI_SELECT_LABEL_KEY, c.FALLBACK_MULTI_SELECT_LABEL_VALUE)
+        multi_select_register_value = multi_select_config.get(c.MULTI_SELECT_REGISTER_AS_KEY)
+        if multi_select_register_value == 'item_filter':
+            return self.create_item_filter_multi_select(multi_select_config, multi_select_label)
+        elif multi_select_register_value == 'upper_item_filter':
+            return self.create_upper_item_filter_multi_select(multi_select_config, multi_select_label)
+        elif multi_select_register_value == 'model_choice':
+            return self.create_model_choice_multi_select(multi_select_config, multi_select_label)
+        else:
+            option_list, default_option = self.create_multi_select_options(multi_select_config)
+            return self.build_multi_select_widget(option_list, default_option, multi_select_label)

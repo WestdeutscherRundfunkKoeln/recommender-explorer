@@ -1,5 +1,5 @@
 import panel as pn
-from .. import ui_constants
+from .. import ui_constants as c
 
 
 class TextFieldWidget:
@@ -19,11 +19,11 @@ class TextFieldWidget:
         Returns:
             text_input_widget (widget): final widget built from given config
         """
-        text_field_label = text_field_config.get(ui_constants.TEXT_INPUT_LABEL_KEY, '')
-        text_field_placeholder = text_field_config.get(ui_constants.TEXT_INPUT_PLACEHOLDER_KEY, '')
-        text_field_accessor = text_field_config.get(ui_constants.TEXT_INPUT_ACCESSOR_KEY)
-        text_field_validator = text_field_config.get(ui_constants.TEXT_INPUT_VALIDATOR_KEY)
-        url_parameter = text_field_config.get(ui_constants.TEXT_INPUT_URL_PARAMETER_KEY)
+        text_field_label = text_field_config.get(c.TEXT_INPUT_LABEL_KEY, '')
+        text_field_placeholder = text_field_config.get(c.TEXT_INPUT_PLACEHOLDER_KEY, '')
+        text_field_accessor = text_field_config.get(c.TEXT_INPUT_ACCESSOR_KEY)
+        text_field_validator = text_field_config.get(c.TEXT_INPUT_VALIDATOR_KEY)
+        url_parameter = text_field_config.get(c.TEXT_INPUT_URL_PARAMETER_KEY)
 
         text_input_widget = pn.widgets.TextInput(
             placeholder=text_field_placeholder,
@@ -38,7 +38,7 @@ class TextFieldWidget:
                 'validator': text_field_validator,
                 'accessor': text_field_accessor,
                 'label': text_field_label,
-                'has_paging': text_field_config.get(ui_constants.TEXT_INPUT_HAS_PAGING_KEY, False),
+                'has_paging': text_field_config.get(c.TEXT_INPUT_HAS_PAGING_KEY, False),
                 'reset_to': ''
             }
             text_input_widget.param.watch(self.reco_explorer_app_instance.trigger_item_selection, 'value', onlychanged=True)

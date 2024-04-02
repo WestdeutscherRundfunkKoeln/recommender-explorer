@@ -1,6 +1,6 @@
 import panel as pn
 
-from .. import ui_constants
+from .. import ui_constants as c
 
 
 class AccordionWidget:
@@ -20,13 +20,13 @@ class AccordionWidget:
             accordion_widget (widget): final widget built from given config
         """
         accordion_widget = pn.Accordion()
-        accordion_content = self.create_accordion_content(accordion_config.get(ui_constants.ACCORDION_CONTENT_KEY, ''))
+        accordion_content = self.create_accordion_content(accordion_config.get(c.ACCORDION_CONTENT_KEY, ''))
         if accordion_content:
-            for component in self.create_accordion_content(accordion_config.get(ui_constants.ACCORDION_CONTENT_KEY, '')):
-                accordion_widget.append((accordion_config.get(ui_constants.ACCORDION_LABEL_KEY, ui_constants.FALLBACK_ACCORDION_LABEL_VALUE), component))
+            for component in self.create_accordion_content(accordion_config.get(c.ACCORDION_CONTENT_KEY, '')):
+                accordion_widget.append((accordion_config.get(c.ACCORDION_LABEL_KEY, c.FALLBACK_ACCORDION_LABEL_VALUE), component))
 
-        accordion_widget.active = [accordion_config.get(ui_constants.ACCORDION_ACTIVE_KEY, [])]
-        accordion_widget.toggle = accordion_config.get(ui_constants.ACCORDION_TOGGLE_KEY, False)
+        accordion_widget.active = [accordion_config.get(c.ACCORDION_ACTIVE_KEY, [])]
+        accordion_widget.toggle = accordion_config.get(c.ACCORDION_TOGGLE_KEY, False)
 
         return accordion_widget
 
@@ -44,14 +44,14 @@ class AccordionWidget:
         if accordion_contents_config:
             for accordion_content_config in accordion_contents_config:
                 accordion_content.append(
-                    self.reco_explorer_app_instance.build_common_ui_widget_dispatcher(accordion_content_config.get(ui_constants.WIDGET_TYPE_KEY, ''),
+                    self.reco_explorer_app_instance.build_common_ui_widget_dispatcher(accordion_content_config.get(c.WIDGET_TYPE_KEY, ''),
                                                                                       accordion_content_config)
                 )
         return accordion_content
 
     def create_accordion_reset_buttons(self, accordion_config):
         accordion_reset_buttons = []
-        accordion_contents_config = accordion_config.get(ui_constants.ACCORDION_CONTENT_KEY)
+        accordion_contents_config = accordion_config.get(c.ACCORDION_CONTENT_KEY)
         accordion_reset_buttons_config = accordion_config.get('accordion-reset-button')
         for accordion_reset_button_config in accordion_reset_buttons_config:
             reset_button_widget = pn.widgets.Button(
@@ -64,7 +64,7 @@ class AccordionWidget:
             if accordion_contents_config:
                 for accordion_content_config in accordion_contents_config:
                     accordion_content_type = accordion_content_config.get('type')
-                    if accordion_content_type == ui_constants.MULTI_SELECT_TYPE_VALUE:
+                    if accordion_content_type == c.MULTI_SELECT_TYPE_VALUE:
                         contents_choice_types.append(accordion_content_config.get('choice-type'))
 
             reset_button_widget.params = {
