@@ -64,7 +64,7 @@ Recommender Explorer as a whole is distributed under the MIT license. You are we
 
 There are three important things to know:
 
-1. You must be aware and agree to the Contributors License Agreement (CLA) before you can contribute (see docs/ section of this repository). For company contributors special rules apply. The CLA is largely derived from Apache Foundation License Agreement.
+1. You must be aware and agree to a Contributors License Agreement (CLA) before you can contribute. However, if your contribution constitutes as a small code contribution, you do not need a CLA. Our CLAs are largely derived from the ones used by Apache Software Foundation (https://www.apache.org/licenses/contributor-agreements.html)
 2. There are several requirements regarding code style, quality, and product standards which need to be met (we also have to follow them). 
 3. Not all proposed contributions can be accepted. Some features may e.g. just fit a third-party add-on better. The code must fit the overall direction of Recommender Explorer and really improve it. The more effort you invest, the better you should clarify in advance whether the contribution fits: the best way would be to just open an issue to discuss the feature you plan to implement (make it clear you intend to contribute).
 
