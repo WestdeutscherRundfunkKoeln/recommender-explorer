@@ -1,14 +1,15 @@
+api_prefix: $API_PREFIX
+base_url_search: $BASE_URL_SEARCH
+base_url_ingest: $BASE_URL_INGEST
+base_url_embedding: $BASE_URL_EMBEDDING
 opensearch:
     host: $OPENSEARCH_HOST
     port: $OPENSEARCH_PORT
     user: $OPENSEARCH_USER
     pass: $OPENSEARCH_PASS
     index: $OPENSEARCH_INDEX
-#mapping_definition: $MAPPING_DEFINITION
-mapping_definition_file: $MAPPING_DEFINITION_FILE
+mapping_definition: $MAPPING_DEFINITION
 models:
     - distiluse-base-multilingual-cased-v1: "sentence-transformers/distiluse-base-multilingual-cased-v1"
     - all-MiniLM-L6-v2: "sentence-transformers/all-MiniLM-L6-v2"
 #    - german-roberta-sentence-transformer-v2: "T-Systems-onsite/german-roberta-sentence-transformer-v2"
-
-
