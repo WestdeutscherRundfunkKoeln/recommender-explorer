@@ -16,7 +16,6 @@ ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 
 config = EnvYAML(CONFIG_PATH)
 data_preprocessor = DataPreprocessor(config)
-oss_doc_generator = OssAccessor(config)
 
 
 def request(data, url):
@@ -37,10 +36,9 @@ def health_check():
 def ingest_item(data: dict):
     mapped_data = data_preprocessor.preprocess_data(data)
     # add data to index
-    # search_response = request(mapped_data,f"{BASE_URL_SEARCH}/create-single-document")
-    response = oss_doc_generator.create_oss_doc(mapped_data)
+    search_response = request(mapped_data,f"{BASE_URL_SEARCH}/create-single-document")
 
-    return response
+    return search_response
 
 
 @router.post("/ingest-multiple-items")
@@ -51,16 +49,15 @@ def bulk_ingest(bucket):
             data = json.load(f)
             mapped_data = data_preprocessor.preprocess_data(data)
             item_dict[mapped_data['id']] = mapped_data
-    # search_response = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
-    response = oss_doc_generator.bulk_ingest(item_dict)
+    search_response = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
 
-    return response
+    return search_response
 
 
 @router.delete("/delete-data/{id}")
 def delete_document(document_id):
-    response = oss_doc_generator.delete_oss_doc(document_id)
-    return response
+    # TODO @Jessica
+    return {"delete": "NOK"}
 
 
 app = FastAPI(title="Ingest Service")
