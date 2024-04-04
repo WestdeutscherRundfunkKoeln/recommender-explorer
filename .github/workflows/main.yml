@@ -1,0 +1,109 @@
+name: CI Workflow
+
+on:
+  push:
+    branches: 
+      - '*'
+  pull_request:
+    branches:
+      - 'main'
+      - 'dev'
+
+jobs:
+  unit_tests:
+    name: unit_tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+  
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+    
+      - name: Run all unit tests
+        run: |
+            pytest test/unit --doctest-modules --junitxml=junit/test-results.xml
+
+  # Build Images (not pubslish) on pull to dev & main
+  docker_build:
+    needs: unit_tests
+    name: docker_build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && (github.head_ref == 'dev' || github.head_ref == 'main')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker Images 
+        run: |
+          docker build --file ./microservices/ingestservice/docker/Dockerfile ./microservices/ingestservice
+          echo "ingest service image build OK"
+          docker build --file ./microservices/searchservice/docker/Dockerfile ./microservices/searchservice
+          echo "search service image build OK"
+          docker build --file ./microservices/embeddingservice/docker/Dockerfile ./microservices/embeddingservice
+          echo "embedding service image build OK"
+
+  
+  docker_build_publish_dev:
+    needs: unit_tests
+    name: docker_build_publish_dev
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.head_ref == 'dev'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PAT }}
+      
+      - name: Extract short SHA
+        run: |
+          shortSha=$(git rev-parse --short ${{ github.sha }})
+          echo "COMMIT_SHORT_SHA=$shortSha" >> $GITHUB_ENV
+    
+      - name: Downcase Repository
+        run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Build and push Docker Image - Ingest Service
+        uses: docker/build-push-action@v2
+        with:
+          context: ./microservices/ingestservice
+          file: ./microservices/ingestservice/docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}:dev-ingest-${{ env.COMMIT_SHORT_SHA }}
+            ghcr.io/${{ env.REPO_LOWER }}:dev-ingest-latest
+    
+      - name: Build and push Docker Image - Search Service
+        uses: docker/build-push-action@v2
+        with:
+          context: ./microservices/searchservice
+          file: ./microservices/searchservice/docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}:dev-search-${{ env.COMMIT_SHORT_SHA }}
+            ghcr.io/${{ env.REPO_LOWER }}:dev-search-latest
+
+      - name: Build and push Docker Image - Embedding Service
+        uses: docker/build-push-action@v2
+        with:
+          context: ./microservices/embeddingservice
+          file: ./microservices/embeddingservice/docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}:dev-embedding-${{ env.COMMIT_SHORT_SHA }}
+            ghcr.io/${{ env.REPO_LOWER }}:dev-embedding-latest
