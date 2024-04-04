@@ -16,6 +16,11 @@ oss_doc_generator = OssAccessor(config)
 router = APIRouter()
 
 
+@router.get("/health-check")
+def health_check():
+    return {"status": "OK"}
+
+
 @router.post("/create-single-document")
 def create_document(data: dict):
     # add data to index

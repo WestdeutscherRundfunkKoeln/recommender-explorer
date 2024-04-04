@@ -17,6 +17,11 @@ text_embedder = EmbedText(config)
 router = APIRouter()
 
 
+@router.get("/health-check")
+def health_check():
+    return {"status": "OK"}
+
+
 @router.post("/embedding")
 def embedding(data: EmbedData):
     id = data.id
