@@ -41,11 +41,7 @@ class RecoExplorerItem(BaseModel, extra=Extra.allow):
     showTitel: Optional[str] = ""  # showTitle?
     showType: Optional[str] = ""
 
-    @field_serializer("availableFrom")
-    def serialize_dt(self, dt: datetime, _info):
-        return dt.timestamp()
-
-    @field_serializer("availableTo")
+    @field_serializer("availableFrom", "availableTo")
     def serialize_dt(self, dt: datetime, _info):
         return dt.timestamp()
 
