@@ -21,29 +21,3 @@ class OpenSearchResponse(BaseModel):
 class StorageChangeEvent(BaseModel):
     name: str
     bucket: str
-
-
-class Category(BaseModel):
-    id: str
-    title: str
-
-
-class Document(BaseModel):
-    id: Annotated[str, Field(alias="externalid")]
-    typen: str
-    typenDef: list[str]
-    titel: str
-    description: str
-    longdescription: str
-    avaliableFrom: str
-    avaliableTo: str
-    keywords: list[str]
-    durationSeconds: int
-    thematicCategories: list[Category]
-    genreCategory: list[Category]
-    subgenreCategories: list[Category]
-    filterKategorie: list[Category]
-    path: str
-    idstem: str
-    site: str
-    domain: str
