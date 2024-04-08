@@ -16,20 +16,18 @@ class DataPreprocessor:
         self.mapping = config["mapping_definition"]
         self.base_url_embedding = config["base_url_embedding"]
 
-    def preprocess_data(self, data):
+    def preprocess_data(self, data: dict) -> RecoExplorerItem:
         # map data
         try:
-            mapped_data = self.map_data(
-                data
-            ).model_dump_json()  # TODO: Find out what causes triple quotation marks in long description and fix it
+            # TODO: Find out what causes triple quotation marks in long description and fix it
+            preprocessed_data = self.map_data(data)
         except ValidationError as exc:
+            logger.error("Validation error: " + repr(exc.errors()))
             error_message = repr(exc.errors()[0]["type"])
             raise HTTPException(status_code=422, detail=error_message)
-        preprocessed_data = json.loads(mapped_data)
-        # self.add_embeddings(preprocessed_data)
         return preprocessed_data
 
-    def map_data(self, data) -> RecoExplorerItem:  # input = entity
+    def map_data(self, data: dict) -> RecoExplorerItem:  # input = entity
         mapped_data = pyjq.one(self.mapping, data)
         logger.info("Mapped data: " + json.dumps(mapped_data, indent=4, default=str))
         response = RecoExplorerItem.model_validate(mapped_data)

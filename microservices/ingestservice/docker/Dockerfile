@@ -14,6 +14,7 @@ RUN pip install wheel \
 
 COPY src/main.py src/main.py
 COPY src/preprocess_data.py src/preprocess_data.py
+COPY src/models.py src/models.py
 COPY dto/recoexplorer_item.py dto/recoexplorer_item.py
 
 COPY config/config.yaml config.yaml
