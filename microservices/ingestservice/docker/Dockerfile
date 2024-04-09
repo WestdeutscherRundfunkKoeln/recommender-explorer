@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     make \
     automake \
     autoconf
+
 RUN pip install wheel \
     pip install --no-cache-dir --upgrade -r requirements.txt
 
