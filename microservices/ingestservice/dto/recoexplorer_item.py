@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Extra, ConfigDict, field_serializer
+from pydantic import BaseModel, Extra, field_serializer
 from datetime import datetime
 
 
