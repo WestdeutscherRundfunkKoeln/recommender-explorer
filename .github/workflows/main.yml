@@ -22,6 +22,14 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: '3.10'
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
   
       - name: Install dependencies
         run: |
@@ -32,7 +40,8 @@ jobs:
         run: |
             pytest test/unit --doctest-modules --junitxml=junit/test-results.xml
 
-  # Build Images (not pubslish) on pull to dev & main
+  
+  # Build Images (not publish) on pull to dev & main
   docker_build:
     needs: unit_tests
     name: docker_build
