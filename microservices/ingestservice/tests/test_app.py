@@ -52,7 +52,7 @@ def overwrite_storage_client():
                 "availableTo": "2023-10-23T23:00:00.000+02:00",
                 "duration": 200,
                 "thematicCategories": [],
-                "genreCategory": [],
+                "genreCategory": "test",
                 "subgenreCategories": [],
                 "teaserimage": "test",
                 "embedText": "test",
@@ -115,13 +115,13 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
     # Request to the embedding service
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == os.getenv("URL_EMBEDDING")
+    assert request.url == os.getenv("BASE_URL_EMBEDDING", "") + "/embedding"
     assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
 
     # Request to the search service
     request = requests[1]
     assert request.method == "POST"
-    assert request.url == os.getenv("URL_SEARCH_SINGLE")
+    assert request.url == os.getenv("BASE_URL_SEARCH", "") + "/create-single-document"
     assert (
         request.content
         == json.dumps(
@@ -137,7 +137,7 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
                 "thematicCategories": [],
                 "thematicCategoriesIds": None,
                 "thematicCategoriesTitle": None,
-                "genreCategory": [],
+                "genreCategory": "test",
                 "genreCategoryId": None,
                 "subgenreCategories": [],
                 "subgenreCategoriesIds": None,
