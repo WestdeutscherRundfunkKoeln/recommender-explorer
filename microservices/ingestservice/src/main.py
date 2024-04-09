@@ -6,7 +6,7 @@ from typing import Annotated
 
 import httpx
 from envyaml import EnvYAML
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, APIRouter
 from fastapi.exceptions import HTTPException
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
@@ -78,13 +78,15 @@ def ingest_item(raw_document: Annotated[dict, Depends(download_document)]):
     mapped_data = data_preprocessor.preprocess_data(raw_document)
     data_preprocessor.add_embeddings(mapped_data)
     # add data to index
-    return request(mapped_data.model_dump(), URL_SEARCH_SINGLE)
+    return request(
+        mapped_data.model_dump(), f"{BASE_URL_SEARCH}/create-single-document"
+    )
 
 
 @router.post("/delete-single-item", response_model=OpenSearchResponse)
 def delete_item(raw_document: Annotated[dict, Depends(download_document)]):
     document = data_preprocessor.preprocess_data(raw_document)
-    return httpx.delete(f"URL_SEARCH_DELETE/{document.id}")
+    return httpx.delete(f"{BASE_URL_SEARCH}/{document.id}")
 
 
 @router.post("/ingest-multiple-items")
@@ -94,7 +96,7 @@ def bulk_ingest(bucket):
         with open(fname, "r") as f:
             data = json.load(f)
             mapped_data = data_preprocessor.preprocess_data(data)
-            item_dict[mapped_data["id"]] = mapped_data
+            item_dict[mapped_data.id] = mapped_data.model_dump()
     search_response = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
 
     return search_response
