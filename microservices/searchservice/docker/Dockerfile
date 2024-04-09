@@ -13,8 +13,7 @@ RUN pip install wheel \
     pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY src/main.py src/main.py
-COPY src/preprocess_data.py src/preprocess_data.py
-COPY dto/recoexplorer_item.py dto/recoexplorer_item.py
+COPY src/oss_accessor.py src/oss_accessor.py
 
 COPY config/config.yaml config.yaml
 
