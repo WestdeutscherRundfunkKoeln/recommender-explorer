@@ -73,9 +73,9 @@ services:
       - "1337"
     environment:
       - API_PREFIX=
-      - BASE_URL_SEARCH=http://search-service/search
-      - BASE_URL_INGEST=http://embedding-service/ingest
-      - BASE_URL_EMBEDDING=http://embedding-service/embedding
+      - BASE_URL_SEARCH=http://search-service
+      - BASE_URL_INGEST=http://embedding-service
+      - BASE_URL_EMBEDDING=http://embedding-service
       - OPENSEARCH_HOST=
       - OPENSEARCH_PORT=
       - OPENSEARCH_USER=
@@ -96,9 +96,9 @@ services:
       - "1336"
     environment:
       - API_PREFIX=
-      - BASE_URL_SEARCH=http://search-service/search
-      - BASE_URL_INGEST=http://embedding-service/ingest
-      - BASE_URL_EMBEDDING=http://embedding-service/embedding
+      - BASE_URL_SEARCH=http://search-service
+      - BASE_URL_INGEST=http://embedding-service
+      - BASE_URL_EMBEDDING=http://embedding-service
       - OPENSEARCH_HOST=opensearch-node1
       - OPENSEARCH_PORT=9200
       - OPENSEARCH_USER=admin
@@ -120,9 +120,9 @@ services:
       - "1338"
     environment:
       - API_PREFIX=
-      - BASE_URL_SEARCH=http://search-service/search
-      - BASE_URL_INGEST=http://embedding-service/ingest
-      - BASE_URL_EMBEDDING=http://embedding-service/embedding
+      - BASE_URL_SEARCH=http://search-service
+      - BASE_URL_INGEST=http://embedding-service
+      - BASE_URL_EMBEDDING=http://embedding-service
       - OPENSEARCH_HOST=
       - OPENSEARCH_PORT=
       - OPENSEARCH_USER=
