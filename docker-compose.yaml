@@ -83,6 +83,7 @@ services:
       - OPENSEARCH_INDEX=
       - MAPPING_DEFINITION='{"id":.id,"externalid":.externalid,"uuid":.uuid,"title":.title,"description":.description,"longdescription":.longdescription,"availablefrom":.availablefrom,"availableto":.availableto,"duration":.durationseconds,"embedtext":.embedtext,"embedtexthash":.embedtexthash,"thematiccategories":.thematiccategories,"thematiccategoriesids":.thematiccategoriesids,"thematiccategoriestitle":.thematiccategoriestitle,"genrecategory":.genrecategory,"genrecategoryid":.genrecategoryid,"subgenrecategories":.subgenrecategories,"subgenrecategoriesids":.subgenrecategoriesids,"subgenrecategoriestitle":.subgenrecategoriestitle,"teaserimage":.teaserimage.url,"geoavailability":.geoavailability}'
       - DEPLOYMENT_ENVIRONMENT=DEV
+      - STORAGE_SERVICE_ACCOUNT=$STORAGE_SERVICE_ACCOUNT
     networks:
       - opensearch-net
   search-service:

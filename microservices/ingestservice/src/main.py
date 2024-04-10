@@ -24,6 +24,7 @@ CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 BASE_URL_SEARCH = os.environ.get("BASE_URL_SEARCH", default="")
 API_PREFIX = os.environ.get("API_PREFIX", default="")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
+STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
 
 config = EnvYAML(CONFIG_PATH)
 data_preprocessor = DataPreprocessor(config)
@@ -38,7 +39,7 @@ def request(data, url):
 
 
 def get_storage_client():
-    bucket_service_account = json.loads(os.environ["STORAGE_SERVICE_ACCOUNT"])
+    bucket_service_account = json.loads(STORAGE_SERVICE_ACCOUNT)
     credentials = service_account.Credentials.from_service_account_info(
         bucket_service_account
     )
