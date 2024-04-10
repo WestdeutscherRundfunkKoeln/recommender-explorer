@@ -87,7 +87,7 @@ def ingest_item(raw_document: Annotated[dict, Depends(download_document)]):
 @router.post("/delete-single-item", response_model=OpenSearchResponse)
 def delete_item(raw_document: Annotated[dict, Depends(download_document)]):
     document = data_preprocessor.preprocess_data(raw_document)
-    return httpx.delete(f"{BASE_URL_SEARCH}/{document.id}")
+    return httpx.delete(f"{BASE_URL_SEARCH}/delete-data/{document.id}")
 
 
 @router.post("/ingest-multiple-items")
