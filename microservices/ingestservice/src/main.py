@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-from glob import glob
 from typing import Annotated
 
 import httpx
@@ -11,10 +10,12 @@ from fastapi.exceptions import HTTPException
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
 from google.oauth2 import service_account
-from src.models import OpenSearchResponse, StorageChangeEvent
+from pydantic import ValidationError
+from dto.recoexplorer_item import RecoExplorerItem
+from src.models import FullLoadRequest, OpenSearchResponse, StorageChangeEvent
 from src.preprocess_data import DataPreprocessor
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -91,16 +92,24 @@ def delete_item(raw_document: Annotated[dict, Depends(download_document)]):
 
 
 @router.post("/ingest-multiple-items")
-def bulk_ingest(bucket):
+def bulk_ingest(
+    body: FullLoadRequest,
+    storage: Annotated[storage.Client, Depends(get_storage_client)],
+):
+    bucket = storage.bucket(body.bucket)
     item_dict = {}
-    for fname in glob(bucket + "*.json"):
-        with open(fname, "r") as f:
-            data = json.load(f)
-            mapped_data = data_preprocessor.preprocess_data(data)
-            item_dict[mapped_data.id] = mapped_data.model_dump()
-    search_response = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
-
-    return search_response
+    for blob in bucket.list_blobs(match_glob=f"{body.prefix}*.json"):
+        logger.info(f"Downloading {blob.name}")
+        data = json.loads(blob.download_as_text())
+        try:
+            mapped_data = data_preprocessor.map_data(data)
+        except ValidationError:
+            logger.error(
+                "Error during preprocessing of file %s", blob.name, exc_info=True
+            )
+            continue
+        item_dict[mapped_data.id] = mapped_data.model_dump()
+    return request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
 
 
 app = FastAPI(title="Ingest Service")

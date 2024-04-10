@@ -21,3 +21,8 @@ class OpenSearchResponse(BaseModel):
 class StorageChangeEvent(BaseModel):
     name: str
     bucket: str
+
+
+class FullLoadRequest(BaseModel):
+    bucket: str
+    prefix: str
