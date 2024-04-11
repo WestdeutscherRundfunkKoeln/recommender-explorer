@@ -74,7 +74,7 @@ services:
     environment:
       - API_PREFIX=
       - BASE_URL_SEARCH=http://search-service
-      - BASE_URL_INGEST=http://embedding-service
+      - BASE_URL_INGEST=http://ingest-service
       - BASE_URL_EMBEDDING=http://embedding-service
       - OPENSEARCH_HOST=
       - OPENSEARCH_PORT=
@@ -98,7 +98,7 @@ services:
     environment:
       - API_PREFIX=
       - BASE_URL_SEARCH=http://search-service
-      - BASE_URL_INGEST=http://embedding-service
+      - BASE_URL_INGEST=http://ingest-service
       - BASE_URL_EMBEDDING=http://embedding-service
       - OPENSEARCH_HOST=opensearch-node1
       - OPENSEARCH_PORT=9200
@@ -122,7 +122,7 @@ services:
     environment:
       - API_PREFIX=
       - BASE_URL_SEARCH=http://search-service
-      - BASE_URL_INGEST=http://embedding-service
+      - BASE_URL_INGEST=http://ingest-service
       - BASE_URL_EMBEDDING=http://embedding-service
       - OPENSEARCH_HOST=
       - OPENSEARCH_PORT=
