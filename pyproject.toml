@@ -38,7 +38,7 @@ target-version = "py38"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "A", "PL", "C90"]
-ignore = ["E111", "E114", "E117"]  # Black-compatible
+ignore = ["E501", "E111", "E114", "E117"]  # Black-compatible
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
@@ -73,3 +73,7 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint.pylint]
+max-args = 7
+max-statements = 55
