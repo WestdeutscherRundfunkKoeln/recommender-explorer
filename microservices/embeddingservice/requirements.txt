@@ -6,3 +6,4 @@ pandas
 pydantic
 envyaml
 opensearch-py
+httpx

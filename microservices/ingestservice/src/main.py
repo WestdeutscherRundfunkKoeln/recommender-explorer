@@ -1,6 +1,5 @@
 from fastapi import FastAPI, APIRouter
 from src.preprocess_data import DataPreprocessor
-from src.oss_accessor import OssAccessor
 from envyaml import EnvYAML
 import os
 import httpx

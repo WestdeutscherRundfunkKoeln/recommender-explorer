@@ -58,6 +58,11 @@ Copy the file <local_path>/config/config_template.yaml to </path/to/your_config_
 ### Run Docker image
 ```docker run --env OPENSEARCH_PASS="<YOUR_OPENSEARCH_PW>" --env AWS_ACCESS_KEY_ID="<YOUR_AWS_KEY_ID>" --env AWS_SECRET_ACCESS_KEY="<YOUR_AWS_SECRET>" --env AWS_DEFAULT_REGION="eu-central-1"   --rm -it -p 8080:80 --name recoxplorer reco_explorer:0.1```
 
+### Run microservices locally
+To run the backend services and opensearch locally just execute:
+```docker-compose up```
+If you have a specific mapping definition you might need to change the corresponding environment variable in the docker-compose.yaml.
+
 ## How to contribute
 
 Recommender Explorer as a whole is distributed under the MIT license. You are welcome to contribute code in order to fix bugs or to implement new features. 
