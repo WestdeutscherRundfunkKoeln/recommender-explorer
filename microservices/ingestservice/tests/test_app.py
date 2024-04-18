@@ -85,7 +85,7 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
     )
 
     response = test_client.post(
-        "/ingest-single-item",
+        "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
         json={
             "kind": "storage#object",
@@ -170,7 +170,7 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
 
 def test_upsert_event_no_document_found(test_client):
     response = test_client.post(
-        "/ingest-single-item",
+        "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
         json={
             "kind": "storage#object",
@@ -199,7 +199,7 @@ def test_upsert_event_no_document_found(test_client):
 
 def test_upsert_event_invalid_document(test_client):
     response = test_client.post(
-        "/ingest-single-item",
+        "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
         json={
             "kind": "storage#object",
@@ -223,3 +223,51 @@ def test_upsert_event_invalid_document(test_client):
     )
 
     assert response.status_code == 422
+
+
+def test_delete_event_with_available_correct_document(test_client, httpx_mock):
+    httpx_mock.add_response(
+        headers={"Content-Type": "application/json"},
+        json={
+            "_index": "sample-index1",
+            "_id": "1",
+            "_version": 3,
+            "result": "deleted",
+            "_shards": {"total": 2, "successful": 2, "failed": 0},
+            "_seq_no": 4,
+            "_primary_term": 17,
+        },
+    )
+
+    response = test_client.post(
+        "/events",
+        headers={"Content-Type": "application/json", "eventType": "OBJECT_DELETE"},
+        json={
+            "kind": "storage#object",
+            "id": "wdr-recommender-exporter-dev-import/produktion/c65b43ee-cd44-4653-a03d-241ac052c36b.json/1712568938633012",
+            "selfLink": "https://www.googleapis.com/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json",
+            "name": "prod/valid.json",
+            "bucket": "wdr-recommender-exporter-dev-import",
+            "generation": "1712568938633012",
+            "metageneration": "1",
+            "contentType": "application/json",
+            "timeCreated": "2024-04-08T09:35:38.666Z",
+            "updated": "2024-04-08T09:35:38.666Z",
+            "storageClass": "STANDARD",
+            "timeStorageClassUpdated": "2024-04-08T09:35:38.666Z",
+            "size": "1504",
+            "md5Hash": "nUoVmkcgy2xR5l676DzUgw==",
+            "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json?generation=1712568938633012&alt=media",
+            "crc32c": "+IKxJA==",
+            "etag": "CLSu9rmosoUDEAE=",
+        },
+    )
+
+    assert response.status_code == 200
+    requests = httpx_mock.get_requests()
+    assert len(requests) == 1
+
+    # Request to the search service
+    request = requests[0]
+    assert request.method == "DELETE"
+    assert request.url == os.getenv("BASE_URL_SEARCH", "") + "/delete-data/test"
