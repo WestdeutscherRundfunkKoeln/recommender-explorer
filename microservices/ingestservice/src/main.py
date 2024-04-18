@@ -5,13 +5,12 @@ from typing import Annotated
 
 import httpx
 from envyaml import EnvYAML
-from fastapi import Depends, FastAPI, APIRouter
+from fastapi import Depends, FastAPI, APIRouter, Header
 from fastapi.exceptions import HTTPException
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
 from google.oauth2 import service_account
 from pydantic import ValidationError
-from dto.recoexplorer_item import RecoExplorerItem
 from src.models import FullLoadRequest, OpenSearchResponse, StorageChangeEvent
 from src.preprocess_data import DataPreprocessor
 
@@ -20,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 NAMESPACE = "ingest"
+EVENT_TYPE_DELETE = "OBJECT_DELETE"
 
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 BASE_URL_SEARCH = os.environ.get("BASE_URL_SEARCH", default="")
@@ -76,20 +76,18 @@ def health_check():
     return {"status": "OK"}
 
 
-@router.post("/ingest-single-item", response_model=OpenSearchResponse)
-def ingest_item(raw_document: Annotated[dict, Depends(download_document)]):
-    mapped_data = data_preprocessor.preprocess_data(raw_document)
-    data_preprocessor.add_embeddings(mapped_data)
-    # add data to index
-    return request(
-        mapped_data.model_dump(), f"{BASE_URL_SEARCH}/create-single-document"
-    )
-
-
-@router.post("/delete-single-item", response_model=OpenSearchResponse)
-def delete_item(raw_document: Annotated[dict, Depends(download_document)]):
+@router.post("/events", response_model=OpenSearchResponse)
+def ingest_item(
+    raw_document: Annotated[dict, Depends(download_document)],
+    event_type: Annotated[str, Header(alias="eventType")],
+):
     document = data_preprocessor.preprocess_data(raw_document)
-    return httpx.delete(f"{BASE_URL_SEARCH}/delete-data/{document.id}")
+    if event_type == EVENT_TYPE_DELETE:
+        return httpx.delete(f"{BASE_URL_SEARCH}/delete-data/{document.id}").json()
+
+    data_preprocessor.add_embeddings(document)
+    # add data to index
+    return request(document.model_dump(), f"{BASE_URL_SEARCH}/create-single-document")
 
 
 @router.post("/ingest-multiple-items")
