@@ -387,6 +387,10 @@ class RecommendationController():
         elif not url_field.value.startswith('https://'):
             raise ValueError('URL must be of format https://')
 
+    def _check_text(self, text_field):
+        if not isinstance(text_field.value, str):
+            raise ValueError('Text must be a string')
+
     def _check_category(self, genre_field):
         if genre_field.value not in self.get_item_defaults('genreCategory'):
             raise ValueError('Unknown category [' + genre_field.value + ']')
