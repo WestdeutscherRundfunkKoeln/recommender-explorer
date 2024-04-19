@@ -39,17 +39,15 @@ def request(data, url):
 
 
 def get_storage_client():
-    bucket_service_account = json.loads(STORAGE_SERVICE_ACCOUNT)
     credentials = service_account.Credentials.from_service_account_info(
-        bucket_service_account
+        json.loads(STORAGE_SERVICE_ACCOUNT)
     )
-    storage_client = storage.Client(credentials=credentials)
-    return storage_client
+    return storage.Client(credentials=credentials)
 
 
 def download_document(
+    storage: storage.Client,
     event: StorageChangeEvent,
-    storage: Annotated[storage.Client, Depends(get_storage_client)],
 ) -> dict:
     blob = storage.bucket(event.bucket).blob(event.name)
     try:
@@ -77,13 +75,15 @@ def health_check():
 
 @router.post("/events", response_model=OpenSearchResponse)
 def ingest_item(
-    raw_document: Annotated[dict, Depends(download_document)],
+    storage: Annotated[storage.Client, Depends(get_storage_client)],
+    event: StorageChangeEvent,
     event_type: Annotated[str, Header(alias="eventType")],
 ):
-    document = data_preprocessor.preprocess_data(raw_document)
     if event_type == EVENT_TYPE_DELETE:
-        return httpx.delete(f"{BASE_URL_SEARCH}/delete-data/{document.id}").json()
+        id = event.name.split("/")[-1].split(".")[0]
+        return httpx.delete(f"{BASE_URL_SEARCH}/delete-data/{id}").json()
 
+    document = data_preprocessor.preprocess_data(download_document(storage, event))
     data_preprocessor.add_embeddings(document)
     # add data to index
     return request(document.model_dump(), f"{BASE_URL_SEARCH}/create-single-document")

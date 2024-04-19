@@ -270,4 +270,4 @@ def test_delete_event_with_available_correct_document(test_client, httpx_mock):
     # Request to the search service
     request = requests[0]
     assert request.method == "DELETE"
-    assert request.url == os.getenv("BASE_URL_SEARCH", "") + "/delete-data/test"
+    assert request.url == os.getenv("BASE_URL_SEARCH", "") + "/delete-data/valid"
