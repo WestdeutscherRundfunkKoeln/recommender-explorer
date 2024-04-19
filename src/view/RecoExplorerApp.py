@@ -327,7 +327,8 @@ class RecoExplorerApp:
         # crid input
         self.crid_input = pn.widgets.TextInput(
             placeholder=self.config['opensearch']['primary_field'],
-            visible=False
+            visible=False,
+            max_length=100000
         )
 
         self.crid_input.params = {

@@ -44,4 +44,3 @@ class DataPreprocessor:
         request_payload = {"id": mapped_data["id"],
                            "embedText": mapped_data["embedText"]}
         httpx.post(URL_EMBEDDING, json=request_payload, timeout=None).json()
-        # mapped_data.update(embedding_response)

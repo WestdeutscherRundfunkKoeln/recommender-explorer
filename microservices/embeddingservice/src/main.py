@@ -12,12 +12,10 @@ config = EnvYAML(full_path)
 text_embedder = EmbedText(config)
 
 @app.post("/get-embedding")
-def get_embedding(data: EmbedData):
-    id = data.id
-    text_to_embed = data.embedText
-
+def get_embedding(data: dict):
+    text_to_embed = data['embedText']
     try:
-        result = text_embedder.embed_text(id, text_to_embed)
+        result = text_embedder.embed_text(text_to_embed)
     except ValidationError as exc:
         error_message = repr(exc.errors()[0]['type'])
         raise HTTPException(status_code=422, detail=error_message)  # TODO: return here
@@ -30,10 +28,19 @@ def add_embedding_to_document(data: EmbedData):
     text_to_embed = data.embedText
 
     try:
+<<<<<<< HEAD
         result = text_embedder.embed_text(id, text_to_embed)
         text_embedder.add_embedding_to_document(result)
+=======
+        result = text_embedder.embed_text(text_to_embed)
+        text_embedder.add_embedding_to_document(id, result)
+>>>>>>> refactor-for-wdr-idx
     except ValidationError as exc:
         error_message = repr(exc.errors()[0]['type'])
         raise HTTPException(status_code=422, detail=error_message)  # TODO: return here
 
+<<<<<<< HEAD
     return result
+=======
+    return result
+>>>>>>> refactor-for-wdr-idx
