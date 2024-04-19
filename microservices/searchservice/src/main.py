@@ -38,7 +38,7 @@ def bulk_create_document(data: dict):
     return response
 
 
-@router.delete("/delete-data/{id}")
+@router.delete("/delete-data/{document_id}")
 def delete_document(document_id):
     response = oss_doc_generator.delete_oss_doc(document_id)
     return response
