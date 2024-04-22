@@ -9,8 +9,6 @@ logger = logging.getLogger(__name__)
 
 class NnSeekerPaService(NnSeekerRest):
 
-    ITEM_IDENTIFIER_PROP = 'externalid'
-
     def __init__( self, config ):
 
         self.__max_num_neighbours = 16
