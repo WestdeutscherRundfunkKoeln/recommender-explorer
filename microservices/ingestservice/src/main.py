@@ -82,7 +82,9 @@ def ingest_item(
 ):
     if event_type == EVENT_TYPE_DELETE:
         id = event.name.split("/")[-1].split(".")[0]
-        return httpx.delete(f"{BASE_URL_SEARCH}/delete-data/{id}").json()
+        return httpx.delete(
+            f"{BASE_URL_SEARCH}/delete-data", params={"document_id": id}
+        ).json()
 
     document = data_preprocessor.preprocess_data(download_document(storage, event))
     data_preprocessor.add_embeddings(document)
