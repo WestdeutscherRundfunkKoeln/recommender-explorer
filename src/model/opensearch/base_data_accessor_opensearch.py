@@ -37,21 +37,27 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         
         self.max_items_per_fetch = 500
 
-    def get_items_by_ids( self, item: ItemDto, ids, identifier = 'id', provenance=constants.ITEM_PROVENANCE_C2C):
+    def get_items_by_ids(self, item: ItemDto, ids, identifier='id', provenance=constants.ITEM_PROVENANCE_C2C):
+        docs = [{
+            "_id": id,
+            "_source": {"exclude": "embedding"}  # Todo: replace by all model fields
+        } for id in ids]
+
         query = {
-          "size": len(ids),
-          "_source": {"exclude": "embedding"},
-          "query": {
-            "bool": {
-              "must" : [ 
-                { "terms": { identifier + ".keyword": ids } }
-              ]
-            }
-          }
+            "docs": docs
         }
 
         logger.info(query)
-        response = self.client.search(body=query, index=self.target_idx_name)
+        response_mget = self.client.mget(body=query, index=self.target_idx_name)
+        response = {'hits': {
+            'hits': response_mget['docs'],
+            'total': {
+                'value': len(ids)
+            }
+        }
+        }
+
+        logger.info(response)
         return self.__get_items_from_response(item, response, provenance)
 
     def get_item_by_url(self, item: ItemDto, url, filter = {} ):
