@@ -4,7 +4,7 @@ from src.oss_accessor import OssAccessor
 from envyaml import EnvYAML
 import os
 
-app = FastAPI(title="Ingest Service")
+app = FastAPI(title="Search Service")
 # get values from config
 full_path = os.environ.get("CONFIG_FILE", default='config.yaml')
 config = EnvYAML(full_path)

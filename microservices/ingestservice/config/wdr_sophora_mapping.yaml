@@ -25,6 +25,5 @@ mapping:
     "fskAgeRating": .fskAgeRating,
     "contentRatings": .contentRatings,
     "geoAvailability": .geoAvailability,
-    "all-MiniLM-L6-v2_title_desc_nokeywords": .["all-MiniLM-L6-v2_title_desc_nokeywords"],
     "sophoraid": .sophoraId
     }'
