@@ -1,5 +1,6 @@
 import logging
 import httpx
+import os
 
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
@@ -31,7 +32,7 @@ class NnSeekerOpenSearch(NnSeeker):
         
         self.embedding_field_name = 'embedding_01'
 
-        self.url_embedding = "http://localhost:8001/get-embedding" # TODO: env variable? config?
+        self.base_url_embedding = os.environ.get("BASE_URL_EMBEDDING") # TODO: env variable? config?
 
     def set_model_config( self, model_config ):
         self._set_model_name(model_config['endpoint'].removeprefix("opensearch://"))
@@ -48,7 +49,7 @@ class NnSeekerOpenSearch(NnSeeker):
         else:
             text_to_embed = item.description
             request_payload = {"embedText": text_to_embed}
-            response = httpx.post(self.url_embedding, json=request_payload, timeout=None).json()
+            response = httpx.post(f"{self.base_url_embedding}/embedding", json=request_payload, timeout=None).json()
             embedding = response[self.embedding_field_name]
 
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(embedding, k, filter_criteria)
