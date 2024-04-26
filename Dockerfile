@@ -13,6 +13,10 @@ ENV APP_HOME /app
 WORKDIR $APP_HOME
 COPY src/RecoExplorer.py RecoExplorer.py
 
+# Install production dependencies.
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
 #modules
 COPY assets assets
 COPY config config
@@ -22,11 +26,8 @@ COPY src/model model
 COPY src/util util
 COPY src/view view
 COPY src/dto dto
-COPY requirements.txt requirements.txt
 COPY src/constants.py constants.py
 
-# Install production dependencies.
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Run the web service on container startup.
 EXPOSE 80
