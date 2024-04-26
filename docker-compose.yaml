@@ -122,6 +122,25 @@ services:
       - DEPLOYMENT_ENVIRONMENT=DEV
     networks:
       - opensearch-net
+  reco-explorer-ui:
+    image: reco-explorer-ui
+    build: .
+    container_name: reco-explorer-ui
+    command: panel serve RecoExplorer.py --address 0.0.0.0 --port 80 --allow-websocket-origin="*" --log-level info --args config=config/config_mediathek.yaml
+    ports:
+      - 8080:80
+    expose:
+      - "8080"
+    environment:
+      - DATABACKEND_TYPE=opensearch
+      - OPENSEARCH_HOST=opensearch-node1
+      - OPENSEARCH_PORT=9200
+      - OPENSEARCH_USER=admin
+      - OPENSEARCH_PASS=admin
+      - OPENSEARCH_INDEX=test_index
+      - OPENSEARCH_USE_SSL=true
+    networks:
+      - opensearch-net
 volumes:
   opensearch-data1:
   opensearch-data2:

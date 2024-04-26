@@ -23,6 +23,8 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
         auth = (self.config["opensearch.user"], self.config["opensearch.pass"])
 
+        use_ssl = self.config["opensearch.use_ssl"] == "true"
+
         self.client = OpenSearch(
             hosts=[
                 {
@@ -31,8 +33,8 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
                 }
             ],
             http_auth=auth,
-            use_ssl=True,
-            verify_certs=True,
+            use_ssl=use_ssl,
+            verify_certs=use_ssl,
             connection_class=RequestsHttpConnection,
         )
         self.target_idx_name = self.config["opensearch.index"]
