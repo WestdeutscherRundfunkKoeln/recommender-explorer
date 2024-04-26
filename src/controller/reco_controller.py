@@ -80,7 +80,8 @@ class RecommendationController():
         return self.item_accessor.get_unique_vals_for_column(column=component_name, sort=True)
 
     def get_user_cluster(self):
-        self.user_cluster_accessor.set_endpoint(self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model']['endpoint'])
+        # TODO: improve the model config pass
+        self.user_cluster_accessor.set_model_config(self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model'])
         self.user_cluster = self.user_cluster_accessor.get_user_cluster()
         return list(self.user_cluster.keys())
 
@@ -112,6 +113,7 @@ class RecommendationController():
         # set model type: u2c or c2c
         self.model_config = [item for item in self.components['model_choice'].items() if item[1].value][0][0]
         chosen_model = self.components['model_choice'][self.model_config].value[0]
+        # ToDo: Needs refactoring. Gets value 'c2c_config' from configuration file based on position, should be based on key
         self.model_type = [model_type for model_type in self.config[self.model_config] for model in
                                 self.config[self.model_config][model_type] if model == chosen_model][0]
 
@@ -140,12 +142,19 @@ class RecommendationController():
         return class_(self.config)
 
     def set_model_and_strategy(self, model_info):
+        """Sets an active model and a strategy in the controller for search
+
+        Sets self.reco_accessor based on handler from config and self.reco_accessor endpoint from config
+
+        :param model_info: model config from config yaml (should contain handler and model info)
+        :return: Boolean True if successful
+        """
         matches = re.search('^(.*)@(.*)$', model_info['handler'])
         handler_name, handler_dir = matches.group(1), matches.group(2)
         module = importlib.import_module(handler_dir)
         class_ = getattr(module, handler_name)
         self.reco_accessor = class_(self.config)
-        self.reco_accessor.set_endpoint(model_info['endpoint'])
+        self.reco_accessor.set_model_config(model_info)
         return True
 
     def get_model_params(self):
@@ -159,6 +168,12 @@ class RecommendationController():
             logger.warning('couldn\'t find item from user history')
 
     def get_items(self) -> tuple[list, list[list], str]:
+        """ Gets Items from OSS based on selected models, inputs and filters
+
+        First gets selected models and display mode. Frontend can show items for a single
+        model but also for multiple models at the same time
+        :return:
+        """
         self.set_mode()
         selected_models = self.components['model_choice'][self.model_config].value
 
@@ -179,6 +194,14 @@ class RecommendationController():
             return list(selected_models), res, self.model_config
 
     def get_items_by_strategy_and_model(self, model_info: dict) -> tuple[list, list[list], str]:
+        """ Gets all items from OSS by model info
+
+        Gets the start items by model info. The start item is the reference item a user searches.
+        Each start item creates a new row in the frontend.
+
+        :param model_info: Config of model in configuration yaml
+        :return:
+        """
         all_items = []
         item_hits, start_items = self._get_start_items(model_info)
 
@@ -217,7 +240,18 @@ class RecommendationController():
                 continue
         return [model_info['display_name']], all_items, self.model_config
 
-    def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]: ######################
+    def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
+        """ Gets search results based on selected model and active components
+
+        First, gets the active components from registered components and checks these components
+        with validator. Gets the accessor method from the components params and values from these
+        components. The values are appended with an item dto and optional paging flag and filters.
+        These final accessor values are passed to the accessor method in BaseDataAccessorOpenSearch.
+        This function returns the actual item search results.
+
+        :param model: Config of a model from the configuration yaml
+        :return:
+        """
         active_components = self._get_active_start_components()
         self._validate_input_data(active_components)
         accessor_method = self._get_data_accessor_method(active_components)
@@ -265,7 +299,8 @@ class RecommendationController():
             raise Exception("Unknown user selection widget [" + active_components[0].params.label + ']')
 
     def _get_start_users_by_genre(self, user_dto: UserItemDto, genre_widget, start_idx, end_idx) -> tuple[int, list[UserItemDto]]:
-        self.user_cluster_accessor.set_endpoint(self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model']['endpoint'])
+        # TODO: improve the model config pass
+        self.user_cluster_accessor.set_model_config(self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model'])
         field_map = self.config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model']['field_mapping']
         response = self.user_cluster_accessor.get_users_by_category(genre_widget.value)
         num_users = len(response[genre_widget.value])
@@ -291,18 +326,35 @@ class RecommendationController():
         return len(self.user_cluster[cluster_name]), users
 
     def _get_start_items(self, model: dict) -> tuple[int, list[ItemDto]]:
+        """ Decides if C2C or U2C are used for the search query for the start items
+
+        :param model: Config of models from the configuration yaml
+        :return:
+        """
         if self.model_type == constants.MODEL_TYPE_C2C:
             return self._get_start_items_c2c(model)
         else:
             return self._get_start_users_u2c(model)
 
     def _get_reco_items(self, start_item, model):
+        """ Decides if C2C or U2C are used for the search query for the reco items
+
+        :param start_item: The start item (reference item) for which reco items are searched
+        :param model: Config of models from the configuration yaml
+        :return:
+        """
         if self.model_type == constants.MODEL_TYPE_C2C:
             return self._get_reco_items_c2c(start_item, model)
         else:
             return self._get_reco_items_u2c(start_item, model)
 
     def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
+        """ Gets recommended items based on the start item and filters
+
+        :param start_item: The start item (reference item) for which reco items are searched
+        :param model: Config of models from the configuration yaml
+        :return:
+        """
         reco_filter = self._get_current_filter_state('reco_filter')
         transposed_filter = self._transpose_reco_filter_state(reco_filter, start_item)
         kidxs, nn_dists, field = self.reco_accessor.get_k_NN(start_item, (self.num_NN + 1), transposed_filter)
@@ -341,6 +393,14 @@ class RecommendationController():
             return kidxs, nn_dists
 
     def _get_data_accessor_method(self, active_components):
+        """ Gets a accessor method from the active components.
+
+        Every component should contain a accessor_method in params but
+        for an active component there should be no different accessor methods
+
+        :param active_components:
+        :return:
+        """
         accessor_method = set([])
         for component in active_components:
             accessor_method.add(component.params['accessor'])
@@ -349,6 +409,14 @@ class RecommendationController():
         return list(accessor_method)[0]
 
     def _validate_input_data(self, active_components):
+        """ Gets validator based on given active components
+
+        Validator must be in component params, otherwise a Key Error gets raised.
+        Validator is a string which must be defined as a callable function in this controller.
+
+        :param active_components: List of active components
+        :return:
+        """
         for component in active_components:
             if component.params.get('validator', False):
                 validator = getattr(self, component.params['validator'])
@@ -397,12 +465,20 @@ class RecommendationController():
 
     #
     def _get_active_start_components(self) -> list:
+        """ Gets a list of active components
+
+        For C2C models 'item_choice' components which are visible are active components.
+        For U2C models 'user_choice' components which are active are active components.
+        Components should be registered in controller before
+
+        :return: list of active start components
+        """
         if self.model_type == constants.MODEL_TYPE_U2C:
             return list(filter(lambda x: x.params['active'] == True, self.components['user_choice'].values()))
         elif self.model_type == constants.MODEL_TYPE_C2C:
             return list(filter(lambda x: x.visible == True, self.components['item_choice'].values()))
         else:
-            raise TypeError('Unkown model type [' + self.model_type + ']')
+            raise TypeError('Unknown model type [' + self.model_type + ']')
 
     def _get_current_filter_state(self, filter_group):
         filter_state = collections.defaultdict(dict)
@@ -458,7 +534,7 @@ class RecommendationController():
         operator = self.FILTER_LOGIC_MATRIX[logic]  ## contains "must"
         if logic != "choose":
             if isinstance(start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]), list):
-                transposed_values.extend(start_item[self.FILTER_FIELD_MATRIX[field]])
+                transposed_values.extend(start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]))
             else:
                 transposed_values.append(start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]))
         else:  ## we're in "choose_genre", or "choose_subgenre" etc..

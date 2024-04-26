@@ -12,34 +12,34 @@ class NnSeekerOpenSearch(NnSeeker):
     FILTER_TYPE_SAME_GENRE = 'same_genre'
     ITEM_IDENTIFIER_PROP = 'id'
 
-    def __init__(self, config):
-
+    def __init__( self, config ):
+        
         auth = (config['opensearch.user'], config['opensearch.pass'])
-
+        
         self.client = OpenSearch(
-            hosts=[{'host': config['opensearch.host'], 'port': config['opensearch.port']}],
-            http_auth=auth,
-            use_ssl=True,
-            verify_certs=True,
-            connection_class=RequestsHttpConnection
+            hosts = [{'host': config['opensearch.host'], 'port': config['opensearch.port']}],
+            http_auth = auth,
+            use_ssl = True,
+            verify_certs = True,
+            connection_class = RequestsHttpConnection
         )
         self.target_idx_name = config['opensearch.index']
-
+        
         self.__max_num_neighbours = 50
         self.max_items_per_fetch = 500
         self.field_mapping = config['opensearch.field_mapping']
-
+        
         self.embedding_field_name = 'embedding_01'
 
         self.url_embedding = "http://localhost:8001/get-embedding" # TODO: env variable? config?
 
-    def set_endpoint( self, endpoint ):
-        self._set_model_name(endpoint.removeprefix("opensearch://"))
+    def set_model_config( self, model_config ):
+        self._set_model_name(model_config['endpoint'].removeprefix("opensearch://"))
 
-    def _set_model_name(self, model_name):
+    def _set_model_name( self, model_name ):
         self.embedding_field_name = model_name
 
-    def get_k_NN(self, item: ItemDto, k, filter_criteria) -> tuple[list, list]:
+    def get_k_NN( self, item: ItemDto, k, filter_criteria ) -> tuple[list, list]:
         logger.info(f'Seeking {k} neighours.')
         content_id = item.id
 
@@ -53,10 +53,10 @@ class NnSeekerOpenSearch(NnSeeker):
 
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(embedding, k, filter_criteria)
         return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP
-
-    def get_max_num_neighbours(self, content_id):
+    
+    def get_max_num_neighbours(self, content_id ):
         return self.__max_num_neighbours
-
+    
     def set_max_num_neighbours(self, num_neighbours):
         self.__max_num_neighbours = num_neighbours
 
@@ -68,7 +68,7 @@ class NnSeekerOpenSearch(NnSeeker):
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         hits = response['hits']['hits']
-        nn_dists = [(hit['_score'] - 1) for hit in hits]
+        nn_dists = [(hit['_score']-1) for hit in hits]
         ids = [hit['_source']['id'] for hit in hits]
         return ids, nn_dists
 
@@ -117,22 +117,22 @@ class NnSeekerOpenSearch(NnSeeker):
     def __get_approx_nn_by_embedding(self, embedding, k, filter_criteria):
 
         query = {
-            "size": k,
-            "_source": {"include": "id"},
-            "query": {
-                "knn": {
-                    self.embedding_field_name: {
-                        "vector": embedding,
-                        "k": k
-                    }
-                }
+          "size": k,
+          "_source": {"include": "id"},
+          "query": {
+            "knn": {
+                self.embedding_field_name: {
+                "vector": embedding,
+                "k": k
+              }
             }
+          }
         }
 
         if len(filter_criteria['sortrecos']):
             query['sort'] = [
                 {
-                    self.field_mapping['created']: {"order": filter_criteria['sortrecos'][0]}
+                    self.field_mapping['created']: { "order": filter_criteria['sortrecos'][0] }
                 }
             ]
             query['track_scores'] = True
@@ -149,19 +149,20 @@ class NnSeekerOpenSearch(NnSeeker):
 
     def __get_vec_for_content_id(self, content_id):
         query = {
-            "size": 1,
-            "_source": {"include": self.embedding_field_name},
-            "query": {
-                "bool": {
-                    "must": [
-                        {"terms": {"id.keyword": [content_id]}}
-                    ]
-                }
+          "size": 1,
+          "_source": {"include": self.embedding_field_name},
+          "query": {
+            "bool": {
+              "must" : [ 
+                { "terms": { "id.keyword": [content_id] } }
+              ]
             }
+          }
         }
 
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         embedding = response['hits']['hits'][0]['_source'][self.embedding_field_name]
-
+               
         return embedding
+

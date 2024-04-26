@@ -29,7 +29,7 @@ def mock_date_component(date_values: dict, position: str) -> object:
     date_choice.visible = True
     date_choice.name = position.capitalize() + 'datum'
     if position == 'start':
-        date_choice.value = datetime.now() + relativedelta(months=-3)
+        date_choice.value = datetime.now() + relativedelta(months=-6)
     else:
         date_choice.value = datetime.now()
     return date_choice

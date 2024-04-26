@@ -8,7 +8,7 @@ import httpx
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-URL_SEARCH_SINGLE = os.environ.get("URL_SEARCH_SINGLE")
+BASE_URL_SEARCH = os.environ.get("BASE_URL_SEARCH", default="")
 
 class EmbedText:
 
@@ -32,4 +32,4 @@ class EmbedText:
     def add_embedding_to_document(self, id, embedding):
         embedding['id'] = id
         # Send request to search service to add embedding to index
-        httpx.post(url=URL_SEARCH_SINGLE, json=embedding).json()
+        httpx.post(url=f"{BASE_URL_SEARCH}/create-single-document", json=response).json()

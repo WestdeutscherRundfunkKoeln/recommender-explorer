@@ -11,16 +11,11 @@ import httpx
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-URL_EMBEDDING = os.environ.get("URL_EMBEDDING")
-
-
 class DataPreprocessor:
 
     def __init__(self, config):
-        # mapping_definition_file = config['mapping_definition_file']
-        # mapping_file = EnvYAML(mapping_definition_file)
-        # self.mapping = mapping_file['mapping']
         self.mapping = config['mapping_definition']
+        self.base_url_embedding = config['base_url_embedding']
 
     def preprocess_data(self, data):
         # map data
@@ -43,4 +38,4 @@ class DataPreprocessor:
         # get embedding
         request_payload = {"id": mapped_data["id"],
                            "embedText": mapped_data["embedText"]}
-        httpx.post(URL_EMBEDDING, json=request_payload, timeout=None).json()
+        httpx.post(f"{self.base_url_embedding}/embedding", json=request_payload, timeout=None).json()

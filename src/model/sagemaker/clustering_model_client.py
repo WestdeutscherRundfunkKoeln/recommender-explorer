@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class ClusteringModelClient:
 
     def __init__( self, config ):
-        self.__endpoint = ''
+        self.__model_config = {}
         cross_account_options = self.__get_cross_account_options(
             config[constants.MODEL_CONFIG_U2C]['clustering_models']['U2C-Knn-Model']['role_arn']
         )
@@ -21,15 +21,17 @@ class ClusteringModelClient:
         json_body = json.dumps({ "action": "list_clusters" })
 
         try:
-            logger.info('Invoking endpoint call to [' + self.__endpoint + ']')
+
+            logger.info('Invoking clustering endpoint call to [' + self.__model_config['endpoint'] + ']')
+            
             response = self._client.invoke_endpoint(
-                EndpointName=self.__endpoint.removeprefix("sagemaker://"),
+                EndpointName=self.__model_config['endpoint'].removeprefix("sagemaker://"),
                 Body=json_body,
                 ContentType="application/json",
             )
         except Exception as e:
             logging.error(e)
-            raise EndpointError("Couldn't get a response from endpoint [" + self.__endpoint + ']')
+            raise EndpointError("Couldn't get a response from endpoint [" + self.__model_config['endpoint'] + ']')
 
         response_data = json.loads(response["Body"].read().decode("utf-8"))
         user_cluster = {}
@@ -51,15 +53,17 @@ class ClusteringModelClient:
         json_body = json.dumps(body_dict)
 
         try:
-            logger.info('Invoking endpoint call to [' + self.__endpoint + ']')
+          
+            logger.info('Invoking clustering endpoint call to [' + self.__model_config['endpoint'] + ']')
+
             response = self._client.invoke_endpoint(
-                EndpointName=self.__endpoint.removeprefix("sagemaker://"),
+                EndpointName=self.__model_config['endpoint'].removeprefix("sagemaker://"),
                 Body=json_body,
                 ContentType="application/json",
             )
         except Exception as e:
             logging.error(e)
-            raise EndpointError("Couldn't get a response from endpoint [" + self.__endpoint + ']', {})
+            raise EndpointError("Couldn't get a response from endpoint [" + self.__model_config['endpoint'] + ']', {})
 
         response_data = json.loads(response["Body"].read().decode("utf-8"))
         if not len(response_data):
@@ -68,8 +72,8 @@ class ClusteringModelClient:
         user_cluster[genreCategory] = response_data
         return user_cluster
 
-    def set_endpoint(self, endpoint):
-        self.__endpoint = endpoint
+    def set_model_config(self, model_config):
+        self.__model_config = model_config
 
     def __get_cross_account_options(self, role_arn):
         sts_client = boto3client("sts")
