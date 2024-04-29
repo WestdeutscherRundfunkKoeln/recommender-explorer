@@ -29,7 +29,6 @@ STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
 
 config = EnvYAML(CONFIG_PATH)
 data_preprocessor = DataPreprocessor(config)
-oss_doc_generator = OssAccessor(config)
 
 
 def request(data, url):
