@@ -16,14 +16,15 @@ from util.dto_utils import content_fields, update_from_props, get_primary_idents
 
 logger = logging.getLogger(__name__)
 
-class BaseDataAccessorOpenSearch(BaseDataAccessor):    
 
-    def __init__( self, config ):
+class BaseDataAccessorOpenSearch(BaseDataAccessor):
+
+    def __init__(self, config):
 
         self.config = config
 
         auth = (self.config['opensearch.user'], self.config['opensearch.pass'])
-        
+
         self.client = OpenSearch(
             hosts = [{'host': config['opensearch.host'], 'port': self.config['opensearch.port']}],
             http_auth = auth,
@@ -34,28 +35,28 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         self.target_idx_name = self.config['opensearch.index']
         self.field_mapping = self.config['opensearch.field_mapping']
         self.embedding_field_name = 'embedding'
-        
+
         self.max_items_per_fetch = 500
 
     def get_items_by_ids(self, item: ItemDto, ids, identifier='id', provenance=constants.ITEM_PROVENANCE_C2C):
         docs = [{
-            "_id": id,
-            "_source": {"exclude": "embedding"}  # Todo: replace by all model fields
-        } for id in ids]
+                    "_id": id,
+                    "_source": {"exclude": "embedding"} # Todo: replace by all model fields
+                } for id in ids]
 
         query = {
             "docs": docs
-        }
+            }
 
         logger.info(query)
         response_mget = self.client.mget(body=query, index=self.target_idx_name)
         response = {'hits': {
-            'hits': response_mget['docs'],
-            'total': {
-                'value': len(ids)
-            }
-        }
-        }
+                            'hits': response_mget['docs'],
+                            'total': {
+                                      'value': len(ids)
+                                     }
+                            }
+                    }
 
         logger.info(response)
         return self.__get_items_from_response(item, response, provenance)
@@ -67,8 +68,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         crid = crid_bytes.decode("ascii")
         return self.get_item_by_crid(item, crid, filter)
 
-
-    def get_item_by_urn( self, item: ItemDto, urn, filter = {} ):
+    def get_item_by_urn(self, item: ItemDto, urn, filter={}):
         urn = urn.strip()
         prim_id, prim_val = get_primary_idents(self.config)
         oss_col = prim_val + '.keyword'
@@ -97,20 +97,20 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         """
         crid = crid.strip()
         column = 'crid'
-        #apply field mapping if defined
+        # apply field mapping if defined
         if column in self.field_mapping.keys():
             new_col = self.field_mapping[column]
             logger.info(f'mapping col {column} to {new_col}')
             column = new_col
 
-        #term filter applies to keyword subcolumn
-        oss_col = column+'.keyword'
-        
+        # term filter applies to keyword subcolumn
+        oss_col = column + '.keyword'
+
         query = {
-            "size": 10, # duplicate crids max occur in data, return max 10
+            "size": 10,  # duplicate crids max occur in data, return max 10
             "_source": {"exclude": "embedding"},
             "query": {
-                "match": {oss_col : crid},
+                "match": {oss_col: crid},
             },
         }
 
@@ -118,14 +118,23 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         response = self.client.search(body=query, index=self.target_idx_name)
         return self.__get_items_from_response(item, response)
 
+    def get_item_by_text(self,item: ItemDto, text, filter = {} ):
+        item_dtos = []
+        new_item = copy.copy(item)
+        text_input = {"description": text}
+        new_item = update_from_props(new_item, text_input, self.field_mapping)
+        item_dtos.append(new_item)
+        return item_dtos, 1
+
     def get_items_by_date( self, item: ItemDto, start_date, end_date, item_filter = {}, offset = 10, size = -1) -> tuple[pd.DataFrame, int]:
         # handle valid size range
 
-        if size < 0 or size >self.max_items_per_fetch:
+        if size < 0 or size > self.max_items_per_fetch:
             size = self.max_items_per_fetch
-        
+
         if start_date > end_date:
-            logger.info(f'end data for data selection. {end_date} is before start date {start_date}. Swapping end and start date.')
+            logger.info(
+                f'end data for data selection. {end_date} is before start date {start_date}. Swapping end and start date.')
             xx = end_date
             end_date = start_date
             start_date = xx
@@ -136,19 +145,19 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         logger.info(f'query: {query}')
         response = self.client.search(body=query, index=self.target_idx_name)
         return self.__get_items_from_response(item, response)
-    
-    def get_items_date_range_limits( self ) -> tuple[pd.Timestamp, pd.Timestamp]:
+
+    def get_items_date_range_limits(self) -> tuple[pd.Timestamp, pd.Timestamp]:
         query = {
             "size": 0,
-             "query": {
-                "match_all" : {}
-              },
-              "aggs" : {
-                  "min_date": { "min": { "field": self.field_mapping['created']} },
-                  "max_date": { "max": { "field": self.field_mapping['created']} }
-              }
+            "query": {
+                "match_all": {}
+            },
+            "aggs": {
+                "min_date": {"min": {"field": self.field_mapping['created']}},
+                "max_date": {"max": {"field": self.field_mapping['created']}}
+            }
         }
-        
+
         response = self.client.search(body=query, index=self.target_idx_name)
         min_date = response['aggregations']['min_date']['value_as_string']
         max_date = response['aggregations']['max_date']['value_as_string']
@@ -156,43 +165,42 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         oldest_item_in_base_ts = pd.Timestamp(min_date).timestamp()
         return newest_item_in_base_ts, oldest_item_in_base_ts
 
-    def get_top_k_vals_for_column( self, column, k) -> list:
-        
-        #apply field mapping if defined
+    def get_top_k_vals_for_column(self, column, k) -> list:
+
+        # apply field mapping if defined
         if column in self.field_mapping.keys():
             new_col = self.field_mapping[column]
             logger.info(f'mapping col {column} to {new_col}')
             column = new_col
-        
-        
-        #term filter applies to keyword subcolumn
-        oss_col = column+'.keyword'
+
+        # term filter applies to keyword subcolumn
+        oss_col = column + '.keyword'
 
         query = {
-        "size": 0,
-        "_source": {"exclude": "*"},
-         "query": {
-            "match_all" : {}
-          },
-          "aggs" : {
-              "mydata_agg" : {
-            "terms": {"field" : oss_col, "size": k}
+            "size": 0,
+            "_source": {"exclude": "*"},
+            "query": {
+                "match_all": {}
+            },
+            "aggs": {
+                "mydata_agg": {
+                    "terms": {"field": oss_col, "size": k}
+                }
             }
-          }
         }
         response = self.client.search(body=query, index=self.target_idx_name)
         buckets = response['aggregations']['mydata_agg']['buckets']
-        vals =[ bucket['key'] for bucket in buckets]
+        vals = [bucket['key'] for bucket in buckets]
         top_col_vals = vals
         return top_col_vals
 
-    def get_unique_vals_for_column( self, column, sort=True, max_vals=1000) -> list:
-        uniq_vals = self.get_top_k_vals_for_column( column, k = max_vals)
+    def get_unique_vals_for_column(self, column, sort=True, max_vals=1000) -> list:
+        uniq_vals = self.get_top_k_vals_for_column(column, k=max_vals)
         if sort:
             uniq_vals = sorted(uniq_vals)
         return uniq_vals
     
-    def __get_items_from_response( self, item: ItemDto, response, provenance=constants.ITEM_PROVENANCE_C2C ) -> tuple[list, int]:
+    def __get_items_from_response(self, item: ItemDto, response, provenance=constants.ITEM_PROVENANCE_C2C) -> tuple[list, int]:
         """ Gets the resulting items from the opensearch services response
 
         Gets total items count from search response (hits.total.hits) and iterates
@@ -216,17 +224,17 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
     def __compose_date_range_query(self, size, offset, dates, item_filter) -> dict:
         query = {
-              "size": size,
-              "from": offset,
-              "_source": {"exclude": "embedding*"},
-              "query": {
-                 "bool": {
+            "size": size,
+            "from": offset,
+            "_source": {"exclude": "embedding*"},
+            "query": {
+                "bool": {
                     "must": [
-                      { "range": { "availableFrom": { "gte": dates[0], "lt": dates[1] } } },
+                        {"range": {"availableFrom": {"gte": dates[0], "lt": dates[1]}}},
                     ]
                 }
-              },
-              "sort": [ { self.field_mapping['created']: { "order": "asc" } } ]
+            },
+            "sort": [{self.field_mapping['created']: {"order": "asc"}}]
         }
 
         for filter_category in item_filter.items():

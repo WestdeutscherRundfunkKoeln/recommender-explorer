@@ -7,22 +7,23 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 class OssAccessor:
+
     def __init__(self, config):
-        self.target_idx_name = config["opensearch"]["index"]
+        self.target_idx_name = config['opensearch']['index']
 
-        host = config["opensearch"]["host"]
-        auth = (config["opensearch"]["user"], config["opensearch"]["pass"])
-        port = config["opensearch"]["port"]
-        use_ssl = config["deployment_env"] != "DEV"
+        host = config['opensearch']['host']
+        auth = (config['opensearch']['user'],
+                config['opensearch']['pass'])
+        port = config['opensearch']['port']
 
-        logger.info("Host: " + host)
+        logger.info('Host: ' + host)
 
         # initialize OSS client
         self.oss_client = OpenSearch(
             hosts=[{"host": host, "port": port}],
             http_auth=auth,
-            use_ssl=use_ssl,
-            verify_certs=use_ssl,
+            use_ssl=True,
+            verify_certs=True,
             connection_class=RequestsHttpConnection,
             timeout=600,
         )
@@ -33,10 +34,10 @@ class OssAccessor:
             index=self.target_idx_name,
             body={"doc": data, "doc_as_upsert": True},
             id=f"{data['id']}",
-            refresh=True,
+            refresh=True
         )
 
-        logger.info("Response: " + json.dumps(response, indent=4, default=str))
+        logger.info('Response: ' + json.dumps(response, indent=4, default=str))
 
         return response
 
@@ -49,20 +50,20 @@ class OssAccessor:
 
     def bulk_ingest(self, jsonlst):
         for success, info in helpers.parallel_bulk(
-            client=self.oss_client,
-            index=self.target_idx_name,
-            actions=self.doc_generator(jsonlst),
-        ):
+                    client=self.oss_client,
+                    index=self.target_idx_name,
+                    actions=self.doc_generator(jsonlst)
+                ):
             if not success:
-                print("A document failed:", info)
+                print('A document failed:', info)
 
-    def doc_generator(self, jsonlst):  # TODO: review this
+    def doc_generator(self, jsonlst): # TODO: review this
         for idx in jsonlst:
-            item = jsonlst[idx]
+            item=jsonlst[idx]
 
             yield {
                 "_op_type": "update",
                 "_index": self.target_idx_name,
                 "_id": f"{item['id']}",
-                "_source": {"doc": item, "doc_as_upsert": True},
+                "_source": {"doc": item, "doc_as_upsert": True}
             }

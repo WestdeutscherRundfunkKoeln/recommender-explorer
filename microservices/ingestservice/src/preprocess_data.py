@@ -1,5 +1,6 @@
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import ValidationError
+from envyaml import EnvYAML
 from dto.recoexplorer_item import RecoExplorerItem
 import logging
 import json
@@ -24,7 +25,7 @@ class DataPreprocessor:
             error_message = repr(exc.errors()[0]['type'])
             raise HTTPException(status_code=422, detail=error_message)
         preprocessed_data = json.loads(mapped_data)
-        # self.add_embeddings(preprocessed_data)
+        self.add_embeddings(preprocessed_data)
         return preprocessed_data
 
     def map_data(self, data) -> RecoExplorerItem: # input = entity
