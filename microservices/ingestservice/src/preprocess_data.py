@@ -40,5 +40,7 @@ class DataPreprocessor:
             "embedText": mapped_data.embedText,
         }
         httpx.post(
-            f"{self.base_url_embedding}/embedding", json=request_payload, timeout=None
+            f"{self.base_url_embedding}/add-embedding-to-doc",
+            json=request_payload,
+            timeout=None,
         ).json()
