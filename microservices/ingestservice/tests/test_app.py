@@ -115,7 +115,7 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
     # Request to the embedding service
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == os.getenv("BASE_URL_EMBEDDING", "") + "/embedding"
+    assert request.url == os.getenv("BASE_URL_EMBEDDING", "") + "/add-embedding-to-doc"
     assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
 
     # Request to the search service
