@@ -15,7 +15,7 @@ class RecoExplorerItem(BaseModel, extra=Extra.allow):
     thematicCategories: list
     thematicCategoriesIds: Optional[list] = []
     thematicCategoriesTitle: Optional[list] = []
-    genreCategory: str
+    genreCategory: Optional[str] = ""
     genreCategoryId: Optional[str] = ""
     subgenreCategories: list
     subgenreCategoriesIds: Optional[list] = []
