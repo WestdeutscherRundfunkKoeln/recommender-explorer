@@ -17,7 +17,7 @@ class EmbedText:
 
     def embed_text(self, embed_text):
         hash = sha256(embed_text.encode("utf-8")).hexdigest()
-        response = {"embedTextHash": hash}
+        response: dict[str, str | list[float]] = {"embedTextHash": hash}
 
         for model in self.config["models"]:
             for model_name, model_path in model.items():
@@ -33,5 +33,5 @@ class EmbedText:
         embedding["id"] = id
         # Send request to search service to add embedding to index
         httpx.post(
-            url=f"{BASE_URL_SEARCH}/create-single-document", json=response
+            url=f"{BASE_URL_SEARCH}/create-single-document", json=embedding
         ).json()
