@@ -22,8 +22,8 @@ def health_check():
     return {"status": "OK"}
 
 @router.post("/embedding")
-def get_embedding(data: dict):
-    text_to_embed = data['embedText']
+def get_embedding(data: EmbedData):
+    text_to_embed = data.embedText
     try:
         result = text_embedder.embed_text(text_to_embed)
     except ValidationError as exc:
