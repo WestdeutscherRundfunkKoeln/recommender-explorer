@@ -53,6 +53,11 @@ TEXT_AREA_INPUT_ACCESSOR_KEY = 'accessor_function'
 TEXT_AREA_INPUT_VALIDATOR_KEY = 'validator_function'
 TEXT_AREA_INPUT_URL_PARAMETER_KEY = 'url_parameter'
 
+# Accordion Reset Button
+ACCORDION_RESET_LABEL_KEY = 'label'
+ACCORDION_RESET_BUTTON_STYLE_KEY = 'button-style'
+ACCORDION_RESET_MARGIN_KEY = 'margin'
+
 # Block
 BLOCKS_CONFIG_KEY = 'blocks'
 BLOCK_LABEL_LIST_KEY = 'label'
@@ -68,6 +73,7 @@ ACCORDION_TYPE_VALUE = 'accordion'
 DATE_TIME_PICKER_TYPE_VALUE = 'date_time_picker'
 RADIO_BOX_TYPE_VALUE = 'radio_box'
 TEXT_AREA_INPUT_TYPE_VALUE = 'text_area_input'
+ACCORDION_RESET_BUTTON_TYPE_VALUE = 'accordion-reset-button'
 
 
 # Fallbacks (if no key and value was given in the config yaml)
