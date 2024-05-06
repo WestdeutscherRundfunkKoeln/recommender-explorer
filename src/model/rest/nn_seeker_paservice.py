@@ -9,8 +9,6 @@ logger = logging.getLogger(__name__)
 
 class NnSeekerPaService(NnSeekerRest):
 
-    ITEM_IDENTIFIER_PROP = 'externalid'
-
     def __init__( self, config ):
 
         self.__max_num_neighbours = 16
@@ -33,6 +31,7 @@ class NnSeekerPaService(NnSeekerRest):
 
         params = {
             "configuration": self.__configuration_c2c,
+            "similarityType": model_props['param_model_type'],
             "limit": self.__max_num_neighbours,
             "assetId": content_id
         }
@@ -55,16 +54,19 @@ class NnSeekerPaService(NnSeekerRest):
         return recomm_content_ids, nn_dists, oss_field
 
     def get_recos_user(self, user, n_recos):
+        primary_ident, oss_field = get_primary_idents(self.__config)
         model_props = self.__model_config['properties']
 
         user_id = user.id
         headers = {
             model_props['auth_header']: model_props['auth_header_value']
         }
+
         params = {
             "configuration": self.__configuration_u2c,
             "explain": True,
-            "userId": user_id
+            "userId": user_id,
+            "assetReturnType": 'episode'
         }
 
         if "param_model_type" in model_props:
@@ -85,7 +87,7 @@ class NnSeekerPaService(NnSeekerRest):
         else:
             logger.warning('discarding not found item [' + params['assetId'] + ']')
 
-        return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP
+        return recomm_content_ids, nn_dists, oss_field
 
     def get_max_num_neighbours(self, content_id):
         return self.__max_num_neighbours

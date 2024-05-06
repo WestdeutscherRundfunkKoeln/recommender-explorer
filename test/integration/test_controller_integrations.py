@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.parametrize("start_component, model", [(
     [True, 'genre_users', '_check_category', 'Comedy'],
-    ['ARD-ALS-Experiments', constants.MODEL_CONFIG_U2C]
+    ['PA-Service-Collab', constants.MODEL_CONFIG_U2C]
 )])
 def test_get_items_one_u2c_model_succeeds(u2c_controller: RecommendationController) -> None:
     items = u2c_controller.get_items()
