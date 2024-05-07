@@ -1,4 +1,6 @@
 import logging
+import httpx
+import os
 
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
@@ -6,8 +8,8 @@ from dto.item import ItemDto
 
 logger = logging.getLogger(__name__)
 
-class NnSeekerOpenSearch(NnSeeker):
 
+class NnSeekerOpenSearch(NnSeeker):
     FILTER_TYPE_SAME_GENRE = 'same_genre'
     ITEM_IDENTIFIER_PROP = 'id'
 
@@ -30,6 +32,8 @@ class NnSeekerOpenSearch(NnSeeker):
         
         self.embedding_field_name = 'embedding_01'
 
+        self.base_url_embedding = os.environ.get("BASE_URL_EMBEDDING") # TODO: env variable? config?
+
     def set_model_config( self, model_config ):
         self._set_model_name(model_config['endpoint'].removeprefix("opensearch://"))
 
@@ -39,7 +43,15 @@ class NnSeekerOpenSearch(NnSeeker):
     def get_k_NN( self, item: ItemDto, k, filter_criteria ) -> tuple[list, list]:
         logger.info(f'Seeking {k} neighours.')
         content_id = item.id
-        embedding = self.__get_vec_for_content_id(content_id)
+
+        if content_id:
+            embedding = self.__get_vec_for_content_id(content_id)
+        else:
+            text_to_embed = item.description
+            request_payload = {"embedText": text_to_embed}
+            response = httpx.post(f"{self.base_url_embedding}/embedding", json=request_payload, timeout=None).json()
+            embedding = response[self.embedding_field_name]
+
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(embedding, k, filter_criteria)
         return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP
     
@@ -48,7 +60,7 @@ class NnSeekerOpenSearch(NnSeeker):
     
     def set_max_num_neighbours(self, num_neighbours):
         self.__max_num_neighbours = num_neighbours
-    
+
     def __get_nn_by_embedding(self, embedding, k, filter_criteria):
         return self.__get_exact__nn_by_embedding(embedding, k, filter_criteria)
 
@@ -130,13 +142,13 @@ class NnSeekerOpenSearch(NnSeeker):
         response = self.client.search(body=query, index=self.target_idx_name)
 
         hits = response['hits']['hits']
-        
-        nn_dists = [(1.0/hit['_score'])-1 for hit in hits]
+
+        nn_dists = [(1.0 / hit['_score']) - 1 for hit in hits]
         ids = [hit['_source']['id'] for hit in hits]
 
-        return ids,nn_dists
+        return ids, nn_dists
 
-    def __get_vec_for_content_id(self, content_id ):
+    def __get_vec_for_content_id(self, content_id):
         query = {
           "size": 1,
           "_source": {"include": self.embedding_field_name},
