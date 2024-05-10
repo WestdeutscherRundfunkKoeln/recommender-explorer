@@ -38,7 +38,26 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
         self.max_items_per_fetch = 500
 
-    def get_items_by_ids(self, item: ItemDto, ids, identifier='id', provenance=constants.ITEM_PROVENANCE_C2C):
+    def get_primary_key_by_field(self, item_ident, field):
+
+        query = {
+            "query": {
+                "match": {
+                    field + '.keyword': item_ident
+                }
+            },
+            "size": 1,
+            "_source": {"exclude": "embedding"}
+        }
+        logger.info(query)
+        response = self.client.search(body=query, index=self.target_idx_name)
+
+        if response['hits']['total']['value'] < 1:
+            raise EmptySearchError("Couldn't find item identified by field [" + field + '.keyword] and value [' + item_ident, {})
+        else:
+            return response['hits']['hits'][0]['_id']
+
+    def get_items_by_ids(self, item: ItemDto, ids, provenance=constants.ITEM_PROVENANCE_C2C):
         docs = [{
                     "_id": id,
                     "_source": {"exclude": "embedding"} # Todo: replace by all model fields
@@ -46,7 +65,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
         query = {
             "docs": docs
-            }
+        }
 
         logger.info(query)
         response_mget = self.client.mget(body=query, index=self.target_idx_name)
@@ -212,6 +231,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         :return: List of item dtos, total items count
         """
         total_items = response['hits']['total']['value']
+
         items = [x['_source'] for x in response['hits']['hits']]
         if total_items < 1 or not len(items):
             raise EmptySearchError('Keine Treffer gefunden', {})
