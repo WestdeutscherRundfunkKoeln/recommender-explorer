@@ -17,7 +17,7 @@ from exceptions.model_validation_error import ModelValidationError
 from exceptions.user_not_found_error import UnknownUserError
 from exceptions.empty_search_error import EmptySearchError
 from util.postprocessing import FilterPostproc
-from util.dto_utils import update_from_props, dto_from_classname, dto_from_model
+from util.dto_utils import update_from_props, dto_from_classname, dto_from_model, get_primary_idents
 from dto.user_item import UserItemDto
 from dto.item import ItemDto
 from dto.content_item import ContentItemDto
@@ -160,9 +160,13 @@ class RecommendationController():
     def get_model_params(self):
         return self.reco_accessor.get_model_params()
 
-    def get_items_by_crids(self, item_dto: ItemDto, crids: list):
+    def get_items_by_field(self, item_dto: ItemDto, ids: list):
+        ids_prim = []
+        ident, db_ident = get_primary_idents(self.config)
         try:
-            item_dtos, num_items = self.item_accessor.get_items_by_ids(item_dto, crids, 'externalid')
+            for id in ids:
+                ids_prim.append(self.item_accessor.get_primary_key_by_field(id, db_ident))
+            item_dtos, num_items = self.item_accessor.get_items_by_ids(item_dto, ids_prim)
             return item_dtos
         except EmptySearchError as e:
             logger.warning('couldn\'t find item from user history')
@@ -368,20 +372,27 @@ class RecommendationController():
         return (
             self.item_accessor.get_items_by_ids(
                 item_dto, kidxs[:self.num_NN],
-                field,
                 constants.MODEL_TYPE_C2C)[0],
                 nn_dists[:self.num_NN]
         )
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
         kidxs, nn_dists, field = self.reco_accessor.get_recos_user(start_item, (self.num_NN + 1))
+        ident, db_ident = get_primary_idents(self.config)
+        kidxs_prim = []
+        try:
+            for kidx in kidxs:
+                kidxs_prim.append(self.item_accessor.get_primary_key_by_field(kidx, db_ident))
+        except EmptySearchError as e:
+            logger.warning(str(e))
+
         reco_item = dto_from_model(
             model=model,
             position=constants.ITEM_POSITION_RECO,
             item_type=constants.ITEM_TYPE_CONTENT,
             provenance=constants.ITEM_PROVENANCE_U2C
         )
-        return self.item_accessor.get_items_by_ids(reco_item, kidxs[:self.num_NN], field, constants.MODEL_TYPE_U2C)[0], nn_dists[:self.num_NN]
+        return self.item_accessor.get_items_by_ids(reco_item, kidxs_prim[:self.num_NN], constants.MODEL_TYPE_U2C)[0], nn_dists[:self.num_NN]
 
     def _align_kidxs_nn(self, content_id, kidxs, nn_dists):
         try:

@@ -882,7 +882,7 @@ class RecoExplorerApp:
                 constants.ITEM_TYPE_CONTENT,
                 constants.ITEM_PROVENANCE_C2C
             )
-            items = self.controller.get_items_by_crids(item_dto, item.history)
+            items = self.controller.get_items_by_field(item_dto, item.history)
             item_row_1 = pn.Row()
             item_row_2 = pn.Row()
             for idx, item_dto in enumerate(items):
