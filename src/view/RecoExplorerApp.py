@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 #
 class RecoExplorerApp:
     #
-    def __init__(self, config_full_path):
+    def __init__(self, config_full_path: str) -> None:
         # basic setup
         self.config = EnvYAML(config_full_path)
         self.config_full_path = config_full_path
@@ -105,6 +105,7 @@ class RecoExplorerApp:
     def set_client(self):
         # Check if there are multiple config files. If yes, make config widget visible.
         all_configs = get_all_config_files(self.config_full_path)
+        logger.debug("all_configs: %s", all_configs)
 
         if len(all_configs) > 1:
             self.client_choice_visibility = True
@@ -771,21 +772,39 @@ class RecoExplorerApp:
         )
 
     def define_score_threshold(self):
-        threshold_values = [0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4]
+        threshold_values = [
+            0.95,
+            0.9,
+            0.85,
+            0.8,
+            0.75,
+            0.7,
+            0.65,
+            0.6,
+            0.55,
+            0.5,
+            0.45,
+            0.4,
+        ]
         # duration filter selector
-        self.score_threshold_filter = pn.widgets.MultiSelect( # TODO: change this to continuous slider
-            name="Modell-Score",
-            options={
-                "Alle": [],
-                **{
-                    f"ONLY SCORE > {score_threshold}": score_threshold
-                    for score_threshold in threshold_values
+        self.score_threshold_filter = (
+            pn.widgets.MultiSelect(  # TODO: change this to continuous slider
+                name="Modell-Score",
+                options={
+                    "Alle": [],
+                    **{
+                        f"ONLY SCORE > {score_threshold}": score_threshold
+                        for score_threshold in threshold_values
+                    },
                 },
-            },
-            size=1,
+                size=1,
+            )
         )
 
-        self.score_threshold_filter.params = {"label": "score_threshold", "reset_to": 0.0}
+        self.score_threshold_filter.params = {
+            "label": "score_threshold",
+            "reset_to": 0.0,
+        }
 
         score_threshold_filter_watcher = self.score_threshold_filter.param.watch(
             self.trigger_reco_filter_choice, "value", onlychanged=True
@@ -1354,6 +1373,7 @@ class RecoExplorerApp:
     def assemble_components(self):
         if ui_constants.UI_CONFIG_KEY in self.config:
             blocks = self.build_blocks()
+            logger.debug("found blocks %s", blocks)
             block_counts = len(blocks)
 
             # Client
@@ -1540,7 +1560,9 @@ class RecoExplorerApp:
 
     #
     def render(self):
+        logger.info("assemble components")
         self.assemble_components()
+        logger.debug("assemble components done")
 
         title = self.get_ui_config_value(
             ui_constants.UI_CONFIG_TITLE_KEY,
