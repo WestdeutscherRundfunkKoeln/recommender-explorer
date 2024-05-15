@@ -1145,6 +1145,17 @@ class RecoExplorerApp:
         if ui_constants.UI_CONFIG_KEY in self.config:
             blocks = self.build_blocks()
             block_counts = len(blocks)
+
+            # Client
+            client_choice = pn.widgets.RadioButtonGroup(
+                name='',
+                options=get_client_options(self.config_full_path),
+                value=self.client)
+
+            if self.client_choice_visibility:
+                client_choice.param.watch(self.toggle_client_choice, 'value', onlychanged=True)
+                self.config_based_nav_controls.append(client_choice)
+
             for index, block in enumerate(blocks):
                 self.append_block_to_navigation(block)
                 # append a divider if its not the last block

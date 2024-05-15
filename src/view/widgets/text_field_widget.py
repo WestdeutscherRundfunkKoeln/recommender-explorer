@@ -11,10 +11,12 @@ class TextFieldWidget:
         """
         Builds a textField widget based on the given config from config yaml. When a url_parameter value is given
         in the config, this string gets saved in a dictionary (url_parameter_text_field_mapping) to be used when
-        Application loads.
+        Application loads. Also at least a label or a placeholder must be in config. Validator function and accessor function
+        must be in config.
 
         Args:
-            text_field_config (config): config of a text field from config yaml. Can contain: label, placeholder and url_parameter
+            text_field_config (config): config of a text field from config yaml.
+            Can contain: label, placeholder, validator_function, accessor_function and url_parameter
 
         Returns:
             text_input_widget (widget): final widget built from given config
@@ -38,7 +40,7 @@ class TextFieldWidget:
                 'validator': text_field_validator,
                 'accessor': text_field_accessor,
                 'label': text_field_label,
-                'has_paging': text_field_config.get(c.TEXT_INPUT_HAS_PAGING_KEY, False),
+                'has_paging': False,
                 'reset_to': ''
             }
             text_input_widget.param.watch(self.reco_explorer_app_instance.trigger_item_selection, 'value', onlychanged=True)

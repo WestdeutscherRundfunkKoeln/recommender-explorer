@@ -15,17 +15,19 @@ TEXT_INPUT_ACCESSOR_KEY = 'accessor_function'
 TEXT_INPUT_HAS_PAGING_KEY = ''
 TEXT_INPUT_URL_PARAMETER_KEY = 'url_parameter'
 
-# Multi Select Options
-MULTI_SELECT_OPTIONS_KEY = 'options'
-MULTI_SELECT_OPTION_LABEL_KEY = 'display_name'
-MULTI_SELECT_DEFAULT_OPTION_KEY = 'default'
-
 # Multi Select
 MULTI_SELECT_LABEL_KEY = 'label'
 MULTI_SELECT_ITEM_DEFAULTS_KEY = 'get_item_defaults'
-MULTI_SELECT_UPPER_ITEM_FILTER_KEY = 'upper_item_filter'
-MULTI_SELECT_OPTIONS_DEFAULT_KEY = 'option_default'
+MULTI_SELECT_OPTION_VALUE_KEY = 'value'
+MULTI_SELECT_OPTIONS_DEFAULT_FUNCTION_KEY = 'option_default'
 MULTI_SELECT_REGISTER_AS_KEY = 'register_as'
+MULTI_SELECT_LINKED_FILTER_NAME_KEY = 'linked_filter_name'
+MULTI_SELECT_FILTER_CATEGORY = 'filter_category'
+MULTI_SELECT_DISPLAY_NAME_KEY = 'name'
+MULTI_SELECT_OPTIONS_KEY = 'options'
+MULTI_SELECT_DICTIONARY_OPTIONS_KEY = 'dictionary_options'
+MULTI_SELECT_OPTION_LABEL_KEY = 'display_name'
+MULTI_SELECT_DEFAULT_OPTION_KEY = 'default'
 
 # Accordion
 ACCORDION_CONTENT_KEY = 'content'
@@ -44,6 +46,18 @@ DATE_TIME_PICKER_LABEL_KEY = 'label'
 DATE_TIME_PICKER_ACCESSOR_KEY = 'accessor_function'
 DATE_TIME_PICKER_HAS_PAGING_KEY = 'hasPaging'
 
+# Text Area Input
+TEXT_AREA_INPUT_LABEL_KEY = 'label'
+TEXT_AREA_INPUT_PLACEHOLDER_KEY = 'placeholder'
+TEXT_AREA_INPUT_ACCESSOR_KEY = 'accessor_function'
+TEXT_AREA_INPUT_VALIDATOR_KEY = 'validator_function'
+TEXT_AREA_INPUT_URL_PARAMETER_KEY = 'url_parameter'
+
+# Accordion Reset Button
+ACCORDION_RESET_LABEL_KEY = 'label'
+ACCORDION_RESET_BUTTON_STYLE_KEY = 'button-style'
+ACCORDION_RESET_MARGIN_KEY = 'margin'
+
 # Block
 BLOCKS_CONFIG_KEY = 'blocks'
 BLOCK_LABEL_LIST_KEY = 'label'
@@ -58,6 +72,8 @@ MULTI_SELECT_TYPE_VALUE = 'multi_select'
 ACCORDION_TYPE_VALUE = 'accordion'
 DATE_TIME_PICKER_TYPE_VALUE = 'date_time_picker'
 RADIO_BOX_TYPE_VALUE = 'radio_box'
+TEXT_AREA_INPUT_TYPE_VALUE = 'text_area_input'
+ACCORDION_RESET_BUTTON_TYPE_VALUE = 'accordion-reset-button'
 
 
 # Fallbacks (if no key and value was given in the config yaml)
