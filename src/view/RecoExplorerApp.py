@@ -23,7 +23,7 @@ from view.widgets.slider_widget import SliderWidget
 from view import ui_constants
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 ##
@@ -49,11 +49,8 @@ class RecoExplorerApp:
             ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
             ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
         }
-        self.ui_config = (
-            EnvYAML(self.config[ui_constants.UI_CONFIG_KEY])
-            if ui_constants.UI_CONFIG_KEY in self.config
-            else {}
-        )
+        self.ui_config = self.load_ui_config()
+        logger.debug("ui_config initialized")
 
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
@@ -107,6 +104,16 @@ class RecoExplorerApp:
         self.set_u2c_model_definitions()
 
         self.url_parameter_text_field_mapping = {}
+
+    def load_ui_config(self) -> EnvYAML | dict:
+        ui_config = {}
+        try:
+            ui_config = EnvYAML(self.config[ui_constants.UI_CONFIG_KEY])
+        except KeyError:
+            logger.warning("UI config not found in config file")
+        except FileNotFoundError:
+            logger.warning("UI config file not found")
+        return ui_config
 
     def set_client(self):
         # Check if there are multiple config files. If yes, make config widget visible.
