@@ -9,6 +9,9 @@ from exceptions.user_not_found_error import UnknownUserError
 logger = logging.getLogger(__name__)
 
 
+HTTP_OK = 200
+
+
 class NnSeekerPaService(NnSeekerRest):
     def __init__(self, config):
         self.__max_num_neighbours = 16
@@ -50,7 +53,7 @@ class NnSeekerPaService(NnSeekerRest):
         #
         # TODO - add better status and error handling
         #
-        if status == 200:
+        if status == HTTP_OK:
             for reco in pa_recos["recommendations"]:
                 nn_dists.append(reco["score"])
                 recomm_content_ids.append(reco["asset"]["assetId"])
@@ -103,7 +106,7 @@ class NnSeekerPaService(NnSeekerRest):
         #
         # TODO - add better status and error handling
         #
-        if status == 200:
+        if status == HTTP_OK:
             for reco in pa_recos["recommendations"]:
                 nn_dists.append(reco["score"])
                 recomm_content_ids.append(reco["asset"]["assetId"])

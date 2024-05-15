@@ -61,10 +61,11 @@ class MultiSelectionWidget:
         options, default = self.get_multi_select_options(multi_select_config)
         multi_select_label = multi_select_config.get(c.MULTI_SELECT_LABEL_KEY, "")
         if options:
-            if len(options) < 5:
+            MULTI_SELECT_SIZE = 5
+            if len(options) < MULTI_SELECT_SIZE:
                 multi_select_size = len(options)
             else:
-                multi_select_size = 5
+                multi_select_size = MULTI_SELECT_SIZE
 
             multi_select_widget = pn.widgets.MultiSelect(
                 options=options,

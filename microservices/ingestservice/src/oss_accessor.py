@@ -40,8 +40,8 @@ class OssAccessor:
 
         return response
 
-    def delete_oss_doc(self, id):
-        response = self.oss_client.delete(index=self.target_idx_name, id=id)
+    def delete_oss_doc(self, id_):
+        response = self.oss_client.delete(index=self.target_idx_name, id=id_)
         return response
 
     def bulk_ingest(self, jsonlst):

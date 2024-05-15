@@ -2,7 +2,12 @@ import logging
 import sys
 from dataclasses import fields
 
+from dto.content_item import ContentItemDto  # noqa
+from dto.history_item import HistoryItemDto  # noqa
 from dto.item import ItemDto
+from dto.model_params_item import ModelParametersDto  # noqa
+from dto.not_found_item import NotFoundDto  # noqa
+from dto.user_item import UserItemDto  # noqa
 
 logger = logging.getLogger(__name__)
 

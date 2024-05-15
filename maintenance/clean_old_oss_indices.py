@@ -25,7 +25,7 @@ def delete_oss_index(oss_client, idx_name):
     try:
         print(idx_name, "will be deleted")
         oss_client.indices.delete(idx_name)
-    except:
+    except Exception:
         print("non existing")
 
 

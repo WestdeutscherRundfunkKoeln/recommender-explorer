@@ -19,9 +19,9 @@ class ContentCard:
         base_card_objects = [
             pn.pane.Markdown(f"""
                        #### {content_dto.title}
-                       **Erzählweise:** {self.controller.get_upper_genres_and_subgenres(content_dto.genreCategory)} 
+                       **Erzählweise:** {self.controller.get_upper_genres_and_subgenres(content_dto.genreCategory)}
                        **Genre:** {content_dto.genreCategory}
-                       **Inhalt:** {self.controller.get_upper_genres_and_subgenres(content_dto.subgenreCategories)} 
+                       **Inhalt:** {self.controller.get_upper_genres_and_subgenres(content_dto.subgenreCategories)}
                        **Subgenre:** {', '.join(set(content_dto.subgenreCategories))}
                        **Themen:** {', '.join(set(content_dto.thematicCategories))}
                        **Sendereihe:** {content_dto.showTitle}

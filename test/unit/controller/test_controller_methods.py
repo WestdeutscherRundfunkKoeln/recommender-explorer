@@ -30,7 +30,7 @@ def controller() -> RecommendationController:
 
 def test_increasing_page_number_succeeds(controller: RecommendationController) -> None:
     controller.increase_page_number()
-    assert controller.get_page_number() == 2
+    assert controller.get_page_number() == 2  # noqa
 
 
 def test_get_start_components_succeeds(controller: RecommendationController) -> None:

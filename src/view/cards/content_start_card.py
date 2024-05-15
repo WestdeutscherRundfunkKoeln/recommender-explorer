@@ -18,12 +18,12 @@ class ContentStartCard(ContentCard):
                          .img_wrapper {
                              position: relative;
                              width: 100%;
-                             height: 200px; 
+                             height: 200px;
                          }
 
                          img {
                              display:block;
-                             width: 100%; 
+                             width: 100%;
                              height: 100%;
 
                              position: absolute;
@@ -41,20 +41,20 @@ class ContentStartCard(ContentCard):
                          }
 
                          .duration_label {
-                             position: absolute; 
-                             right:0px; 
-                             top:0px; 
+                             position: absolute;
+                             right:0px;
+                             top:0px;
 
-                             background-color: 
-                             rgba(0,0,0,0.4); 
+                             background-color:
+                             rgba(0,0,0,0.4);
 
-                             padding-left: 4px; 
+                             padding-left: 4px;
                              padding-right: 4px;
                          }
 
                          .duration_label span{
-                             color: #ffff; 
-                             font-weight: 500; 
+                             color: #ffff;
+                             font-weight: 500;
                              font-size: 12px;
                          }
                      """

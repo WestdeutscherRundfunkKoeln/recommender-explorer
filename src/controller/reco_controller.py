@@ -180,9 +180,9 @@ class RecommendationController:
         ids_prim = []
         ident, db_ident = get_primary_idents(self.config)
         try:
-            for id in ids:
+            for _id in ids:
                 ids_prim.append(
-                    self.item_accessor.get_primary_key_by_field(id, db_ident)
+                    self.item_accessor.get_primary_key_by_field(_id, db_ident)
                 )
             item_dtos, num_items = self.item_accessor.get_items_by_ids(
                 item_dto, ids_prim
@@ -373,11 +373,11 @@ class RecommendationController:
         cluster_name = cluster_widget.value
         user_ids = self.user_cluster[cluster_name][start_idx:end_idx]
         users = []
-        for id in user_ids:
+        for user_id in user_ids:
             new_user = copy.copy(user_dto)
             new_user.source = "Cluster-Nutzer"
             new_user.source_value = cluster_name
-            new_user.id = id
+            new_user.id = user_id
             users.append(new_user)
         return len(self.user_cluster[cluster_name]), users
 
@@ -564,15 +564,13 @@ class RecommendationController:
         if self.model_type == constants.MODEL_TYPE_U2C:
             return list(
                 filter(
-                    lambda x: x.params["active"] == True,
+                    lambda x: x.params["active"],
                     self.components["user_choice"].values(),
                 )
             )
         elif self.model_type == constants.MODEL_TYPE_C2C:
             return list(
-                filter(
-                    lambda x: x.visible == True, self.components["item_choice"].values()
-                )
+                filter(lambda x: x.visible, self.components["item_choice"].values())
             )
         else:
             raise TypeError("Unknown model type [" + self.model_type + "]")

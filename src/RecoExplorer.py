@@ -19,7 +19,7 @@ def getExplorerInstance():
 # start like so: panel serve RecoExplorer.py --args config=<path_to_my_config.yaml>
 #
 if not len(sys.argv[1:]):
-    exit("Unable to start Reco Explorer - no config was passed.")
+    sys.exit("Unable to start Reco Explorer - no config was passed.")
 
 try:
     config_full_path = get_config_from_arg(sys.argv[1:][0])
@@ -39,4 +39,4 @@ except ConfigError as e:
     RecoExplorerApp.render_404().server_doc()
 
 except Exception as e:
-    exit(e)
+    sys.exit(str(e))

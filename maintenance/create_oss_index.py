@@ -1,4 +1,3 @@
-import datetime
 import itertools
 import json
 import logging
@@ -127,7 +126,7 @@ def postprocess_data(df):
     ).fillna(pd.Timestamp("2099-12-31T00:00:00Z"))
 
     has_col_naval = df.isna().any()
-    nacols = has_col_naval[has_col_naval == True].index
+    nacols = has_col_naval[has_col_naval].index
 
     for col in nacols:
         logger.info(f"Col {col} has null vals fixing")
@@ -139,7 +138,7 @@ def postprocess_data(df):
 def delete_oss_index(client, idx_name):
     try:
         client.indices.delete(idx_name)
-    except:
+    except Exception:
         logger.info("non existing")
 
 
@@ -209,7 +208,7 @@ def upload_data_oss(
 
 if __name__ == "__main__":
     if not len(sys.argv[1:]):
-        exit("You must provide a configuration file for indexing")
+        sys.exit("You must provide a configuration file for indexing")
 
     configuration_file_name = sys.argv[1:][0].removeprefix("config=")
     config = EnvYAML(configuration_file_name)

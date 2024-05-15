@@ -988,7 +988,8 @@ class RecoExplorerApp:
             item_row_2 = pn.Row()
             for idx, item_dto in enumerate(items):
                 card = self.controller.get_item_viewer(item_dto)
-                if idx < 5:
+                MAX_ITEMS_PER_ROW = 5
+                if idx < MAX_ITEMS_PER_ROW:
                     item_row_1.append(card.draw(item_dto, idx + 1, "mediathek"))
                 else:
                     item_row_2.append(card.draw(item_dto, idx + 1, "mediathek"))
@@ -1357,7 +1358,7 @@ class RecoExplorerApp:
 
         if self.client_choice_visibility:
             self.put_navigational_block(0, ["### Mandant wählen", self.client_choice])
-            client_choice_watcher = self.client_choice.param.watch(
+            _ = self.client_choice.param.watch(
                 self.toggle_client_choice, "value", onlychanged=True
             )
 
@@ -1378,7 +1379,7 @@ class RecoExplorerApp:
         self.put_navigational_block(
             1, ["### Modelle wählen", self.model_choice, self.model_resetter]
         )
-        model_choice_watcher = self.model_choice.param.watch(
+        _ = self.model_choice.param.watch(
             self.toggle_model_choice, "active", onlychanged=True
         )
 
@@ -1400,7 +1401,7 @@ class RecoExplorerApp:
         )
         self.user_source.active = [0]
         self.user_source.toggle = True
-        user_source_watcher = self.user_source.param.watch(
+        _ = self.user_source.param.watch(
             self.toggle_user_choice, "active", onlychanged=True
         )
 

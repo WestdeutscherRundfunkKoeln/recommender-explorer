@@ -82,15 +82,15 @@ class Embedder:
         return self._config
 
     def calculate_embedding(self, item):
-        id = item["id"]
+        id_ = item["id"]
         embedded_text = self.__getTextToEmbed(item)
-        hash = sha256(embedded_text.encode("utf-8")).hexdigest()
+        text_hash = sha256(embedded_text.encode("utf-8")).hexdigest()
         embedding = self._model.encode(embedded_text).tolist()
 
         return {
-            "id": id,
+            "id": id_,
             "embedded_text": embedded_text,
-            "hash": hash,
+            "hash": text_hash,
             "embedding": embedding,
         }
 

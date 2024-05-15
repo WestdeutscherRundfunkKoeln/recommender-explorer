@@ -38,12 +38,12 @@ def get_embedding(data: EmbedData):
 
 @router.post("/add-embedding-to-doc")
 def add_embedding_to_document(data: EmbedData):
-    id = data.id
+    id_ = data.id
     text_to_embed = data.embedText
 
     try:
         result = text_embedder.embed_text(text_to_embed)
-        text_embedder.add_embedding_to_document(id, result)
+        text_embedder.add_embedding_to_document(id_, result)
     except ValidationError as exc:
         error_message = repr(exc.errors()[0]["type"])
 <<<<<<< HEAD

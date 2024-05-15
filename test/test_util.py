@@ -6,8 +6,12 @@ from dateutil.relativedelta import relativedelta
 from src.dto.content_item import ContentItemDto
 
 
+def _dummy_function() -> None:
+    return None
+
+
 def mock_start_filter_component(filter_values: dict) -> object:
-    item_filter = lambda: None
+    item_filter = _dummy_function
     item_filter.params = {}
     item_filter.params["label"] = filter_values["label"]
     item_filter.value = filter_values["selected_value"]
@@ -16,7 +20,7 @@ def mock_start_filter_component(filter_values: dict) -> object:
 
 
 def mock_reco_filter_component(filter_values: dict) -> object:
-    item_filter = lambda: None
+    item_filter = _dummy_function
     item_filter.params = {}
     item_filter.params["label"] = filter_values["label"]
     item_filter.value = filter_values["selected_value"]
@@ -25,7 +29,7 @@ def mock_reco_filter_component(filter_values: dict) -> object:
 
 
 def mock_date_component(date_values: dict, position: str) -> object:
-    date_choice = lambda: None
+    date_choice = _dummy_function
     date_choice.params = {}
     date_choice.params["label"] = position + date_values["label"]
     date_choice.params["validator"] = date_values["validator"]
@@ -41,7 +45,7 @@ def mock_date_component(date_values: dict, position: str) -> object:
 
 
 def mock_user_component(values: list) -> object:
-    user_choice = lambda: None
+    user_choice = _dummy_function
     user_choice.params = {}
     user_choice.params["active"] = values[0]
     user_choice.params["label"] = values[1]
@@ -53,7 +57,7 @@ def mock_user_component(values: list) -> object:
 
 
 def mock_model_component(values: list) -> object:
-    model = lambda: None
+    model = _dummy_function
     model.params = {}
     model.params["label"] = values[1]
     model.value = [values[0]]
