@@ -1,8 +1,9 @@
 mapping:
   '{
-    "id": .sophoraId,
+    "id": .externalId,
     "externalid": .externalId,
     "uuid": .uuid,
+    "sophoraid": .sophoraId,
     "type": .type,
     "title": .title,
     "description": .["description"],
@@ -14,16 +15,15 @@ mapping:
     "keywords": .keywords,
     "language": .language,
     "duration": .durationSeconds,
-    "thematicCategories": .thematicCategories,
+    "thematicCategories": [.thematicCategories[] | .title],
     "genreCategory": .genreCategory,
-    "subgenreCategories": .subgenreCategories,
-    "filterCategory": .filterCategory,
+    "subgenreCategories": [.subgenreCategories[] | .title],
+    "filterCategory": [.filterCategory[] | .title],
     "structurePath": .structurePath,
     "site": .site,
     "domain": .domain,
     "teaserimage": .teaserImage.url,
     "fskAgeRating": .fskAgeRating,
     "contentRatings": .contentRatings,
-    "geoAvailability": .geoAvailability,
-    "sophoraid": .sophoraId
+    "geoAvailability": .geoAvailability
     }'

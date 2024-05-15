@@ -38,4 +38,4 @@ class DataPreprocessor:
         # get embedding
         request_payload = {"id": mapped_data["id"],
                            "embedText": mapped_data["embedText"]}
-        httpx.post(f"{self.base_url_embedding}/embedding", json=request_payload, timeout=None).json()
+        httpx.post(f"{self.base_url_embedding}/add-embedding-to-doc", json=request_payload, timeout=None).json()

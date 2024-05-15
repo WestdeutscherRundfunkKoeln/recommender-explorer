@@ -13,13 +13,8 @@ class RecoExplorerItem(BaseModel, extra=Extra.allow):
     availableTo: datetime
     duration: Optional[int] = -1
     thematicCategories: list
-    thematicCategoriesIds: Optional[list] = []
-    thematicCategoriesTitle: Optional[list] = []
-    genreCategory: str
-    genreCategoryId: Optional[str] = ''
+    genreCategory: Optional[str]
     subgenreCategories: list
-    subgenreCategoriesIds: Optional[list] = []
-    subgenreCategoriesTitle: Optional[list] = []
     teaserimage: str
     geoAvailability: Optional[str] = ''
     embedText: Optional[str] = ''

@@ -32,4 +32,4 @@ class EmbedText:
     def add_embedding_to_document(self, id, embedding):
         embedding['id'] = id
         # Send request to search service to add embedding to index
-        httpx.post(url=f"{BASE_URL_SEARCH}/create-single-document", json=response).json()
+        httpx.post(url=f"{BASE_URL_SEARCH}/create-single-document", json=embedding).json()
