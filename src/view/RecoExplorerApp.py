@@ -23,6 +23,7 @@ from view.widgets.slider_widget import SliderWidget
 from view import ui_constants
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 ##
@@ -48,6 +49,11 @@ class RecoExplorerApp:
             ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
             ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
         }
+        self.ui_config = (
+            EnvYAML(self.config[ui_constants.UI_CONFIG_KEY])
+            if ui_constants.UI_CONFIG_KEY in self.config
+            else {}
+        )
 
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
@@ -1371,7 +1377,7 @@ class RecoExplorerApp:
 
     #
     def assemble_components(self):
-        if ui_constants.UI_CONFIG_KEY in self.config:
+        if self.ui_config:
             blocks = self.build_blocks()
             logger.debug("found blocks %s", blocks)
             block_counts = len(blocks)
