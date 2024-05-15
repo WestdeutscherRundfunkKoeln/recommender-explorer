@@ -1,9 +1,10 @@
-import logging
 import json
-from sentence_transformers import SentenceTransformer
-from hashlib import sha256
+import logging
 import os
+from hashlib import sha256
+
 import httpx
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")

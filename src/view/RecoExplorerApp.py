@@ -1,11 +1,12 @@
-import panel as pn
 import logging
 import traceback
+
 import constants
-from envyaml import EnvYAML
+import panel as pn
 from controller.reco_controller import RecommendationController
-from exceptions.empty_search_error import EmptySearchError
+from envyaml import EnvYAML
 from exceptions.date_validation_error import DateValidationError
+from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
@@ -15,13 +16,12 @@ from util.file_utils import (
     get_client_from_path,
     get_client_options,
 )
-from .widgets.multi_select_widget import MultiSelectionWidget
-from .widgets.date_time_picker_widget import DateTimePickerWidget
-from .widgets.text_field_widget import TextFieldWidget
-from .widgets.radio_box_widget import RadioBoxWidget
-from .widgets.accordion_widget import AccordionWidget
 from . import ui_constants
-import sys
+from .widgets.accordion_widget import AccordionWidget
+from .widgets.date_time_picker_widget import DateTimePickerWidget
+from .widgets.multi_select_widget import MultiSelectionWidget
+from .widgets.radio_box_widget import RadioBoxWidget
+from .widgets.text_field_widget import TextFieldWidget
 
 logger = logging.getLogger(__name__)
 
@@ -1331,12 +1331,15 @@ class RecoExplorerApp:
 
             # Client
             client_choice = pn.widgets.RadioButtonGroup(
-                name='',
+                name="",
                 options=get_client_options(self.config_full_path),
-                value=self.client)
+                value=self.client,
+            )
 
             if self.client_choice_visibility:
-                client_choice.param.watch(self.toggle_client_choice, 'value', onlychanged=True)
+                client_choice.param.watch(
+                    self.toggle_client_choice, "value", onlychanged=True
+                )
                 self.config_based_nav_controls.append(client_choice)
 
             for index, block in enumerate(blocks):
@@ -1456,9 +1459,9 @@ class RecoExplorerApp:
         self.pagination.append(self.previousPage)
 
         self.pagination.append(pn.pane.Markdown("""### Seite """))
-        self.pagination.append(pn.pane.Markdown(f"""### - """))
+        self.pagination.append(pn.pane.Markdown("""### - """))
         self.pagination.append(pn.pane.Markdown("""### von """))
-        self.pagination.append(pn.pane.Markdown(f"""### - """))
+        self.pagination.append(pn.pane.Markdown("""### - """))
 
         # next button
         self.nextPage = pn.widgets.Button(
@@ -1505,7 +1508,7 @@ class RecoExplorerApp:
 
     @staticmethod
     def render_404():
-        return pn.pane.Markdown(f"""## Unknown location""")
+        return pn.pane.Markdown("""## Unknown location""")
 
     #
     def render(self):

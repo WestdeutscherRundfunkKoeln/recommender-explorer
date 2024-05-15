@@ -1,13 +1,15 @@
-import panel as pn
 import logging
+
+import panel as pn
 from dto.content_item import ContentItemDto
 from view.cards.content_card import ContentCard
 
 logger = logging.getLogger(__name__)
 
-class ContentStartCard(ContentCard):
 
+class ContentStartCard(ContentCard):
     CARD_HEIGHT = 600
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -70,16 +72,18 @@ class ContentStartCard(ContentCard):
         teaserimage.stylesheets = [stylesheet_image]
         teaserimage.margin = (0, 0, 0, 0)
 
-        child_objects = [
-            teaserimage,
-            pn.pane.Markdown(f""" ### Modell: {model} """)
-        ]
+        child_objects = [teaserimage, pn.pane.Markdown(f""" ### Modell: {model} """)]
 
         card = pn.Card(
-            styles={ 'background': self.config[model_config][content_dto.provenance][model]['start_color'], 'overflow': 'auto' },
+            styles={
+                "background": self.config[model_config][content_dto.provenance][model][
+                    "start_color"
+                ],
+                "overflow": "auto",
+            },
             margin=5,
             height=self.CARD_HEIGHT,
-            hide_header=True
+            hide_header=True,
         )
 
         card.objects = child_objects

@@ -1,18 +1,16 @@
+import base64
+import collections
 import copy
 import logging
-import collections
-import pandas as pd
 import re
-import base64
-import constants
 
-from dataclasses import dataclass, fields
-from opensearchpy import OpenSearch, RequestsHttpConnection
-from datetime import datetime
-from model.base_data_accessor import BaseDataAccessor
-from exceptions.empty_search_error import EmptySearchError
+import constants
+import pandas as pd
 from dto.item import ItemDto
-from util.dto_utils import content_fields, update_from_props, get_primary_idents
+from exceptions.empty_search_error import EmptySearchError
+from model.base_data_accessor import BaseDataAccessor
+from opensearchpy import OpenSearch, RequestsHttpConnection
+from util.dto_utils import get_primary_idents, update_from_props
 
 logger = logging.getLogger(__name__)
 

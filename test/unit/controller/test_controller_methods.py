@@ -1,5 +1,7 @@
 from collections import namedtuple
+
 import pytest
+
 from src import constants
 from src.controller.reco_controller import RecommendationController
 

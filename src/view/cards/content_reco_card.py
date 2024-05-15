@@ -1,12 +1,13 @@
-import panel as pn
 import logging
+
+import panel as pn
 from dto.content_item import ContentItemDto
 from view.cards.content_card import ContentCard
 
 logger = logging.getLogger(__name__)
 
-class ContentRecoCard(ContentCard):
 
+class ContentRecoCard(ContentCard):
     CARD_HEIGHT = 600
     IMAGE_HEIGHT = 200
 
@@ -74,14 +75,21 @@ class ContentRecoCard(ContentCard):
 
         child_objects = [
             teaserimage,
-            pn.pane.Markdown(f""" ### Score Empfehlung {nr}: {str(round(content_dto.dist, 2))}""")
+            pn.pane.Markdown(
+                f""" ### Score Empfehlung {nr}: {str(round(content_dto.dist, 2))}"""
+            ),
         ]
 
         card = pn.Card(
-            styles={ 'background': self.config[model_config][content_dto.provenance][model]['reco_color'], 'overflow': 'auto'},
+            styles={
+                "background": self.config[model_config][content_dto.provenance][model][
+                    "reco_color"
+                ],
+                "overflow": "auto",
+            },
             margin=5,
             height=self.CARD_HEIGHT,
-            hide_header=True
+            hide_header=True,
         )
 
         card.objects = child_objects

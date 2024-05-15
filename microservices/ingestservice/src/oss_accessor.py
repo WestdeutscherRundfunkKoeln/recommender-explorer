@@ -14,7 +14,6 @@ class OssAccessor:
         host = config["opensearch"]["host"]
         auth = (config["opensearch"]["user"], config["opensearch"]["pass"])
         port = config["opensearch"]["port"]
-        use_ssl = config["deployment_env"] != "DEV"
 
         logger.info("Host: " + host)
 
@@ -22,8 +21,8 @@ class OssAccessor:
         self.oss_client = OpenSearch(
             hosts=[{"host": host, "port": port}],
             http_auth=auth,
-            use_ssl=use_ssl,
-            verify_certs=use_ssl,
+            use_ssl=True,
+            verify_certs=True,
             connection_class=RequestsHttpConnection,
             timeout=600,
         )

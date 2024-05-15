@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException, APIRouter
-from pydantic import ValidationError
-from src.embed_text import EmbedText
+import os
+
 from dto.embed_data import EmbedData
 from envyaml import EnvYAML
-import os
+from fastapi import APIRouter, FastAPI, HTTPException
+from pydantic import ValidationError
+
+from src.embed_text import EmbedText
 
 NAMESPACE = "embedding"
 
@@ -21,16 +23,18 @@ router = APIRouter()
 def health_check():
     return {"status": "OK"}
 
+
 @router.post("/embedding")
 def get_embedding(data: EmbedData):
     text_to_embed = data.embedText
     try:
         result = text_embedder.embed_text(text_to_embed)
     except ValidationError as exc:
-        error_message = repr(exc.errors()[0]['type'])
+        error_message = repr(exc.errors()[0]["type"])
         raise HTTPException(status_code=422, detail=error_message)
 
     return result
+
 
 @router.post("/add-embedding-to-doc")
 def add_embedding_to_document(data: EmbedData):
@@ -42,11 +46,14 @@ def add_embedding_to_document(data: EmbedData):
         text_embedder.add_embedding_to_document(id, result)
     except ValidationError as exc:
         error_message = repr(exc.errors()[0]["type"])
+<<<<<<< HEAD
         raise HTTPException(status_code=422, detail=error_message)  # TODO: Return here
+=======
+        raise HTTPException(status_code=422, detail=error_message)  # TODO: return here
+>>>>>>> c50a9c3 (chore: run formatter)
 
     return result
 
 
 app = FastAPI(title="Embedding Service")
 app.include_router(router, prefix=ROUTER_PREFIX)
-
