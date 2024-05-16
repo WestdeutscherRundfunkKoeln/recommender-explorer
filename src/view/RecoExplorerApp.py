@@ -3,7 +3,6 @@ import panel as pn
 import logging
 import traceback
 import constants
-from envyaml import EnvYAML
 from controller.reco_controller import RecommendationController
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.date_validation_error import DateValidationError
@@ -31,9 +30,9 @@ logger.setLevel(logging.INFO)
 #
 class RecoExplorerApp:
     #
-    def __init__(self, config_full_path: str) -> None:
+    def __init__(self, config_full_path: str, config: dict[str, str]) -> None:
         # basic setup
-        self.config = EnvYAML(config_full_path)
+        self.config = config
         self.config_full_path = config_full_path
         self.controller = RecommendationController(self.config)
 
@@ -49,8 +48,6 @@ class RecoExplorerApp:
             ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
             ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
         }
-        self.ui_config = self.load_ui_config()
-        logger.debug("ui_config initialized")
 
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
@@ -104,16 +101,6 @@ class RecoExplorerApp:
         self.set_u2c_model_definitions()
 
         self.url_parameter_text_field_mapping = {}
-
-    def load_ui_config(self) -> EnvYAML | dict:
-        ui_config = {}
-        try:
-            ui_config = EnvYAML(self.config[ui_constants.UI_CONFIG_KEY])
-        except KeyError:
-            logger.warning("UI config not found in config file")
-        except FileNotFoundError:
-            logger.warning("UI config file not found")
-        return ui_config
 
     def set_client(self):
         # Check if there are multiple config files. If yes, make config widget visible.
@@ -1352,9 +1339,7 @@ class RecoExplorerApp:
             block_list (list): list of ui blocks
         """
         block_list = []
-        blocks_config = self.config[
-            ui_constants.UI_CONFIG_KEY + "." + ui_constants.BLOCKS_CONFIG_KEY
-        ]
+        blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         for block_config in blocks_config:
             block = {
                 ui_constants.BLOCK_LABEL_LIST_KEY: block_config.get(
@@ -1384,7 +1369,7 @@ class RecoExplorerApp:
 
     #
     def assemble_components(self):
-        if self.ui_config:
+        if ui_constants.UI_CONFIG_BLOCKS in self.config:
             blocks = self.build_blocks()
             logger.debug("found blocks %s", blocks)
             block_counts = len(blocks)
