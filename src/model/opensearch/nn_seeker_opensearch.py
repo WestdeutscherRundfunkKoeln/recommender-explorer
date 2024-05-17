@@ -1,6 +1,5 @@
 import logging
 import httpx
-import os
 
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
@@ -33,9 +32,8 @@ class NnSeekerOpenSearch(NnSeeker):
 
         self.embedding_field_name = "embedding_01"
 
-        self.base_url_embedding = os.environ.get(
-            "BASE_URL_EMBEDDING"
-        )  # TODO: env variable? config?
+        self.base_url_embedding = config.get("ingest.base_url_embedding")
+        self.api_key = config.get("ingest.api_key")
 
     def set_model_config(self, model_config):
         self._set_model_name(model_config["endpoint"].removeprefix("opensearch://"))
@@ -56,6 +54,7 @@ class NnSeekerOpenSearch(NnSeeker):
                 f"{self.base_url_embedding}/embedding",
                 json=request_payload,
                 timeout=None,
+                headers={"x-api-key": self.api_key},
             ).json()
             embedding = response[self.embedding_field_name]
 

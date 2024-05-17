@@ -32,10 +32,10 @@ data_preprocessor = DataPreprocessor(config)
 
 
 def request(data, url):
-    response = httpx.post(
-        url, json=data, timeout=None
-    )  # TODO: remove timeout when search service is implemented
-    return response.json()
+    # TODO: remove timeout when search service is implemented
+    return httpx.post(
+        url, json=data, timeout=None, headers={"x-api-key": config.get("api_key")}
+    ).json()
 
 
 def get_storage_client():

@@ -33,5 +33,7 @@ class EmbedText:
         embedding["id"] = id
         # Send request to search service to add embedding to index
         httpx.post(
-            url=f"{BASE_URL_SEARCH}/create-single-document", json=embedding
+            url=f"{BASE_URL_SEARCH}/create-single-document",
+            json=embedding,
+            headers={"x-api-key": self.config.get("api_key")},
         ).json()
