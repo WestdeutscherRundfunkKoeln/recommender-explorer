@@ -32,8 +32,8 @@ class NnSeekerOpenSearch(NnSeeker):
 
         self.embedding_field_name = "embedding_01"
 
-        self.base_url_embedding = config.get("ingest.base_url_embedding")
-        self.api_key = config.get("ingest.api_key")
+        self.base_url_embedding = config["ingest.base_url_embedding"]
+        self.api_key = config["ingest.api_key"]
 
     def set_model_config(self, model_config):
         self._set_model_name(model_config["endpoint"].removeprefix("opensearch://"))

@@ -35,5 +35,5 @@ class EmbedText:
         httpx.post(
             url=f"{BASE_URL_SEARCH}/create-single-document",
             json=embedding,
-            headers={"x-api-key": self.config.get("api_key")},
+            headers={"x-api-key": self.config["api_key"]},
         ).json()
