@@ -73,10 +73,16 @@ services:
       - "1337"
     environment:
       - API_PREFIX=
+      - API_KEY=test
       - BASE_URL_SEARCH=http://search-service
       - BASE_URL_INGEST=http://ingest-service
       - BASE_URL_EMBEDDING=http://embedding-service
-      - MAPPING_DEFINITION='{"id":.sophoraId,"externalid":.externalId,"uuid":.uuid,"type":.type,"title":.title,"description":.["description"],"longDescription":.["longDescription"],"embedText":(.title+""+.longDescription),"availableFrom":.availableFrom,"availableTo":.availableTo,"firstPublicationDate":.firstPublicationDate,"keywords":.keywords,"language":.language,"duration":.durationSeconds,"thematicCategories":.thematicCategories,"genreCategory":.genreCategory,"subgenreCategories":.subgenreCategories,"filterCategory":.filterCategory,"structurePath":.structurePath,"site":.site,"domain":.domain,"teaserimage":.teaserImage.url,"fskAgeRating":.fskAgeRating,"contentRatings":.contentRatings,"geoAvailability":.geoAvailability,"sophoraid":.sophoraId}'
+      - OPENSEARCH_HOST=opensearch-node1
+      - OPENSEARCH_PORT=9200
+      - OPENSEARCH_USER=admin
+      - OPENSEARCH_PASS=admin
+      - OPENSEARCH_INDEX=test_index
+      - MAPPING_DEFINITION='{"id":.id,"externalid":.externalid,"uuid":.uuid,"title":.title,"description":.description,"longdescription":.longdescription,"availablefrom":.availablefrom,"availableto":.availableto,"duration":.durationseconds,"embedtext":.embedtext,"embedtexthash":.embedtexthash,"thematiccategories":.thematiccategories,"thematiccategoriesids":.thematiccategoriesids,"thematiccategoriestitle":.thematiccategoriestitle,"genrecategory":.genrecategory,"genrecategoryid":.genrecategoryid,"subgenrecategories":.subgenrecategories,"subgenrecategoriesids":.subgenrecategoriesids,"subgenrecategoriestitle":.subgenrecategoriestitle,"teaserimage":.teaserimage.url,"geoavailability":.geoavailability}'
       - DEPLOYMENT_ENVIRONMENT=DEV
       - STORAGE_SERVICE_ACCOUNT=$STORAGE_SERVICE_ACCOUNT
     networks:
@@ -116,6 +122,7 @@ services:
       - "1338"
     environment:
       - API_PREFIX=
+      - API_KEY=test
       - BASE_URL_SEARCH=http://search-service
       - BASE_URL_INGEST=http://ingest-service
       - BASE_URL_EMBEDDING=http://embedding-service

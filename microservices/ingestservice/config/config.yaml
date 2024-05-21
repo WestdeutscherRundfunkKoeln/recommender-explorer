@@ -1,4 +1,5 @@
 api_prefix: $API_PREFIX
+api_key: $API_KEY
 base_url_search: $BASE_URL_SEARCH
 base_url_ingest: $BASE_URL_INGEST
 base_url_embedding: $BASE_URL_EMBEDDING

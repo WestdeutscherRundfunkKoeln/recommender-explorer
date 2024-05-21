@@ -15,6 +15,7 @@ class DataPreprocessor:
     def __init__(self, config):
         self.mapping = config["mapping_definition"]
         self.base_url_embedding = config["base_url_embedding"]
+        self.api_key = config["api_key"]
 
     def preprocess_data(self, data: dict) -> RecoExplorerItem:
         # map data
@@ -43,4 +44,5 @@ class DataPreprocessor:
             f"{self.base_url_embedding}/add-embedding-to-doc",
             json=request_payload,
             timeout=None,
+            headers={"x-api-key": self.api_key},
         ).json()
