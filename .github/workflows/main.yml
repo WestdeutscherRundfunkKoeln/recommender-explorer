@@ -113,7 +113,7 @@ jobs:
   build_publish_deploy_ingest_prod:
     needs: unit_tests
     uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/SNTWREC-27_backend_ms_cicd'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     with:
       service-name: ingest
       stage: prod
@@ -129,7 +129,7 @@ jobs:
   build_publish_deploy_search_prod:
     needs: unit_tests
     uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/SNTWREC-27_backend_ms_cicd'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     with:
       service-name: search
       stage: prod
@@ -145,7 +145,7 @@ jobs:
   build_publish_deploy_embedding_prod:
     needs: unit_tests
     uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/SNTWREC-27_backend_ms_cicd'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     with:
       service-name: embedding
       stage: prod
