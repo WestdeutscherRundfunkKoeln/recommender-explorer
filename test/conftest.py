@@ -33,6 +33,8 @@ def controller(start_component: list, config: str) -> RecommendationController:
 def u2c_controller(start_component: list, model: list, config: str) -> RecommendationController:
     if not config.get(constants.MODEL_CONFIG_U2C):
         pytest.skip("configuration does not support u2c integration call")
+    if not config[constants.MODEL_CONFIG_U2C][constants.MODEL_TYPE_U2C].get(model[0]):
+            pytest.skip("model with identifier [" + model[0] + "] not found in config - cant initialise. check test parameters!")
     controller = RecommendationController(config)
     user_choice = mock_user_component(start_component)
     controller.register('user_choice', user_choice)
@@ -40,6 +42,8 @@ def u2c_controller(start_component: list, model: list, config: str) -> Recommend
     return controller
 @pytest.fixture
 def c2c_controller(selection_type: str, start_component: list, model: list, config: str) -> RecommendationController:
+    if not config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C].get(model[0]):
+            pytest.skip("model with identifier [" + model[0] + "] not found in config - cant initialise. check test parameters!")
     controller = RecommendationController(config)
     if selection_type == '_by_date':
         for position in ['start', 'end']:
