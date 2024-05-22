@@ -1,4 +1,4 @@
-name: CI Workflow
+name: CICD Main Workflow
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
     branches:
       - 'main'
       - 'dev'
+      - 'SNTWREC-27_backend_ms_cicd'
 
 jobs:
   unit_tests:
@@ -61,58 +62,18 @@ jobs:
           docker build --file ./microservices/embeddingservice/docker/Dockerfile ./microservices/embeddingservice
           echo "embedding service image build OK"
 
-  
-  docker_build_publish_dev:
+
+  build_publish_deploy_ingest_dev:
     needs: unit_tests
-    name: docker_build_publish_dev
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.PAT }}
-      
-      - name: Extract short SHA
-        run: |
-          shortSha=$(git rev-parse --short ${{ github.sha }})
-          echo "COMMIT_SHORT_SHA=$shortSha" >> $GITHUB_ENV
-    
-      - name: Downcase Repository
-        run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-
-      - name: Build and push Docker Image - Ingest Service
-        uses: docker/build-push-action@v2
-        with:
-          context: ./microservices/ingestservice
-          file: ./microservices/ingestservice/docker/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ env.REPO_LOWER }}:dev-ingest-${{ env.COMMIT_SHORT_SHA }}
-            ghcr.io/${{ env.REPO_LOWER }}:dev-ingest-latest
-    
-      - name: Build and push Docker Image - Search Service
-        uses: docker/build-push-action@v2
-        with:
-          context: ./microservices/searchservice
-          file: ./microservices/searchservice/docker/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ env.REPO_LOWER }}:dev-search-${{ env.COMMIT_SHORT_SHA }}
-            ghcr.io/${{ env.REPO_LOWER }}:dev-search-latest
-
-      - name: Build and push Docker Image - Embedding Service
-        uses: docker/build-push-action@v2
-        with:
-          context: ./microservices/embeddingservice
-          file: ./microservices/embeddingservice/docker/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ env.REPO_LOWER }}:dev-embedding-${{ env.COMMIT_SHORT_SHA }}
-            ghcr.io/${{ env.REPO_LOWER }}:dev-embedding-latest
+    uses: ./.github/workflows/build-publish-deploy.yml
+    if: github.event_name == 'push' && github.ref == 'SNTWREC-27_backend_ms_cicd'
+    with:
+      service-name: ingest
+      environment: dev
+      stage: dev
+    secrets:
+      PAT: ${{ secrets.PAT }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
