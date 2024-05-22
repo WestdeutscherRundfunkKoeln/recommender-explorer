@@ -1,0 +1,112 @@
+{
+  "type": "object",
+  "properties": {
+    "ui_config": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the App. Is Shown in the visible Header."
+        },
+        "logo": {
+          "type": "string",
+          "format": "uri",
+          "description": "Can contain a URL to an Icon or Logo Image."
+        },
+        "header_background": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Background color of the Header. Must be a valid HEX color code."
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "headline of the block"
+              },
+              "components": {
+                "type": "array",
+                "description": "contains the configuration of the widgets which can be shown.",
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/text_field"
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "components"
+            ]
+          }
+        },
+        "costom_css": {
+          "type": "string",
+          "description": "Custom CSS to be included in the App."
+        }
+      },
+      "required": [
+        "blocks"
+      ]
+    }
+  },
+  "required": [
+    "ui_config"
+  ],
+  "$defs": {
+    "text_field": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text_field"
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the Text Field."
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Placeholder of the Text Field."
+        },
+        "validator_function": {
+          "type": "string",
+          "description": "Validator function name, which checks the given content in the controller before searching."
+        },
+        "accessor_function": {
+          "type": "string",
+          "description": "Accessor function name, which is used to create the search query."
+        },
+        "url_parameter": {
+          "type": "string",
+          "description": "Name of the URL parameter, which is used to pass the value to the controller."
+        }
+      },
+      "required": [
+        "type",
+        "validator_function",
+        "accessor_function"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "label"
+          ]
+        },
+        {
+          "required": [
+            "placeholder"
+          ]
+        }
+      ]
+    },
+    "date_time_picker": {},
+    "multi_select": {},
+    "accordion": {},
+    "radio_box": {}
+  }
+}
