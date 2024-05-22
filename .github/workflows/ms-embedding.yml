@@ -1,4 +1,4 @@
-name: Microservice CICD - Embedding
+name: Microservice - Embedding
 
 on:
   push:

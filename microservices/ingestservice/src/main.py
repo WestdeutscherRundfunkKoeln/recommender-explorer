@@ -32,7 +32,7 @@ data_preprocessor = DataPreprocessor(config)
 
 
 def request(data, url):
-    # TODO: remove timeout when search service is implemented
+    # TODO: Remove timeout when search service is implemented
     return httpx.post(
         url, json=data, timeout=None, headers={"x-api-key": config["api_key"]}
     ).json()

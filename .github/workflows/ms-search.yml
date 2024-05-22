@@ -1,4 +1,4 @@
-name: Microservice CICD - Search
+name: Microservice - Search
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Microservice CICD - Ingest
+name: Microservice - Ingest
 
 on:
   push:
