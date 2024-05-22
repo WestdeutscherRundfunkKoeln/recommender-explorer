@@ -74,5 +74,5 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ECS-CLUSTER: ${{ secrets.ECS_CLUSTER }}
+      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
       MS_PREFIX: ${{ secrets.MS_PREFIX }}

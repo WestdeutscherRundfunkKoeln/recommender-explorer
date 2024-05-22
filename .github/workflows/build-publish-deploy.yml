@@ -19,7 +19,7 @@ on:
         required: true
       AWS_SECRET_ACCESS_KEY:
         required: true
-      ECS-CLUSTER:
+      ECS_CLUSTER:
         required: true
       MS_PREFIX:
         required: true
