@@ -39,9 +39,9 @@ jobs:
 
       - name: Configure image tags
         run: |
-          TAG_COMMIT=$(echo "ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}")
+          TAG_COMMIT=$(echo "ghcr.io/${{ env.REPO_LOWER }}:${{ env.STAGE }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}")
           echo "TAG_COMMIT=$TAG_COMMIT" >> $GITHUB_ENV
-          TAG_LATEST=$(echo "ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-latest")
+          TAG_LATEST=$(echo "ghcr.io/${{ env.REPO_LOWER }}:${{ env.STAGE }}-${{ inputs.service-name }}-latest")
           echo "TAG_LATEST=$TAG_LATEST" >> $GITHUB_ENV
 
       - name: Build and push Docker Image
@@ -56,7 +56,7 @@ jobs:
   
       - name: Configure ECS params
         run: |
-          STAGE_UPPER=$(echo "${{ inputs.stage }}" | tr '[:lower:]' '[:upper:]')
+          STAGE_UPPER=$(echo "${{ env.STAGE }}" | tr '[:lower:]' '[:upper:]')
           ECS_SERVICE=$(echo "$STAGE_UPPER-${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}")
           echo "ECS_SERVICE=$ECS_SERVICE" >> $GITHUB_ENV
           ECS_CONTAINER=$(echo "${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}")
