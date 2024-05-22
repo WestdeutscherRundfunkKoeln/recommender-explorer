@@ -1,34 +1,26 @@
 name: Build, Publish and Deploy Workflow
-on: 
+on:
   workflow_call:
     inputs:
       service-name:
         required: true
         type: string
         description: Name of the service
-      stage:
-        required: true
-        type: string
-        description: Deployment Stage
-    secrets:
-      PAT:
-        required: true
-      AWS_REGION:
-        required: true
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-      ECS_CLUSTER:
-        required: true
-      MS_PREFIX:
-        required: true
+
 jobs:
   build_publish_deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+  
+      - name: Set stage environment variable
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "STAGE=prod" >> $GITHUB_ENV
+          else
+            echo "STAGE=dev" >> $GITHUB_ENV
+          fi
   
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v1

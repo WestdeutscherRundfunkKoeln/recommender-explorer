@@ -1,0 +1,17 @@
+name: Microservice CICD - Ingest
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - SNTWREC-27_backend_ms_cicd
+    paths:
+      - 'microservices/ingestservice/**'
+
+jobs:
+  build_publish_deploy_ingest:
+    uses: ./.github/workflows/build-publish-deploy.yml
+    with:
+      service-name: ingest
+    secrets: inherit

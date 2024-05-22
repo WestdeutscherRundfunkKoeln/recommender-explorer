@@ -1,0 +1,17 @@
+name: Microservice CICD - Embedding
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - SNTWREC-27_backend_ms_cicd
+    paths:
+      - 'microservices/embeddingservice/**'
+
+jobs:
+  build_publish_deploy_ingest:
+    uses: ./.github/workflows/build-publish-deploy.yml
+    with:
+      service-name: embedding
+    secrets: inherit

@@ -1,0 +1,17 @@
+name: Microservice CICD - Search
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - SNTWREC-27_backend_ms_cicd
+    paths:
+      - 'microservices/searchservice/**'
+
+jobs:
+  build_publish_deploy_ingest:
+    uses: ./.github/workflows/build-publish-deploy.yml
+    with:
+      service-name: search
+    secrets: inherit

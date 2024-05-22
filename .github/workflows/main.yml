@@ -43,7 +43,6 @@ jobs:
   
   #Build Images (not publish) on pull to dev & main
   docker_build:
-    needs: unit_tests
     name: docker_build
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && (github.base_ref == 'dev' || github.base_ref == 'main')
@@ -60,99 +59,3 @@ jobs:
           echo "search service image build OK"
           docker build --file ./microservices/embeddingservice/docker/Dockerfile ./microservices/embeddingservice
           echo "embedding service image build OK"
-
-
-  build_publish_deploy_ingest_dev:
-    needs: unit_tests
-    uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-    with:
-      service-name: ingest
-      stage: dev
-    secrets:
-      PAT: ${{ secrets.PAT }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-      MS_PREFIX: ${{ secrets.MS_PREFIX }}
-
-    
-  build_publish_deploy_search_dev:
-      needs: unit_tests
-      uses: ./.github/workflows/build-publish-deploy.yml
-      if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-      with:
-        service-name: search
-        stage: dev
-      secrets:
-        PAT: ${{ secrets.PAT }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-        MS_PREFIX: ${{ secrets.MS_PREFIX }}
-
-
-  build_publish_deploy_embedding_dev:
-    needs: unit_tests
-    uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-    with:
-      service-name: embedding
-      stage: dev
-    secrets:
-      PAT: ${{ secrets.PAT }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-      MS_PREFIX: ${{ secrets.MS_PREFIX }}
-
-
-  build_publish_deploy_ingest_prod:
-    needs: unit_tests
-    uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    with:
-      service-name: ingest
-      stage: prod
-    secrets:
-      PAT: ${{ secrets.PAT }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-      MS_PREFIX: ${{ secrets.MS_PREFIX }}
-    
-        
-  build_publish_deploy_search_prod:
-    needs: unit_tests
-    uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    with:
-      service-name: search
-      stage: prod
-    secrets:
-      PAT: ${{ secrets.PAT }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-      MS_PREFIX: ${{ secrets.MS_PREFIX }}
-    
-    
-  build_publish_deploy_embedding_prod:
-    needs: unit_tests
-    uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    with:
-      service-name: embedding
-      stage: prod
-    secrets:
-      PAT: ${{ secrets.PAT }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-      MS_PREFIX: ${{ secrets.MS_PREFIX }}
