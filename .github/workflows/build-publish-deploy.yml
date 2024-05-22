@@ -81,18 +81,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
   
-      - name: Download existing task definition
-        id: download-task-definition
-        uses: aws-actions/amazon-ecs-download-task-definition@v1
-        with:
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ secrets.ECS_CLUSTER }}
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.ECS_SERVICE }} --region ${{ secrets.AWS_REGION }} --query 'taskDefinition' > task-definition.json
       
       - name: Render new task definition
         id: render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ${{ steps.download-task-definition.outputs.task-definition }}
+          task-definition: ./task-definition.json
           container-name: ${{ env.ECS_CONTAINER }}
           image: ${{ env.TAG_COMMIT }}
   
