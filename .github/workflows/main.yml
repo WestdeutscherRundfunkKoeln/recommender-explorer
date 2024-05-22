@@ -65,7 +65,7 @@ jobs:
   build_publish_deploy_ingest_dev:
     needs: unit_tests
     uses: ./.github/workflows/build-publish-deploy.yml
-    if: github.event_name == 'push' && github.ref == 'SNTWREC-27_backend_ms_cicd'
+    #if: github.event_name == 'push' && github.ref == 'SNTWREC-27_backend_ms_cicd'
     with:
       service-name: ingest
       stage: dev
