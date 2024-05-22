@@ -44,11 +44,6 @@ jobs:
 
       - name: Downcase Repository
         run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-      
-      - name: Uppercase stage
-        run: |
-          STAGE_UPPER=$(echo "${{ inputs.stage }}" | tr '[:lower:]' '[:upper:]')
-          echo "STAGE_UPPER=$STAGE_UPPER" >> $GITHUB_ENV
 
       - name: Configure image tags
         run: |
@@ -69,7 +64,8 @@ jobs:
   
       - name: Configure ECS params
         run: |
-          ECS_SERVICE=$(echo "${{ env.STAGE_UPPER }}-${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}")
+          STAGE_UPPER=$(echo "${{ inputs.stage }}" | tr '[:lower:]' '[:upper:]')
+          ECS_SERVICE=$(echo "$STAGE_UPPER-${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}")
           echo "ECS_SERVICE=$ECS_SERVICE" >> $GITHUB_ENV
           ECS_CONTAINER=$(echo "${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}")
           echo "ECS_CONTAINER=$ECS_CONTAINER" >> $GITHUB_ENV
