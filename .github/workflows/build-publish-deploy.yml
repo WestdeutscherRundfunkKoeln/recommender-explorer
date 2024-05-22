@@ -44,7 +44,7 @@ jobs:
           TAG_LATEST=$(echo "ghcr.io/${{ env.REPO_LOWER }}:${{ env.STAGE }}-${{ inputs.service-name }}-latest")
           echo "TAG_LATEST=$TAG_LATEST" >> $GITHUB_ENV
 
-      - name: Build and push Docker Image
+      - name: Build and push docker image
         uses: docker/build-push-action@v2
         with:
           context: ./microservices/${{ inputs.service-name }}service
