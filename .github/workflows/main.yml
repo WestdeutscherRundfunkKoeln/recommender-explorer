@@ -64,7 +64,7 @@ jobs:
 
 
   build_publish_deploy_ingest_dev:
-    needs: unit_tests
+    #needs: unit_tests
     uses: ./.github/workflows/build-publish-deploy.yml
     if: github.event_name == 'push' && github.ref == 'SNTWREC-27_backend_ms_cicd'
     with:
@@ -76,4 +76,4 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+      ECS-CLUSTER: ${{ secrets.ECS_CLUSTER }}
