@@ -41,7 +41,7 @@ jobs:
         run: |
           shortSha=$(git rev-parse --short ${{ github.sha }})
           echo "COMMIT_SHORT_SHA=$shortSha" >> $GITHUB_ENV
-      
+
       - name: Downcase Repository
         run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
       
@@ -49,7 +49,14 @@ jobs:
         run: |
           STAGE_UPPER=$(echo "${{ inputs.stage }}" | tr '[:lower:]' '[:upper:]')
           echo "STAGE_UPPER=$STAGE_UPPER" >> $GITHUB_ENV
-  
+
+      - name: Configure image tags
+        run: |
+          TAG_COMMIT=$(echo "ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}")
+          echo "TAG_COMMIT=$TAG_COMMIT" >> $GITHUB_ENV
+          TAG_LATEST=$(echo "ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-latest")
+          echo "TAG_LATEST=$TAG_LATEST" >> $GITHUB_ENV
+
       - name: Build and push Docker Image
         uses: docker/build-push-action@v2
         with:
@@ -57,9 +64,16 @@ jobs:
           file: ./microservices/${{ inputs.service-name }}service/docker/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}
-            ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-latest
-      
+            ${{ env.TAG_COMMIT }}
+            ${{ env.TAG_LATEST }}
+  
+      - name: Configure ECS params
+        run: |
+          ECS_SERVICE=$(echo "${{ env.STAGE_UPPER }}-${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}")
+          echo "ECS_SERVICE=$ECS_SERVICE" >> $GITHUB_ENV
+          ECS_CONTAINER=$(echo "${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}")
+          echo "ECS_CONTAINER=$ECS_CONTAINER" >> $GITHUB_ENV
+    
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -71,7 +85,7 @@ jobs:
         id: download-task-definition
         uses: aws-actions/amazon-ecs-download-task-definition@v1
         with:
-          service: "${{ env.STAGE_UPPER }}-${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}"
+          service: ${{ env.ECS_SERVICE }}
           cluster: ${{ secrets.ECS_CLUSTER }}
       
       - name: Render new task definition
@@ -79,13 +93,13 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ steps.download-task-definition.outputs.task-definition }}
-          container-name: "${{ secrets.MS_PREFIX }}-${{ inputs.service-name}}"
-          image: ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}
+          container-name: ${{ env.ECS_CONTAINER }}
+          image: ${{ env.TAG_COMMIT }}
   
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          service: "${{ env.STAGE_UPPER }}-${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}"
+          service: ${{ env.ECS_SERVICE }}
           cluster: ${{ secrets.ECS_CLUSTER }}
           task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
           wait-for-service-stability: true
