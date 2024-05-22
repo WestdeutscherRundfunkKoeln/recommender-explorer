@@ -2,10 +2,6 @@ name: Build, Publish and Deploy Workflow
 on: 
   workflow_call:
     inputs:
-      environment:
-        type: string
-        required: true
-        description: Github environment
       service-name:
         required: true
         type: string
@@ -25,11 +21,11 @@ on:
         required: true
       ECS-CLUSTER:
         required: true
-      
+      MS_PREFIX:
+        required: true
 jobs:
   build_publish_deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,6 +44,11 @@ jobs:
       
       - name: Downcase Repository
         run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+      
+      - name: Uppercase stage
+        run: |
+          STAGE_UPPER=$(echo "${{ inputs.stage }}" | tr '[:lower:]' '[:upper:]')
+          echo "STAGE_UPPER=$STAGE_UPPER" >> $GITHUB_ENV
   
       - name: Build and push Docker Image
         uses: docker/build-push-action@v2
@@ -58,7 +59,7 @@ jobs:
           tags: |
             ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}
             ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-latest
-    
+      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -66,25 +67,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
   
-      # - name: Download existing task definition
-      #   id: download-task-definition
-      #   uses: aws-actions/amazon-ecs-download-task-definition@v1
-      #   with:
-      #     service: ${{ secrets.ECS_SERVICE }}
-      #     cluster: ${{ secrets.ECS_CLUSTER }}
+      - name: Download existing task definition
+        id: download-task-definition
+        uses: aws-actions/amazon-ecs-download-task-definition@v1
+        with:
+          service: "${{ env.STAGE_UPPER }}-${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}"
+          cluster: ${{ secrets.ECS_CLUSTER }}
       
-      # - name: Render new task definition
-      #   id: render-task-definition
-      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-      #   with:
-      #     task-definition: ${{ steps.download-task-definition.outputs.task-definition }}
-      #     container-name: ${{ secrets.CONTAINER_NAME }}
-      #     image: ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}
+      - name: Render new task definition
+        id: render-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ steps.download-task-definition.outputs.task-definition }}
+          container-name: "${{ secrets.MS_PREFIX }}-${{ inputs.service-name}}"
+          image: ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}
   
-      # - name: Deploy to ECS
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      #   with:
-      #     service: ${{ secrets.ECS_SERVICE }}
-      #     cluster: ${{ secrets.ECS_CLUSTER }}
-      #     task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
-      #     wait-for-service-stability: true
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          service: "${{ env.STAGE_UPPER }}-${{ secrets.MS_PREFIX }}-${{ inputs.service-name }}"
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
+          wait-for-service-stability: true

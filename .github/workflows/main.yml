@@ -8,7 +8,6 @@ on:
     branches:
       - 'main'
       - 'dev'
-      - 'SNTWREC-27_backend_ms_cicd'
 
 jobs:
   unit_tests:
@@ -42,7 +41,7 @@ jobs:
             pytest test/unit --doctest-modules --junitxml=junit/test-results.xml
 
   
-  # Build Images (not publish) on pull to dev & main
+  #Build Images (not publish) on pull to dev & main
   docker_build:
     needs: unit_tests
     name: docker_build
@@ -64,12 +63,11 @@ jobs:
 
 
   build_publish_deploy_ingest_dev:
-    #needs: unit_tests
+    needs: unit_tests
     uses: ./.github/workflows/build-publish-deploy.yml
     if: github.event_name == 'push' && github.ref == 'SNTWREC-27_backend_ms_cicd'
     with:
       service-name: ingest
-      environment: dev
       stage: dev
     secrets:
       PAT: ${{ secrets.PAT }}
@@ -77,3 +75,4 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       ECS-CLUSTER: ${{ secrets.ECS_CLUSTER }}
+      MS_PREFIX: ${{ secrets.MS_PREFIX }}
