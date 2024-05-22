@@ -1,0 +1,90 @@
+name: Build, Publish and Deploy Workflow
+on: 
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+        description: Github environment
+      service-name:
+        required: true
+        type: string
+        description: Name of the service
+      stage:
+        required: true
+        type: string
+        description: Deployment Stage
+    secrets:
+      PAT:
+        required: true
+      AWS_REGION:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      ECS-CLUSTER:
+        required: true
+      
+jobs:
+  build_publish_deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+  
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PAT }}
+        
+      - name: Extract short SHA
+        run: |
+          shortSha=$(git rev-parse --short ${{ github.sha }})
+          echo "COMMIT_SHORT_SHA=$shortSha" >> $GITHUB_ENV
+      
+      - name: Downcase Repository
+        run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+  
+      - name: Build and push Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./microservices/${{ inputs.service-name }}service
+          file: ./microservices/${{ inputs.service-name }}service/docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}
+            ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-latest
+    
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+  
+      # - name: Download existing task definition
+      #   id: download-task-definition
+      #   uses: aws-actions/amazon-ecs-download-task-definition@v1
+      #   with:
+      #     service: ${{ secrets.ECS_SERVICE }}
+      #     cluster: ${{ secrets.ECS_CLUSTER }}
+      
+      # - name: Render new task definition
+      #   id: render-task-definition
+      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+      #   with:
+      #     task-definition: ${{ steps.download-task-definition.outputs.task-definition }}
+      #     container-name: ${{ secrets.CONTAINER_NAME }}
+      #     image: ghcr.io/${{ env.REPO_LOWER }}:${{ inputs.stage }}-${{ inputs.service-name }}-${{ env.COMMIT_SHORT_SHA }}
+  
+      # - name: Deploy to ECS
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      #   with:
+      #     service: ${{ secrets.ECS_SERVICE }}
+      #     cluster: ${{ secrets.ECS_CLUSTER }}
+      #     task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
+      #     wait-for-service-stability: true
