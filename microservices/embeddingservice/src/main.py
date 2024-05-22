@@ -42,7 +42,7 @@ def add_embedding_to_document(data: EmbedData):
         text_embedder.add_embedding_to_document(id, result)
     except ValidationError as exc:
         error_message = repr(exc.errors()[0]["type"])
-        raise HTTPException(status_code=422, detail=error_message)  # TODO: return here
+        raise HTTPException(status_code=422, detail=error_message)  # TODO: Return here
 
     return result
 

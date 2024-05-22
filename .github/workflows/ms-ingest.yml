@@ -1,0 +1,16 @@
+name: Microservice - Ingest
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'microservices/ingestservice/**'
+
+jobs:
+  build_publish_deploy_ingest:
+    uses: ./.github/workflows/build-publish-deploy.yml
+    with:
+      service-name: ingest
+    secrets: inherit

@@ -32,7 +32,7 @@ data_preprocessor = DataPreprocessor(config)
 
 
 def request(data, url):
-    # TODO: remove timeout when search service is implemented
+    # TODO: Remove timeout when search service is implemented
     return httpx.post(
         url, json=data, timeout=None, headers={"x-api-key": config["api_key"]}
     ).json()
@@ -87,7 +87,7 @@ def ingest_item(
 
     document = data_preprocessor.preprocess_data(download_document(storage, event))
     data_preprocessor.add_embeddings(document)
-    # add data to index
+    # Add data to index
     return request(document.model_dump(), f"{BASE_URL_SEARCH}/create-single-document")
 
 
