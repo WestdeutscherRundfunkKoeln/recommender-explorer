@@ -23,7 +23,10 @@ def health_check():
 
 @router.post("/create-single-document")
 def create_document(data: dict):
-    # add data to index
+    print("---------------")
+    print(data)
+    print("---------------")
+    # Add data to index
     response = oss_doc_generator.create_oss_doc(data)
     return response
 
@@ -35,8 +38,8 @@ def bulk_create_document(data: dict):
     return response
 
 
-@router.delete("/delete-data/{id}")
-def delete_document(document_id):
+@router.delete("/delete-data")
+def delete_document(document_id: str):
     response = oss_doc_generator.delete_oss_doc(document_id)
     return response
 
