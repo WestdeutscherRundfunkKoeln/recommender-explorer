@@ -138,6 +138,15 @@
                     "type": "string"
                   }
                 }
+              },
+              "item_accessor": {
+                "type": "string"
+              },
+              "pa_service_rest_url": {
+                "type": "string"
+              },
+              "pa_service_rest_endpoint": {
+                "type": "string"
               }
             },
             "required": [
