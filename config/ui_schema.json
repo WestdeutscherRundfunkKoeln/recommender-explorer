@@ -34,6 +34,18 @@
                   "anyOf": [
                     {
                       "$ref": "#/$defs/text_field"
+                    },
+                    {
+                      "$ref": "#/$defs/date_time_picker"
+                    },
+                    {
+                      "$ref": "#/$defs/multi_select"
+                    },
+                    {
+                      "$ref": "#/$defs/accordion"
+                    },
+                    {
+                      "$ref": "#/$defs/radio_box"
                     }
                   ]
                 }
@@ -104,9 +116,204 @@
         }
       ]
     },
-    "date_time_picker": {},
-    "multi_select": {},
-    "accordion": {},
-    "radio_box": {}
+    "date_time_picker": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "date_time_picker"
+        },
+        "name": {
+          "type": "string",
+          "description": "Header of the Date Time Picker."
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the Date Time Picker."
+        },
+        "validator": {
+          "type": "string",
+          "description": "Validator function name, which checks the given content in the controller before searching."
+        },
+        "accessor_function": {
+          "type": "string",
+          "description": "Accessor function name, which is used to create the search query."
+        }
+      },
+      "required": [
+        "type",
+        "validator",
+        "accessor_function"
+      ]
+    },
+    "multi_select": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "multi_select"
+        },
+        "label": {
+          "type": "string",
+          "description": "Header of the Multi Select."
+        },
+        "register_as": {
+          "type": "string",
+          "description": "Sets the value which gets registered in the controller."
+        },
+        "linked_filter_name": {
+          "type": "string",
+          "description": "Name of the filter which is linked to this Multi Select."
+        },
+        "filter_category": {
+          "type": "string",
+          "description": "Category of the filter."
+        },
+        "options": {
+          "type": "array",
+          "description": "Array of options which can be selected.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "default": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "display_name"
+            ]
+          }
+        },
+        "dictionary_options": {
+          "type": "array",
+          "description": "Array of options which can be selected.",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "option_default": {
+          "type": "string",
+          "description": "Key of the default option."
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "options"
+          ]
+        },
+        {
+          "required": [
+            "dictionary_options"
+          ]
+        },
+        {
+          "required": [
+            "option_default"
+          ]
+        }
+      ]
+    },
+    "accordion": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "accordion"
+        },
+        "label": {
+          "type": "string",
+          "description": "Header of the Accordion."
+        },
+        "active": {
+          "type": "integer",
+          "description": "which accordion should be open by default."
+        },
+        "toggle": {
+          "type": "boolean",
+          "description": "If true, multiple accordions can be opened at the same time."
+        },
+        "content": {
+          "type": "array",
+          "description": "Array of objects which can be shown in the accordion.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/text_field"
+              },
+              {
+                "$ref": "#/$defs/multi_select"
+              },
+              {
+                "$ref": "#/$defs/date_time_picker"
+              },
+              {
+                "$ref": "#/$defs/radio_box"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ]
+    },
+    "radio_box": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "radio_box"
+        },
+        "label": {
+          "type": "string",
+          "description": "Header of the Radio Box."
+        },
+        "options": {
+          "description": "Options which can be selected.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/text_field"
+                },
+                {
+                  "$ref": "#/$defs/multi_select"
+                },
+                {
+                  "$ref": "#/$defs/date_time_picker"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "required": [
+        "type",
+        "options"
+      ]
+    }
   }
 }
