@@ -46,6 +46,7 @@ pip3 install -r requirements.txt
 #### Adapt the configuration file
 Copy the file <local_path>/config/config_template.yaml to </path/to/your_config_file.yaml> and configure your model endpoints and mappings accordingly. 
 A config file can be validated by using [pajv](https://github.com/json-schema-everywhere/pajv)
+
 ```pajv -s config/schema/schema.json -d </path/to/your_config_file.yaml>```
 
 ### Start Recommender Explorer in development mode
@@ -100,9 +101,8 @@ You can define different widgets in the configuration and some of these can also
 
 ## General UI Configuration
 To Configure A UI, the config file needs to contain some Key Value Pairs. In these some general Defaults will be set and the blocks are configured, which contain the widgets themselves.
-
-## UI Configuration Validation
 A UI config file can be validated by using [pajv](https://github.com/json-schema-everywhere/pajv)
+
 ```pajv -s config/schema/ui_schema.json -d </path/to/your_ui_config_file.yaml>```
 
 ### Config Overview
