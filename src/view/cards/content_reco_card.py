@@ -1,12 +1,13 @@
-import panel as pn
 import logging
+
+import panel as pn
 from dto.content_item import ContentItemDto
 from view.cards.content_card import ContentCard
 
 logger = logging.getLogger(__name__)
 
-class ContentRecoCard(ContentCard):
 
+class ContentRecoCard(ContentCard):
     CARD_HEIGHT = 600
     IMAGE_HEIGHT = 200
 
@@ -18,12 +19,12 @@ class ContentRecoCard(ContentCard):
                                  .img_wrapper {
                                      position: relative;
                                      width: 100%;
-                                     height: 200px; 
+                                     height: 200px;
                                  }
 
                                  img {
                                      display:block;
-                                     width: 100%; 
+                                     width: 100%;
                                      height: 100%;
 
                                      position: absolute;
@@ -41,20 +42,20 @@ class ContentRecoCard(ContentCard):
                                  }
 
                                  .duration_label {
-                                     position: absolute; 
-                                     right:0px; 
-                                     top:0px; 
+                                     position: absolute;
+                                     right:0px;
+                                     top:0px;
 
-                                     background-color: 
-                                     rgba(0,0,0,0.4); 
+                                     background-color:
+                                     rgba(0,0,0,0.4);
 
-                                     padding-left: 4px; 
+                                     padding-left: 4px;
                                      padding-right: 4px;
                                  }
 
                                  .duration_label span{
-                                     color: #ffff; 
-                                     font-weight: 500; 
+                                     color: #ffff;
+                                     font-weight: 500;
                                      font-size: 12px;
                                  }
                              """
@@ -74,14 +75,21 @@ class ContentRecoCard(ContentCard):
 
         child_objects = [
             teaserimage,
-            pn.pane.Markdown(f""" ### Score Empfehlung {nr}: {str(round(content_dto.dist, 2))}""")
+            pn.pane.Markdown(
+                f""" ### Score Empfehlung {nr}: {str(round(content_dto.dist, 2))}"""
+            ),
         ]
 
         card = pn.Card(
-            styles={ 'background': self.config[model_config][content_dto.provenance][model]['reco_color'], 'overflow': 'auto'},
+            styles={
+                "background": self.config[model_config][content_dto.provenance][model][
+                    "reco_color"
+                ],
+                "overflow": "auto",
+            },
             margin=5,
             height=self.CARD_HEIGHT,
-            hide_header=True
+            hide_header=True,
         )
 
         card.objects = child_objects

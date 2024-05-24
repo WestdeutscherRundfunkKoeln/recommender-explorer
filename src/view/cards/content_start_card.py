@@ -1,13 +1,15 @@
-import panel as pn
 import logging
+
+import panel as pn
 from dto.content_item import ContentItemDto
 from view.cards.content_card import ContentCard
 
 logger = logging.getLogger(__name__)
 
-class ContentStartCard(ContentCard):
 
+class ContentStartCard(ContentCard):
     CARD_HEIGHT = 600
+
     def __init__(self, config):
         super().__init__(config)
 
@@ -16,12 +18,12 @@ class ContentStartCard(ContentCard):
                          .img_wrapper {
                              position: relative;
                              width: 100%;
-                             height: 200px; 
+                             height: 200px;
                          }
 
                          img {
                              display:block;
-                             width: 100%; 
+                             width: 100%;
                              height: 100%;
 
                              position: absolute;
@@ -39,20 +41,20 @@ class ContentStartCard(ContentCard):
                          }
 
                          .duration_label {
-                             position: absolute; 
-                             right:0px; 
-                             top:0px; 
+                             position: absolute;
+                             right:0px;
+                             top:0px;
 
-                             background-color: 
-                             rgba(0,0,0,0.4); 
+                             background-color:
+                             rgba(0,0,0,0.4);
 
-                             padding-left: 4px; 
+                             padding-left: 4px;
                              padding-right: 4px;
                          }
 
                          .duration_label span{
-                             color: #ffff; 
-                             font-weight: 500; 
+                             color: #ffff;
+                             font-weight: 500;
                              font-size: 12px;
                          }
                      """
@@ -70,16 +72,18 @@ class ContentStartCard(ContentCard):
         teaserimage.stylesheets = [stylesheet_image]
         teaserimage.margin = (0, 0, 0, 0)
 
-        child_objects = [
-            teaserimage,
-            pn.pane.Markdown(f""" ### Modell: {model} """)
-        ]
+        child_objects = [teaserimage, pn.pane.Markdown(f""" ### Modell: {model} """)]
 
         card = pn.Card(
-            styles={ 'background': self.config[model_config][content_dto.provenance][model]['start_color'], 'overflow': 'auto' },
+            styles={
+                "background": self.config[model_config][content_dto.provenance][model][
+                    "start_color"
+                ],
+                "overflow": "auto",
+            },
             margin=5,
             height=self.CARD_HEIGHT,
-            hide_header=True
+            hide_header=True,
         )
 
         card.objects = child_objects

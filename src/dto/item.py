@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, InitVar
+from dataclasses import dataclass
 
 
 @dataclass

@@ -1,9 +1,9 @@
 import logging
-import httpx
 
+import httpx
+from dto.item import ItemDto
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
-from dto.item import ItemDto
 
 logger = logging.getLogger(__name__)
 

@@ -1,30 +1,33 @@
-import panel as pn
 import logging
-from dto.content_item import ContentItemDto
+
+import panel as pn
 from view.cards.content_card import ContentCard
 
 logger = logging.getLogger(__name__)
 
-class ModelParametersCard(ContentCard):
 
+class ModelParametersCard(ContentCard):
     CARD_WIDTH = 500
 
     def draw(self, model_params):
-
         card = pn.Card(
-            styles={ 'background': 'lightgrey', 'overflow': 'auto' },
+            styles={"background": "lightgrey", "overflow": "auto"},
             width=self.CARD_WIDTH,
-            hide_header=True
+            hide_header=True,
         )
 
-        if model_params.get('Error'):
-            card.objects = [pn.pane.Markdown(f""" ### Es konnten keine Modellparameter ermittelt werden """)]
+        if model_params.get("Error"):
+            card.objects = [
+                pn.pane.Markdown(
+                    """ ### Es konnten keine Modellparameter ermittelt werden """
+                )
+            ]
             return card
 
-        coverage = model_params['Evaluate-ARDCollabMatrix']['pct_catalog_coverage']
-        coverage_weight = model_params['Statische Hyperparameter']['Coverage-Gewicht']
-        watchtime = model_params['Evaluate-ARDCollabMatrix']['pct_watch_time']
-        watchtime_weight = model_params['Statische Hyperparameter']['Watchtime-Gewicht']
+        coverage = model_params["Evaluate-ARDCollabMatrix"]["pct_catalog_coverage"]
+        coverage_weight = model_params["Statische Hyperparameter"]["Coverage-Gewicht"]
+        watchtime = model_params["Evaluate-ARDCollabMatrix"]["pct_watch_time"]
+        watchtime_weight = model_params["Statische Hyperparameter"]["Watchtime-Gewicht"]
 
         card.objects = [
             pn.pane.Markdown(f"""

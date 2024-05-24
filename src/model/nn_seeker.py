@@ -1,19 +1,19 @@
 from abc import ABC, abstractmethod
 
-class NnSeeker(ABC):
 
+class NnSeeker(ABC):
     @property
     def ITEM_IDENTIFIER_PROP(cls):
         pass
 
     @abstractmethod
-    def get_k_NN( self, item, k, nn_filter ):
+    def get_k_NN(self, item, k, nn_filter):
         pass
 
     @abstractmethod
-    def get_max_num_neighbours( self, content_idx ):
+    def get_max_num_neighbours(self, content_idx):
         pass
 
     @abstractmethod
-    def set_model_config(self, model_config ):
+    def set_model_config(self, model_config):
         pass

@@ -1,18 +1,16 @@
+import base64
+import collections
 import copy
 import logging
-import collections
-import pandas as pd
 import re
-import base64
-import constants
 
-from dataclasses import dataclass, fields
-from opensearchpy import OpenSearch, RequestsHttpConnection
-from datetime import datetime
-from model.base_data_accessor import BaseDataAccessor
-from exceptions.empty_search_error import EmptySearchError
+import constants
+import pandas as pd
 from dto.item import ItemDto
-from util.dto_utils import content_fields, update_from_props, get_primary_idents
+from exceptions.empty_search_error import EmptySearchError
+from model.base_data_accessor import BaseDataAccessor
+from opensearchpy import OpenSearch, RequestsHttpConnection
+from util.dto_utils import get_primary_idents, update_from_props
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +64,12 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
     ):
         docs = [
             {
-                "_id": id,
+                "_id": _id,
                 "_source": {
                     "exclude": "embedding"
                 },  # Todo: replace by all model fields
             }
-            for id in ids
+            for _id in ids
         ]
 
         query = {"docs": docs}
@@ -82,17 +80,17 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             "hits": {"hits": response_mget["docs"], "total": {"value": len(ids)}}
         }
 
-        #logger.info(response)
+        # logger.info(response)
         return self.__get_items_from_response(item, response, provenance)
 
-    def get_item_by_url(self, item: ItemDto, url, filter={}):
+    def get_item_by_url(self, item: ItemDto, url, _filter={}):
         last_string = re.search(r".*/([^/?]+)[?]*", url.strip()).group(1)
         base64_bytes = last_string.encode("ascii")
         crid_bytes = base64.b64decode(base64_bytes + b"==")
         crid = crid_bytes.decode("ascii")
-        return self.get_item_by_crid(item, crid, filter)
+        return self.get_item_by_crid(item, crid, _filter)
 
-    def get_item_by_urn(self, item: ItemDto, urn, filter={}):
+    def get_item_by_urn(self, item: ItemDto, urn, _filter={}):
         urn = urn.strip()
         prim_id, prim_val = get_primary_idents(self.config)
         oss_col = prim_val + ".keyword"
@@ -108,7 +106,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         response = self.client.search(body=query, index=self.target_idx_name)
         return self.__get_items_from_response(item, response)
 
-    def get_item_by_crid(self, item: ItemDto, crid, filter={}):
+    def get_item_by_crid(self, item: ItemDto, crid, _filter={}):
         """Builds query to get items based on a crid
 
         Maps crid parameter to mapped value if given in configuration file.
@@ -142,7 +140,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         response = self.client.search(body=query, index=self.target_idx_name)
         return self.__get_items_from_response(item, response)
 
-    def get_item_by_text(self, item: ItemDto, text, filter={}):
+    def get_item_by_text(self, item: ItemDto, text, _filter={}):
         item_dtos = []
         new_item = copy.copy(item)
         text_input = {"description": text}

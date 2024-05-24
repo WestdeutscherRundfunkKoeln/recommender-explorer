@@ -1,9 +1,10 @@
-import logging
 import json
-from sentence_transformers import SentenceTransformer
-from hashlib import sha256
+import logging
 import os
+from hashlib import sha256
+
 import httpx
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -16,8 +17,8 @@ class EmbedText:
         self.config = config
 
     def embed_text(self, embed_text):
-        hash = sha256(embed_text.encode("utf-8")).hexdigest()
-        response: dict[str, str | list[float]] = {"embedTextHash": hash}
+        text_hash = sha256(embed_text.encode("utf-8")).hexdigest()
+        response: dict[str, str | list[float]] = {"embedTextHash": text_hash}
 
         for model in self.config["models"]:
             for model_name, model_path in model.items():
@@ -29,8 +30,8 @@ class EmbedText:
 
         return response
 
-    def add_embedding_to_document(self, id, embedding):
-        embedding["id"] = id
+    def add_embedding_to_document(self, id_, embedding):
+        embedding["id"] = id_
         # Send request to search service to add embedding to index
         httpx.post(
             url=f"{BASE_URL_SEARCH}/create-single-document",

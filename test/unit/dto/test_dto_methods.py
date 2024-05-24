@@ -1,11 +1,12 @@
 import copy
 import logging
+from dataclasses import fields
 from typing import cast
+
 import pytest
-import src.constants as constants
+
+from src import constants
 from src.dto.content_item import ContentItemDto
-from src.dto.user_item import UserItemDto
-from dataclasses import dataclass, fields
 from src.util.dto_utils import content_fields, dto_from_classname, dto_from_model
 
 logger = logging.getLogger(__name__)

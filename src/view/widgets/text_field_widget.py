@@ -1,4 +1,5 @@
 import panel as pn
+
 from .. import ui_constants as c
 
 
@@ -21,32 +22,41 @@ class TextFieldWidget:
         Returns:
             text_input_widget (widget): final widget built from given config
         """
-        text_field_label = text_field_config.get(c.TEXT_INPUT_LABEL_KEY, '')
-        text_field_placeholder = text_field_config.get(c.TEXT_INPUT_PLACEHOLDER_KEY, '')
+        text_field_label = text_field_config.get(c.TEXT_INPUT_LABEL_KEY, "")
+        text_field_placeholder = text_field_config.get(c.TEXT_INPUT_PLACEHOLDER_KEY, "")
         text_field_accessor = text_field_config.get(c.TEXT_INPUT_ACCESSOR_KEY)
         text_field_validator = text_field_config.get(c.TEXT_INPUT_VALIDATOR_KEY)
         url_parameter = text_field_config.get(c.TEXT_INPUT_URL_PARAMETER_KEY)
 
         text_input_widget = pn.widgets.TextInput(
-            placeholder=text_field_placeholder,
-            name=text_field_label
+            placeholder=text_field_placeholder, name=text_field_label
         )
 
-        if text_field_label == '' and text_field_placeholder != '':
+        if text_field_label == "" and text_field_placeholder != "":
             text_field_label = text_field_placeholder
 
-        if text_field_accessor is not None and text_field_validator is not None and text_field_label != '':
+        if (
+            text_field_accessor is not None
+            and text_field_validator is not None
+            and text_field_label != ""
+        ):
             text_input_widget.params = {
-                'validator': text_field_validator,
-                'accessor': text_field_accessor,
-                'label': text_field_label,
-                'has_paging': False,
-                'reset_to': ''
+                "validator": text_field_validator,
+                "accessor": text_field_accessor,
+                "label": text_field_label,
+                "has_paging": False,
+                "reset_to": "",
             }
-            text_input_widget.param.watch(self.reco_explorer_app_instance.trigger_item_selection, 'value', onlychanged=True)
-            self.controller_instance.register('item_choice', text_input_widget)
+            text_input_widget.param.watch(
+                self.reco_explorer_app_instance.trigger_item_selection,
+                "value",
+                onlychanged=True,
+            )
+            self.controller_instance.register("item_choice", text_input_widget)
             if url_parameter is not None:
-                self.reco_explorer_app_instance.url_parameter_text_field_mapping[url_parameter] = text_input_widget
+                self.reco_explorer_app_instance.url_parameter_text_field_mapping[
+                    url_parameter
+                ] = text_input_widget
             return text_input_widget
         else:
             return text_input_widget

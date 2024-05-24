@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
-class U2CSeeker(ABC):
 
+class U2CSeeker(ABC):
     @abstractmethod
-    def get_recos_user( self, user, num_recos ):
+    def get_recos_user(self, user, num_recos):
         pass
 
     @abstractmethod
@@ -11,5 +11,5 @@ class U2CSeeker(ABC):
         pass
 
     @abstractmethod
-    def set_model_config( self, model_config ):
+    def set_model_config(self, model_config):
         pass
