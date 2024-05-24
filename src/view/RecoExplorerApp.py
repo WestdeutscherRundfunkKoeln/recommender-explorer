@@ -11,11 +11,10 @@ from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
     get_all_config_files,
-    get_client_ident_from_search,
-    get_config_from_arg,
     get_client_from_path,
     get_client_options,
 )
+
 from . import ui_constants
 from .widgets.accordion_widget import AccordionWidget
 from .widgets.date_time_picker_widget import DateTimePickerWidget

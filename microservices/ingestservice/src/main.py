@@ -5,12 +5,13 @@ from typing import Annotated
 
 import httpx
 from envyaml import EnvYAML
-from fastapi import Depends, FastAPI, APIRouter, Header
+from fastapi import APIRouter, Depends, FastAPI, Header
 from fastapi.exceptions import HTTPException
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
 from google.oauth2 import service_account
 from pydantic import ValidationError
+
 from src.models import FullLoadRequest, OpenSearchResponse, StorageChangeEvent
 from src.preprocess_data import DataPreprocessor
 
@@ -80,9 +81,9 @@ def ingest_item(
     event_type: Annotated[str, Header(alias="eventType")],
 ):
     if event_type == EVENT_TYPE_DELETE:
-        id = event.name.split("/")[-1].split(".")[0]
+        document_id = event.name.split("/")[-1].split(".")[0]
         return httpx.delete(
-            f"{BASE_URL_SEARCH}/delete-data", params={"document_id": id}
+            f"{BASE_URL_SEARCH}/delete-data", params={"document_id": document_id}
         ).json()
 
     document = data_preprocessor.preprocess_data(download_document(storage, event))

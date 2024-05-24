@@ -1,5 +1,4 @@
 import logging
-import httpx
 
 import httpx
 from dto.item import ItemDto

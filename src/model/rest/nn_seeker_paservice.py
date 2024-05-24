@@ -1,10 +1,10 @@
 import logging
 
 from dto.item import ItemDto
-from model.rest.nn_seeker_rest import NnSeekerRest
-from util.dto_utils import get_primary_idents
 from exceptions.item_not_found_error import UnknownItemError
 from exceptions.user_not_found_error import UnknownUserError
+from model.rest.nn_seeker_rest import NnSeekerRest
+from util.dto_utils import get_primary_idents
 
 logger = logging.getLogger(__name__)
 

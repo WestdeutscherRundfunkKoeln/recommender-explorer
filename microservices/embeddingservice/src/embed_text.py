@@ -17,8 +17,8 @@ class EmbedText:
         self.config = config
 
     def embed_text(self, embed_text):
-        hash = sha256(embed_text.encode("utf-8")).hexdigest()
-        response: dict[str, str | list[float]] = {"embedTextHash": hash}
+        text_hash = sha256(embed_text.encode("utf-8")).hexdigest()
+        response: dict[str, str | list[float]] = {"embedTextHash": text_hash}
 
         for model in self.config["models"]:
             for model_name, model_path in model.items():

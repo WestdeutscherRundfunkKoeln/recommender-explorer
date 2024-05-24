@@ -80,7 +80,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             "hits": {"hits": response_mget["docs"], "total": {"value": len(ids)}}
         }
 
-        #logger.info(response)
+        # logger.info(response)
         return self.__get_items_from_response(item, response, provenance)
 
     def get_item_by_url(self, item: ItemDto, url, _filter={}):

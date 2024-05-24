@@ -1,11 +1,16 @@
-from fastapi.testclient import TestClient
-from dotenv import load_dotenv
 import json
 import os
-from google.api_core.exceptions import GoogleAPICallError
+
 import pytest
+from dotenv import load_dotenv
+from fastapi.testclient import TestClient
+from google.api_core.exceptions import GoogleAPICallError
 
 load_dotenv("tests/test.env")
+
+HTTP_OK = 200
+HTTP_BAD_REQUEST = 400
+HTTP_UNPROCESSABLE_ENTITY = 422
 
 
 @pytest.fixture(scope="module")
@@ -108,9 +113,9 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
         },
     )
 
-    assert response.status_code == 200
+    assert response.status_code == HTTP_OK
     requests = httpx_mock.get_requests()
-    assert len(requests) == 2
+    assert len(requests) == 2  # noqa
 
     # Request to the embedding service
     request = requests[0]
@@ -193,7 +198,7 @@ def test_upsert_event_no_document_found(test_client):
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == HTTP_BAD_REQUEST
     assert response.json() == {"detail": "Blob not found"}
 
 
@@ -222,7 +227,7 @@ def test_upsert_event_invalid_document(test_client):
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == HTTP_UNPROCESSABLE_ENTITY
 
 
 def test_delete_event_with_available_correct_document(test_client, httpx_mock):
@@ -263,7 +268,7 @@ def test_delete_event_with_available_correct_document(test_client, httpx_mock):
         },
     )
 
-    assert response.status_code == 200
+    assert response.status_code == HTTP_OK
     requests = httpx_mock.get_requests()
     assert len(requests) == 1
 
