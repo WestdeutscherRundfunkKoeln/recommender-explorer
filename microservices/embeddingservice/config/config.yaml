@@ -4,5 +4,5 @@ base_url_search: $BASE_URL_SEARCH
 base_url_ingest: $BASE_URL_INGEST
 base_url_embedding: $BASE_URL_EMBEDDING
 models:
-  - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2
+  - all-MiniLM-L6-v2_title_desc_nokeywords: sentence-transformers/all-MiniLM-L6-v2
 
