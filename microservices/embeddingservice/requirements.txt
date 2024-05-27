@@ -8,3 +8,4 @@ envyaml
 opensearch-py
 httpx
 sentencepiece
+protobuf
