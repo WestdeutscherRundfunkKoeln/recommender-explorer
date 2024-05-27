@@ -13,6 +13,7 @@ def controller() -> RecommendationController:
             "opensearch.host": "test",
             "opensearch.port": "8080",
             "opensearch.index": "test",
+            "opensearch.use_ssl": True,
             "opensearch.field_mapping": {},
         }
     )
