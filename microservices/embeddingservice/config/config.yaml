@@ -5,4 +5,6 @@ base_url_ingest: $BASE_URL_INGEST
 base_url_embedding: $BASE_URL_EMBEDDING
 models:
   - all-MiniLM-L6-v2_title_desc_nokeywords: sentence-transformers/all-MiniLM-L6-v2
-
+  - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2
+  - T-Systems-onsitegerman-roberta-sentence-transformer-v2_title_desc_nokeywords: T-Systems-onsite/german-roberta-sentence-transformer-v2
+  - sentence-transformersdistiluse-base-multilingual-cased-v1_title_desc_nokeywords: sentence-transformers/distiluse-base-multilingual-cased-v1
