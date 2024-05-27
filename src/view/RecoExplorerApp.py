@@ -372,7 +372,10 @@ class RecoExplorerApp:
 
         # text input
         self.text_input = pn.widgets.TextAreaInput(
-            name="Text", placeholder="Text here", visible=False
+            name="Text",
+            placeholder="Text here",
+            visible=False,
+            max_length=99_999,  # empirical max_length
         )
 
         self.text_input.params = {
@@ -1331,12 +1334,15 @@ class RecoExplorerApp:
 
             # Client
             client_choice = pn.widgets.RadioButtonGroup(
-                name='',
+                name="",
                 options=get_client_options(self.config_full_path),
-                value=self.client)
+                value=self.client,
+            )
 
             if self.client_choice_visibility:
-                client_choice.param.watch(self.toggle_client_choice, 'value', onlychanged=True)
+                client_choice.param.watch(
+                    self.toggle_client_choice, "value", onlychanged=True
+                )
                 self.config_based_nav_controls.append(client_choice)
 
             for index, block in enumerate(blocks):
