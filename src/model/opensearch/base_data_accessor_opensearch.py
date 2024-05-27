@@ -1,18 +1,16 @@
+import base64
+import collections
 import copy
 import logging
-import collections
-import pandas as pd
 import re
-import base64
-import constants
 
-from dataclasses import dataclass, fields
-from opensearchpy import OpenSearch, RequestsHttpConnection
-from datetime import datetime
-from model.base_data_accessor import BaseDataAccessor
-from exceptions.empty_search_error import EmptySearchError
+import constants
+import pandas as pd
 from dto.item import ItemDto
-from util.dto_utils import content_fields, update_from_props, get_primary_idents
+from exceptions.empty_search_error import EmptySearchError
+from model.base_data_accessor import BaseDataAccessor
+from opensearchpy import OpenSearch, RequestsHttpConnection
+from util.dto_utils import get_primary_idents, update_from_props
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +64,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
     def get_items_by_ids(
         self, item: ItemDto, ids, provenance=constants.ITEM_PROVENANCE_C2C
     ):
-        if len(ids)>0:
+        if len(ids) > 0:
             docs = [
                 {
                     "_id": id,
@@ -87,14 +85,11 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             # logger.info(response)
             return self.__get_items_from_response(item, response, provenance)
         else:
-            response = {
-                "hits": {"hits": [], "total": {"value": len(ids)}}
-            }
+            response = {"hits": {"hits": [], "total": {"value": len(ids)}}}
             item_dtos = []
             total_items = 0
             # logger.info(response)
             return item_dtos, total_items
-
 
     def get_item_by_url(self, item: ItemDto, url, filter={}):
         last_string = re.search(r".*/([^/?]+)[?]*", url.strip()).group(1)
