@@ -60,6 +60,9 @@
         "index": {
           "type": "string"
         },
+        "use_ssl": {
+          "type": "boolean"
+        },
         "field_mapping": {
           "type": "object",
           "additionalProperties": {
