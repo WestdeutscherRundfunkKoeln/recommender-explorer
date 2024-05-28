@@ -300,7 +300,7 @@ class RecommendationController:
         has_paging = [x.params.get("has_paging", False) for x in active_components]
         if any(has_paging):
             accessor_values.extend(
-                [(self.get_page_number() * self.get_num_items()), self.get_num_items()]
+                [((self.get_page_number()-1) * self.get_num_items()), self.get_num_items()]
             )
         logger.info(
             "calling " + accessor_method + " with values " + str(accessor_values)
@@ -524,8 +524,8 @@ class RecommendationController:
     def _check_crid(self, crid_field):
         if not isinstance(crid_field.value.strip(), str):
             raise ValueError("Crid must be a string")
-        elif not crid_field.value.strip().startswith("crid://"):
-            raise ValueError("Id must be of format crid://")
+        # elif not crid_field.value.strip().startswith("crid://"):
+        #     raise ValueError("Id must be of format crid://")
 
     def _check_urn(self, urn_field):
         if not isinstance(urn_field.value.strip(), str):
