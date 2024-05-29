@@ -23,7 +23,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
 
         auth = (self.config["opensearch.user"], self.config["opensearch.pass"])
 
-        use_ssl = self.config["opensearch.use_ssl"] == "true"
+        use_ssl = self.config.get("opensearch.use_ssl", True)
 
         self.client = OpenSearch(
             hosts=[
@@ -84,7 +84,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             "hits": {"hits": response_mget["docs"], "total": {"value": len(ids)}}
         }
 
-        #logger.info(response)
+        # logger.info(response)
         return self.__get_items_from_response(item, response, provenance)
 
     def get_item_by_url(self, item: ItemDto, url, filter={}):

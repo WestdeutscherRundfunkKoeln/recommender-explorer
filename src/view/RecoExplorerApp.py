@@ -1,3 +1,4 @@
+from typing import Any
 import panel as pn
 import logging
 import traceback
@@ -10,18 +11,16 @@ from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
     get_all_config_files,
-    get_client_ident_from_search,
-    get_config_from_arg,
     get_client_from_path,
     get_client_options,
 )
-from .widgets.multi_select_widget import MultiSelectionWidget
-from .widgets.date_time_picker_widget import DateTimePickerWidget
-from .widgets.text_field_widget import TextFieldWidget
-from .widgets.radio_box_widget import RadioBoxWidget
-from .widgets.accordion_widget import AccordionWidget
-from . import ui_constants
-import sys
+from view.widgets.multi_select_widget import MultiSelectionWidget
+from view.widgets.date_time_picker_widget import DateTimePickerWidget
+from view.widgets.text_field_widget import TextFieldWidget
+from view.widgets.radio_box_widget import RadioBoxWidget
+from view.widgets.accordion_widget import AccordionWidget
+from view.widgets.slider_widget import SliderWidget
+from view import ui_constants
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +36,18 @@ class RecoExplorerApp:
         self.config_full_path = config_full_path
         self.controller = RecommendationController(self.config)
 
-        self.multiSelectModule = MultiSelectionWidget(self, self.controller)
-        self.dateTimePickerModule = DateTimePickerWidget(self, self.controller)
-        self.textFieldModule = TextFieldWidget(self, self.controller)
-        self.radioBoxModule = RadioBoxWidget(self, self.controller)
-        self.accordionModule = AccordionWidget(self, self.controller)
+        self.widgets = {
+            ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
+                self, self.controller
+            ),
+            ui_constants.DATE_TIME_PICKER_TYPE_VALUE: DateTimePickerWidget(
+                self, self.controller
+            ),
+            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(self, self.controller),
+            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(self, self.controller),
+            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
+            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
+        }
 
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
@@ -1213,7 +1219,7 @@ class RecoExplorerApp:
         return self.config.get(ui_constants.UI_CONFIG_KEY + "." + key, fallback)
 
     def build_common_ui_widget_dispatcher(
-        self, common_ui_widget_type, common_ui_widget_config
+        self, common_ui_widget_type: str, common_ui_widget_config: dict[str, Any]
     ):
         """
         Decides which common ui widget should be build based on the given ui type. If no type matches returns None
@@ -1225,24 +1231,10 @@ class RecoExplorerApp:
         Returns:
             widget of common ui widget type, built based on given config
         """
-        if ui_constants.TEXT_INPUT_TYPE_VALUE == common_ui_widget_type:
-            return self.textFieldModule.create_text_field_component(
-                common_ui_widget_config
-            )
-        elif ui_constants.MULTI_SELECT_TYPE_VALUE == common_ui_widget_type:
-            return self.multiSelectModule.create_multi_select_component(
-                common_ui_widget_config
-            )
-        elif ui_constants.DATE_TIME_PICKER_TYPE_VALUE == common_ui_widget_type:
-            return self.dateTimePickerModule.create_date_time_picker_component(
-                common_ui_widget_config
-            )
-        elif ui_constants.RADIO_BOX_TYPE_VALUE == common_ui_widget_type:
-            return self.radioBoxModule.create_radio_box_component(
-                common_ui_widget_config
-            )
-        else:
+        widget = self.widgets.get(common_ui_widget_type)
+        if not widget:
             return None
+        return widget.create(common_ui_widget_config)
 
     def build_widgets(self, widgets_config):
         """
@@ -1265,19 +1257,23 @@ class RecoExplorerApp:
                     widgets_list.append(component_from_dispatcher)
                 elif ui_constants.ACCORDION_TYPE_VALUE == component_type:
                     widgets_list.append(
-                        self.accordionModule.create_accordion_component(widget_config)
+                        self.widgets[ui_constants.ACCORDION_TYPE_VALUE].create(
+                            widget_config
+                        )
                     )
                     if widget_config.get(ui_constants.ACCORDION_RESET_BUTTON_KEY):
                         widgets_list.append(
                             (
-                                self.accordionModule.create_accordion_reset_buttons(
-                                    widget_config
-                                )
+                                self.widgets[
+                                    ui_constants.ACCORDION_TYPE_VALUE
+                                ].create_accordion_reset_buttons(widget_config)
                             )
                         )
                 elif "radio_box" == component_type:
                     widgets_list.append(
-                        self.radioBoxModule.create_radio_box_component(widget_config)
+                        self.widgets[ui_constants.RADIO_BOX_TYPE_VALUE].create(
+                            widget_config
+                        )
                     )
                 else:
                     logger.error("Unknown UI Config Type: " + component_type)
