@@ -76,15 +76,16 @@ class RecoExplorerApp:
 
         #
         self.define_item_pagination()
-        self.define_start_item_selections()
-        self.define_start_item_filtering()
-        self.define_reco_filtering_selection()
-        self.define_reco_sorting()
-        self.define_reco_duplicate_filtering()
-        self.define_reco_incomplete_filtering()
-        self.define_model_selections()
-        self.define_user_selections()
-        self.define_reco_duration_filtering()
+        if ui_constants.UI_CONFIG_KEY not in self.config:
+            self.define_start_item_selections()
+            self.define_start_item_filtering()
+            self.define_reco_filtering_selection()
+            self.define_reco_sorting()
+            self.define_reco_duplicate_filtering()
+            self.define_reco_incomplete_filtering()
+            self.define_model_selections()
+            self.define_user_selections()
+            self.define_reco_duration_filtering()
 
         # a grid for start items/users and recos
         self.item_grid = pn.GridSpec()
@@ -1351,98 +1352,99 @@ class RecoExplorerApp:
                 if index + 1 != block_counts:
                     self.config_based_nav_controls.append(pn.layout.Divider())
 
-        # Client
-        self.client_choice = pn.widgets.RadioButtonGroup(
-            name="",
-            options=get_client_options(self.config_full_path),
-            value=self.client,
-        )
-
-        if self.client_choice_visibility:
-            self.put_navigational_block(0, ["### Mandant wählen", self.client_choice])
-            client_choice_watcher = self.client_choice.param.watch(
-                self.toggle_client_choice, "value", onlychanged=True
-            )
-
-        # Models
-        if (
-            constants.MODEL_CONFIG_U2C in self.config
-        ):  # TODO: refactor bootstrapping of application to make this more generic
-            self.model_choice = pn.Accordion(
-                ("Content-2-Content", self.c2c_choice),
-                ("User-2-Content", self.u2c_model_choice),
-            )
         else:
-            self.model_choice = pn.Accordion(("Content-2-Content", self.c2c_choice))
+            # Client
+            self.client_choice = pn.widgets.RadioButtonGroup(
+                name="",
+                options=get_client_options(self.config_full_path),
+                value=self.client,
+            )
 
-        self.model_choice.active = [0]
-        self.model_choice.toggle = True
+            if self.client_choice_visibility:
+                self.put_navigational_block(0, ["### Mandant wählen", self.client_choice])
+                client_choice_watcher = self.client_choice.param.watch(
+                    self.toggle_client_choice, "value", onlychanged=True
+                )
 
-        self.put_navigational_block(
-            1, ["### Modelle wählen", self.model_choice, self.model_resetter]
-        )
-        model_choice_watcher = self.model_choice.param.watch(
-            self.toggle_model_choice, "active", onlychanged=True
-        )
+            # Models
+            if (
+                constants.MODEL_CONFIG_U2C in self.config
+            ):  # TODO: refactor bootstrapping of application to make this more generic
+                self.model_choice = pn.Accordion(
+                    ("Content-2-Content", self.c2c_choice),
+                    ("User-2-Content", self.u2c_model_choice),
+                )
+            else:
+                self.model_choice = pn.Accordion(("Content-2-Content", self.c2c_choice))
 
-        # Item source
-        self.item_source = pn.Accordion(
-            ("Quelle wählen", self.input_sources),
-            ("Genre wählen", self.genre_start_col),
-            ("Subgenre wählen", self.subgenre_start_col),
-            ("Thema wählen", self.themes),
-            ("Sendereihe wählen", self.shows),
-        )
-        self.item_source.active = [0]
+            self.model_choice.active = [0]
+            self.model_choice.toggle = True
 
-        # User source
-        self.user_source = pn.Accordion(
-            ("User-Filter", self.user_filter_choice),
-            # temporarily removing user-clustering
-            # ('User-Cluster', self.user_cluster_choice)
-        )
-        self.user_source.active = [0]
-        self.user_source.toggle = True
-        user_source_watcher = self.user_source.param.watch(
-            self.toggle_user_choice, "active", onlychanged=True
-        )
+            self.put_navigational_block(
+                1, ["### Modelle wählen", self.model_choice, self.model_resetter]
+            )
+            model_choice_watcher = self.model_choice.param.watch(
+                self.toggle_model_choice, "active", onlychanged=True
+            )
 
-        self.source_block = {}
-        self.source_block[0] = [
-            "### Start-Video bestimmen",
-            self.item_source,
-            self.item_resetter,
-        ]
-        self.source_block[1] = [
-            "### Start-User bestimmen",
-            self.user_source,
-            self.item_resetter,
-        ]
+            # Item source
+            self.item_source = pn.Accordion(
+                ("Quelle wählen", self.input_sources),
+                ("Genre wählen", self.genre_start_col),
+                ("Subgenre wählen", self.subgenre_start_col),
+                ("Thema wählen", self.themes),
+                ("Sendereihe wählen", self.shows),
+            )
+            self.item_source.active = [0]
 
-        self.put_navigational_block(2, self.source_block[0])
+            # User source
+            self.user_source = pn.Accordion(
+                ("User-Filter", self.user_filter_choice),
+                # temporarily removing user-clustering
+                # ('User-Cluster', self.user_cluster_choice)
+            )
+            self.user_source.active = [0]
+            self.user_source.toggle = True
+            user_source_watcher = self.user_source.param.watch(
+                self.toggle_user_choice, "active", onlychanged=True
+            )
 
-        # Postprocessing and Filtering
-        self.reco_items = pn.Accordion(
-            ("Duplikatfilterung", self.duplicate),
-            ("Sortierung", self.sort),
-            ("Fehlende Daten ausblenden", self.incompleteSelect),
-            ("Länge-Filter", self.duration_filter),
-            ("Genre-Filter", self.genre_col),
-            ("Subgenre-Filter", self.subgenre_col),
-            ("Themen-Filter", self.theme_col),
-            ("Sendereihe-Filter", self.show_col),
-        )
+            self.source_block = {}
+            self.source_block[0] = [
+                "### Start-Video bestimmen",
+                self.item_source,
+                self.item_resetter,
+            ]
+            self.source_block[1] = [
+                "### Start-User bestimmen",
+                self.user_source,
+                self.item_resetter,
+            ]
 
-        self.filter_block = {}
-        self.filter_block[0] = [
-            "### Empfehlungen beeinflussen",
-            self.reco_items,
-            self.reco_resetter,
-        ]
-        self.filter_block[1] = []
+            self.put_navigational_block(2, self.source_block[0])
 
-        self.put_navigational_block(3, self.filter_block[0])
-        self.assemble_navigation_elements()
+            # Postprocessing and Filtering
+            self.reco_items = pn.Accordion(
+                ("Duplikatfilterung", self.duplicate),
+                ("Sortierung", self.sort),
+                ("Fehlende Daten ausblenden", self.incompleteSelect),
+                ("Länge-Filter", self.duration_filter),
+                ("Genre-Filter", self.genre_col),
+                ("Subgenre-Filter", self.subgenre_col),
+                ("Themen-Filter", self.theme_col),
+                ("Sendereihe-Filter", self.show_col),
+            )
+
+            self.filter_block = {}
+            self.filter_block[0] = [
+                "### Empfehlungen beeinflussen",
+                self.reco_items,
+                self.reco_resetter,
+            ]
+            self.filter_block[1] = []
+
+            self.put_navigational_block(3, self.filter_block[0])
+            self.assemble_navigation_elements()
 
         # empty screen hinweis
         self.item_grid[0, 0] = pn.pane.Alert(

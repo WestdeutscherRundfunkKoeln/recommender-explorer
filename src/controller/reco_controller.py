@@ -172,7 +172,23 @@ class RecommendationController:
         class_ = getattr(module, handler_name)
         self.reco_accessor = class_(self.config)
         self.reco_accessor.set_model_config(model_info)
+        self.set_item_accessor(model_info)
         return True
+
+    def set_item_accessor(self, model_info):
+        """
+        Sets Item Accessor Based on given model_info. Default init value is BaseDataAccessorOpenSearch(),
+        if nothing is passed in the model info, default selection stays.
+
+        :param model_info: model config from config yaml
+        """
+        item_accessor_key = model_info.get('item_accessor', None)
+        if item_accessor_key:
+            matches = re.search('^(.*)@(.*)$', model_info['item_accessor'])
+            item_accessor_name, item_accessor_dir = matches.group(1), matches.group(2)
+            module = importlib.import_module(item_accessor_dir)
+            class_ = getattr(module, item_accessor_name)
+            self.item_accessor = class_(self.config)
 
     def get_model_params(self):
         return self.reco_accessor.get_model_params()
@@ -222,56 +238,61 @@ class RecommendationController:
                 res.append(items[0])
             return list(selected_models), res, self.model_config
 
-    def get_items_by_strategy_and_model(
-        self, model_info: dict
-    ) -> tuple[list, list[list], str]:
-        """Gets all items from OSS by model info
+    def get_items_by_strategy_and_model(self, model_info: dict) -> tuple[list, list[list], str]:
+        """
+        Gets start item(s) based on model info and already set strategy. If model is configured as
+        recos_in_same_response, function will not only return start items but also all recommended
+        items as well. Otherwise function will try to get recommended results for start item.
 
-        Gets the start items by model info. The start item is the reference item a user searches.
-        Each start item creates a new row in the frontend.
-
-        :param model_info: Config of model in configuration yaml
-        :return:
+        :param model_info: selected model info dictionary
+        :return:found items in a list
         """
         all_items = []
         item_hits, start_items = self._get_start_items(model_info)
 
-        self.set_num_pages(item_hits)
-
-        for index, start_item in enumerate(start_items):
+        if model_info.get('recos_in_same_response', False):
             item_row = []
-            item_row.append(start_item)
-            try:
-                nn_items, nn_dists = self._get_reco_items(start_item, model_info)
+            for index, start_item in enumerate(start_items):
+                item_row.append(start_item)
+            all_items.append(item_row)
+            return [model_info['display_name']], all_items, self.model_config
+        else:
+            self.set_num_pages(item_hits)
 
-                # Find all filters
-                all_chosen_filters = self._get_current_filter_state("reco_filter")
-                if len(all_chosen_filters["remove_duplicate"]) > 0:
-                    chosen_param = []
-                    for item in all_chosen_filters["remove_duplicate"]:
-                        chosen_param.append(item[1])
-                    filtered_nn_items = self.postproc.filterDuplicates(
-                        start_item, nn_items, chosen_param
+            for index, start_item in enumerate(start_items):
+                item_row = []
+                item_row.append(start_item)
+                try:
+                    nn_items, nn_dists = self._get_reco_items(start_item, model_info)
+
+                    # Find all filters
+                    all_chosen_filters = self._get_current_filter_state("reco_filter")
+                    if len(all_chosen_filters["remove_duplicate"]) > 0:
+                        chosen_param = []
+                        for item in all_chosen_filters["remove_duplicate"]:
+                            chosen_param.append(item[1])
+                        filtered_nn_items = self.postproc.filterDuplicates(
+                            start_item, nn_items, chosen_param
+                        )
+                        nn_items = filtered_nn_items
+
+                    for idx, reco_item in enumerate(nn_items):
+                        reco_item.dist = nn_dists[idx]
+                        reco_item.position = constants.ITEM_POSITION_RECO
+                        item_row.append(reco_item)
+
+                    all_items.append(item_row)
+                except (UnknownUserError, UnknownItemError) as e:
+                    not_found_item = dto_from_classname(
+                        class_name="NotFoundDto",
+                        position=constants.ITEM_POSITION_START,
+                        item_type=constants.ITEM_TYPE_CONTENT,
+                        provenance=constants.ITEM_PROVENANCE_C2C,
                     )
-                    nn_items = filtered_nn_items
-
-                for idx, reco_item in enumerate(nn_items):
-                    reco_item.dist = nn_dists[idx]
-                    reco_item.position = constants.ITEM_POSITION_RECO
-                    item_row.append(reco_item)
-
-                all_items.append(item_row)
-            except (UnknownUserError, UnknownItemError) as e:
-                not_found_item = dto_from_classname(
-                    class_name="NotFoundDto",
-                    position=constants.ITEM_POSITION_START,
-                    item_type=constants.ITEM_TYPE_CONTENT,
-                    provenance=constants.ITEM_PROVENANCE_C2C,
-                )
-                item_row.append(not_found_item)
-                all_items.append(item_row)
-                continue
-        return [model_info["display_name"]], all_items, self.model_config
+                    item_row.append(not_found_item)
+                    all_items.append(item_row)
+                    continue
+            return [model_info["display_name"]], all_items, self.model_config
 
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
@@ -539,10 +560,6 @@ class RecommendationController:
             raise ValueError("URL must be a string")
         elif not url_field.value.startswith("https://"):
             raise ValueError("URL must be of format https://")
-
-    def _check_text(self, text_field):
-        if not isinstance(text_field.value, str):
-            raise ValueError("Text must be a string")
 
     def _check_text(self, text_field):
         if not isinstance(text_field.value, str):
