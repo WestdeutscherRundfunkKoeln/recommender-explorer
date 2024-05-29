@@ -37,8 +37,8 @@ class DataPreprocessor:
     def add_embeddings(self, mapped_data):  # TODO: Make this asynchronous
         # get embedding
         request_payload = {
-            "id": mapped_data.id,
-            "embedText": mapped_data.embedText,
+            "id": mapped_data["id"],
+            "embedText": mapped_data["embedText"],
         }
         httpx.post(
             f"{self.base_url_embedding}/add-embedding-to-doc",

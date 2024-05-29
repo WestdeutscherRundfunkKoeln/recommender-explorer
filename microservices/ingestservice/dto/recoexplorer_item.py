@@ -43,7 +43,7 @@ class RecoExplorerItem(BaseModel, extra=Extra.allow):
 
     @field_serializer("availableFrom", "availableTo")
     def serialize_dt(self, dt: datetime, _info):
-        return dt.timestamp()
+        return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
 
     @property
     def extra_fields(

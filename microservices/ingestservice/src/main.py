@@ -86,9 +86,13 @@ def ingest_item(
         ).json()
 
     document = data_preprocessor.preprocess_data(download_document(storage, event))
-    data_preprocessor.add_embeddings(document)
-    # Add data to index
-    return request(document.model_dump(), f"{BASE_URL_SEARCH}/create-single-document")
+    document_json = document.model_dump()
+    # Add metadata to index
+    retval = request(document_json, f"{BASE_URL_SEARCH}/create-single-document")
+    # Trigger embedding service to add embeddings to index
+    data_preprocessor.add_embeddings(document_json)
+    return retval #TODO: check for meaningful return object. kept for backward compatibility?
+
 
 
 @router.post("/ingest-multiple-items")
