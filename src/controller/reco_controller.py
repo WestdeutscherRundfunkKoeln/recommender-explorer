@@ -40,13 +40,6 @@ class RecommendationController:
         "show": "showId",
     }
 
-    FILTER_LOGIC_MATRIX = {
-        "same": "must",
-        "different": "must_not",
-        "choose": "must",
-        "mixed": "",
-    }
-
     def __init__(self, config):
         self.config = config
         self.item_accessor = BaseDataAccessorOpenSearch(config)
@@ -342,7 +335,10 @@ class RecommendationController:
         has_paging = [x.params.get("has_paging", False) for x in active_components]
         if any(has_paging):
             accessor_values.extend(
-                [((self.get_page_number()-1) * self.get_num_items()), self.get_num_items()]
+                [
+                    ((self.get_page_number() - 1) * self.get_num_items()),
+                    self.get_num_items(),
+                ]
             )
         logger.info(
             "calling " + accessor_method + " with values " + str(accessor_values)
@@ -455,9 +451,8 @@ class RecommendationController:
         :return:
         """
         reco_filter = self._get_current_filter_state("reco_filter")
-        transposed_filter = self._transpose_reco_filter_state(reco_filter, start_item)
         kidxs, nn_dists, field = self.reco_accessor.get_k_NN(
-            start_item, (self.num_NN + 1), transposed_filter
+            start_item, (self.num_NN + 1), reco_filter
         )
         kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
         item_dto = dto_from_model(
@@ -621,113 +616,6 @@ class RecommendationController:
         for component in self.components[filter_group].values():
             filter_state[component.params["label"]] = component.value
         return filter_state
-
-    def _transpose_reco_filter_state(self, reco_filter, start_item):
-        transposed = collections.defaultdict(dict)
-        bool_terms = collections.defaultdict(list)
-        script_term = collections.defaultdict(dict)
-
-        for filter_element in reco_filter.items():
-            label, value = filter_element
-            if not value:
-                continue
-
-            if isinstance(value, list):
-                value = value[0]
-
-            action, actor = label.split("_")
-
-            if action == "termfilter":
-                bool_terms = self._prepare_query_term_condition_statement(
-                    value, start_item, reco_filter, bool_terms
-                )
-            elif action == "rangefilter":
-                bool_terms = self._prepare_query_range_condition_statement(
-                    value, bool_terms
-                )
-            elif action == "sort":
-                transposed["sort"] = value
-            elif action == "clean":
-                script_term = self._prepare_query_bool_script_statement(value)
-            elif action == "score":
-                transposed["score"] = value
-            else:
-                logger.warning(
-                    "Received unknown filter action [" + action + "]. Omitting."
-                )
-
-        if bool_terms:
-            transposed["bool"] = bool_terms
-        if script_term:
-            transposed["bool"]["filter"] = script_term
-
-        return transposed
-
-    def _prepare_query_range_condition_statement(self, value, bool_terms):
-        bool_terms["must"].append({"range": value})
-
-        return bool_terms
-
-    def _prepare_query_term_condition_statement(
-        self, value: list, start_item: ItemDto, reco_filter: dict, bool_terms: dict
-    ) -> dict:
-        transposed_values = []
-
-        logic, field = value.split("_")
-        operator = self.FILTER_LOGIC_MATRIX[logic]  ## contains "must"
-        if logic != "choose":
-            if isinstance(
-                start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]), list
-            ):
-                transposed_values.extend(
-                    start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field])
-                )
-            else:
-                transposed_values.append(
-                    start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field])
-                )
-        else:  ## we're in "choose_genre", or "choose_subgenre" etc..
-            if field == "erzählweise":
-                reco_filter["value_genreCategory"] = (
-                    self.get_genres_and_subgenres_from_upper_category(
-                        reco_filter["value_erzaehlweiseCategory"], "genres"
-                    )
-                )
-                field = "genre"
-            elif field == "inhalt":
-                reco_filter["value_subgenreCategories"] = (
-                    self.get_genres_and_subgenres_from_upper_category(
-                        reco_filter["value_inhaltCategory"], "subgenres"
-                    )
-                )
-                field = "subgenre"
-            filter_key = "value_" + self.FILTER_FIELD_MATRIX[field]
-            transposed_values.extend(reco_filter[filter_key])
-        term = collections.defaultdict(dict)
-
-        if len(transposed_values):
-            term["terms"][self.FILTER_FIELD_MATRIX[field] + ".keyword"] = (
-                transposed_values
-            )
-
-        if term:
-            bool_terms[operator].append(term)
-
-        return bool_terms
-
-    def _prepare_query_bool_script_statement(self, values):
-        filter_statement = collections.defaultdict(dict)
-        filter_statement["script"] = collections.defaultdict(dict)
-        expr_template = "doc['###.keyword'].length > 0"
-        expr = ""
-
-        for idx, one_element in enumerate(values):
-            expr = expr + expr_template.replace("###", values)
-            if (idx + 1) < len(values):
-                expr = expr + " && "
-
-        filter_statement["script"]["script"]["source"] = expr
-        return filter_statement
 
     def _get_model_type_by_model_key(self, model_key):
         for ctype in [constants.MODEL_CONFIG_C2C, constants.MODEL_CONFIG_U2C]:

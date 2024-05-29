@@ -4,6 +4,7 @@ import httpx
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from dto.item import ItemDto
+import collections
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +12,12 @@ logger = logging.getLogger(__name__)
 class NnSeekerOpenSearch(NnSeeker):
     FILTER_TYPE_SAME_GENRE = "same_genre"
     ITEM_IDENTIFIER_PROP = "id"
+    FILTER_LOGIC_MATRIX = {
+        "same": "must",
+        "different": "must_not",
+        "choose": "must",
+        "mixed": "",
+    }
 
     def __init__(self, config):
         auth = (config["opensearch.user"], config["opensearch.pass"])
@@ -58,8 +65,9 @@ class NnSeekerOpenSearch(NnSeeker):
             ).json()
             embedding = response[self.embedding_field_name]
 
+        reco_filter = self._transpose_reco_filter_state(filter_criteria, item)
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(
-            embedding, k, filter_criteria
+            embedding, k, reco_filter
         )
         return recomm_content_ids, nn_dists, self.ITEM_IDENTIFIER_PROP
 
@@ -167,3 +175,108 @@ class NnSeekerOpenSearch(NnSeeker):
         embedding = response["hits"]["hits"][0]["_source"][self.embedding_field_name]
 
         return embedding
+
+    def _transpose_reco_filter_state(self, reco_filter, start_item):
+        transposed = collections.defaultdict(dict)
+        bool_terms = collections.defaultdict(list)
+        script_term = collections.defaultdict(dict)
+
+        for filter_element in reco_filter.items():
+            label, value = filter_element
+            if not value:
+                continue
+
+            if isinstance(value, list):
+                value = value[0]
+
+            action, actor = label.split("_")
+
+            if action == "termfilter":
+                bool_terms = self._prepare_query_term_condition_statement(
+                    value, start_item, reco_filter, bool_terms
+                )
+            elif action == "rangefilter":
+                bool_terms = self._prepare_query_range_condition_statement(
+                    value, bool_terms
+                )
+            elif action == "sort":
+                transposed["sort"] = value
+            elif action == "clean":
+                script_term = self._prepare_query_bool_script_statement(value)
+            else:
+                logger.warning(
+                    "Received unknown filter action [" + action + "]. Omitting."
+                )
+
+        if bool_terms:
+            transposed["bool"] = bool_terms
+        if script_term:
+            transposed["bool"]["filter"] = script_term
+
+        return transposed
+
+    def _prepare_query_range_condition_statement(self, value, bool_terms):
+        bool_terms["must"].append({"range": value})
+
+        return bool_terms
+
+    def _prepare_query_term_condition_statement(
+        self, value: list, start_item: ItemDto, reco_filter: dict, bool_terms: dict
+    ) -> dict:
+        transposed_values = []
+
+        logic, field = value.split("_")
+        operator = self.FILTER_LOGIC_MATRIX[logic]  ## contains "must"
+        if logic != "choose":
+            if isinstance(
+                start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field]), list
+            ):
+                transposed_values.extend(
+                    start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field])
+                )
+            else:
+                transposed_values.append(
+                    start_item.__getattribute__(self.FILTER_FIELD_MATRIX[field])
+                )
+        else:  ## we're in "choose_genre", or "choose_subgenre" etc..
+            if field == "erzählweise":
+                reco_filter["value_genreCategory"] = (
+                    self.get_genres_and_subgenres_from_upper_category(
+                        reco_filter["value_erzaehlweiseCategory"], "genres"
+                    )
+                )
+                field = "genre"
+            elif field == "inhalt":
+                reco_filter["value_subgenreCategories"] = (
+                    self.get_genres_and_subgenres_from_upper_category(
+                        reco_filter["value_inhaltCategory"], "subgenres"
+                    )
+                )
+                field = "subgenre"
+            filter_key = "value_" + self.FILTER_FIELD_MATRIX[field]
+            transposed_values.extend(reco_filter[filter_key])
+        term = collections.defaultdict(dict)
+
+        if len(transposed_values):
+            term["terms"][self.FILTER_FIELD_MATRIX[field] + ".keyword"] = (
+                transposed_values
+            )
+
+        if term:
+            bool_terms[operator].append(term)
+
+        return bool_terms
+
+    def _prepare_query_bool_script_statement(self, values):
+        filter_statement = collections.defaultdict(dict)
+        filter_statement["script"] = collections.defaultdict(dict)
+        expr_template = "doc['###.keyword'].length > 0"
+        expr = ""
+
+        for idx, one_element in enumerate(values):
+            expr = expr + expr_template.replace("###", values)
+            if (idx + 1) < len(values):
+                expr = expr + " && "
+
+        filter_statement["script"]["script"]["source"] = expr
+        return filter_statement
