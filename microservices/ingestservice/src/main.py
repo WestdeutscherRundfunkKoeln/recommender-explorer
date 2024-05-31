@@ -82,17 +82,21 @@ def ingest_item(
     if event_type == EVENT_TYPE_DELETE:
         id = event.name.split("/")[-1].split(".")[0]
         return httpx.delete(
-            f"{BASE_URL_SEARCH}/delete-data", params={"document_id": id}
+            f"{BASE_URL_SEARCH}/delete-data", params={"document_id": id} #TODO: api key missing
         ).json()
 
-    document = data_preprocessor.preprocess_data(download_document(storage, event))
-    document_json = document.model_dump()
-    # Add metadata to index
-    retval = request(document_json, f"{BASE_URL_SEARCH}/create-single-document")
-    # Trigger embedding service to add embeddings to index
-    data_preprocessor.add_embeddings(document_json)
-    return retval #TODO: check for meaningful return object. kept for backward compatibility?
-
+    try:
+        document = data_preprocessor.map_data(download_document(storage, event))
+        document_json = document.model_dump()
+        # Add metadata to index
+        retval = request(document_json, f"{BASE_URL_SEARCH}/create-single-document")
+        # Trigger embedding service to add embeddings to index
+        data_preprocessor.add_embeddings(document)
+        return retval  # TODO: check for meaningful return object. kept for backward compatibility?
+    except ValidationError as exc:
+        error_message = repr(exc.errors()[0]["type"])
+        logger.error("Validation error: " + repr(exc.errors()))
+        raise HTTPException(status_code=422, detail=error_message)
 
 
 @router.post("/ingest-multiple-items")
@@ -107,6 +111,8 @@ def bulk_ingest(
         data = json.loads(blob.download_as_text())
         try:
             mapped_data = data_preprocessor.map_data(data)
+            # Trigger embedding service to add embeddings to index
+            data_preprocessor.add_embeddings(mapped_data)
         except ValidationError:
             logger.error(
                 "Error during preprocessing of file %s", blob.name, exc_info=True
