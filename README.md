@@ -452,3 +452,26 @@ This configuration would create a Accordion Widget with a label and two contents
 			...
 
 This Example would create three radio Buttons with the labels: Option A, Option B and Option C. The Radio Button Option A would be selected initially and under the Radio Box, the configured Text Field will be visible. When you select another Radio Button, the Text Field will be hidden and the selected Option Widget will be visible. Be aware that the widgets inside the option are treated as standard widgets so they have all the features and requirements as if you would confige it outside the Radio Box.
+
+## Slider Widget
+
+### Slider Config Overview
+
+| keyword | mandatory | fallback value | description                                                                                                                                                                                                                                                                             |
+|---------|-----------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| type    | yes       | -              | widget type definition: **slider**                                                                                                                                                                                                                                                   |
+| label   | no        | Wert           | headline of the slider widget                                                                                                                                                                                                                                                            |
+| start   | no        | 0.0            | start value of the slider                                                                                                                                                                                                                                                            |
+| end     | no        | 1.0            | end value of the slider                                                                                                                                                                                                                                                            |
+| step    | no        | 0.1            | step value of the slider
+| unit    | no        | -              | unit that will be displayed after the slider value
+
+### Example of a Slider Widget Configuration
+
+    type: 'slider'
+    label: 'Länge'
+    start: 0.0
+    end: 50.0
+    step: 0.5
+    unit: 's'
+
