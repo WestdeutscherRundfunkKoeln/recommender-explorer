@@ -6,4 +6,3 @@ panel
 pytest
 s3fs
 httpx
-requests

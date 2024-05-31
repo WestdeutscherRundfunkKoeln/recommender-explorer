@@ -1,7 +1,7 @@
 import copy
 import json
 import logging
-import requests
+import httpx
 import constants
 
 from model.base_data_accessor import BaseDataAccessor
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class BaseDataAccessorPaService(BaseDataAccessor):
     def __init__(self, config):
+        self.not_implemented_error_message = "This method is not implemented yet"
         self.config = config
         self.pa_service_config = self.config.get('pa_service', None)
         if self.pa_service_config:
@@ -23,25 +24,26 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             self.auth_header_value = self.pa_service_config.get('auth_header_value', None)
             self.http_proxy = self.pa_service_config.get('http_proxy', None)
             self.https_proxy = self.pa_service_config.get('https_proxy', None)
+            self.endpoint = self.pa_service_config.get('endpoint', None)
             self.field_mapping = self.pa_service_config.get('field_mapping', None)
 
     def get_items_by_ids(self, ids):
-        pass
+        raise NotImplementedError(self.not_implemented_error_message)
 
     def get_item_by_crid(self, crid):
-        pass
+        raise NotImplementedError(self.not_implemented_error_message)
 
     def get_items_by_date(self, start_date, end_date, offset=0, size=-1):
-        pass
+        raise NotImplementedError(self.not_implemented_error_message)
 
     def get_items_date_range_limits(self):
-        pass
+        raise NotImplementedError(self.not_implemented_error_message)
 
     def get_top_k_vals_for_column(self, column, k):
-        pass
+        raise NotImplementedError(self.not_implemented_error_message)
 
     def get_unique_vals_for_column(self, column, sort=True):
-        pass
+        raise NotImplementedError(self.not_implemented_error_message)
 
     def get_item_by_external_id(self, item: ItemDto, external_id, filter={}):
         """
@@ -55,11 +57,8 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :return: Start Item and Recommendations in the given Item DTO
         """
         try:
-            pa_service_model_config = self.config['c2c_config']['c2c_models']['PA-Service-Only']
-            pa_service_endpoint = pa_service_model_config.get('endpoint', None)
-
-            if self.host and pa_service_endpoint:
-                url = self.host + '/' + pa_service_endpoint
+            if self.host and self.endpoint:
+                url = self.host + '/' + self.endpoint
 
                 request_body = {
                     "referenceId": external_id,
@@ -92,14 +91,12 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 if proxies:
                     request_params['proxies'] = proxies
 
-                response = requests.post(**request_params)
+                with httpx.Client() as client:
+                    response = client.post(**request_params)
 
                 if response.status_code == 200:
-                    # Print the response data
-                    print(response.json())
                     return self.__get_items_from_response(item, response.json())
                 else:
-                    # If there was an error, print the status code and error message
                     logging.error("Request Error:", response.status_code, response.text)
                     raise EndpointError(
                         'Could not get result from Endpoint: ' + url + 'with request parameters: ' + json.dumps(request_params, indent=4) + '. Status Code: ' + response.status_code)
