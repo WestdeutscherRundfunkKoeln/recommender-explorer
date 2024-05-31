@@ -1,9 +1,7 @@
 import collections
 import logging
-import sys
 import copy
 
-import pandas as pd
 import datetime
 import math
 import re
@@ -26,7 +24,6 @@ from util.dto_utils import (
 )
 from dto.user_item import UserItemDto
 from dto.item import ItemDto
-from dto.content_item import ContentItemDto
 from envyaml import EnvYAML
 
 logger = logging.getLogger(__name__)
@@ -163,7 +160,11 @@ class RecommendationController:
         handler_name, handler_dir = matches.group(1), matches.group(2)
         module = importlib.import_module(handler_dir)
         class_ = getattr(module, handler_name)
-        self.reco_accessor = class_(self.config)
+        self.reco_accessor = (
+            class_(self.config)
+            if not getattr(class_, "from_config", None)
+            else class_.from_config(self.config)
+        )
         self.reco_accessor.set_model_config(model_info)
         self.set_item_accessor(model_info)
         return True
@@ -451,7 +452,7 @@ class RecommendationController:
         :return:
         """
         reco_filter = self._get_current_filter_state("reco_filter")
-        kidxs, nn_dists, field = self.reco_accessor.get_k_NN(
+        kidxs, nn_dists, _ = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
         kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
