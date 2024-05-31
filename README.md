@@ -466,7 +466,7 @@ This Example would create three radio Buttons with the labels: Option A, Option 
 | step    | no        | 0.1            | step value of the slider
 | unit    | no        | -              | unit that will be displayed after the slider value
 
-### Example of a Radio Box Widget Configuration
+### Example of a Slider Widget Configuration
 
     type: 'slider'
     label: 'Länge'
