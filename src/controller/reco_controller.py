@@ -611,6 +611,8 @@ class RecommendationController:
                 transposed["sort"] = value
             elif action == "clean":
                 script_term = self._prepare_query_bool_script_statement(value)
+            elif action == "score":
+                transposed["score"] = value
             else:
                 logger.warning(
                     "Received unknown filter action [" + action + "]. Omitting."

@@ -121,6 +121,9 @@ class NnSeekerOpenSearch(NnSeeker):
             ]
             query["track_scores"] = True
 
+        if reco_filter.get("score"):
+            query["min_score"] = reco_filter["score"]+1
+
         return query
 
     def __get_approx_nn_by_embedding(self, embedding, k, filter_criteria):
