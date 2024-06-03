@@ -61,6 +61,7 @@ ACCORDION_RESET_MARGIN_KEY = "margin"
 # Slider
 SLIDER_TYPE_VALUE = "slider"
 SLIDER_LABEL_KEY = "label"
+SLIDER_NAME_KEY = "name"
 SLIDER_UNIT_KEY = "unit"
 SLIDER_START_KEY = "start"
 SLIDER_END_KEY = "end"

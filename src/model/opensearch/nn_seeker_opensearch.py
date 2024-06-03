@@ -215,7 +215,9 @@ class NnSeekerOpenSearch(NnSeeker):
 
         return embedding
 
-    def _transpose_reco_filter_state(self, reco_filter, start_item):
+    def _transpose_reco_filter_state(
+        self, reco_filter: dict[str, Any], start_item: ItemDto
+    ) -> dict[str, Any]:
         transposed = collections.defaultdict(dict)
         bool_terms = collections.defaultdict(list)
         script_term = collections.defaultdict(dict)
@@ -227,24 +229,27 @@ class NnSeekerOpenSearch(NnSeeker):
             if isinstance(value, list):
                 value = value[0]
 
-            action = label.split("_")[0]
+            action, actor = label.split("_")
 
-            if action == "termfilter":
-                bool_terms = self._prepare_query_term_condition_statement(
-                    value, start_item, reco_filter, bool_terms
-                )
-            elif action == "rangefilter":
-                bool_terms = self._prepare_query_range_condition_statement(
-                    value, bool_terms
-                )
-            elif action == "sort":
-                transposed["sort"] = value
-            elif action == "clean":
-                script_term = self._prepare_query_bool_script_statement(value)
-            else:
-                logger.warning(
-                    "Received unknown filter action [" + action + "]. Omitting."
-                )
+            match action:
+                case "termfilter":
+                    bool_terms = self._prepare_query_term_condition_statement(
+                        value, start_item, reco_filter, bool_terms
+                    )
+                case "rangefilter":
+                    self._prepare_query_range_condition_statement(value, bool_terms)
+                case "relativerangefilter":
+                    self._prepare_query_relative_range_condition_statement(
+                        start_item, actor, value, bool_terms
+                    )
+                case "sort":
+                    transposed["sort"] = value
+                case "clean":
+                    script_term = self._prepare_query_bool_script_statement(value)
+                case _:
+                    logger.warning(
+                        "Received unknown filter action [" + action + "]. Omitting."
+                    )
 
         if bool_terms:
             transposed["bool"] = dict(bool_terms)
@@ -256,7 +261,17 @@ class NnSeekerOpenSearch(NnSeeker):
     def _prepare_query_range_condition_statement(self, value, bool_terms):
         bool_terms["must"].append({"range": value})
 
-        return bool_terms
+    def _prepare_query_relative_range_condition_statement(
+        self, start_item: ItemDto, actor: str, value: float, bool_terms: dict[str, Any]
+    ) -> None:
+        if hasattr(start_item, actor):
+            bool_terms["must"].append(
+                {"range": {actor: {"lte": value * start_item.duration}}}
+            )
+        else:
+            logger.warning(
+                "Relative range filter could not be applied. Start item has no duration attribute."
+            )
 
     def _prepare_query_term_condition_statement(
         self, value: str, start_item: ItemDto, reco_filter: dict, bool_terms: dict

@@ -89,6 +89,7 @@ def test_get_k_nn__by_id__multiple_filter(nn_seeker):
         _item_type="test",
         _provenance="test",
         id="test",
+        duration=1337,
     )
 
     nn_seeker.get_k_NN(
@@ -108,6 +109,8 @@ def test_get_k_nn__by_id__multiple_filter(nn_seeker):
             "termfilter_erzählweise": "choose_erzählweise",
             "value_erzaehlweiseCategory": ["categories_live"],
             "value_genreCategory": None,
+            "rangefilter_test": {"duration": {"gte": 60}},
+            "relativerangefilter_duration": 0.5,
         },
     )
 
@@ -163,6 +166,8 @@ def test_get_k_nn__by_id__multiple_filter(nn_seeker):
                                         ]
                                     }
                                 },
+                                {"range": {"duration": {"gte": 60}}},
+                                {"range": {"duration": {"lte": 668.5}}},
                             ],
                         }
                     },
