@@ -746,7 +746,7 @@ class RecoExplorerApp:
         gte_values = [2, 5, 10, 15, 30, 45]
 
         # duration filter selector
-        self.duration_filter = pn.widgets.Select(
+        self.duration_filter = pn.widgets.MultiSelect(
             name="Länge-Filter",
             options={
                 "Alle": [],
@@ -774,7 +774,7 @@ class RecoExplorerApp:
         threshold_values = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
         # duration filter selector
         self.score_threshold_filter = pn.widgets.MultiSelect( # TODO: change this to continuous slider
-            name="Qualität-Filter",
+            name="Modell-Score",
             options={
                 "Alle": [],
                 **{
@@ -1447,7 +1447,7 @@ class RecoExplorerApp:
 
         # Postprocessing and Filtering
         self.reco_items = pn.Accordion(
-            ("Qualität-Filter", self.score_threshold_filter),
+            ("Modell-Score", self.score_threshold_filter),
             ("Duplikatfilterung", self.duplicate),
             ("Sortierung", self.sort),
             ("Fehlende Daten ausblenden", self.incompleteSelect),
