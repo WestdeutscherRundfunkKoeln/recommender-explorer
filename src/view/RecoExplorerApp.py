@@ -91,6 +91,7 @@ class RecoExplorerApp:
         self.define_model_selections()
         self.define_user_selections()
         self.define_reco_duration_filtering()
+        self.define_score_threshold()
 
         # a grid for start items/users and recos
         self.item_grid = pn.GridSpec()
@@ -745,7 +746,7 @@ class RecoExplorerApp:
         gte_values = [2, 5, 10, 15, 30, 45]
 
         # duration filter selector
-        self.duration_filter = pn.widgets.Select(
+        self.duration_filter = pn.widgets.MultiSelect(
             name="Länge-Filter",
             options={
                 "Alle": [],
@@ -766,6 +767,33 @@ class RecoExplorerApp:
             "reco_filter",
             self.duration_filter,
             duration_filter_watcher,
+            self.trigger_reco_filter_choice,
+        )
+
+    def define_score_threshold(self):
+        threshold_values = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        # duration filter selector
+        self.score_threshold_filter = pn.widgets.MultiSelect( # TODO: change this to continuous slider
+            name="Modell-Score",
+            options={
+                "Alle": [],
+                **{
+                    f"ONLY SCORE > {score_threshold}": score_threshold
+                    for score_threshold in threshold_values
+                },
+            },
+            size=1,
+        )
+
+        self.score_threshold_filter.params = {"label": "score_threshold", "reset_to": 0.0}
+
+        score_threshold_filter_watcher = self.score_threshold_filter.param.watch(
+            self.trigger_reco_filter_choice, "value", onlychanged=True
+        )
+        self.controller.register(
+            "reco_filter",
+            self.score_threshold_filter,
+            score_threshold_filter_watcher,
             self.trigger_reco_filter_choice,
         )
 
@@ -1419,6 +1447,7 @@ class RecoExplorerApp:
 
         # Postprocessing and Filtering
         self.reco_items = pn.Accordion(
+            ("Modell-Score", self.score_threshold_filter),
             ("Duplikatfilterung", self.duplicate),
             ("Sortierung", self.sort),
             ("Fehlende Daten ausblenden", self.incompleteSelect),
