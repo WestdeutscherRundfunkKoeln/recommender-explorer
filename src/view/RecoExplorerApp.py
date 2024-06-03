@@ -771,7 +771,7 @@ class RecoExplorerApp:
         )
 
     def define_score_threshold(self):
-        threshold_values = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        threshold_values = [0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4]
         # duration filter selector
         self.score_threshold_filter = pn.widgets.MultiSelect( # TODO: change this to continuous slider
             name="Modell-Score",
