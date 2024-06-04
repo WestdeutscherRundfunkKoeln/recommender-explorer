@@ -172,7 +172,23 @@ class RecommendationController:
         class_ = getattr(module, handler_name)
         self.reco_accessor = class_(self.config)
         self.reco_accessor.set_model_config(model_info)
+        self.set_item_accessor(model_info)
         return True
+
+    def set_item_accessor(self, model_info):
+        """
+        Sets Item Accessor Based on given model_info. Default init value is BaseDataAccessorOpenSearch(),
+        if nothing is passed in the model info, default selection stays.
+
+        :param model_info: model config from config yaml
+        """
+        item_accessor_key = model_info.get('item_accessor', None)
+        if item_accessor_key:
+            matches = re.search('^(.*)@(.*)$', model_info['item_accessor'])
+            item_accessor_name, item_accessor_dir = matches.group(1), matches.group(2)
+            module = importlib.import_module(item_accessor_dir)
+            class_ = getattr(module, item_accessor_name)
+            self.item_accessor = class_(self.config)
 
     def get_model_params(self):
         return self.reco_accessor.get_model_params()
@@ -222,25 +238,51 @@ class RecommendationController:
                 res.append(items[0])
             return list(selected_models), res, self.model_config
 
-    def get_items_by_strategy_and_model(
-        self, model_info: dict
-    ) -> tuple[list, list[list], str]:
-        """Gets all items from OSS by model info
-
-        Gets the start items by model info. The start item is the reference item a user searches.
-        Each start item creates a new row in the frontend.
-
-        :param model_info: Config of model in configuration yaml
-        :return:
+    def get_items_by_strategy_and_model(self, model_info: dict) -> tuple[list, list[list], str]:
         """
-        all_items = []
+        Gets start item(s) based on model info and already set strategy. If model is configured as
+        recos_in_same_response, function will not only return start items but also all recommended
+        items as well. Otherwise function will try to get recommended results for start item.
+
+        :param model_info: selected model info dictionary
+        :return:found items in a list
+        """
         item_hits, start_items = self._get_start_items(model_info)
 
-        self.set_num_pages(item_hits)
+        if model_info.get('recos_in_same_response', False):
+            return self.get_items_from_response_with_recommendations_included(model_info, start_items)
+        else:
+            self.set_num_pages(item_hits)
+            return self.get_reco_items_for_start_items_from_response(model_info, start_items)
 
-        for index, start_item in enumerate(start_items):
-            item_row = []
+    def get_items_from_response_with_recommendations_included(self, model_info: dict, returned_items) -> tuple[list, list[list], str]:
+        """
+        Returns the items from the response. Here Recommendations are already part of the response, so mostly
+        just iterate over results and return list of items.
+
+        :param model_info: selected model info dictionary
+        :param returned_items: items returned in response - here already contains recommendations
+        :return: Final List of Item DTOs for this search
+        """
+        all_items = []
+        item_row = []
+        for index, start_item in enumerate(returned_items):
             item_row.append(start_item)
+        all_items.append(item_row)
+        return [model_info['display_name']], all_items, self.model_config
+
+    def get_reco_items_for_start_items_from_response(self, model_info: dict, start_items) -> tuple[list, list[list], str]:
+        """
+        Returns the items from the response. Here Recommendations are not part of the response, so they need to be requeted
+        from service for each start item from response.
+
+        :param model_info: selected model info dictionary
+        :param start_items: start items returned in response
+        :return: Final List of Item DTOs for this search
+        """
+        all_items = []
+        for index, start_item in enumerate(start_items):
+            item_row = [start_item]
             try:
                 nn_items, nn_dists = self._get_reco_items(start_item, model_info)
 
@@ -539,10 +581,6 @@ class RecommendationController:
             raise ValueError("URL must be a string")
         elif not url_field.value.startswith("https://"):
             raise ValueError("URL must be of format https://")
-
-    def _check_text(self, text_field):
-        if not isinstance(text_field.value, str):
-            raise ValueError("Text must be a string")
 
     def _check_text(self, text_field):
         if not isinstance(text_field.value, str):

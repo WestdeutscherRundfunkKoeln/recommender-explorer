@@ -475,3 +475,95 @@ This Example would create three radio Buttons with the labels: Option A, Option 
     step: 0.5
     unit: 's'
 
+
+
+# RecoExplorer Custom Data
+
+This Documentation will provide insights in the possibilities of creating your own RecoExplorer Content Type to make this app work with your Data Structure and 
+Mapping of the Meta Data Structure your Search Service will provide or just map your Open Search Response Keys to the default DTO which is already defined.
+
+## Content Item DTO
+At first you will have to define and implement a ContentItemDto Class in python in src/dto. This dto should look like this: 
+
+    import constants
+    from dataclasses import dataclass
+    from dto.item import ItemDto
+    
+    @dataclass
+    class NewContentItemDto(ItemDto):
+      id: str = ''
+      title: str = ''
+      description: str = ''
+      duration: int = 0
+      imageUrl: str = ''
+      _viewer: str = ''
+
+      @property
+      def viewer(self) -> str:
+        if self._position == constants.ITEM_POSITION_START:
+            self._viewer = 'NewContentStartCard@view.cards.new_cards.new_content_start_card'
+        elif self._position == constants.ITEM_POSITION_RECO:
+            self._viewer = 'NewContentRecoCard@view.cards.new_cards.new_content_reco_card'
+        else:
+            raise TypeError('Unknown Item position [' + self._position + ']')
+        return self._viewer
+
+This dto will be used to store the request from your search service or endpoint into items so that the Reco Explorer can internally work with the items. 
+To archive that, you will have to set the new ContentItemDto class in the c2c config file of your Reco Explorer Instance as the content_type:
+
+    c2c_config:
+      c2c_models:
+          A-New-Model:
+              display_name: 'A-New-Model'
+              handler: '...'
+              endpoint: '...'
+              start_color: '...'
+              reco_color: '...'
+              content_type: 'NewContentItemDto'
+              default: True
+
+Now the RecoExplorer will try to map the result of your search request (or endpoint result) to the given ContentItemDTO Class. If the search or endpoint result 
+json has a different structure than the Standard OpenS Search Service Response, you will need a custom Item Accessor. For more information about this, see 
+section Item Accessor in this documentation.
+
+### Custom Field Mapping
+The easiest way for the custom mapping is to name the vars in the DTO Class like the keys of the item you want to map. So in the given example, an Item from the 
+response has a key named "id" and a key named "description" and so on. If you want additional mapping here, you can define it in the config. If the Items in 
+your response have the same json structure as the ones in the default ContentItemDto class (all in one json level) but just other key names, it would be much 
+easier to use a custom field mapping than implement a whole new DTO for your items. A field mapping would look like this:
+
+      field_mapping:
+        "created": "availableFrom"
+        "id": "externalid"
+
+In this example there would be a key named "availableFrom" in the Item response. There is no "availableFrom" key in the ContentItemDto class (which is used in 
+default case) and so you can use the custom mapping to map the value from the custom key to a key name in the item dto class. Here the "availableFrom" Key from 
+the response is mapped to the "created" key from the item dto. The Value behind it will be saved in created in the dto. You dont need to map all keys from your 
+response to the dto. When the key in the dto and the item response is the same it gets mapped automatically and if its not mapped its default empty in the DTO.
+
+## Custom Result Cards (Frontend)
+When a custom new ContentItemDto is implemented that usually also means a new Frontend Configuration is needed. The Result View in Reco Explorer is called a
+Card and usually there is a least one Card per DTO because Cards gets the infos from a DTO and present it in the Explorer. What Result Card is displayed in the 
+Explorer is defined in the DTO Class itself. The DTO needs a viewer function which returns a String like: 
+"NewContentStartCard@view.cards.new_cards.new_content_start_card" That means there need to be a NewContentStartCard Class in 
+view/cards/new_cards/new_content_start_card which gets displayed for the result. 
+
+### Card Implementation
+For a example how Cards can work its the best to check the "ContentCard" class in /view/cards. Here Values from the DTO (in this case ContentItemDto) get 
+mapped to the card and the ContentStartCard() and ContentRecoCard() are implementations of this ContentCard(). The Implementations are the ones which get
+actually shown.
+
+## Custom Item Accessor
+When you have a custom search result or endpoint response its possible, that the structure of the response does not fit to the ones the Open Search Service 
+returns. In that case you need to implement a custom Item Accessor which gets that custom response, gets the items from it and maps every key to the configured 
+DTO. The custom Item Accessor needs to be implemented and attached to the model config in the config.yaml like this:
+
+      New-Model:
+        display_name: 'New-Model'
+        handler: '...'
+        item_accessor: 'BaseDataAccessorNewAccessor@model.newService.base_data_accessor_new_accessor'
+        ...
+
+This Accessor Class will need all accessor_methods which are defined for the widgets (which get the raw response from your service of choice) and a function
+get_ items_from_response() which will take the raw (for example json response) and create item Dtos from the items in the response. You wont have to do more,
+When the ContentItemDto and the Resulting Cards are defined correctly, the Reco Explorer should now work with the custom Service (Response)
