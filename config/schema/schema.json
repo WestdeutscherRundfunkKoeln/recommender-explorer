@@ -80,7 +80,8 @@
         "pass",
         "index",
         "primary_field"
-      ]
+      ],
+      "additionalProperties": false
     },
     "ingest": {
       "type": "object",
