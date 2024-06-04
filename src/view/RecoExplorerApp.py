@@ -3,7 +3,6 @@ import panel as pn
 import logging
 import traceback
 import constants
-from envyaml import EnvYAML
 from controller.reco_controller import RecommendationController
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.date_validation_error import DateValidationError
@@ -23,6 +22,7 @@ from view.widgets.slider_widget import SliderWidget
 from view import ui_constants
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 ##
@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 #
 class RecoExplorerApp:
     #
-    def __init__(self, config_full_path):
+    def __init__(self, config_full_path: str, config: dict[str, str]) -> None:
         # basic setup
-        self.config = EnvYAML(config_full_path)
+        self.config = config
         self.config_full_path = config_full_path
         self.controller = RecommendationController(self.config)
 
@@ -92,6 +92,7 @@ class RecoExplorerApp:
             self.define_model_selections()
             self.define_user_selections()
             self.define_reco_duration_filtering()
+            self.define_score_threshold()
 
         # a grid for start items/users and recos
         self.item_grid = pn.GridSpec()
@@ -105,6 +106,7 @@ class RecoExplorerApp:
     def set_client(self):
         # Check if there are multiple config files. If yes, make config widget visible.
         all_configs = get_all_config_files(self.config_full_path)
+        logger.debug("all_configs: %s", all_configs)
 
         if len(all_configs) > 1:
             self.client_choice_visibility = True
@@ -746,7 +748,7 @@ class RecoExplorerApp:
         gte_values = [2, 5, 10, 15, 30, 45]
 
         # duration filter selector
-        self.duration_filter = pn.widgets.Select(
+        self.duration_filter = pn.widgets.MultiSelect(
             name="Länge-Filter",
             options={
                 "Alle": [],
@@ -767,6 +769,51 @@ class RecoExplorerApp:
             "reco_filter",
             self.duration_filter,
             duration_filter_watcher,
+            self.trigger_reco_filter_choice,
+        )
+
+    def define_score_threshold(self):
+        threshold_values = [
+            0.95,
+            0.9,
+            0.85,
+            0.8,
+            0.75,
+            0.7,
+            0.65,
+            0.6,
+            0.55,
+            0.5,
+            0.45,
+            0.4,
+        ]
+        # duration filter selector
+        self.score_threshold_filter = (
+            pn.widgets.MultiSelect(  # TODO: change this to continuous slider
+                name="Modell-Score",
+                options={
+                    "Alle": [],
+                    **{
+                        f"ONLY SCORE > {score_threshold}": score_threshold
+                        for score_threshold in threshold_values
+                    },
+                },
+                size=1,
+            )
+        )
+
+        self.score_threshold_filter.params = {
+            "label": "score_threshold",
+            "reset_to": 0.0,
+        }
+
+        score_threshold_filter_watcher = self.score_threshold_filter.param.watch(
+            self.trigger_reco_filter_choice, "value", onlychanged=True
+        )
+        self.controller.register(
+            "reco_filter",
+            self.score_threshold_filter,
+            score_threshold_filter_watcher,
             self.trigger_reco_filter_choice,
         )
 
@@ -1293,9 +1340,7 @@ class RecoExplorerApp:
             block_list (list): list of ui blocks
         """
         block_list = []
-        blocks_config = self.config[
-            ui_constants.UI_CONFIG_KEY + "." + ui_constants.BLOCKS_CONFIG_KEY
-        ]
+        blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         for block_config in blocks_config:
             block = {
                 ui_constants.BLOCK_LABEL_LIST_KEY: block_config.get(
@@ -1325,8 +1370,9 @@ class RecoExplorerApp:
 
     #
     def assemble_components(self):
-        if ui_constants.UI_CONFIG_KEY in self.config:
+        if ui_constants.UI_CONFIG_BLOCKS in self.config:
             blocks = self.build_blocks()
+            logger.debug("found blocks %s", blocks)
             block_counts = len(blocks)
 
             # Client
@@ -1421,6 +1467,7 @@ class RecoExplorerApp:
 
             # Postprocessing and Filtering
             self.reco_items = pn.Accordion(
+                ("Modell-Score", self.score_threshold_filter),
                 ("Duplikatfilterung", self.duplicate),
                 ("Sortierung", self.sort),
                 ("Fehlende Daten ausblenden", self.incompleteSelect),
@@ -1513,7 +1560,9 @@ class RecoExplorerApp:
 
     #
     def render(self):
+        logger.info("assemble components")
         self.assemble_components()
+        logger.debug("assemble components done")
 
         title = self.get_ui_config_value(
             ui_constants.UI_CONFIG_TITLE_KEY,

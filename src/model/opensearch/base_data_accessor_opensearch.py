@@ -66,26 +66,35 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
     def get_items_by_ids(
         self, item: ItemDto, ids, provenance=constants.ITEM_PROVENANCE_C2C
     ):
-        docs = [
-            {
-                "_id": id,
-                "_source": {
-                    "exclude": "embedding"
-                },  # Todo: replace by all model fields
+        if len(ids)>0:
+            docs = [
+                {
+                    "_id": id,
+                    "_source": {
+                        "exclude": "embedding"
+                    },  # Todo: replace by all model fields
+                }
+                for id in ids
+            ]
+
+            query = {"docs": docs}
+
+            logger.info(query)
+            response_mget = self.client.mget(body=query, index=self.target_idx_name)
+            response = {
+                "hits": {"hits": response_mget["docs"], "total": {"value": len(ids)}}
             }
-            for id in ids
-        ]
+            # logger.info(response)
+            return self.__get_items_from_response(item, response, provenance)
+        else:
+            response = {
+                "hits": {"hits": [], "total": {"value": len(ids)}}
+            }
+            item_dtos = []
+            total_items = 0
+            # logger.info(response)
+            return item_dtos, total_items
 
-        query = {"docs": docs}
-
-        logger.info(query)
-        response_mget = self.client.mget(body=query, index=self.target_idx_name)
-        response = {
-            "hits": {"hits": response_mget["docs"], "total": {"value": len(ids)}}
-        }
-
-        # logger.info(response)
-        return self.__get_items_from_response(item, response, provenance)
 
     def get_item_by_url(self, item: ItemDto, url, filter={}):
         last_string = re.search(r".*/([^/?]+)[?]*", url.strip()).group(1)

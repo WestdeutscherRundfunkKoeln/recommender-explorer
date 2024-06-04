@@ -82,7 +82,9 @@ def ingest_item(
     if event_type == EVENT_TYPE_DELETE:
         id = event.name.split("/")[-1].split(".")[0]
         return httpx.delete(
-            f"{BASE_URL_SEARCH}/delete-data", params={"document_id": id} #TODO: api key missing
+            f"{BASE_URL_SEARCH}/delete-data",
+            params={"document_id": id},
+            headers={"x-api-key": config["api_key"]}
         ).json()
 
     try:

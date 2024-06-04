@@ -1,13 +1,11 @@
 indexing_sources:
-    base_data_bucket: '<your base data bucket for indexing>'
-    base_data_file: '<your base data file for indexing>'
-    subgenre_lut_file: '<your subgenre categories lookup file for indexing>'
-    thematic_lut_file: '<your thematic categories lookup file for indexing>'
-    models_to_index: '<a list of model names to use for indexing>'
-
+  base_data_bucket: <your base data bucket for indexing>
+  base_data_file: <your base data file for indexing>
+  subgenre_lut_file: <your subgenre categories lookup file for indexing>
+  thematic_lut_file: <your thematic categories lookup file for indexing>
+  models_to_index: <a list of model names to use for indexing>
 databackend:
-    type: opensearch
-
+  type: opensearch
 opensearch:
     host: $OPENSEARCH_HOST
     port: $OPENSEARCH_PORT
@@ -27,34 +25,34 @@ ingest:
     base_url_embedding: $BASE_URL_EMBEDDING
 
 c2c_config:
-    c2c_models:
-        # Example for opensearch endpoint
-        Dummy-C2C-Model:
-            display_name: '<your model name for display in frontend>'
-            handler: 'ModelClass@path'
-            endpoint: 'opensearch://<your opensearch endpoint>'
-            start_color: '#5F84A2' # dark blue
-            reco_color: '#B7D0E1' # light blue
-            default: True # enabled at startup
-
+  c2c_models:
+    # Example for opensearch endpoint
+    Dummy-C2C-Model:
+      display_name: <your model name for display in frontend>
+      handler: ModelClass@path
+      endpoint: opensearch://<your opensearch endpoint>
+      start_color: '#5F84A2' # dark blue
+      reco_color: '#B7D0E1' # light blue
+      default: True # enabled at startup
 # optional if no u2c models available
 u2c_config:
-    u2c_models:
-        # Example for sagemaker endpoint
-        Dummy-U2C-Model:
-            display_name: '<your model name for display in frontend>'
-            handler: 'ModelClass@path'
-            endpoint: 'sagemaker://<your endpoint>'
-            role_arn: '<your sagemaker models role arn>'
-            start_color: '#4B6043' # dark green
-            reco_color: '#75975E' # light green
-            default: False
-    clustering_models:
-        # Example for sagemaker endpoint
-        Dummy-Clustering-Model:
-            display_name: '<your model name for display in frontend>'
-            handler: 'ModelClass@path'
-            endpoint: 'sagemaker://<your endpoint>'
-            role_arn: '<your sagemaker models role arn>'
-            avatar: 'assets/img/user-dummy-pic.png'
-            default: False
+  u2c_models:
+    # Example for sagemaker endpoint
+    Dummy-U2C-Model:
+      display_name: <your model name for display in frontend>
+      handler: ModelClass@path
+      endpoint: sagemaker://<your endpoint>
+      role_arn: <your sagemaker models role arn>
+      start_color: '#4B6043' # dark green
+      reco_color: '#75975E' # light green
+      default: False
+  clustering_models:
+    # Example for sagemaker endpoint
+    Dummy-Clustering-Model:
+      display_name: <your model name for display in frontend>
+      handler: ModelClass@path
+      endpoint: sagemaker://<your endpoint>
+      role_arn: <your sagemaker models role arn>
+      avatar: assets/img/user-dummy-pic.png
+      default: False
+ui_config: config/ui_config.yaml
