@@ -452,7 +452,7 @@ class RecommendationController:
         :return:
         """
         reco_filter = self._get_current_filter_state("reco_filter")
-        kidxs, nn_dists, _ = self.reco_accessor.get_k_NN(
+        kidxs, nn_dists = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
         kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
@@ -470,7 +470,7 @@ class RecommendationController:
         )
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
-        kidxs, nn_dists, field = self.reco_accessor.get_recos_user(
+        kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
             start_item, (self.num_NN + 1)
         )
         ident, db_ident = get_primary_idents(self.config)
