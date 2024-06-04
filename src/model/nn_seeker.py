@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from src.dto.item import ItemDto
+from dto.item import ItemDto
 
 
 class NnSeeker(ABC):
@@ -22,4 +22,3 @@ class NnSeeker(ABC):
     @abstractmethod
     def set_model_config(self, model_config):
         pass
-
