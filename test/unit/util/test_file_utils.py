@@ -34,3 +34,11 @@ def test_load_ui_config__wrong_config():
     result = load_ui_config(config)
 
     assert result == config
+
+
+def test_load_ui_config__inline_config():
+    config = {"test": "test", "ui_config": {"title": "Test Recommender Explorer"}}
+
+    result = load_ui_config(config)
+
+    assert result == config

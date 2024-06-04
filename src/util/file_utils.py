@@ -100,7 +100,8 @@ def load_ui_config(config: dict[str, str]) -> dict[str, str]:
         logger.warning("UI config not found in config file")
     except FileNotFoundError:
         logger.warning("UI config file not found")
+    except TypeError:
+        logger.warning("UI config seems to be defined inline")
 
     config.update(ui_config)
     return config
-
