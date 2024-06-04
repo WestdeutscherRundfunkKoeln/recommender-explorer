@@ -19,6 +19,7 @@ from view.widgets.text_field_widget import TextFieldWidget
 from view.widgets.radio_box_widget import RadioBoxWidget
 from view.widgets.accordion_widget import AccordionWidget
 from view.widgets.slider_widget import SliderWidget
+from view.widgets.text_area_input_widget import TextAreaInputWidget
 from view import ui_constants
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ class RecoExplorerApp:
             ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(self, self.controller),
             ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
             ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
+            ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(self, self.controller)
         }
 
         pn.extension(sizing_mode="stretch_width")

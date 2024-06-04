@@ -51,6 +51,7 @@ TEXT_AREA_INPUT_LABEL_KEY = "label"
 TEXT_AREA_INPUT_PLACEHOLDER_KEY = "placeholder"
 TEXT_AREA_INPUT_ACCESSOR_KEY = "accessor_function"
 TEXT_AREA_INPUT_VALIDATOR_KEY = "validator_function"
+TEXT_AREA_INPUT_HAS_PAGING_KEY = "hasPaging"
 TEXT_AREA_INPUT_URL_PARAMETER_KEY = "url_parameter"
 
 # Accordion Reset Button
@@ -94,5 +95,6 @@ FALLBACK_MULTI_SELECT_LABEL_VALUE = "Default Multi Select Headline"
 FALLBACK_ACCORDION_LABEL_VALUE = "Default Accordion Headline"
 FALLBACK_DATE_TIME_PICKER_NAME_VALUE = "Default Date Time Picker Label"
 FALLBACK_BLOCK_LABEL_VALUE = "Default Block Headline"
+FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE = "Default Text Area Input"
 
 UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
