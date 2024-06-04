@@ -6,6 +6,7 @@ from dto.user_item import UserItemDto
 from dto.history_item import HistoryItemDto
 from dto.model_params_item import ModelParametersDto
 from dto.not_found_item import NotFoundDto
+from dto.wdr_content_item import WDRContentItemDto
 import logging
 import sys
 
