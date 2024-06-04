@@ -247,52 +247,73 @@ class RecommendationController:
         :param model_info: selected model info dictionary
         :return:found items in a list
         """
-        all_items = []
         item_hits, start_items = self._get_start_items(model_info)
 
         if model_info.get('recos_in_same_response', False):
-            item_row = []
-            for index, start_item in enumerate(start_items):
-                item_row.append(start_item)
-            all_items.append(item_row)
-            return [model_info['display_name']], all_items, self.model_config
+            return self.get_items_from_response_with_recommendations_included(model_info, start_items)
         else:
             self.set_num_pages(item_hits)
+            return self.get_reco_items_for_start_items_from_response(model_info, start_items)
 
-            for index, start_item in enumerate(start_items):
-                item_row = []
-                item_row.append(start_item)
-                try:
-                    nn_items, nn_dists = self._get_reco_items(start_item, model_info)
+    def get_items_from_response_with_recommendations_included(self, model_info: dict, returned_items) -> tuple[list, list[list], str]:
+        """
+        Returns the items from the response. Here Recommendations are already part of the response, so mostly
+        just iterate over results and return list of items.
 
-                    # Find all filters
-                    all_chosen_filters = self._get_current_filter_state("reco_filter")
-                    if len(all_chosen_filters["remove_duplicate"]) > 0:
-                        chosen_param = []
-                        for item in all_chosen_filters["remove_duplicate"]:
-                            chosen_param.append(item[1])
-                        filtered_nn_items = self.postproc.filterDuplicates(
-                            start_item, nn_items, chosen_param
-                        )
-                        nn_items = filtered_nn_items
+        :param model_info: selected model info dictionary
+        :param returned_items: items returned in response - here already contains recommendations
+        :return: Final List of Item DTOs for this search
+        """
+        all_items = []
+        item_row = []
+        for index, start_item in enumerate(returned_items):
+            item_row.append(start_item)
+        all_items.append(item_row)
+        return [model_info['display_name']], all_items, self.model_config
 
-                    for idx, reco_item in enumerate(nn_items):
-                        reco_item.dist = nn_dists[idx]
-                        reco_item.position = constants.ITEM_POSITION_RECO
-                        item_row.append(reco_item)
+    def get_reco_items_for_start_items_from_response(self, model_info: dict, start_items) -> tuple[list, list[list], str]:
+        """
+        Returns the items from the response. Here Recommendations are not part of the response, so they need to be requeted
+        from service for each start item from response.
 
-                    all_items.append(item_row)
-                except (UnknownUserError, UnknownItemError) as e:
-                    not_found_item = dto_from_classname(
-                        class_name="NotFoundDto",
-                        position=constants.ITEM_POSITION_START,
-                        item_type=constants.ITEM_TYPE_CONTENT,
-                        provenance=constants.ITEM_PROVENANCE_C2C,
+        :param model_info: selected model info dictionary
+        :param start_items: start items returned in response
+        :return: Final List of Item DTOs for this search
+        """
+        all_items = []
+        for index, start_item in enumerate(start_items):
+            item_row = [start_item]
+            try:
+                nn_items, nn_dists = self._get_reco_items(start_item, model_info)
+
+                # Find all filters
+                all_chosen_filters = self._get_current_filter_state("reco_filter")
+                if len(all_chosen_filters["remove_duplicate"]) > 0:
+                    chosen_param = []
+                    for item in all_chosen_filters["remove_duplicate"]:
+                        chosen_param.append(item[1])
+                    filtered_nn_items = self.postproc.filterDuplicates(
+                        start_item, nn_items, chosen_param
                     )
-                    item_row.append(not_found_item)
-                    all_items.append(item_row)
-                    continue
-            return [model_info["display_name"]], all_items, self.model_config
+                    nn_items = filtered_nn_items
+
+                for idx, reco_item in enumerate(nn_items):
+                    reco_item.dist = nn_dists[idx]
+                    reco_item.position = constants.ITEM_POSITION_RECO
+                    item_row.append(reco_item)
+
+                all_items.append(item_row)
+            except (UnknownUserError, UnknownItemError) as e:
+                not_found_item = dto_from_classname(
+                    class_name="NotFoundDto",
+                    position=constants.ITEM_POSITION_START,
+                    item_type=constants.ITEM_TYPE_CONTENT,
+                    provenance=constants.ITEM_PROVENANCE_C2C,
+                )
+                item_row.append(not_found_item)
+                all_items.append(item_row)
+                continue
+        return [model_info["display_name"]], all_items, self.model_config
 
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components

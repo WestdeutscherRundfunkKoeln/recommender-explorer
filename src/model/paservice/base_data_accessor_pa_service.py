@@ -7,6 +7,7 @@ import constants
 from model.base_data_accessor import BaseDataAccessor
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.endpoint_error import EndpointError
+from exceptions.config_error import ConfigError
 from dto.item import ItemDto
 from util.dto_utils import update_from_props
 
@@ -26,6 +27,25 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             self.https_proxy = self.pa_service_config.get('https_proxy', None)
             self.endpoint = self.pa_service_config.get('endpoint', None)
             self.field_mapping = self.pa_service_config.get('field_mapping', None)
+
+        if not self.pa_service_config:
+            raise ConfigError("Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
+                              "expect Configuration in Key: pa_service")
+        elif not self.host:
+            raise ConfigError("Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
+                              "expect Configuration in Key: pa_service.host")
+        elif not self.endpoint:
+            raise ConfigError("Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
+                              "expect Configuration in Key: pa_service.endpoint")
+        elif not self.field_mapping:
+            raise ConfigError("Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
+                              "expect Configuration in Key: pa_service.field_mapping")
+        elif not self.auth_header:
+            raise ConfigError("Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
+                              "expect Configuration in Key: pa_service.auth_header")
+        elif not self.auth_header_value:
+            raise ConfigError("Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
+                              "expect Configuration in Key: pa_service.auth_header_value")
 
     def get_items_by_ids(self, ids):
         raise NotImplementedError(self.not_implemented_error_message)
@@ -65,6 +85,11 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                     "reco": "true"
                 }
 
+                request_params = {
+                    'url': url,
+                    'json': request_body
+                }
+
                 headers = None
                 if self.auth_header and self.auth_header_value:
                     headers = {
@@ -73,26 +98,22 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                         self.auth_header: self.auth_header_value
                     }
 
-                proxies = None
-                if self.http_proxy and self.https_proxy:
-                    proxies = {
-                        'http': self.http_proxy,
-                        'https': self.https_proxy
-                    }
-
-                request_params = {
-                    'url': url,
-                    'json': request_body
-                }
-
                 if headers:
                     request_params['headers'] = headers
 
-                if proxies:
-                    request_params['proxies'] = proxies
+                proxies = None
+                if self.http_proxy and self.https_proxy:
+                    proxies = {
+                        'http://': self.http_proxy,
+                        'https://': self.https_proxy
+                    }
 
-                with httpx.Client() as client:
-                    response = client.post(**request_params)
+                if proxies:
+                    client = httpx.Client(proxies=proxies)
+                else:
+                    client = httpx.Client()
+
+                response = client.post(**request_params)
 
                 if response.status_code == 200:
                     return self.__get_items_from_response(item, response.json())
@@ -102,7 +123,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                         'Could not get result from Endpoint: ' + url + 'with request parameters: ' + json.dumps(request_params, indent=4) + '. Status Code: ' + response.status_code)
         except Exception as e:
             logging.error(e)
-            raise EndpointError("Couldn't get a valid response from endpoint [" + self.host + '/' + pa_service_endpoint + ']', {})
+            raise EndpointError("Couldn't get a valid response from endpoint [" + self.host + '/' + self.endpoint + ']', {})
 
     def __get_items_from_response(self, item_dto: ItemDto, response, provenance=constants.ITEM_PROVENANCE_C2C) -> tuple[list, int]:
         """
