@@ -385,6 +385,9 @@ class RecoExplorerApp:
             placeholder="Text here",
             visible=False,
             max_length=99_999,  # empirical max_length
+            rows=5,
+            max_rows=10,
+            auto_grow=True,
         )
 
         self.text_input.params = {
@@ -1187,7 +1190,7 @@ class RecoExplorerApp:
                 component = getattr(self, on_component)
                 new_event = event.new
 
-                if value_trigger == new_event:
+                if value_trigger == new_event[0]:
                     component.visible = True
                 else:
                     component.visible = False
