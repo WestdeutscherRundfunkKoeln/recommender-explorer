@@ -168,8 +168,8 @@ class NnSeekerOpenSearch(NnSeeker):
             ]
             query["track_scores"] = True
 
-        if reco_filter.get("score"):
-            query["min_score"] = reco_filter["score"]+1
+        if filter_criteria.get("score"):
+            query["min_score"] = reco_filter["score"] + 1
 
         return query
 
