@@ -2,6 +2,7 @@ import constants
 from dataclasses import dataclass
 from dto.item import ItemDto
 
+
 @dataclass
 class WDRContentItemDto(ItemDto):
     availableFrom: str = ''
@@ -48,10 +49,11 @@ class WDRContentItemDto(ItemDto):
 
     @property
     def viewer(self) -> str:
-        if self._position == constants.ITEM_POSITION_START:
-            self._viewer = 'WDRContentStartCard@view.cards.wdr.wdr_content_start_card'
-        elif self._position == constants.ITEM_POSITION_RECO:
-            self._viewer = 'WDRContentRecoCard@view.cards.wdr.wdr_content_reco_card'
-        else:
-            raise TypeError('Unknown Item position [' + self._position + ']')
+        match self._position:
+            case constants.ITEM_POSITION_START:
+                self._viewer = 'WDRContentStartCard@view.cards.wdr.wdr_content_start_card'
+            case constants.ITEM_POSITION_RECO:
+                self._viewer = 'WDRContentRecoCard@view.cards.wdr.wdr_content_reco_card'
+            case _:
+                raise TypeError('Unknown Item position [' + self._position + ']')
         return self._viewer
