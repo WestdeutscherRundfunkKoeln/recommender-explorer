@@ -483,7 +483,7 @@ This Example would create three radio Buttons with the labels: Option A, Option 
 
 ## Text Area Input Widget
 
-### Slider Config Overview
+### Text Area Input Config Overview
 
 | keyword            | mandatory | fallback value          | description                                                                                                                                                                                                                                       |
 |--------------------|-----------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -495,7 +495,7 @@ This Example would create three radio Buttons with the labels: Option A, Option 
 | url_parameter      | no        | -                       | text area inputs can be set by a url parameter. This parameter name can be set here, so when its named: aParameterName a call like .../RecoExplorer?aParameterName=test would set test into the text area input and trigger a search immediately. |
 
 
-### Example of a Slider Widget Configuration
+### Example of a Text Area Input Widget Configuration
 
     type: 'text_area_input'
     label: 'A Text Area Input Widget'

@@ -146,28 +146,6 @@
       },
       "required": [
         "type"
-      ],
-      "anyOf": [
-        {
-          "required": [
-            "label"
-          ]
-        },
-        {
-          "required": [
-            "placeholder"
-          ]
-        },
-        {
-          "required": [
-            "validator_function"
-          ]
-        },
-        {
-          "required": [
-            "accessor_function"
-          ]
-        }
       ]
     },
     "date_time_picker": {
