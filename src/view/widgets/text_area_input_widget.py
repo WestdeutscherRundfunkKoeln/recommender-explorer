@@ -18,7 +18,6 @@ class TextAreaInputWidget(UIWidget):
             "validator": config.get(c.TEXT_AREA_INPUT_VALIDATOR_KEY, "_check_text"),
             "accessor": config.get(c.TEXT_AREA_INPUT_ACCESSOR_KEY, "get_item_by_text"),
             "label": "text_input",
-            "has_paging": config.get(c.TEXT_AREA_INPUT_HAS_PAGING_KEY, False),
             "reset_to": ""
         }
 

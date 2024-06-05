@@ -463,14 +463,14 @@ This Example would create three radio Buttons with the labels: Option A, Option 
 
 ### Slider Config Overview
 
-| keyword | mandatory | fallback value | description                                                                                                                                                                                                                                                                             |
-|---------|-----------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| type    | yes       | -              | widget type definition: **slider**                                                                                                                                                                                                                                                   |
-| label   | no        | Wert           | headline of the slider widget                                                                                                                                                                                                                                                            |
-| start   | no        | 0.0            | start value of the slider                                                                                                                                                                                                                                                            |
-| end     | no        | 1.0            | end value of the slider                                                                                                                                                                                                                                                            |
-| step    | no        | 0.1            | step value of the slider
-| unit    | no        | -              | unit that will be displayed after the slider value
+| keyword | mandatory | fallback value | description                                        |
+|---------|-----------|----------------|----------------------------------------------------|
+| type    | yes       | -              | widget type definition: **slider**                 |
+| label   | no        | Wert           | headline of the slider widget                      |
+| start   | no        | 0.0            | start value of the slider                          |
+| end     | no        | 1.0            | end value of the slider                            |
+| step    | no        | 0.1            | step value of the slider                           |
+| unit    | no        | -              | unit that will be displayed after the slider value |
 
 ### Example of a Slider Widget Configuration
 
@@ -481,6 +481,30 @@ This Example would create three radio Buttons with the labels: Option A, Option 
     step: 0.5
     unit: 's'
 
+## Text Area Input Widget
+
+### Slider Config Overview
+
+| keyword            | mandatory | fallback value          | description                                                                                                                                                                                                                                       |
+|--------------------|-----------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| type               | yes       | -                       | widget type definition: **text_area_input**                                                                                                                                                                                                       |
+| label              | no        | Default Text Area Input | headline of the text area input widget                                                                                                                                                                                                            |
+| placeholder        | no        | -                       | placeholder value in the text area input widget                                                                                                                                                                                                   |
+| validator_function | no        | _check_text             | a validator function name, which checks the given content in the controller before searching. **Validator function must be defined in reco_controller.py**                                                                                        |
+| accessor_function  | no        | get_item_by_text        | a accessor function name, which is used to create the search query. **Accessor function must be defined in base_data_accessor_opensearch.py**                                                                                                     |
+| url_parameter      | no        | -                       | text area inputs can be set by a url parameter. This parameter name can be set here, so when its named: aParameterName a call like .../RecoExplorer?aParameterName=test would set test into the text area input and trigger a search immediately. |
+
+
+### Example of a Slider Widget Configuration
+
+    type: 'text_area_input'
+    label: 'A Text Area Input Widget'
+    placeholder: 'Insert text here'
+    validator_function: _a_validator_function
+    accessor_function: a_accessor_function
+    url_parameter: 'test'
+
+This Example would create a Text Area Input Widget. It has a label and a placeholder value. It takes a text wich gets validated by: _a_validator_function and uses: a_accessor_function for the search. When an url parameter named test is given, the value of this parameter is set into the text area input. 
 
 
 # RecoExplorer Custom Data

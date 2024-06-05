@@ -116,6 +116,60 @@
         }
       ]
     },
+    "text_area_input": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text_area_input"
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the Text Area Input."
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Placeholder of the Text Area Input."
+        },
+        "validator_function": {
+          "type": "string",
+          "description": "Validator function name, which checks the given content in the controller before searching."
+        },
+        "accessor_function": {
+          "type": "string",
+          "description": "Accessor function name, which is used to create the search query."
+        },
+        "url_parameter": {
+          "type": "string",
+          "description": "Name of the URL parameter, which is used to pass the value to the controller."
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "label"
+          ]
+        },
+        {
+          "required": [
+            "placeholder"
+          ]
+        },
+        {
+          "required": [
+            "validator_function"
+          ]
+        },
+        {
+          "required": [
+            "accessor_function"
+          ]
+        }
+      ]
+    },
     "date_time_picker": {
       "type": "object",
       "properties": {
@@ -261,6 +315,9 @@
                 "$ref": "#/$defs/text_field"
               },
               {
+                "$ref": "#/$defs/text_area_input"
+              },
+              {
                 "$ref": "#/$defs/multi_select"
               },
               {
@@ -298,6 +355,9 @@
               "anyOf": [
                 {
                   "$ref": "#/$defs/text_field"
+                },
+                {
+                  "$ref": "#/$defs/text_area_input"
                 },
                 {
                   "$ref": "#/$defs/multi_select"

@@ -51,7 +51,6 @@ TEXT_AREA_INPUT_LABEL_KEY = "label"
 TEXT_AREA_INPUT_PLACEHOLDER_KEY = "placeholder"
 TEXT_AREA_INPUT_ACCESSOR_KEY = "accessor_function"
 TEXT_AREA_INPUT_VALIDATOR_KEY = "validator_function"
-TEXT_AREA_INPUT_HAS_PAGING_KEY = "hasPaging"
 TEXT_AREA_INPUT_URL_PARAMETER_KEY = "url_parameter"
 
 # Accordion Reset Button
