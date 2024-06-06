@@ -14,6 +14,7 @@ TEXT_INPUT_VALIDATOR_KEY = "validator_function"
 TEXT_INPUT_ACCESSOR_KEY = "accessor_function"
 TEXT_INPUT_HAS_PAGING_KEY = ""
 TEXT_INPUT_URL_PARAMETER_KEY = "url_parameter"
+TEXT_INPUT_COMPONENT_GROUP_KEY = "component_group"
 
 # Multi Select
 MULTI_SELECT_LABEL_KEY = "label"

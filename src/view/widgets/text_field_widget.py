@@ -24,6 +24,7 @@ class TextFieldWidget(UIWidget):
         text_field_accessor = config.get(c.TEXT_INPUT_ACCESSOR_KEY)
         text_field_validator = config.get(c.TEXT_INPUT_VALIDATOR_KEY)
         url_parameter = config.get(c.TEXT_INPUT_URL_PARAMETER_KEY)
+        component_group = config.get(c.TEXT_INPUT_COMPONENT_GROUP_KEY)
 
         text_input_widget = pn.widgets.TextInput(
             placeholder=text_field_placeholder, name=text_field_label
@@ -31,29 +32,46 @@ class TextFieldWidget(UIWidget):
 
         if text_field_label == "" and text_field_placeholder != "":
             text_field_label = text_field_placeholder
-
         if (
             text_field_accessor is not None
             and text_field_validator is not None
             and text_field_label != ""
         ):
-            text_input_widget.params = {
-                "validator": text_field_validator,
-                "accessor": text_field_accessor,
-                "label": text_field_label,
-                "has_paging": False,
-                "reset_to": "",
-            }
-            text_input_widget.param.watch(
-                self.reco_explorer_app_instance.trigger_item_selection,
-                "value",
-                onlychanged=True,
-            )
-            self.controller_instance.register("item_choice", text_input_widget)
-            if url_parameter is not None:
-                self.reco_explorer_app_instance.url_parameter_text_field_mapping[
-                    url_parameter
-                ] = text_input_widget
-            return text_input_widget
-        else:
-            return text_input_widget
+            component_group = "item_choice"
+
+        text_input_widget.params = {
+            "label": text_field_label,
+            "reset_to": "",
+        }
+        match component_group:
+            case "item_choice":
+                text_input_widget.params.update(
+                    {
+                        "validator": text_field_validator,
+                        "accessor": text_field_accessor,
+                        "has_paging": False,
+                    }
+                )
+                text_input_widget.param.watch(
+                    self.reco_explorer_app_instance.trigger_item_selection,
+                    "value",
+                    onlychanged=True,
+                )
+                self.controller_instance.register(component_group, text_input_widget)
+                if url_parameter is not None:
+                    self.reco_explorer_app_instance.url_parameter_text_field_mapping[
+                        url_parameter
+                    ] = text_input_widget
+            case "reco_filter" | "item_filter":
+                text_input_watcher = text_input_widget.param.watch(
+                    self.reco_explorer_app_instance.trigger_reco_filter_choice,
+                    "value",
+                    onlychanged=True,
+                )
+                self.controller_instance.register(
+                    component_group,
+                    text_input_widget,
+                    text_input_watcher,
+                    self.reco_explorer_app_instance.trigger_reco_filter_choice,
+                )
+        return text_input_widget
