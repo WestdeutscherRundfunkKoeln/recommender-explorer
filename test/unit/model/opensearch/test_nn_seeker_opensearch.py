@@ -83,6 +83,53 @@ def test_get_k_nn__by_id__no_filter(nn_seeker):
     }
 
 
+def test_get_k_nn__by_id__neutral_element_filter_values(nn_seeker):
+    item = ContentItemDto(
+        _position="1",
+        _item_type="test",
+        _provenance="test",
+        id="test",
+    )
+
+    nn_seeker.get_k_NN(
+        item=item,
+        k=1,
+        nn_filter={
+            "test_filter_null": None,
+            "test_filter_empty": "",
+            "test_filter_false": False,
+            "test_filter_zero": 0,
+            "test_filter_empty_list": [],
+            "test_filter_empty_dict": {},
+            "test_filter_empty_set": set(),
+            "test_filter_empty_tuple": tuple(),
+        },
+    )
+
+    assert nn_seeker.client.search.call_count == 2
+    assert nn_seeker.client.search.call_args_list[1].kwargs == {
+        "body": {
+            "size": 1,
+            "_source": {"include": "id"},
+            "query": {
+                "script_score": {
+                    "query": {"match_all": {}},
+                    "script": {
+                        "source": "knn_score",
+                        "lang": "knn",
+                        "params": {
+                            "field": "embedding_01",
+                            "query_value": [1, 2],
+                            "space_type": "cosinesimil",
+                        },
+                    },
+                }
+            },
+        },
+        "index": "test",
+    }
+
+
 def test_get_k_nn__by_id__multiple_filter(nn_seeker):
     item = ContentItemDto(
         _position="1",
