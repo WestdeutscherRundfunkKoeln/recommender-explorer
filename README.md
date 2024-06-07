@@ -472,6 +472,7 @@ This Example would create three radio Buttons with the labels: Option A, Option 
 | step    | no        | 0.1            | step value of the slider
 | unit    | no        | -              | unit that will be displayed after the slider value
 | label   | no        | relativerangefilter_duration | defines the filter that will be applied
+| component_group   | no        | reco_filter | defines component_group the filter that will be assigned to
 
 ### Example of a Slider Widget Configuration
 
@@ -482,6 +483,7 @@ This Example would create three radio Buttons with the labels: Option A, Option 
     step: 0.5
     unit: 's'
     label: 'relativerangefilter_duration'
+    component_group: 'reco_filter'
 
 ## Text Area Input Widget
 

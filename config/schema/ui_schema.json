@@ -46,6 +46,9 @@
                     },
                     {
                       "$ref": "#/$defs/radio_box"
+                    },
+                    {
+                      "$ref": "#/$defs/slider"
                     }
                   ]
                 }
@@ -303,6 +306,9 @@
               },
               {
                 "$ref": "#/$defs/radio_box"
+              },
+              {
+                "$ref": "#/$defs/slider"
               }
             ]
           }
@@ -342,6 +348,9 @@
                 },
                 {
                   "$ref": "#/$defs/date_time_picker"
+                },
+                {
+                  "$ref": "#/$defs/slider"
                 }
               ]
             }
@@ -352,6 +361,47 @@
         "type",
         "options"
       ]
+    },
+    "slider": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "slider"
+        },
+        "name": {
+          "type": "string",
+          "description": "Label of the slider."
+        },
+        "start": {
+          "type": "number",
+          "description": "start value"
+        },
+        "end": {
+          "type": "number",
+          "description": "end value"
+        },
+        "step": {
+          "type": "number",
+          "description": "step size"
+        },
+        "unit": {
+          "type": "string",
+          "description": "unit to display"
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the slider."
+        },
+        "component_group": {
+          "type": "string",
+          "description": "component_group the slider gets assigned to."
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
     }
   }
 }

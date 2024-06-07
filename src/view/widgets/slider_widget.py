@@ -31,7 +31,7 @@ class SliderWidget(UIWidget):
         )
 
         self.controller_instance.register(
-            "reco_filter",
+            config.get(c.SLIDER_COMPONENT_GROUP_KEY, "reco_filter"),
             slider,
             duration_filter_watcher,
             self.reco_explorer_app_instance.trigger_reco_filter_choice,

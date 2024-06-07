@@ -66,6 +66,7 @@ SLIDER_UNIT_KEY = "unit"
 SLIDER_START_KEY = "start"
 SLIDER_END_KEY = "end"
 SLIDER_STEP_KEY = "step"
+SLIDER_COMPONENT_GROUP_KEY = "component_group"
 
 # Block
 BLOCKS_CONFIG_KEY = "blocks"
