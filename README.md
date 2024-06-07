@@ -463,23 +463,25 @@ This Example would create three radio Buttons with the labels: Option A, Option 
 
 ### Slider Config Overview
 
-| keyword | mandatory | fallback value | description                                        |
-|---------|-----------|----------------|----------------------------------------------------|
-| type    | yes       | -              | widget type definition: **slider**                 |
-| label   | no        | Wert           | headline of the slider widget                      |
-| start   | no        | 0.0            | start value of the slider                          |
-| end     | no        | 1.0            | end value of the slider                            |
-| step    | no        | 0.1            | step value of the slider                           |
-| unit    | no        | -              | unit that will be displayed after the slider value |
+| keyword | mandatory | fallback value | description                                                                                                                                                                                                                                                                             |
+|---------|-----------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| type    | yes       | -              | widget type definition: **slider**                                                                                                                                                                                                                                                   |
+| name    | no        | Wert           | headline of the slider widget                                                                                                                                                                                                                                                            |
+| start   | no        | 0.0            | start value of the slider                                                                                                                                                                                                                                                            |
+| end     | no        | 1.0            | end value of the slider                                                                                                                                                                                                                                                            |
+| step    | no        | 0.1            | step value of the slider
+| unit    | no        | -              | unit that will be displayed after the slider value
+| label   | no        | relativerangefilter_duration | defines the filter that will be applied
 
 ### Example of a Slider Widget Configuration
 
     type: 'slider'
-    label: 'Länge'
+    name: 'Länge'
     start: 0.0
     end: 50.0
     step: 0.5
     unit: 's'
+    label: 'relativerangefilter_duration'
 
 ## Text Area Input Widget
 

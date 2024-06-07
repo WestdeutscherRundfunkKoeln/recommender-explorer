@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, InitVar
+from dataclasses import dataclass
 
 
 @dataclass
@@ -35,3 +35,4 @@ class ItemDto(ABC):
     @item_type.setter
     def item_type(self, v) -> None:
         self._item_type = v
+
