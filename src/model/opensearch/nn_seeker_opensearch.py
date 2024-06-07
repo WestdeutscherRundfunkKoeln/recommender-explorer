@@ -246,6 +246,14 @@ class NnSeekerOpenSearch(NnSeeker):
                     transposed["sort"] = value
                 case "clean":
                     script_term = self._prepare_query_bool_script_statement(value)
+                case "blacklist":
+                    bool_terms["must_not"].append(
+                        {
+                            "terms": {
+                                f"{actor}.keyword": value.replace(" ", "").split(",")
+                            }
+                        }
+                    )
                 case _:
                     logger.warning(
                         "Received unknown filter action [" + action + "]. Omitting."
