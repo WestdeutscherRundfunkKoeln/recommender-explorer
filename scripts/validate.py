@@ -1,6 +1,7 @@
 import json
 import pathlib
 from typing import Any
+import argparse
 
 from envyaml import EnvYAML
 from jsonschema import Draft202012Validator, ValidationError
@@ -27,9 +28,10 @@ def validate_schema(schema_path: str, config: dict[str, Any]) -> None:
             ".".join(
                 str([p]) if isinstance(p, int) else p for p in sub_err.absolute_path
             )
+            + " is "
+            + f"'{sub_err.instance}'"
         )
         msg.append(sub_err.message)
-        msg.append(sub_err.validator)
         msg.append("-------------")
 
     raise ValidationError(message="\n".join(msg)) from err
@@ -47,11 +49,24 @@ def load_ui_config(config: dict[str, Any]) -> dict[str, Any]:
     )
 
 
-if __file__ == "__main__":
-    config = EnvYAML(root_path / "config/config_mediathek.yaml", flatten=False).export()
-    validate_schema("config/schema/schema.json", config)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Validate config")
+    parser.add_argument("--config", type=str, dest="config_path", required=True)
+    parser.add_argument(
+        "--schema", type=str, dest="schema_path", default="config/schema/schema.json"
+    )
+    parser.add_argument(
+        "--ui_schema",
+        type=str,
+        dest="ui_schema_path",
+        default="config/schema/ui_schema.json",
+    )
+    args = parser.parse_args()
+
+    config = EnvYAML(root_path / args.config_path, flatten=False).export()
+    validate_schema(args.schema_path, config)
     print("Config validated")
 
     ui_config = load_ui_config(config)
-    validate_schema("config/schema/ui_schema.json", config)
+    validate_schema(args.ui_schema_path, ui_config)
     print("UI Config validated")
