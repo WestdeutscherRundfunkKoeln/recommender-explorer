@@ -69,9 +69,7 @@ def get_client_options(config_full_path):
     options = {}
     for config_path in all_configs:
         client = get_client_from_path(config_path)
-        key = (
-            client.capitalize()
-        )  # Capitalize the first letter of the client for the key
+        key = EnvYAML(config_path).get("display_name", client.capitalize())
         options[key] = client
     return options
 

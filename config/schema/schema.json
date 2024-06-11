@@ -1,6 +1,9 @@
 {
   "type": "object",
   "properties": {
+    "display_name": {
+      "type": "string"
+    },
     "indexing_sources": {
       "type": "object",
       "properties": {

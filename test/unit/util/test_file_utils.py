@@ -1,5 +1,6 @@
-from src.util.file_utils import load_ui_config
 from pathlib import Path
+
+from src.util.file_utils import get_client_options, load_ui_config
 
 
 def test_load_ui_config__valid_config():
@@ -42,3 +43,9 @@ def test_load_ui_config__inline_config():
     result = load_ui_config(config)
 
     assert result == config
+
+
+def test_get_client_options():
+    result = get_client_options(Path(__file__).parent / "config_test.yaml")
+
+    assert result == {"test_entry_from_config_file": "test", "Dummy": "dummy"}
