@@ -31,7 +31,11 @@ class MultiSelectionWidget(UIWidget):
                     option_default.append(option_label)
             return option_list, option_default
         elif c.MULTI_SELECT_DICTIONARY_OPTIONS_KEY in multi_select_config:
-            return multi_select_config[c.MULTI_SELECT_DICTIONARY_OPTIONS_KEY], []
+            return {
+                k: v
+                for option in multi_select_config[c.MULTI_SELECT_DICTIONARY_OPTIONS_KEY]
+                for k, v in option.items()
+            }, []
         elif c.MULTI_SELECT_OPTIONS_DEFAULT_FUNCTION_KEY in multi_select_config:
             return self.controller_instance.get_item_defaults(
                 multi_select_config[c.MULTI_SELECT_OPTIONS_DEFAULT_FUNCTION_KEY]
