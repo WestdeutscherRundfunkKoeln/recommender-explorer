@@ -158,6 +158,7 @@ def test_get_k_nn__by_id__multiple_filter(nn_seeker):
             "value_genreCategory": None,
             "rangefilter_test": {"duration": {"gte": 60}},
             "relativerangefilter_duration": 0.5,
+            "blacklist_id": "test_id1, test_id2",
         },
     )
 
@@ -180,7 +181,10 @@ def test_get_k_nn__by_id__multiple_filter(nn_seeker):
                                 }
                             },
                             "": [{"terms": {"subgenreCategories.keyword": [""]}}],
-                            "must_not": [{"terms": {"showId.keyword": [""]}}],
+                            "must_not": [
+                                {"terms": {"showId.keyword": [""]}},
+                                {"terms": {"id.keyword": ["test_id1", "test_id2"]}},
+                            ],
                             "must": [
                                 {"terms": {"genreCategory.keyword": [""]}},
                                 {"terms": {"thematicCategories.keyword": [""]}},

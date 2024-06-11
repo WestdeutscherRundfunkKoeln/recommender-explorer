@@ -172,6 +172,7 @@ This Configuration will create 2 Blocks with Headlines 'Block A' and 'Block B'. 
 | validator_function | yes       | -              | a validator function name, which checks the given content (here a date) in the controller before searching. **Validator function must be defined in reco_controller.py**                                                               |
 | accessor_function  | yes       | -              | a accessor function name, which is used to create the search query. **Accessor function must be defined in base_data_accessor_opensearch.py**                                                                                          |
 | url_parameter      | no        | -              | text inputs can be set by a url parameter. This parameter name can be set here, so when its named: aParameterName a call like .../RecoExplorer?aParameterName=test would set test into the text field an trigger a search immediately. |
+| component_group      | no        | -              | defines the component_group of the widget gets registered to. |
 
 ### Example of a Text Input Widget Configuration
 

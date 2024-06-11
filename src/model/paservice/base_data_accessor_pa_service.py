@@ -99,6 +99,10 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                     request_body["maxDurationFactor"] = filter[
                         "relativerangefilter_duration"
                     ]
+                if "blacklist_externalid" in filter:
+                    request_body["excludedIds"] = (
+                        filter["blacklist_externalid"].replace(" ", "").split(",")
+                    )
 
                 request_params = {"url": url, "json": request_body}
 

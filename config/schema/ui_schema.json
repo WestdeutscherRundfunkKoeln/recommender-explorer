@@ -99,22 +99,50 @@
         "url_parameter": {
           "type": "string",
           "description": "Name of the URL parameter, which is used to pass the value to the controller."
+        },
+        "component_group": {
+          "type": "string",
+          "description": "Name of the component group the text field gets assigned to."
         }
       },
       "required": [
-        "type",
-        "validator_function",
-        "accessor_function"
+        "type"
       ],
-      "anyOf": [
+      "allOf": [
         {
-          "required": [
-            "label"
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "component_group": {
+                    "const": "item_choice"
+                  }
+                },
+                "required": [
+                  "component_group"
+                ]
+              }
+            },
+            {
+              "required": [
+                "validator_function",
+                "accessor_function"
+              ]
+            }
           ]
         },
         {
-          "required": [
-            "placeholder"
+          "anyOf": [
+            {
+              "required": [
+                "label"
+              ]
+            },
+            {
+              "required": [
+                "placeholder"
+              ]
+            }
           ]
         }
       ]
