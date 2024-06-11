@@ -34,7 +34,8 @@ def validate_schema(schema_path: str, config: dict[str, Any]) -> None:
         msg.append(sub_err.message)
         msg.append("-------------")
 
-    raise ValidationError(message="\n".join(msg)) from err
+    if len(msg) > 1:
+        raise ValidationError(message="\n".join(msg)) from err
 
 
 def load_ui_config(config: dict[str, Any]) -> dict[str, Any]:
