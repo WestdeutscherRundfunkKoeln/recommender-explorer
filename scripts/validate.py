@@ -63,7 +63,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    config = EnvYAML(root_path / args.config_path, flatten=False).export()
+    config = EnvYAML(root_path / args.config_path, flatten=False, strict=False).export()
     validate_schema(args.schema_path, config)
     print("Config validated")
 
