@@ -218,10 +218,6 @@
         },
         "label": {
           "type": "string",
-          "description": "component_group the Multi Select gets assigned to."
-        },
-        "display_name": {
-          "type": "string",
           "description": "Header of the Multi Select."
         },
         "register_as": {
