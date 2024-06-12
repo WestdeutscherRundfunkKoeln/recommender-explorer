@@ -302,3 +302,12 @@ def test_get_task__not_exists(test_client):
 
     assert response.status_code == 200
     assert response.json() == {"task": None}
+
+
+def test_get_tasks(test_client):
+    response = test_client.get("/tasks")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "tasks": [{"id": "exists", "status": "PREPROCESSING", "errors": []}]
+    }
