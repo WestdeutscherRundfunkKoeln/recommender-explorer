@@ -11,7 +11,16 @@ from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
 from google.oauth2 import service_account
 from pydantic import ValidationError
-from src.models import FullLoadRequest, OpenSearchResponse, StorageChangeEvent
+from src.models import (
+    BulkIngestTask,
+    BulkIngestTaskStatus,
+    FullLoadRequest,
+    FullLoadResponse,
+    OpenSearchResponse,
+    SingleTaskResponse,
+    StorageChangeEvent,
+    TasksResponse,
+)
 from src.preprocess_data import DataPreprocessor
 
 logging.basicConfig(level=logging.INFO)
@@ -30,12 +39,17 @@ STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
 config = EnvYAML(CONFIG_PATH)
 data_preprocessor = DataPreprocessor(config)
 
+bulk_ingest_tasks = {}
 
 def request(data, url):
     # TODO: Remove timeout when search service is implemented
     return httpx.post(
         url, json=data, timeout=None, headers={"x-api-key": config["api_key"]}
     ).json()
+
+
+def _get_tasks():
+    return bulk_ingest_tasks
 
 
 def get_storage_client():
@@ -122,6 +136,19 @@ def bulk_ingest(
             continue
         item_dict[mapped_data.id] = mapped_data.model_dump()
     return request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
+@router.get("/tasks/{task_id}")
+def get_task(
+    task_id: str,
+    tasks: Annotated[dict[str, BulkIngestTask], Depends(_get_tasks)],
+) -> SingleTaskResponse:
+    return SingleTaskResponse(task=tasks.get(task_id))
+
+
+@router.get("/tasks")
+def get_tasks(
+    tasks: Annotated[dict[str, BulkIngestTask], Depends(_get_tasks)],
+) -> TasksResponse:
+    return TasksResponse(tasks=tasks.values())
 
 
 app = FastAPI(title="Ingest Service")

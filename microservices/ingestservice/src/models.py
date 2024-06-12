@@ -1,5 +1,6 @@
-from typing import Annotated
+from typing import Annotated, Iterable
 from pydantic import BaseModel, Field
+import enum
 
 
 class Shard(BaseModel):
@@ -26,3 +27,28 @@ class StorageChangeEvent(BaseModel):
 class FullLoadRequest(BaseModel):
     bucket: str
     prefix: str
+
+
+class FullLoadResponse(BaseModel):
+    task_id: str
+
+
+class BulkIngestTaskStatus(str, enum.Enum):
+    PREPROCESSING = "PREPROCESSING"
+    IN_FLIGHT = "IN_FLIGHT"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class BulkIngestTask(BaseModel):
+    id: str
+    status: BulkIngestTaskStatus
+    errors: list[str]
+
+
+class SingleTaskResponse(BaseModel):
+    task: BulkIngestTask | None
+
+
+class TasksResponse(BaseModel):
+    tasks: Iterable[BulkIngestTask]

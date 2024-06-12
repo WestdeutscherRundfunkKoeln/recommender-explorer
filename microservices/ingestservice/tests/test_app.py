@@ -1,17 +1,20 @@
-from fastapi.testclient import TestClient
-from dotenv import load_dotenv
+import datetime
 import json
 import os
-from google.api_core.exceptions import GoogleAPICallError
+
 import pytest
+from dotenv import load_dotenv
+from fastapi.testclient import TestClient
+from google.api_core.exceptions import GoogleAPICallError
 
 load_dotenv("tests/test.env")
+
+from src.main import _get_tasks, app, get_storage_client
+from src.models import BulkIngestTask, BulkIngestTaskStatus
 
 
 @pytest.fixture(scope="module")
 def test_client():
-    from src.main import app
-
     return TestClient(app)
 
 
@@ -38,8 +41,6 @@ class MockStorageClient:
 
 @pytest.fixture(scope="module", autouse=True)
 def overwrite_storage_client():
-    from src.main import app, get_storage_client
-
     data = {
         "prod/valid.json": json.dumps(
             {
@@ -68,6 +69,17 @@ def overwrite_storage_client():
     app.dependency_overrides[get_storage_client] = lambda: MockStorageClient(data)
     yield
     app.dependency_overrides.pop(get_storage_client)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def overwrite_tasks():
+    app.dependency_overrides[_get_tasks] = lambda: {
+        "exists": BulkIngestTask(
+            id="exists", status=BulkIngestTaskStatus.PREPROCESSING, errors=[]
+        )
+    }
+    yield
+    app.dependency_overrides.pop(_get_tasks)
 
 
 def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
@@ -113,13 +125,13 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
     assert len(requests) == 2
 
     # Request to the embedding service
-    request = requests[0]
+    request = requests[1]
     assert request.method == "POST"
     assert request.url == os.getenv("BASE_URL_EMBEDDING", "") + "/add-embedding-to-doc"
     assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
 
     # Request to the search service
-    request = requests[1]
+    request = requests[0]
     assert request.method == "POST"
     assert request.url == os.getenv("BASE_URL_SEARCH", "") + "/create-single-document"
     assert (
@@ -131,8 +143,8 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
                 "title": "test",
                 "description": "test",
                 "longDescription": "test",
-                "availableFrom": 1698094800.0,
-                "availableTo": 1698094800.0,
+                "availableFrom": "2023-10-23T23:00:00+0200",
+                "availableTo": "2023-10-23T23:00:00+0200",
                 "duration": None,
                 "thematicCategories": [],
                 "thematicCategoriesIds": None,
@@ -274,3 +286,19 @@ def test_delete_event_with_available_correct_document(test_client, httpx_mock):
         request.url
         == os.getenv("BASE_URL_SEARCH", "") + "/delete-data?document_id=valid"
     )
+
+
+def test_get_task__exists(test_client):
+    response = test_client.get("/tasks/exists")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "task": {"id": "exists", "status": "PREPROCESSING", "errors": []}
+    }
+
+
+def test_get_task__not_exists(test_client):
+    response = test_client.get("/tasks/_not_exists")
+
+    assert response.status_code == 200
+    assert response.json() == {"task": None}
