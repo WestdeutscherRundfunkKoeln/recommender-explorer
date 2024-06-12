@@ -58,17 +58,17 @@ class MultiSelectionWidget(UIWidget):
         if not options:
             return
 
-        multi_select_name = config.get(c.MULTI_SELECT_DISPLAY_NAME_KEY, "")
+        multi_select_label = config.get(c.MULTI_SELECT_LABEL_KEY, "")
 
         multi_select_widget = pn.widgets.MultiSelect(
             options=options,
             value=default,
             size=min(len(options), 5),
-            name=multi_select_name,
+            name=multi_select_label,
         )
 
         multi_select_widget.params = {
-            "label": config.get(c.MULTI_SELECT_LABEL_KEY, ""),
+            "label": multi_select_label,
             "reset_to": default,
         }
         return multi_select_widget
