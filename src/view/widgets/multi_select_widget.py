@@ -87,24 +87,75 @@ class MultiSelectionWidget(UIWidget):
             multi_select_widget (widget): final widget built from given config
         """
         multi_select_register_value = config.get(c.MULTI_SELECT_REGISTER_AS_KEY)
-        match multi_select_register_value:
-            case "item_filter":
-                return ItemFilterWidget(
-                    self.reco_explorer_app_instance, self.controller_instance
-                ).create(config)
-            case "upper_item_filter":
-                return UpperItemFilterWidget(
-                    self.reco_explorer_app_instance, self.controller_instance
-                ).create(config)
-            case "reco_filter":
-                return RecoFilterWidget(
-                    self.reco_explorer_app_instance, self.controller_instance
-                ).create(config)
-            case "model_choice":
-                return ModelChoiceWidget(
-                    self.reco_explorer_app_instance, self.controller_instance
-                ).create(config)
-        return self.build_multi_select_widget(config)
+        registered_multi_select_widget = {
+            "item_filter": ItemFilterWidget,
+            "upper_item_filter": UpperItemFilterWidget,
+            "reco_filter": RecoFilterWidget,
+            "model_choice": ModelChoiceWidget,
+        }.get(multi_select_register_value, None)
+
+        if registered_multi_select_widget:
+            multi_select_widget = registered_multi_select_widget(self.reco_explorer_app_instance, self.controller_instance).create(config)
+        else:
+            multi_select_widget = self.build_multi_select_widget(config)
+
+        self.set_action_parameter(config, multi_select_widget)
+        return multi_select_widget
+
+    def set_action_parameter(self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect) -> pn.widgets.MultiSelect | None:
+        """
+        Sets action option parameter on the multi-select widget based on the provided configuration. Action parameter will be used to toggle
+        visibility of other widgets by selecting the configured option. Action parameter are dictionary entries with key = multi select
+        option value and value = label of the target widget.
+
+        :param config: Configuration containing trigger actions.
+        :param multi_select_widget: The multi-select widget to set action parameter on.
+        :return: The multi select widget with the action parameter attached if configured
+        """
+        if config.get(c.MULTI_SELECT_ACTION_OPTION_KEY):
+            action_parameter = {list(pair.keys())[0]: list(pair.values())[0] for pair in config.get(c.MULTI_SELECT_ACTION_OPTION_KEY)}
+            if action_parameter:
+                multi_select_widget.action_parameter = action_parameter
+        return multi_select_widget
+
+    def trigger_multi_select_reco_filter_choice(self, event):
+        """
+        Checks multi select widget for action parameters and sets visibility trigger for each of them.
+        After that runs the usual get items function to search for items with given filters and parameters.
+
+        :param event: The event which triggers the watcher function. Contains the widget itself.
+        :return:
+        """
+        if hasattr(event.obj, "action_parameter"):
+            for action_option_value, action_target_widget_label in event.obj.action_parameter.items():
+                action_target_widget = self.find_widget_by_name_recursive(
+                    self.reco_explorer_app_instance.config_based_nav_controls,
+                    action_target_widget_label
+                )
+                if action_target_widget:
+                    action_target_widget.visible = action_option_value == event.new[0]
+
+        self.reco_explorer_app_instance.get_items_with_parameters()
+
+    def find_widget_by_name_recursive(self, widget, target_name):
+        """
+        Gets a widget from a widget group (for example panels widgets box) and search it by given name (label).
+        Calls itself for nested widgets (recursive).
+
+        :param widget: Widget that is the source for the search.
+        :param target_name: Name of the target widget.
+        :return: The widget if found or None if no widget is found.
+        """
+        if hasattr(widget, "name") and widget.name == target_name:
+            return widget
+
+        if hasattr(widget, "objects"):
+            for obj in widget.objects:
+                found_widget = self.find_widget_by_name_recursive(obj, target_name)
+                if found_widget is not None:
+                    return found_widget
+
+        return None
 
 
 class ItemFilterWidget(MultiSelectionWidget):
@@ -180,24 +231,14 @@ class RecoFilterWidget(MultiSelectionWidget):
         """
         reco_filter_widget = self.build_multi_select_widget(config)
         reco_filter_label = config.get(c.MULTI_SELECT_LABEL_KEY)
-        action_list = [
-            action.get("action_name") for action in config.get("visible_action", [])
-        ]
-        action_2_list = [
-            action.get("action_name") for action in config.get("visible_action_2", [])
-        ]
 
         if (reco_filter_widget is None) or not reco_filter_label:
             return
 
         reco_filter_widget.params = {"label": reco_filter_label, "reset_to": []}
-        if action_list:
-            reco_filter_widget.params["visible_action"] = tuple(action_list)
-        if action_2_list:
-            reco_filter_widget.params["visible_action_2"] = tuple(action_list)
 
         reco_filter_watcher = reco_filter_widget.param.watch(
-            self.reco_explorer_app_instance.trigger_reco_filter_choice,
+            self.trigger_multi_select_reco_filter_choice,
             "value",
             onlychanged=True,
         )
@@ -205,7 +246,7 @@ class RecoFilterWidget(MultiSelectionWidget):
             "reco_filter",
             reco_filter_widget,
             reco_filter_watcher,
-            self.reco_explorer_app_instance.trigger_reco_filter_choice,
+            self.trigger_multi_select_reco_filter_choice,
         )
         return reco_filter_widget
 
@@ -269,25 +310,3 @@ class UpperItemFilterWidget(MultiSelectionWidget):
                 filter_widget.value, category
             )
         )
-
-    def find_widget_by_name_recursive(self, widget, target_name):
-        """
-        Check if a widget has the target name. Function is recursive and calls itself while iterating over all
-        widgets and widgets nested in that widgets.
-
-        :param widget: a panel widget object
-        :param target_name: the name to check the widget for
-        """
-        # Check if the current widget has the target name
-        if hasattr(widget, "name") and widget.name == target_name:
-            return widget
-
-        # If the current widget has nested widgets, iterate over them
-        if hasattr(widget, "objects"):
-            for obj in widget.objects:
-                # Recursively call the function to search within nested widgets
-                found_widget = self.find_widget_by_name_recursive(obj, target_name)
-                if found_widget is not None:
-                    return found_widget
-
-        return None

@@ -391,22 +391,29 @@ A Recommendation Filter Multi Select Widget is configured like this. The Options
 	    Option B: ['filterB', 'description']
 	    Option C: ['filterC', 'url']
 
-A Recommendation Filter Multi Select Widget can also be configured with visible actions. Possible are: One visible action, two or none. Visible Actions are with action names.
+A Recommendation Filter Multi Select Widget can also be configured with action options. You can have multiple action options for one multi select widget. An action option is configured as a key value pair where the key is the multi select option and the value is the label of the target Widget. When configured correctly, the target Widget will be hidden on load and gets visible when configured option is selected. All of these Widgets must be in a single Accordion.
 
     type: 'multi_select'
     name: 'Recommendation Test Filter'
     label: 'reco-test-filter'
     register_as: 'reco_filter'
-    visible_action:
-	    action_name: 'choose_a'
-	    action_name: 'aSelect'
-	visible_action_2:
-		action_name: 'choose_b'
-		action_name: 'bSelect'
     dictionary_options:
 	    Option A: 'filterA'
 	    Option B: 'filterB'
 	    Option C: 'filterC'
+    action_option:
+        filterC: 'trigger_widget_label'
+
+    type: 'multi_select'
+    name: 'Trigger_Widget'
+    label: 'trigger_widget_label'
+    register_as: 'reco_filter'
+    dictionary_options:
+	    Option D: 'filterD'
+	    Option E: 'filterE'
+	    Option F: 'filterF'
+
+In this example the second multi select Widget is hidden on load. When the User Clicks the Option C in the first multi select Widget, the second one gets visible. This second Widget can be anything and used without restrictions.
 
 ## Accordion Widget
 
