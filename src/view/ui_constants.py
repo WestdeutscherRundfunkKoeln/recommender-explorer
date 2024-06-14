@@ -38,6 +38,8 @@ ACCORDION_RESET_BUTTON_KEY = "accordion-reset-button"
 
 # Radio Box
 RADIO_BOX_OPTION_KEY = "options"
+RADIO_BUTTON_GROUP_OPTION_KEY = "options"
+
 
 # Date Time Picker
 DATE_TIME_PICKER_NAME_KEY = "name"
