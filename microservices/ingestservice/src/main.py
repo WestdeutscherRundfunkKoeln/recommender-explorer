@@ -154,7 +154,7 @@ def bulk_ingest(
                     "Error during preprocessing of file %s", blob.name, exc_info=True
                 )
                 error_message = f"An error occurred during preprocessing of item {blob.name}: {str(e)}"
-                bulk_ingest_tasks[task_id].errors.append(str(e))
+                bulk_ingest_tasks[task_id].errors.append(error_message)
                 continue
             item_dict[mapped_data.id] = mapped_data.model_dump()
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.IN_FLIGHT
