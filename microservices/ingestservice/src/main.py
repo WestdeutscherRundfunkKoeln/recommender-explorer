@@ -1,11 +1,12 @@
 import json
 import logging
 import os
-from typing import Annotated
+import uuid
+from typing import Annotated, Any
 
 import httpx
 from envyaml import EnvYAML
-from fastapi import Depends, FastAPI, APIRouter, Header
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header
 from fastapi.exceptions import HTTPException
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
@@ -41,7 +42,8 @@ data_preprocessor = DataPreprocessor(config)
 
 bulk_ingest_tasks = {}
 
-def request(data, url):
+
+def request(data: dict[str, Any], url: str):
     # TODO: Remove timeout when search service is implemented
     return httpx.post(
         url, json=data, timeout=None, headers={"x-api-key": config["api_key"]}
@@ -98,7 +100,7 @@ def ingest_item(
         return httpx.delete(
             f"{BASE_URL_SEARCH}/delete-data",
             params={"document_id": id},
-            headers={"x-api-key": config["api_key"]}
+            headers={"x-api-key": config["api_key"]},
         ).json()
 
     try:
@@ -115,27 +117,51 @@ def ingest_item(
         raise HTTPException(status_code=422, detail=error_message)
 
 
-@router.post("/ingest-multiple-items")
-def bulk_ingest(
+@router.post("/ingest-multiple-items", status_code=202)
+def ingest_multiple_items(
     body: FullLoadRequest,
     storage: Annotated[storage.Client, Depends(get_storage_client)],
-):
+    tasks: BackgroundTasks,
+) -> FullLoadResponse:
+    task_id = str(uuid.uuid4())
     bucket = storage.bucket(body.bucket)
-    item_dict = {}
-    for blob in bucket.list_blobs(match_glob=f"{body.prefix}*.json"):
-        logger.info(f"Downloading {blob.name}")
-        data = json.loads(blob.download_as_text())
-        try:
-            mapped_data = data_preprocessor.map_data(data)
-            # Trigger embedding service to add embeddings to index
-            data_preprocessor.add_embeddings(mapped_data)
-        except ValidationError:
-            logger.error(
-                "Error during preprocessing of file %s", blob.name, exc_info=True
-            )
-            continue
-        item_dict[mapped_data.id] = mapped_data.model_dump()
-    return request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
+    tasks.add_task(bulk_ingest, bucket, body.prefix, task_id)
+    return FullLoadResponse(task_id=task_id)
+
+
+def bulk_ingest(
+    bucket: storage.Bucket,
+    prefix: str,
+    task_id: str,
+):
+    bulk_ingest_tasks[task_id] = BulkIngestTask(
+        id=task_id, status=BulkIngestTaskStatus.PREPROCESSING, errors=[]
+    )
+    try:
+        item_dict = {}
+        for _, blob in enumerate(bucket.list_blobs(match_glob=f"{prefix}*.json")):
+            logger.info(f"Downloading {blob.name}")
+            data = json.loads(blob.download_as_text())
+            try:
+                mapped_data = data_preprocessor.map_data(data)
+                # Trigger embedding service to add embeddings to index
+                data_preprocessor.add_embeddings(mapped_data)
+            except ValidationError as e:
+                logger.error(
+                    "Error during preprocessing of file %s", blob.name, exc_info=True
+                )
+                bulk_ingest_tasks[task_id].errors.append(str(e))
+                continue
+            item_dict[mapped_data.id] = mapped_data.model_dump()
+        bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.IN_FLIGHT
+        result = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
+        bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.COMPLETED
+    except Exception as e:
+        bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.FAILED
+        raise e
+    return result
+
+
 @router.get("/tasks/{task_id}")
 def get_task(
     task_id: str,
