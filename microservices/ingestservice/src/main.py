@@ -134,6 +134,7 @@ def bulk_ingest(
     prefix: str,
     task_id: str,
 ):
+    logger.info("Starting bulk ingest")
     bulk_ingest_tasks[task_id] = BulkIngestTask(
         id=task_id, status=BulkIngestTaskStatus.PREPROCESSING, errors=[]
     )
@@ -142,6 +143,8 @@ def bulk_ingest(
         for _, blob in enumerate(bucket.list_blobs(match_glob=f"{prefix}*.json")):
             logger.info(f"Downloading {blob.name}")
             data = json.loads(blob.download_as_text())
+            logger.info(f"Downloaded {blob.name}")
+            logger.info(f"Preprocessing {blob.name}")
             try:
                 mapped_data = data_preprocessor.map_data(data)
                 # Trigger embedding service to add embeddings to index
@@ -150,11 +153,14 @@ def bulk_ingest(
                 logger.error(
                     "Error during preprocessing of file %s", blob.name, exc_info=True
                 )
+                error_message = f"An error occurred during preprocessing of item {blob.name}: {str(e)}"
                 bulk_ingest_tasks[task_id].errors.append(str(e))
                 continue
             item_dict[mapped_data.id] = mapped_data.model_dump()
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.IN_FLIGHT
+        logger.info("Sending data to search service")
         result = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
+        logger.info("Data sent to search service")
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.COMPLETED
     except Exception as e:
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.FAILED
