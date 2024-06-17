@@ -75,7 +75,10 @@ def overwrite_storage_client():
 def overwrite_tasks():
     app.dependency_overrides[_get_tasks] = lambda: {
         "exists": BulkIngestTask(
-            id="exists", status=BulkIngestTaskStatus.PREPROCESSING, errors=[]
+            id="exists",
+            status=BulkIngestTaskStatus.PREPROCESSING,
+            errors=[],
+            created_at=datetime.datetime.fromisoformat("2023-10-23T23:00:00+02:00"),
         )
     }
     yield
@@ -293,7 +296,12 @@ def test_get_task__exists(test_client):
 
     assert response.status_code == 200
     assert response.json() == {
-        "task": {"id": "exists", "status": "PREPROCESSING", "errors": []}
+        "task": {
+            "id": "exists",
+            "status": "PREPROCESSING",
+            "errors": [],
+            "created_at": "2023-10-23T23:00:00+02:00",
+        }
     }
 
 
@@ -309,5 +317,12 @@ def test_get_tasks(test_client):
 
     assert response.status_code == 200
     assert response.json() == {
-        "tasks": [{"id": "exists", "status": "PREPROCESSING", "errors": []}]
+        "tasks": [
+            {
+                "id": "exists",
+                "status": "PREPROCESSING",
+                "errors": [],
+                "created_at": "2023-10-23T23:00:00+02:00",
+            }
+        ]
     }
