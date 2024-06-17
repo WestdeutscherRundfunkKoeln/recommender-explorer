@@ -1,6 +1,7 @@
 from typing import Annotated, Iterable
 from pydantic import BaseModel, Field
 import enum
+import datetime
 
 
 class Shard(BaseModel):
@@ -44,6 +45,7 @@ class BulkIngestTask(BaseModel):
     id: str
     status: BulkIngestTaskStatus
     errors: list[str]
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
 
 class SingleTaskResponse(BaseModel):

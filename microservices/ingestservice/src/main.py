@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+import asyncio
+from datetime import datetime, timedelta
 import json
 import logging
 import os
@@ -81,6 +84,19 @@ def download_document(
     return document_json
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async def task_cleaner():
+        while True:
+            for task in bulk_ingest_tasks.values():
+                if datetime.now() - task.created_at > timedelta(days=7):
+                    del bulk_ingest_tasks[task.id]
+            await asyncio.sleep(5 * 60)
+
+    asyncio.create_task(task_cleaner())
+    yield
+
+
 router = APIRouter()
 
 
@@ -141,10 +157,8 @@ def bulk_ingest(
     try:
         item_dict = {}
         for _, blob in enumerate(bucket.list_blobs(match_glob=f"{prefix}*.json")):
-            logger.info(f"Downloading {blob.name}")
-            data = json.loads(blob.download_as_text())
-            logger.info(f"Downloaded {blob.name}")
             logger.info(f"Preprocessing {blob.name}")
+            data = json.loads(blob.download_as_text())
             try:
                 mapped_data = data_preprocessor.map_data(data)
                 # Trigger embedding service to add embeddings to index
@@ -158,9 +172,7 @@ def bulk_ingest(
                 continue
             item_dict[mapped_data.id] = mapped_data.model_dump()
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.IN_FLIGHT
-        logger.info("Sending data to search service")
         result = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
-        logger.info("Data sent to search service")
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.COMPLETED
     except Exception as e:
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.FAILED
