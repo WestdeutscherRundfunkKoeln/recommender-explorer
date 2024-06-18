@@ -1,16 +1,22 @@
 import datetime
 import json
-import os
+from typing import Any
 
 import pytest
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from google.api_core.exceptions import GoogleAPICallError
+from src.models import BulkIngestTask, BulkIngestTaskStatus
 
 load_dotenv("tests/test.env")
 
-from src.main import _get_tasks, app, get_storage_client
-from src.models import BulkIngestTask, BulkIngestTaskStatus
+from src.main import (
+    BASE_URL_EMBEDDING,
+    BASE_URL_SEARCH,
+    _get_tasks,
+    app,
+    get_storage_client,
+)
 
 
 @pytest.fixture(scope="module")
@@ -18,25 +24,36 @@ def test_client():
     return TestClient(app)
 
 
+class MockBlob:
+    def __init__(self, data: dict[str, str], name: str):
+        self.data = data
+        self.name = name
+
+    def download_as_text(self):
+        if not self.data:
+            raise GoogleAPICallError("Blob not found")
+        return self.data
+
+
+class MockBucket:
+    def __init__(self, data: dict[str, Any]):
+        self.data = {k: MockBlob(v, k) for k, v in data.items()}
+
+    def blob(self, blob_name: str):
+        return self.data.get(blob_name, MockBlob({}, blob_name))
+
+    def list_blobs(self, *args, **kwargs):
+        return [blob for blob in self.data.values()]
+
+
 class MockStorageClient:
     def __init__(self, data: dict[str, str]):
-        self.data = data
-        self.bucket_name = ""
-        self.blob_name = ""
+        self._bucket = MockBucket(data)
+        self.bucket_name = None
 
     def bucket(self, bucket_name: str):
         self.bucket_name = bucket_name
-        return self
-
-    def blob(self, blob_name: str):
-        self.blob_name = blob_name
-        return self
-
-    def download_as_text(self) -> str:
-        data = self.data.get(self.blob_name)
-        if data is None:
-            raise GoogleAPICallError("Blob not found")
-        return data
+        return self._bucket
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -71,7 +88,7 @@ def overwrite_storage_client():
     app.dependency_overrides.pop(get_storage_client)
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="module")
 def overwrite_tasks():
     app.dependency_overrides[_get_tasks] = lambda: {
         "exists": BulkIngestTask(
@@ -130,13 +147,15 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
     # Request to the embedding service
     request = requests[1]
     assert request.method == "POST"
-    assert request.url == os.getenv("BASE_URL_EMBEDDING", "") + "/add-embedding-to-doc"
+    assert request.url == BASE_URL_EMBEDDING + "/add-embedding-to-doc"
+    assert request.headers["x-api-key"] == "test-key"
     assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
 
     # Request to the search service
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == os.getenv("BASE_URL_SEARCH", "") + "/create-single-document"
+    assert request.url == BASE_URL_SEARCH + "/create-single-document"
+    assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content
         == json.dumps(
@@ -183,7 +202,7 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
     )
 
 
-def test_upsert_event_no_document_found(test_client):
+def test_upsert_event_no_document_found(test_client, httpx_mock):
     response = test_client.post(
         "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
@@ -210,9 +229,10 @@ def test_upsert_event_no_document_found(test_client):
 
     assert response.status_code == 400
     assert response.json() == {"detail": "Blob not found"}
+    assert len(httpx_mock.get_requests()) == 0
 
 
-def test_upsert_event_invalid_document(test_client):
+def test_upsert_event_invalid_document(test_client, httpx_mock):
     response = test_client.post(
         "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
@@ -238,6 +258,7 @@ def test_upsert_event_invalid_document(test_client):
     )
 
     assert response.status_code == 422
+    assert len(httpx_mock.get_requests()) == 0
 
 
 def test_delete_event_with_available_correct_document(test_client, httpx_mock):
@@ -285,13 +306,102 @@ def test_delete_event_with_available_correct_document(test_client, httpx_mock):
     # Request to the search service
     request = requests[0]
     assert request.method == "DELETE"
-    assert (
-        request.url
-        == os.getenv("BASE_URL_SEARCH", "") + "/delete-data?document_id=valid"
+    assert request.url == BASE_URL_SEARCH + "/delete-data?document_id=valid"
+    assert request.headers["x-api-key"] == "test-key"
+
+
+def test_bulk_ingest__with_validation_error(test_client, httpx_mock):
+    httpx_mock.add_response(
+        url=BASE_URL_EMBEDDING + "/embedding", json={"model": [1, 2]}
+    )
+    httpx_mock.add_response(url=BASE_URL_SEARCH + "/create-multiple-documents")
+
+    response = test_client.post(
+        "/ingest-multiple-items",
+        json={
+            "bucket": "test",
+            "prefix": "dev/",
+        },
     )
 
+    assert response.status_code == 202
+    task_id = response.json()["task_id"]
 
-def test_get_task__exists(test_client):
+    requests = httpx_mock.get_requests()
+    assert len(requests) == 2
+
+    # Request to the search service
+    request = requests[0]
+    assert request.method == "POST"
+    assert request.url == BASE_URL_EMBEDDING + "/embedding"
+    assert request.headers["x-api-key"] == "test-key"
+    assert request.content == json.dumps({"embedText": "test"}).encode()
+
+    request = requests[1]
+    assert request.method == "POST"
+    assert request.url == BASE_URL_SEARCH + "/create-multiple-documents"
+    assert request.headers["x-api-key"] == "test-key"
+    assert (
+        request.content
+        == json.dumps(
+            {
+                "test": {
+                    "externalid": "test",
+                    "id": "test",
+                    "title": "test",
+                    "description": "test",
+                    "longDescription": "test",
+                    "availableFrom": "2023-10-23T23:00:00+0200",
+                    "availableTo": "2023-10-23T23:00:00+0200",
+                    "duration": None,
+                    "thematicCategories": [],
+                    "thematicCategoriesIds": None,
+                    "thematicCategoriesTitle": None,
+                    "genreCategory": "test",
+                    "genreCategoryId": None,
+                    "subgenreCategories": [],
+                    "subgenreCategoriesIds": None,
+                    "subgenreCategoriesTitle": None,
+                    "teaserimage": "test",
+                    "geoAvailability": None,
+                    "embedText": "test",
+                    "embedTextHash": None,
+                    "episodeNumber": "",
+                    "hasAudioDescription": False,
+                    "hasDefaultVersion": False,
+                    "hasSignLanguage": False,
+                    "hasSubtitles": False,
+                    "isChildContent": False,
+                    "isOnlineOnly": False,
+                    "isOriginalLanguage": False,
+                    "producer": "",
+                    "publisherId": "",
+                    "seasonNumber": "",
+                    "sections": "",
+                    "showCrid": "",
+                    "showId": "",
+                    "showTitel": "",
+                    "showType": "",
+                    "uuid": None,
+                    "model": [1, 2],
+                }
+            }
+        ).encode()
+    )
+    print(task_id)
+    response = test_client.get(
+        f"/tasks/{task_id}",
+    )
+    assert response.status_code == 200
+    task = response.json()["task"]
+    assert task["id"] == task_id
+    assert task["status"] == "COMPLETED"
+    assert task["errors"] == [
+        "An error occurred during preprocessing of item prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type"
+    ]
+
+
+def test_get_task__exists(test_client, overwrite_tasks):
     response = test_client.get("/tasks/exists")
 
     assert response.status_code == 200
@@ -305,14 +415,14 @@ def test_get_task__exists(test_client):
     }
 
 
-def test_get_task__not_exists(test_client):
+def test_get_task__not_exists(test_client, overwrite_tasks):
     response = test_client.get("/tasks/_not_exists")
 
-    assert response.status_code == 200
-    assert response.json() == {"task": None}
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Task not found"}
 
 
-def test_get_tasks(test_client):
+def test_get_tasks(test_client, overwrite_tasks):
     response = test_client.get("/tasks")
 
     assert response.status_code == 200

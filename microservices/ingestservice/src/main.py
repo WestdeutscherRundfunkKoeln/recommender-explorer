@@ -1,10 +1,10 @@
-from contextlib import asynccontextmanager
 import asyncio
-from datetime import datetime, timedelta
 import json
 import logging
 import os
 import uuid
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 from typing import Annotated, Any
 
 import httpx
@@ -35,12 +35,14 @@ NAMESPACE = "ingest"
 EVENT_TYPE_DELETE = "OBJECT_DELETE"
 
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
-BASE_URL_SEARCH = os.environ.get("BASE_URL_SEARCH", default="")
-API_PREFIX = os.environ.get("API_PREFIX", default="")
-ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
 
 config = EnvYAML(CONFIG_PATH)
+BASE_URL_EMBEDDING = config.get("base_url_embedding", "")
+BASE_URL_SEARCH = config.get("base_url_search", "")
+API_PREFIX = config.get("API_PREFIX", "")
+ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
+
 data_preprocessor = DataPreprocessor(config)
 
 bulk_ingest_tasks = {}
@@ -50,7 +52,7 @@ def request(data: dict[str, Any], url: str):
     # TODO: Remove timeout when search service is implemented
     return httpx.post(
         url, json=data, timeout=None, headers={"x-api-key": config["api_key"]}
-    ).json()
+    )
 
 
 def _get_tasks():
@@ -123,7 +125,9 @@ def ingest_item(
         document = data_preprocessor.map_data(download_document(storage, event))
         document_json = document.model_dump()
         # Add metadata to index
-        retval = request(document_json, f"{BASE_URL_SEARCH}/create-single-document")
+        retval = request(
+            document_json, f"{BASE_URL_SEARCH}/create-single-document"
+        ).json()
         # Trigger embedding service to add embeddings to index
         data_preprocessor.add_embeddings(document)
         return retval  # TODO: check for meaningful return object. kept for backward compatibility?
@@ -159,10 +163,9 @@ def bulk_ingest(
         for _, blob in enumerate(bucket.list_blobs(match_glob=f"{prefix}*.json")):
             logger.info(f"Preprocessing {blob.name}")
             data = json.loads(blob.download_as_text())
+
             try:
                 mapped_data = data_preprocessor.map_data(data)
-                # Trigger embedding service to add embeddings to index
-                data_preprocessor.add_embeddings(mapped_data)
             except ValidationError as e:
                 logger.error(
                     "Error during preprocessing of file %s", blob.name, exc_info=True
@@ -170,14 +173,31 @@ def bulk_ingest(
                 error_message = f"An error occurred during preprocessing of item {blob.name}: {str(e)}"
                 bulk_ingest_tasks[task_id].errors.append(error_message)
                 continue
-            item_dict[mapped_data.id] = mapped_data.model_dump()
+
+            # Trigger embedding service to add embeddings to index
+            embeddings = request(
+                data={
+                    "embedText": mapped_data.embedText,
+                },
+                url=f"{BASE_URL_EMBEDDING}/embedding",
+            )
+            if embeddings.status_code != 200:
+                raise Exception(
+                    f"Error during embedding in embedding service for item {blob.name}"
+                )
+            mapped_data = {**mapped_data.model_dump(), **embeddings.json()}
+            item_dict[mapped_data["id"]] = mapped_data
+
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.IN_FLIGHT
-        result = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
+        response = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
+        if response.status_code != 200:
+            raise Exception("Error during bulk ingest in search service")
         bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.COMPLETED
     except Exception as e:
-        bulk_ingest_tasks[task_id].status = BulkIngestTaskStatus.FAILED
+        task = bulk_ingest_tasks[task_id]
+        task.status = BulkIngestTaskStatus.FAILED
+        task.errors.append(str(e))
         raise e
-    return result
 
 
 @router.get("/tasks/{task_id}")
@@ -185,7 +205,10 @@ def get_task(
     task_id: str,
     tasks: Annotated[dict[str, BulkIngestTask], Depends(_get_tasks)],
 ) -> SingleTaskResponse:
-    return SingleTaskResponse(task=tasks.get(task_id))
+    task = tasks.get(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return SingleTaskResponse(task=task)
 
 
 @router.get("/tasks")
