@@ -114,17 +114,27 @@ class AccordionWidget(UIWidget):
         :param accordion_content: List of all widgets inside the accordion
         :return: List of all widgets inside the accordion with hidden widgets where configured
         """
-        if all(isinstance(widget, pn.widgets.MultiSelect) for widget in accordion_content) and len(accordion_content) > 1:
-            for source_widget in accordion_content:
-                if hasattr(source_widget, "action_parameter"):
-                    for target_widget_label in source_widget.action_parameter.values():
-                        target_widget = self.get_widget_from_content_by_label(
-                            accordion_content,
-                            target_widget_label
-                        )
-                        if target_widget:
-                            target_widget.visible = False
+        if len(accordion_content) <= 1:
+            return accordion_content
+
+        for source_widget in accordion_content:
+            action_parameter = getattr(source_widget, "action_parameter", None)
+            if action_parameter is not None:
+                self.hide_target_widgets(accordion_content, source_widget)
         return accordion_content
+
+    def hide_target_widgets(self, accordion_content, source_widget):
+        """
+        Set all target widgets, which were defined in the action parameters in the source widget to
+        visible = False, so that they are initially hidden.
+
+        :param accordion_content: List of all widgets inside the accordion
+        :param source_widget: The widget which has the action parameters attached
+        """
+        for target_widget_label in source_widget.action_parameter.values():
+            target_widget = self.get_widget_from_content_by_label(accordion_content, target_widget_label)
+            if target_widget:
+                target_widget.visible = False
 
     def get_widget_from_content_by_label(self, accordion_content, target_widget_label):
         """
@@ -135,6 +145,6 @@ class AccordionWidget(UIWidget):
         :return: The widget the given label or None
         """
         for widget in accordion_content:
-            if widget.name == target_widget_label:
+            if widget is not None and widget.name == target_widget_label:
                 return widget
         return None

@@ -298,7 +298,27 @@
             "option_default"
           ]
         }
-      ]
+      ],
+      "action_option": {
+        "type": "array",
+        "description": "Array of action options which can be configured.",
+        "items": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        }
+      }
     },
     "accordion": {
       "type": "object",
