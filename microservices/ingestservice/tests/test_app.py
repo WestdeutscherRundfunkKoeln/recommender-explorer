@@ -43,7 +43,10 @@ class MockBucket:
         return self.data.get(blob_name, MockBlob({}, blob_name))
 
     def list_blobs(self, *args, **kwargs):
-        return [blob for blob in self.data.values()]
+        prefix = kwargs["match_glob"].split("/")[0]
+        if prefix == "raise_error":
+            raise Exception("Test error")
+        return [blob for blob in self.data.values() if blob.name.startswith(prefix)]
 
 
 class MockStorageClient:
@@ -320,7 +323,7 @@ def test_bulk_ingest__with_validation_error(test_client, httpx_mock):
         "/ingest-multiple-items",
         json={
             "bucket": "test",
-            "prefix": "dev/",
+            "prefix": "prod/",
         },
     )
 
@@ -388,7 +391,6 @@ def test_bulk_ingest__with_validation_error(test_client, httpx_mock):
             }
         ).encode()
     )
-    print(task_id)
     response = test_client.get(
         f"/tasks/{task_id}",
     )
@@ -399,6 +401,30 @@ def test_bulk_ingest__with_validation_error(test_client, httpx_mock):
     assert task["errors"] == [
         "An error occurred during preprocessing of item prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.6/v/string_type"
     ]
+
+
+def test_bulk_ingest__with_general_error(test_client, httpx_mock):
+    response = test_client.post(
+        "/ingest-multiple-items",
+        json={
+            "bucket": "test",
+            "prefix": "raise_error/",
+        },
+    )
+
+    assert response.status_code == 202
+    task_id = response.json()["task_id"]
+
+    assert len(httpx_mock.get_requests()) == 0
+
+    response = test_client.get(
+        f"/tasks/{task_id}",
+    )
+    assert response.status_code == 200
+    task = response.json()["task"]
+    assert task["id"] == task_id
+    assert task["status"] == "FAILED"
+    assert task["errors"] == ["Test error"]
 
 
 def test_get_task__exists(test_client, overwrite_tasks):

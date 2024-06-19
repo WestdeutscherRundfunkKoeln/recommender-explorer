@@ -197,7 +197,6 @@ def bulk_ingest(
         task = bulk_ingest_tasks[task_id]
         task.status = BulkIngestTaskStatus.FAILED
         task.errors.append(str(e))
-        raise e
 
 
 @router.get("/tasks/{task_id}")
