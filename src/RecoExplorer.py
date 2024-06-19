@@ -33,6 +33,9 @@ try:
             config_full_path = new_config_full_path
 
     config = load_ui_config(EnvYAML(config_full_path).export())
+    config["reco_explorer_url_base"] = pn.state.location.href.replace(
+        pn.state.location.search, ""
+    )
 
     getExplorerInstance(config_full_path, config).server_doc()
 
@@ -42,4 +45,3 @@ except ConfigError as e:
 
 except Exception as e:
     exit(e)
-
