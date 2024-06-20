@@ -183,6 +183,8 @@ class ItemFilterWidget(MultiSelectionWidget):
         )
         self.controller_instance.register("item_filter", item_filter_widget)
 
+        item_filter_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_FILTER
+
         return item_filter_widget
 
 
@@ -214,6 +216,9 @@ class ModelChoiceWidget(MultiSelectionWidget):
             model_watcher,
             self.reco_explorer_app_instance.trigger_model_choice_new,
         )
+
+        model_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
+
         return model_choice_widget
 
 
@@ -249,6 +254,9 @@ class RecoFilterWidget(MultiSelectionWidget):
             reco_filter_watcher,
             self.trigger_multi_select_reco_filter_choice,
         )
+
+        reco_filter_widget.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
+
         return reco_filter_widget
 
 
@@ -284,6 +292,9 @@ class UpperItemFilterWidget(MultiSelectionWidget):
             onlychanged=True,
         )
         self.controller_instance.register("upper_item_filter", upper_item_filter_widget)
+
+        upper_item_filter_widget.reset_identifier = c.RESET_IDENTIFIER_UPPER_ITEM_FILTER
+
         return upper_item_filter_widget
 
     def load_options_after_filter_got_set(

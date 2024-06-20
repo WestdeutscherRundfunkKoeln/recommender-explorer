@@ -34,6 +34,15 @@ MULTI_SELECT_ACTION_OPTION_KEY = "action_option"
 MULTI_SELECT_ACTION_OPTION_VALUE_KEY = "option_value"
 MULTI_SELECT_ACTION_TARGET_WIDGET_KEY = "target_widget"
 
+# Reset Button
+RESET_BUTTON_LABEL = 'Auswahl zurücksetzen'
+RESET_IDENTIFIER_ITEM_CHOICE = "item_choice"
+RESET_IDENTIFIER_MODEL_CHOICE = "model_choice"
+RESET_IDENTIFIER_ITEM_FILTER = "item_filter"
+RESET_IDENTIFIER_UPPER_ITEM_FILTER = "upper_item_filter"
+RESET_IDENTIFIER_RECO_FILTER = "reco_filter"
+RESET_IDENTIFIER_UPPER_RECO_FILTER = "upper_reco_filter"
+
 # Accordion
 ACCORDION_CONTENT_KEY = "content"
 ACCORDION_LABEL_KEY = "label"

@@ -36,4 +36,7 @@ class SliderWidget(UIWidget):
             duration_filter_watcher,
             self.reco_explorer_app_instance.trigger_reco_filter_choice,
         )
+
+        slider.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
+
         return slider

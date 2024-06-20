@@ -27,6 +27,10 @@
                 "type": "string",
                 "description": "headline of the block"
               },
+              "show_reset_button": {
+                "type": "boolean",
+                "description": "sets if reset button for block is rendered"
+              },
               "components": {
                 "type": "array",
                 "description": "contains the configuration of the widgets which can be shown.",
