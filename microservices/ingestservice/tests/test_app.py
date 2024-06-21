@@ -6,6 +6,7 @@ import pytest
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from google.api_core.exceptions import GoogleAPICallError
+from src.task_status import TaskStatus
 from src.models import BulkIngestTask, BulkIngestTaskStatus
 
 load_dotenv("tests/test.env")
@@ -13,7 +14,6 @@ load_dotenv("tests/test.env")
 from src.main import (
     BASE_URL_EMBEDDING,
     BASE_URL_SEARCH,
-    _get_tasks,
     app,
     get_storage_client,
 )
@@ -91,18 +91,19 @@ def overwrite_storage_client():
     app.dependency_overrides.pop(get_storage_client)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def overwrite_tasks():
-    app.dependency_overrides[_get_tasks] = lambda: {
-        "exists": BulkIngestTask(
+    TaskStatus._lifetime_seconds = 0
+    TaskStatus("exists").put(
+        BulkIngestTask(
             id="exists",
             status=BulkIngestTaskStatus.PREPROCESSING,
             errors=[],
-            created_at=datetime.datetime.fromisoformat("2023-10-23T23:00:00+02:00"),
+            created_at=datetime.datetime.fromisoformat("2023-10-23T23:00:00"),
         )
-    }
+    )
     yield
-    app.dependency_overrides.pop(_get_tasks)
+    TaskStatus.clear()
 
 
 def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
@@ -436,7 +437,7 @@ def test_get_task__exists(test_client, overwrite_tasks):
             "id": "exists",
             "status": "PREPROCESSING",
             "errors": [],
-            "created_at": "2023-10-23T23:00:00+02:00",
+            "created_at": "2023-10-23T23:00:00",
         }
     }
 
@@ -458,7 +459,7 @@ def test_get_tasks(test_client, overwrite_tasks):
                 "id": "exists",
                 "status": "PREPROCESSING",
                 "errors": [],
-                "created_at": "2023-10-23T23:00:00+02:00",
+                "created_at": "2023-10-23T23:00:00",
             }
         ]
     }
