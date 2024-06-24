@@ -16,7 +16,6 @@ from google.cloud import storage
 from google.oauth2 import service_account
 from pydantic import ValidationError
 from src.models import (
-    BulkIngestTask,
     BulkIngestTaskStatus,
     FullLoadRequest,
     FullLoadResponse,
@@ -85,9 +84,7 @@ def download_document(
 async def lifespan(app: FastAPI):
     async def task_cleaner():
         while True:
-            for task in bulk_ingest_tasks.values():
-                if datetime.now() - task.created_at > timedelta(days=7):
-                    del bulk_ingest_tasks[task.id]
+            TaskStatus.clear()
             await asyncio.sleep(5 * 60)
 
     asyncio.create_task(task_cleaner())
