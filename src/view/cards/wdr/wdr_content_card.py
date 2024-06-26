@@ -32,7 +32,7 @@ class WDRContentCard:
             pn.pane.Markdown(f"""
             ***
             ##### {content_dto.title}
-            {content_dto.longDescription[:2000]}...
+            {" ".join(content_dto.longDescription.split(" ")[:500])}...
             """),
         ]
 

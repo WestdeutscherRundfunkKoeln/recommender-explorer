@@ -30,7 +30,7 @@ class PaServiceContentCard:
             pn.pane.Markdown(f"""
             ***
             ##### {content_dto.title}
-            {content_dto.description[:2000]}...
+            {" ".join(content_dto.description.split(" ")[:500])}...
             """),
         ]
 
