@@ -24,7 +24,7 @@ class PaServiceContentCard:
                        **Datentyp:** {self.type_icon.get(content_dto.contentType, content_dto.contentType)} 
                        **Datum:** {content_dto.availableFrom}
                        **Strukturpfad:** {content_dto.structureNodePath}
-                       **External ID:** [{content_dto.externalId}]({self.config["reco_explorer_url_base"]}?crid={content_dto.externalId}) 
+                       **External ID:** [{content_dto.externalId}]({self.config["reco_explorer_url_base"]}?externalId={content_dto.externalId}) 
                        **Sophora ID:** [{content_dto.sophoraId}](https://{content_dto.domain}{content_dto.structureNodePath}/{content_dto.sophoraId}.html)
                 """),
             pn.pane.Markdown(f"""

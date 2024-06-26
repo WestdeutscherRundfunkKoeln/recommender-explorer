@@ -24,7 +24,7 @@ class WDRContentCard:
                        **Datentyp:** {self.type_icon.get(content_dto.type, content_dto.type)} 
                        **Datum:** {content_dto.availableFrom}
                        **Strukturpfad:** {content_dto.structurePath}
-                       **External ID:** [{content_dto.externalid}]({self.config["reco_explorer_url_base"]}?crid={content_dto.externalid}) 
+                       **External ID:** [{content_dto.externalid}]({self.config["reco_explorer_url_base"]}?externalId={content_dto.externalid}) 
                        **Themen:** {', '.join(set(content_dto.thematicCategories))}
                        **Keywords:** {', '.join(set(content_dto.keywords))}
                        **Sophora ID:** [{content_dto.sophoraid}](https://{content_dto.domain}{content_dto.structurePath}/{content_dto.sophoraid}.html)
