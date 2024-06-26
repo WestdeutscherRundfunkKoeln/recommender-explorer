@@ -37,7 +37,7 @@ def test_get_items_one_c2c_model_by_date_succeeds(c2c_controller: Recommendation
 )])
 def test_get_items_one_c2c_model_by_date_with_thematic_start_filter_succeeds(
         c2c_controller: RecommendationController) -> None:
-    expected_start_theme = 'ARD Retro'
+    expected_start_theme = c2c_controller.get_item_defaults("thematicCategories")[0]
     filter_selection = {
         'label': 'thematicCategories',
         'selected_value': [expected_start_theme]
