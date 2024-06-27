@@ -62,6 +62,7 @@ class TextFieldWidget(UIWidget):
                     self.reco_explorer_app_instance.url_parameter_text_field_mapping[
                         url_parameter
                     ] = text_input_widget
+                    text_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
             case "reco_filter" | "item_filter":
                 text_input_watcher = text_input_widget.param.watch(
                     self.reco_explorer_app_instance.trigger_reco_filter_choice,
@@ -74,4 +75,11 @@ class TextFieldWidget(UIWidget):
                     text_input_watcher,
                     self.reco_explorer_app_instance.trigger_reco_filter_choice,
                 )
+                if component_group == "reco_filter":
+                    text_input_widget.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
+                elif component_group == "item_filter":
+                    text_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_FILTER
+
+        text_input_widget.is_leaf_widget = True
+
         return text_input_widget

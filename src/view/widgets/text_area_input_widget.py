@@ -35,5 +35,9 @@ class TextAreaInputWidget(UIWidget):
                 url_parameter
             ] = text_area_input_widget
 
+        text_area_input_widget.is_leaf_widget = True
+
+        text_area_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
+
         return text_area_input_widget
 

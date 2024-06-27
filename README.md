@@ -137,10 +137,11 @@ This configuration will create a Header with a Title, Logo and a Background Colo
 All widgets are organized in Blocks. Every Widgets need to be in an Block to be shown and so you need at least one block in your navigation. 
 
 ### Block Config Overview
-| keyword    | mandatory | fallback value         | description                                                                                                         |
-|------------|-----------|------------------------|---------------------------------------------------------------------------------------------------------------------|
-| label      | no        | Default Block Headline | headline of the block                                                                                               |
-| components | yes       | -                      | contains the configuration of the widgets which can be shown. Can be all of the widgets named in this Documentation |
+| keyword           | mandatory | fallback value         | description                                                                                                         |
+|-------------------|-----------|------------------------|---------------------------------------------------------------------------------------------------------------------|
+| label             | no        | Default Block Headline | headline of the block                                                                                               |
+| show_reset_button | no        | True                   | Switch if a reaset button for the block should be displayed or not                                                  |
+| components        | yes       | -                      | contains the configuration of the widgets which can be shown. Can be all of the widgets named in this Documentation |
 
 ### Example of a Block Configuration
 
@@ -151,6 +152,7 @@ All widgets are organized in Blocks. Every Widgets need to be in an Block to be 
         - type: 'text_field'
           ...
     - label: 'Block B'
+      show_reset_button: False
       components:
         - type: 'multi_select'
           ...
@@ -159,7 +161,7 @@ All widgets are organized in Blocks. Every Widgets need to be in an Block to be 
         - type: 'date_time_picker'
           ...
 
-This Configuration will create 2 Blocks with Headlines 'Block A' and 'Block B'. Block A will contain a Accordion Widget and a Text Field Widget and Block B will contain a Multi Select Widget, a Accordion Widget and a DateTimePicker Widget. Be aware that these Widgets need configuration in itself. See each Widgets Documentation here.
+This Configuration will create 2 Blocks with Headlines 'Block A' and 'Block B'. Block A will contain a Accordion Widget and a Text Field Widget and Block B will contain a Multi Select Widget, a Accordion Widget and a DateTimePicker Widget. Also it will not display a reset button. Be aware that these Widgets need configuration in itself. See each Widgets Documentation here.
 
 ## Text Input Widget
 

@@ -20,6 +20,7 @@ from view.widgets.radio_box_widget import RadioBoxWidget
 from view.widgets.accordion_widget import AccordionWidget
 from view.widgets.slider_widget import SliderWidget
 from view.widgets.text_area_input_widget import TextAreaInputWidget
+from view.widgets.reset_button import ResetButtonWidget
 from view import ui_constants
 
 logger = logging.getLogger(__name__)
@@ -1025,13 +1026,6 @@ class RecoExplorerApp:
         self.floating_elements.objects = []
         self.draw_pagination()
 
-    def trigger_reset_button(self, event):
-        self.controller.reset_defaults(event.obj.params["resets"])
-        self.controller.reset_page_number()
-        self.item_grid.objects = {}
-        self.floating_elements.objects = []
-        self.draw_pagination()
-
     def trigger_modal(self, event):
         logger.info(event)
         item = event.obj.params["item"]
@@ -1347,14 +1341,15 @@ class RecoExplorerApp:
         block_list = []
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         for block_config in blocks_config:
+            list_of_widgets_in_block = self.build_widgets(block_config.get(ui_constants.BLOCK_CONFIG_WIDGETS_KEY))
+            if block_config.get("show_reset_button", True):
+                list_of_widgets_in_block.append(ResetButtonWidget(self, self.controller).create(list_of_widgets_in_block))
             block = {
                 ui_constants.BLOCK_LABEL_LIST_KEY: block_config.get(
                     ui_constants.BLOCK_CONFIG_LABEL_KEY,
                     ui_constants.FALLBACK_BLOCK_LABEL_VALUE,
                 ),
-                ui_constants.BLOCK_WIDGETS_LIST_KEY: self.build_widgets(
-                    block_config.get(ui_constants.BLOCK_CONFIG_WIDGETS_KEY)
-                ),
+                ui_constants.BLOCK_WIDGETS_LIST_KEY: list_of_widgets_in_block
             }
             block_list.append(block)
         return block_list
