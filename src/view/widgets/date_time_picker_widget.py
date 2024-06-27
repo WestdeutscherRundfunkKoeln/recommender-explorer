@@ -39,6 +39,8 @@ class DateTimePickerWidget(UIWidget):
         )
         self.controller_instance.register("item_choice", date_time_picker_widget)
 
+        date_time_picker_widget.is_leaf_widget = True
+
         date_time_picker_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
 
         return date_time_picker_widget

@@ -79,4 +79,7 @@ class TextFieldWidget(UIWidget):
                     text_input_widget.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
                 elif component_group == "item_filter":
                     text_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_FILTER
+
+        text_input_widget.is_leaf_widget = True
+
         return text_input_widget

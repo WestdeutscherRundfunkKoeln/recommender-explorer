@@ -12,14 +12,6 @@ class ResetButtonWidget(UIWidget):
             pn.layout.base.Column
         )
 
-        self.leaf_widget_types = (
-            pn.widgets.select.MultiSelect,
-            pn.widgets.input.TextInput,
-            pn.widgets.input.TextAreaInput,
-            pn.widgets.input.DatetimePicker,
-            pn.widgets.FloatSlider
-        )
-
     def create(self, block) -> pn.widgets.Button:
         reset_button_widget = pn.widgets.Button(
             name=c.RESET_BUTTON_LABEL,
@@ -63,8 +55,7 @@ class ResetButtonWidget(UIWidget):
         :return: None
         """
         for widget in block:
-            if widget.value is not widget.params.get("reset_to"):
-                widget.value = widget.params.get("reset_to")
+            widget.value = widget.params.get("reset_to")
 
         self.controller_instance.reset_defaults(event.obj.params["resets"])
         self.controller_instance.reset_page_number()
@@ -103,30 +94,25 @@ class ResetButtonWidget(UIWidget):
 
     def collect_leaf_widgets(self, widget):
         """
-        This method recursively traverses the widget hierarchy starting from
-        the given widget, and collects all the leaf widgets. A leaf widget is
-        a widget that does not have any children.
+        This method collects leaf widgets from a given widget.
 
-        If the given widget is an instance of any of the layout widget types
-        defined in `self.layout_widget_types`, this method will traverse its
-        children and collect the leaf widgets from them
-        * recursively.
-
-        If the given widget is an instance of any of the leaf widget types
-        defined in `self.leaf_widget_types`, it will be added to the list
-        of leaf widgets, unless it has a `reset_identifier
-        *` attribute.
-
-        The resulting list of leaf widgets is returned by this method.
-
-        :param widget: The widget to collect the leaf widgets from.
+        :param widget: The widget from which to collect leaf widgets.
         :return: A list of leaf widgets.
+
+        The leaf widgets are collected recursively by traversing through the widget hierarchy.
+        Leaf widgets are considered to be widgets with the attribute `is_leaf_widget` set to
+        `True`. If the widget is an instance of one of the layout widget types specified in
+        `layout_widget_types`, the method recursively collects leaf widgets from its children.
         """
         leaf_widgets = []
-        if isinstance(widget, self.layout_widget_types):
+        is_leaf_widget = (
+                hasattr(widget, "is_leaf_widget")
+                and widget.is_leaf_widget
+        )
+
+        if not is_leaf_widget and isinstance(widget, self.layout_widget_types):
             for child in widget:
                 leaf_widgets.extend(self.collect_leaf_widgets(child))
-        elif isinstance(widget, self.leaf_widget_types):
-            if hasattr(widget, "reset_identifier"):
-                leaf_widgets.append(widget)
+        elif is_leaf_widget and hasattr(widget, "reset_identifier"):
+            leaf_widgets.append(widget)
         return leaf_widgets

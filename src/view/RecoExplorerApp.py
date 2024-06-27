@@ -1342,7 +1342,7 @@ class RecoExplorerApp:
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         for block_config in blocks_config:
             list_of_widgets_in_block = self.build_widgets(block_config.get(ui_constants.BLOCK_CONFIG_WIDGETS_KEY))
-            if block_config.get("show_reset_button", True) is not False:
+            if block_config.get("show_reset_button", True):
                 list_of_widgets_in_block.append(ResetButtonWidget(self, self.controller).create(list_of_widgets_in_block))
             block = {
                 ui_constants.BLOCK_LABEL_LIST_KEY: block_config.get(

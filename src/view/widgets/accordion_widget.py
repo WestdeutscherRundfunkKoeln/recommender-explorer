@@ -38,6 +38,8 @@ class AccordionWidget(UIWidget):
         accordion_widget.active = [config.get(c.ACCORDION_ACTIVE_KEY, [])]
         accordion_widget.toggle = config.get(c.ACCORDION_TOGGLE_KEY, False)
 
+        accordion_widget.is_leaf_widget = False
+
         return accordion_widget
 
     def create_accordion_content(self, accordion_contents_config):

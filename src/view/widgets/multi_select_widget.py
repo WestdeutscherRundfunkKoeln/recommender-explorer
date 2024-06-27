@@ -100,6 +100,9 @@ class MultiSelectionWidget(UIWidget):
         else:
             multi_select_widget = self.build_multi_select_widget(config)
 
+        if multi_select_widget is not None:
+            multi_select_widget.is_leaf_widget = True
+
         self.set_action_parameter(config, multi_select_widget)
         return multi_select_widget
 
