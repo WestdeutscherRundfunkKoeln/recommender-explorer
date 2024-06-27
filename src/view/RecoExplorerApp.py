@@ -1,11 +1,12 @@
-from typing import Any
-import panel as pn
 import logging
 import traceback
+from typing import Any
+
 import constants
+import panel as pn
 from controller.reco_controller import RecommendationController
-from exceptions.empty_search_error import EmptySearchError
 from exceptions.date_validation_error import DateValidationError
+from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
@@ -13,14 +14,14 @@ from util.file_utils import (
     get_client_from_path,
     get_client_options,
 )
-from view.widgets.multi_select_widget import MultiSelectionWidget
-from view.widgets.date_time_picker_widget import DateTimePickerWidget
-from view.widgets.text_field_widget import TextFieldWidget
-from view.widgets.radio_box_widget import RadioBoxWidget
+from view import ui_constants
 from view.widgets.accordion_widget import AccordionWidget
+from view.widgets.date_time_picker_widget import DateTimePickerWidget
+from view.widgets.multi_select_widget import MultiSelectionWidget
+from view.widgets.radio_box_widget import RadioBoxWidget
 from view.widgets.slider_widget import SliderWidget
 from view.widgets.text_area_input_widget import TextAreaInputWidget
-from view import ui_constants
+from view.widgets.text_field_widget import TextFieldWidget
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -48,7 +49,9 @@ class RecoExplorerApp:
             ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(self, self.controller),
             ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
             ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
-            ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(self, self.controller)
+            ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(
+                self, self.controller
+            ),
         }
 
         pn.extension(sizing_mode="stretch_width")
@@ -896,7 +899,6 @@ class RecoExplorerApp:
         self.u2c_model_choice = pn.widgets.MultiSelect(
             name="",
             options=self.u2c_models,
-            # value=[]
         )
         self.u2c_model_choice.params = {
             "label": constants.MODEL_CONFIG_U2C,
@@ -1375,6 +1377,7 @@ class RecoExplorerApp:
 
     #
     def assemble_components(self):
+        accordion_max_width = 323
         if ui_constants.UI_CONFIG_BLOCKS in self.config:
             blocks = self.build_blocks()
             logger.debug("found blocks %s", blocks)
@@ -1408,8 +1411,10 @@ class RecoExplorerApp:
             )
 
             if self.client_choice_visibility:
-                self.put_navigational_block(0, ["### Mandant wählen", self.client_choice])
-                client_choice_watcher = self.client_choice.param.watch(
+                self.put_navigational_block(
+                    0, ["### Mandant wählen", self.client_choice]
+                )
+                self.client_choice.param.watch(
                     self.toggle_client_choice, "value", onlychanged=True
                 )
 
@@ -1426,11 +1431,12 @@ class RecoExplorerApp:
 
             self.model_choice.active = [0]
             self.model_choice.toggle = True
+            self.model_choice.max_width = accordion_max_width
 
             self.put_navigational_block(
                 1, ["### Modelle wählen", self.model_choice, self.model_resetter]
             )
-            model_choice_watcher = self.model_choice.param.watch(
+            self.model_choice.param.watch(
                 self.toggle_model_choice, "active", onlychanged=True
             )
 
@@ -1443,6 +1449,7 @@ class RecoExplorerApp:
                 ("Sendereihe wählen", self.shows),
             )
             self.item_source.active = [0]
+            self.item_source.max_width = accordion_max_width
 
             # User source
             self.user_source = pn.Accordion(
@@ -1452,7 +1459,8 @@ class RecoExplorerApp:
             )
             self.user_source.active = [0]
             self.user_source.toggle = True
-            user_source_watcher = self.user_source.param.watch(
+            self.user_source.max_width = accordion_max_width
+            self.user_source.param.watch(
                 self.toggle_user_choice, "active", onlychanged=True
             )
 
@@ -1482,6 +1490,7 @@ class RecoExplorerApp:
                 ("Themen-Filter", self.theme_col),
                 ("Sendereihe-Filter", self.show_col),
             )
+            self.reco_items.max_width = accordion_max_width
 
             self.filter_block = {}
             self.filter_block[0] = [
@@ -1512,9 +1521,9 @@ class RecoExplorerApp:
         self.pagination.append(self.previousPage)
 
         self.pagination.append(pn.pane.Markdown("""### Seite """))
-        self.pagination.append(pn.pane.Markdown(f"""### - """))
+        self.pagination.append(pn.pane.Markdown("""### - """))
         self.pagination.append(pn.pane.Markdown("""### von """))
-        self.pagination.append(pn.pane.Markdown(f"""### - """))
+        self.pagination.append(pn.pane.Markdown("""### - """))
 
         # next button
         self.nextPage = pn.widgets.Button(
@@ -1561,7 +1570,7 @@ class RecoExplorerApp:
 
     @staticmethod
     def render_404():
-        return pn.pane.Markdown(f"""## Unknown location""")
+        return pn.pane.Markdown("""## Unknown location""")
 
     #
     def render(self):
