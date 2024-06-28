@@ -1,6 +1,6 @@
-from typing import Any
 import panel as pn
 from view.widgets.widget import UIWidget
+
 from .. import ui_constants as c
 
 
@@ -9,23 +9,27 @@ class ResetButtonWidget(UIWidget):
         super().__init__(*args, **kwargs)
         self.layout_widget_types = (
             pn.layout.accordion.Accordion,
-            pn.layout.base.Column
+            pn.layout.base.Column,
         )
 
     def create(self, block) -> pn.widgets.Button:
         reset_button_widget = pn.widgets.Button(
-            name=c.RESET_BUTTON_LABEL,
-            button_type='primary',
-            margin=10
+            name=c.RESET_BUTTON_LABEL, button_type="primary", margin=10
         )
 
         widgets_to_reset = self.get_widgets_to_reset(block)
-        reset_button_widget = self.set_reset_button_params(reset_button_widget, widgets_to_reset)
-        reset_button_widget.on_click(lambda event: self.reset_block_contents(event, widgets_to_reset))
+        reset_button_widget = self.set_reset_button_params(
+            reset_button_widget, widgets_to_reset
+        )
+        reset_button_widget.on_click(
+            lambda event: self.reset_block_contents(event, widgets_to_reset)
+        )
 
         return reset_button_widget
 
-    def set_reset_button_params(self, reset_button_widget, widgets_to_reset) -> pn.widgets.Button:
+    def set_reset_button_params(
+        self, reset_button_widget, widgets_to_reset
+    ) -> pn.widgets.Button:
         """
         Set the parameters for the reset button widget.
 
@@ -39,7 +43,7 @@ class ResetButtonWidget(UIWidget):
         list_of_reset_identifiers = list(set(list_of_reset_identifiers))
         reset_button_widget.params = {
             "label": "resetter",
-            "resets": list_of_reset_identifiers
+            "resets": list_of_reset_identifiers,
         }
         return reset_button_widget
 
@@ -64,12 +68,12 @@ class ResetButtonWidget(UIWidget):
             c.RESET_IDENTIFIER_MODEL_CHOICE,
             c.RESET_IDENTIFIER_ITEM_CHOICE,
             c.RESET_IDENTIFIER_UPPER_ITEM_FILTER,
-            c.RESET_IDENTIFIER_ITEM_FILTER
+            c.RESET_IDENTIFIER_ITEM_FILTER,
         ]
 
         reset_identifiers_reco = [
             c.RESET_IDENTIFIER_RECO_FILTER,
-            c.RESET_IDENTIFIER_UPPER_RECO_FILTER
+            c.RESET_IDENTIFIER_UPPER_RECO_FILTER,
         ]
 
         for reset_type in event.obj.params["resets"]:
@@ -105,10 +109,7 @@ class ResetButtonWidget(UIWidget):
         `layout_widget_types`, the method recursively collects leaf widgets from its children.
         """
         leaf_widgets = []
-        is_leaf_widget = (
-                hasattr(widget, "is_leaf_widget")
-                and widget.is_leaf_widget
-        )
+        is_leaf_widget = hasattr(widget, "is_leaf_widget") and widget.is_leaf_widget
 
         if not is_leaf_widget and isinstance(widget, self.layout_widget_types):
             for child in widget:

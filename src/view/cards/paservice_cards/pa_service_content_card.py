@@ -1,5 +1,6 @@
-import panel as pn
 import logging
+
+import panel as pn
 from dto.pa_service_content_item import PaServiceContentItemDto
 
 logger = logging.getLogger(__name__)

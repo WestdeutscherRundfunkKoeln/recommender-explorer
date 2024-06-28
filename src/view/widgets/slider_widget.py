@@ -1,10 +1,9 @@
 from typing import Any
 
-from bokeh.models.formatters import PrintfTickFormatter
 import panel as pn
-from view.widgets.widget import UIWidget
-
+from bokeh.models.formatters import PrintfTickFormatter
 from view import ui_constants as c
+from view.widgets.widget import UIWidget
 
 
 class SliderWidget(UIWidget):

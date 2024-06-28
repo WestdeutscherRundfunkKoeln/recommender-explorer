@@ -1,24 +1,25 @@
 from typing import Any
 
 import panel as pn
-from view.widgets.widget import UIWidget
-
 from view import ui_constants as c
+from view.widgets.widget import UIWidget
 
 
 class TextAreaInputWidget(UIWidget):
     def create(self, config: dict[str, Any]) -> pn.widgets.TextAreaInput:
         text_area_input_widget = pn.widgets.TextAreaInput(
-            name=config.get(c.TEXT_AREA_INPUT_LABEL_KEY, c.FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE),
+            name=config.get(
+                c.TEXT_AREA_INPUT_LABEL_KEY, c.FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE
+            ),
             placeholder=config.get(c.TEXT_AREA_INPUT_PLACEHOLDER_KEY, ""),
-            max_length=99_999
+            max_length=99_999,
         )
 
         text_area_input_widget.params = {
             "validator": config.get(c.TEXT_AREA_INPUT_VALIDATOR_KEY, "_check_text"),
             "accessor": config.get(c.TEXT_AREA_INPUT_ACCESSOR_KEY, "get_item_by_text"),
             "label": "text_input",
-            "reset_to": ""
+            "reset_to": "",
         }
 
         text_area_input_widget.param.watch(
@@ -40,4 +41,3 @@ class TextAreaInputWidget(UIWidget):
         text_area_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
 
         return text_area_input_widget
-

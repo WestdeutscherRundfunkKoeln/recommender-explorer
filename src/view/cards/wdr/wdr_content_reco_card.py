@@ -1,5 +1,6 @@
-import panel as pn
 import logging
+
+import panel as pn
 from dto.wdr_content_item import WDRContentItemDto
 from view.cards.wdr.wdr_content_card import WDRContentCard
 
@@ -92,4 +93,3 @@ class WDRContentRecoCard(WDRContentCard):
         card.objects = child_objects
 
         return super().draw(content_dto, card)
-

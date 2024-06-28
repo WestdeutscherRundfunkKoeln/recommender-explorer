@@ -1,6 +1,6 @@
-import panel as pn
 from typing import Any
 
+import panel as pn
 from view import ui_constants as c
 from view.widgets.widget import UIWidget
 
@@ -25,12 +25,12 @@ class AccordionWidget(UIWidget):
         accordion_content = self.hide_trigger_action_widgets(accordion_content)
 
         if accordion_content:
-            all_inner_widgets_column = pn.Column(*accordion_content, sizing_mode='stretch_width')
+            all_inner_widgets_column = pn.Column(
+                *accordion_content, sizing_mode="stretch_width"
+            )
             accordion_widget.append(
                 (
-                    config.get(
-                        c.ACCORDION_LABEL_KEY, c.FALLBACK_ACCORDION_LABEL_VALUE
-                    ),
+                    config.get(c.ACCORDION_LABEL_KEY, c.FALLBACK_ACCORDION_LABEL_VALUE),
                     all_inner_widgets_column,
                 )
             )
@@ -90,7 +90,9 @@ class AccordionWidget(UIWidget):
         :param source_widget: The widget which has the action parameters attached
         """
         for target_widget_label in source_widget.action_parameter.values():
-            target_widget = self.get_widget_from_content_by_label(accordion_content, target_widget_label)
+            target_widget = self.get_widget_from_content_by_label(
+                accordion_content, target_widget_label
+            )
             if target_widget:
                 target_widget.visible = False
 

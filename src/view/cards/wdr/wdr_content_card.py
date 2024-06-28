@@ -1,5 +1,6 @@
-import panel as pn
 import logging
+
+import panel as pn
 from dto.wdr_content_item import WDRContentItemDto
 
 logger = logging.getLogger(__name__)

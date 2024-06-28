@@ -35,7 +35,7 @@ MULTI_SELECT_ACTION_OPTION_VALUE_KEY = "option_value"
 MULTI_SELECT_ACTION_TARGET_WIDGET_KEY = "target_widget"
 
 # Reset Button
-RESET_BUTTON_LABEL = 'Auswahl zurücksetzen'
+RESET_BUTTON_LABEL = "Auswahl zurücksetzen"
 RESET_IDENTIFIER_ITEM_CHOICE = "item_choice"
 RESET_IDENTIFIER_MODEL_CHOICE = "model_choice"
 RESET_IDENTIFIER_ITEM_FILTER = "item_filter"
@@ -49,6 +49,8 @@ ACCORDION_LABEL_KEY = "label"
 ACCORDION_ACTIVE_KEY = "active"
 ACCORDION_TOGGLE_KEY = "toggle"
 ACCORDION_RESET_BUTTON_KEY = "accordion-reset-button"
+ACCORDION_MAX_WIDTH = 323
+
 
 # Radio Box
 RADIO_BOX_OPTION_KEY = "options"

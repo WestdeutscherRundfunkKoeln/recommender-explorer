@@ -1,10 +1,8 @@
-import panel as pn
-
-from view.widgets.widget import UIWidget
 from typing import Any
 
-
+import panel as pn
 from view import ui_constants as c
+from view.widgets.widget import UIWidget
 
 
 class DateTimePickerWidget(UIWidget):
