@@ -1378,7 +1378,7 @@ class RecoExplorerApp:
 
     #
     def assemble_components(self):
-        accordion_max_width = 323
+        accordion_max_width = ui_constants.ACCORDION_MAX_WIDTH
         if ui_constants.UI_CONFIG_BLOCKS in self.config:
             blocks = self.build_blocks()
             logger.debug("found blocks %s", blocks)
