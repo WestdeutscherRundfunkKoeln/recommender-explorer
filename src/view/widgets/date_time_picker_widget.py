@@ -1,10 +1,8 @@
-import panel as pn
-
-from view.widgets.widget import UIWidget
 from typing import Any
 
-
+import panel as pn
 from view import ui_constants as c
+from view.widgets.widget import UIWidget
 
 
 class DateTimePickerWidget(UIWidget):
@@ -38,4 +36,9 @@ class DateTimePickerWidget(UIWidget):
             onlychanged=True,
         )
         self.controller_instance.register("item_choice", date_time_picker_widget)
+
+        date_time_picker_widget.is_leaf_widget = True
+
+        date_time_picker_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
+
         return date_time_picker_widget

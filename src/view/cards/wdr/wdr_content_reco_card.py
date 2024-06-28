@@ -1,12 +1,13 @@
-import panel as pn
 import logging
+
+import panel as pn
 from dto.wdr_content_item import WDRContentItemDto
 from view.cards.wdr.wdr_content_card import WDRContentCard
 
 logger = logging.getLogger(__name__)
 
-class WDRContentRecoCard(WDRContentCard):
 
+class WDRContentRecoCard(WDRContentCard):
     CARD_HEIGHT = 600
     IMAGE_HEIGHT = 200
 
@@ -74,14 +75,19 @@ class WDRContentRecoCard(WDRContentCard):
 
         child_objects = [
             teaserimage,
-            pn.pane.Markdown(f""" ### Score Empfehlung {nr}: {str(round(content_dto.dist, 2))}""")
+            pn.pane.Markdown(f""" ### Score: {str(round(content_dto.dist, 2))}"""),
         ]
 
         card = pn.Card(
-            styles={ 'background': self.config[model_config][content_dto.provenance][model]['reco_color'], 'overflow': 'auto'},
+            styles={
+                "background": self.config[model_config][content_dto.provenance][model][
+                    "reco_color"
+                ],
+                "overflow": "auto",
+            },
             margin=5,
             height=self.CARD_HEIGHT,
-            hide_header=True
+            hide_header=True,
         )
 
         card.objects = child_objects

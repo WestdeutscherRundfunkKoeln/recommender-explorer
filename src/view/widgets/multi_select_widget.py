@@ -1,8 +1,8 @@
 from typing import Any
-import panel as pn
 
-from view.widgets.widget import UIWidget
+import panel as pn
 from view import ui_constants as c
+from view.widgets.widget import UIWidget
 
 
 class MultiSelectionWidget(UIWidget):
@@ -96,14 +96,21 @@ class MultiSelectionWidget(UIWidget):
         }.get(multi_select_register_value, None)
 
         if registered_multi_select_widget:
-            multi_select_widget = registered_multi_select_widget(self.reco_explorer_app_instance, self.controller_instance).create(config)
+            multi_select_widget = registered_multi_select_widget(
+                self.reco_explorer_app_instance, self.controller_instance
+            ).create(config)
         else:
             multi_select_widget = self.build_multi_select_widget(config)
+
+        if multi_select_widget is not None:
+            multi_select_widget.is_leaf_widget = True
 
         self.set_action_parameter(config, multi_select_widget)
         return multi_select_widget
 
-    def set_action_parameter(self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect) -> pn.widgets.MultiSelect | None:
+    def set_action_parameter(
+        self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect
+    ) -> pn.widgets.MultiSelect | None:
         """
         Sets action option parameter on the multi-select widget based on the provided configuration. Action parameter will be used to toggle
         visibility of other widgets by selecting the configured option. Action parameter are dictionary entries with key = multi select
@@ -114,7 +121,10 @@ class MultiSelectionWidget(UIWidget):
         :return: The multi select widget with the action parameter attached if configured
         """
         if config.get(c.MULTI_SELECT_ACTION_OPTION_KEY):
-            action_parameter = {list(pair.keys())[0]: list(pair.values())[0] for pair in config.get(c.MULTI_SELECT_ACTION_OPTION_KEY)}
+            action_parameter = {
+                list(pair.keys())[0]: list(pair.values())[0]
+                for pair in config.get(c.MULTI_SELECT_ACTION_OPTION_KEY)
+            }
             if action_parameter:
                 multi_select_widget.action_parameter = action_parameter
         return multi_select_widget
@@ -128,10 +138,13 @@ class MultiSelectionWidget(UIWidget):
         :return:
         """
         if hasattr(event.obj, "action_parameter"):
-            for action_option_value, action_target_widget_label in event.obj.action_parameter.items():
+            for (
+                action_option_value,
+                action_target_widget_label,
+            ) in event.obj.action_parameter.items():
                 action_target_widget = self.find_widget_by_name_recursive(
                     self.reco_explorer_app_instance.config_based_nav_controls,
-                    action_target_widget_label
+                    action_target_widget_label,
                 )
                 if action_target_widget:
                     action_target_widget.visible = action_option_value == event.new[0]
@@ -183,6 +196,8 @@ class ItemFilterWidget(MultiSelectionWidget):
         )
         self.controller_instance.register("item_filter", item_filter_widget)
 
+        item_filter_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_FILTER
+
         return item_filter_widget
 
 
@@ -214,6 +229,9 @@ class ModelChoiceWidget(MultiSelectionWidget):
             model_watcher,
             self.reco_explorer_app_instance.trigger_model_choice_new,
         )
+
+        model_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
+
         return model_choice_widget
 
 
@@ -249,6 +267,9 @@ class RecoFilterWidget(MultiSelectionWidget):
             reco_filter_watcher,
             self.trigger_multi_select_reco_filter_choice,
         )
+
+        reco_filter_widget.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
+
         return reco_filter_widget
 
 
@@ -284,6 +305,9 @@ class UpperItemFilterWidget(MultiSelectionWidget):
             onlychanged=True,
         )
         self.controller_instance.register("upper_item_filter", upper_item_filter_widget)
+
+        upper_item_filter_widget.reset_identifier = c.RESET_IDENTIFIER_UPPER_ITEM_FILTER
+
         return upper_item_filter_widget
 
     def load_options_after_filter_got_set(

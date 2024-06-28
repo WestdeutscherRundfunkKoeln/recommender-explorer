@@ -1,10 +1,12 @@
-import panel as pn
-import sys
 import logging
+import sys
+
+import panel as pn
 from envyaml import EnvYAML
-from view.RecoExplorerApp import RecoExplorerApp
-from util.file_utils import get_config_from_search, get_config_from_arg, load_ui_config
+
 from exceptions.config_error import ConfigError
+from util.file_utils import get_config_from_search, get_config_from_arg, load_ui_config
+from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -33,6 +35,9 @@ try:
             config_full_path = new_config_full_path
 
     config = load_ui_config(EnvYAML(config_full_path).export())
+    config["reco_explorer_url_base"] = pn.state.location.href.replace(
+        pn.state.location.search, ""
+    )
 
     getExplorerInstance(config_full_path, config).server_doc()
 
@@ -42,4 +47,3 @@ except ConfigError as e:
 
 except Exception as e:
     exit(e)
-

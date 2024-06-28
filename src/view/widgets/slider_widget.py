@@ -1,10 +1,9 @@
 from typing import Any
 
-from bokeh.models.formatters import PrintfTickFormatter
 import panel as pn
-from view.widgets.widget import UIWidget
-
+from bokeh.models.formatters import PrintfTickFormatter
 from view import ui_constants as c
+from view.widgets.widget import UIWidget
 
 
 class SliderWidget(UIWidget):
@@ -36,4 +35,9 @@ class SliderWidget(UIWidget):
             duration_filter_watcher,
             self.reco_explorer_app_instance.trigger_reco_filter_choice,
         )
+
+        slider.is_leaf_widget = True
+
+        slider.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
+
         return slider

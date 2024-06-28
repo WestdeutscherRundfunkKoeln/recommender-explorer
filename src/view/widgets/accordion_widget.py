@@ -1,6 +1,6 @@
-import panel as pn
 from typing import Any
 
+import panel as pn
 from view import ui_constants as c
 from view.widgets.widget import UIWidget
 
@@ -25,18 +25,20 @@ class AccordionWidget(UIWidget):
         accordion_content = self.hide_trigger_action_widgets(accordion_content)
 
         if accordion_content:
-            all_inner_widgets_column = pn.Column(*accordion_content, sizing_mode='stretch_width')
+            all_inner_widgets_column = pn.Column(
+                *accordion_content, sizing_mode="stretch_width"
+            )
             accordion_widget.append(
                 (
-                    config.get(
-                        c.ACCORDION_LABEL_KEY, c.FALLBACK_ACCORDION_LABEL_VALUE
-                    ),
+                    config.get(c.ACCORDION_LABEL_KEY, c.FALLBACK_ACCORDION_LABEL_VALUE),
                     all_inner_widgets_column,
                 )
             )
 
         accordion_widget.active = [config.get(c.ACCORDION_ACTIVE_KEY, [])]
         accordion_widget.toggle = config.get(c.ACCORDION_TOGGLE_KEY, False)
+
+        accordion_widget.is_leaf_widget = False
 
         return accordion_widget
 
@@ -60,50 +62,6 @@ class AccordionWidget(UIWidget):
                     )
                 )
         return accordion_content
-
-    def create_accordion_reset_buttons(self, accordion_config):
-        accordion_reset_buttons = []
-        accordion_contents_config = accordion_config.get(c.ACCORDION_CONTENT_KEY)
-        accordion_reset_buttons_config = accordion_config.get(
-            c.ACCORDION_RESET_BUTTON_TYPE_VALUE
-        )
-        for accordion_reset_button_config in accordion_reset_buttons_config:
-            reset_button_widget = pn.widgets.Button(
-                name=accordion_reset_button_config.get(c.ACCORDION_RESET_LABEL_KEY, ""),
-                button_type=accordion_reset_button_config.get(
-                    c.ACCORDION_RESET_BUTTON_STYLE_KEY, "primary"
-                ),
-                margin=accordion_reset_button_config.get(
-                    c.ACCORDION_RESET_MARGIN_KEY, 0
-                ),
-            )
-
-            contents_choice_types = []
-            if accordion_contents_config:
-                for accordion_content_config in accordion_contents_config:
-                    accordion_content_type = accordion_content_config.get(
-                        c.WIDGET_TYPE_KEY
-                    )
-                    if accordion_content_type == c.MULTI_SELECT_TYPE_VALUE:
-                        contents_choice_types.append("model_choice")
-
-            reset_button_widget.params = {
-                "label": "model_resetter",
-                "resets": contents_choice_types,
-            }
-
-            reset_button_widget.on_click(
-                self.reco_explorer_app_instance.trigger_reset_button
-            )
-
-            accordion_reset_buttons.append(reset_button_widget)
-        if len(accordion_reset_buttons) == 1:
-            return accordion_reset_buttons[0]
-        elif len(accordion_reset_buttons) > 1:
-            # TODO: Not a valid reset button, what now?
-            return accordion_reset_buttons[0]
-        else:
-            return None
 
     def hide_trigger_action_widgets(self, accordion_content: [any]) -> [any]:
         """
@@ -132,7 +90,9 @@ class AccordionWidget(UIWidget):
         :param source_widget: The widget which has the action parameters attached
         """
         for target_widget_label in source_widget.action_parameter.values():
-            target_widget = self.get_widget_from_content_by_label(accordion_content, target_widget_label)
+            target_widget = self.get_widget_from_content_by_label(
+                accordion_content, target_widget_label
+            )
             if target_widget:
                 target_widget.visible = False
 
