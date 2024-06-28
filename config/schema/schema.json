@@ -52,7 +52,7 @@
           "type": "string"
         },
         "port": {
-          "type": "string"
+          "type": "number"
         },
         "user": {
           "type": "string"
@@ -289,8 +289,15 @@
       }
     },
     "ui_config": {
-      "type": "string",
-      "pattern": "^.*\\.yaml$"
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^.*\\.yaml$"
+        },
+        {
+          "type": "object"
+        }
+      ]
     }
   },
   "required": [
