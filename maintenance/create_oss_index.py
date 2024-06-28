@@ -23,6 +23,7 @@ def load_and_preprocess_data(s3_bucket,
                              s3_base_pa_data_filename,
                              s3_subgenre_lut_file,
                              s3_thematic_lut_file,
+                             s3_show_lut_file,
                              sample=True):
     # read data
     res = "s3://{}/{}".format(s3_bucket, s3_base_pa_data_filename)
@@ -66,7 +67,12 @@ def load_and_preprocess_data(s3_bucket,
         lambda row: [thematic_lut[v] for v in row if thematic_lut.get(v)]
     )
 
-    return df
+    # load and process show luts
+    show_obj = s3.Object(s3_bucket, s3_show_lut_file)
+    show_lut = json.load(show_obj.get()['Body'])
+    show_df = pd.DataFrame(show_lut)
+
+    return df, show_df
 
 def calc_embeddings(df, model_names):
 
@@ -154,6 +160,19 @@ def doc_generator(df, index_name, keys):
         }
     # raise StopIteration
     
+def upload_show_luts(df, client, target_idx):
+
+    # transfer all columns, we could subset here
+    use_these_keys = df.columns.tolist()
+
+    for ok, action in helpers.streaming_bulk(
+        client=client,
+        index=target_idx,
+        actions=doc_generator(df, target_idx, use_these_keys),
+    ):
+        progress.update(1)
+        successes += ok
+
 
 def upload_data_oss(df, client, embedding_field_names, embedding_sizes, index_prefix="reco_pa_test"):
     # Determine target index name by timestamp
@@ -162,6 +181,11 @@ def upload_data_oss(df, client, embedding_field_names, embedding_sizes, index_pr
     current_idx_alias = index_prefix + '_idx_current'
     logger.info(f"Target index name: {target_idx_name}")
     logger.info(f"Target index alias: {current_idx_alias}")
+
+    #
+    #
+    #
+    return target_idx_name
 
     # make sure the index doesn't exists yet
     delete_oss_index(client, target_idx_name)
@@ -201,6 +225,8 @@ def upload_data_oss(df, client, embedding_field_names, embedding_sizes, index_pr
             name=current_idx_alias, index=index_prefix + '_*')
         client.indices.put_alias(name=current_idx_alias, index=target_idx_name)
 
+    return target_idx_name
+
         
 if __name__ == "__main__":
 
@@ -226,20 +252,20 @@ if __name__ == "__main__":
     logger.info('Host: ' + host)
 
     logger.info("Preprocess data")
-    df = load_and_preprocess_data(
+    df, show_df = load_and_preprocess_data(
         indexing_sources['base_data_bucket'],
         indexing_sources['base_data_file'],
         indexing_sources['subgenre_lut_file'],
         indexing_sources['thematic_lut_file'],
+        indexing_sources['show_lut_file'],
         index_sample
     )
 
-
-    logger.info("Calculate embeddings")
-    df, embedding_field_names, embedding_sizes = calc_embeddings(df, c2c_models)
+    #logger.info("Calculate embeddings")
+    #df, embedding_field_names, embedding_sizes = calc_embeddings(df, c2c_models)
     
-    logger.info("Postprocess data")
-    df = postprocess_data(df)
+    #logger.info("Postprocess data")
+    #df = postprocess_data(df)
 
     # initialize OSS client
     oss_client = OpenSearch(
@@ -251,9 +277,13 @@ if __name__ == "__main__":
         timeout=600,
     )
     
-    logger.info("Upload new index to OSS")
-    print(
-        "index prefix [" + index_prefix + "]\n"
-        "embedding field names [" + '_'.join(embedding_field_names) + "]"
-    )
-    upload_data_oss(df, oss_client, embedding_field_names, embedding_sizes, index_prefix)
+    #logger.info("Upload new index to OSS")
+    #print(
+    #    "index prefix [" + index_prefix + "]\n"
+    #    "embedding field names [" + '_'.join(embedding_field_names) + "]"
+    #)
+
+    #target_idx = upload_data_oss(df, oss_client, embedding_field_names, embedding_sizes, index_prefix)
+    target_idx = "audiothek_pa_prod_idx_20240612_02_33"
+    logger.info("Upload show luts to OSS idx [" + target_idx + ']')
+    upload_show_luts(show_df, oss_client, target_idx)
