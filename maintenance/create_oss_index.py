@@ -165,6 +165,13 @@ def upload_show_luts(df, client, target_idx):
     # transfer all columns, we could subset here
     use_these_keys = df.columns.tolist()
 
+    # Set total number of documents
+    number_of_docs = df.shape[0]
+    successes = 0
+
+    progress = tqdm(unit="docs", total=number_of_docs,
+                    leave=True, desc="indexing")
+
     for ok, action in helpers.streaming_bulk(
         client=client,
         index=target_idx,
