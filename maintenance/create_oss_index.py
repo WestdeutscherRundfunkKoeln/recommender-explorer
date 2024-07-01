@@ -23,7 +23,6 @@ def load_and_preprocess_data(s3_bucket,
                              s3_base_pa_data_filename,
                              s3_subgenre_lut_file,
                              s3_thematic_lut_file,
-                             s3_show_lut_file,
                              sample=True):
     # read data
     res = "s3://{}/{}".format(s3_bucket, s3_base_pa_data_filename)
@@ -68,10 +67,39 @@ def load_and_preprocess_data(s3_bucket,
     )
 
     # load and process show luts
-    show_obj = s3.Object(s3_bucket, s3_show_lut_file)
-    show_lut = json.load(show_obj.get()['Body'])
-    show_df = pd.DataFrame(show_lut)
+    transposed = []
+    for index, row in df.iterrows():
 
+        show_luts = {}
+        show_core_id = row.get('showCoreId', False)
+        prim_id = row.id
+
+        if not show_core_id:
+            continue
+
+        curr_episode_nr = row.get('episodeNumber', 10000)
+        curr_season_nr = row.get('seasonNumber', 10000)
+
+        if not show_luts.get(show_core_id):
+            show_luts[show_core_id] = {}
+            show_luts[show_core_id] = {'episode': prim_id}
+
+        if curr_season_nr <= show_luts[show_core_id].get('season_nr', 10000):
+            if curr_episode_nr < show_luts[show_core_id].get('episode_nr', 10000):
+                # new low of season and episode
+                show_luts[show_core_id] = {'episode': prim_id, 'season_nr': curr_season_nr,
+                                           'episode_nr': curr_episode_nr}
+
+        for idx, val in show_luts.items():
+            item = {
+                'id': idx,
+                'episode': val.get('episode'),
+                'season': val.get('season_nr', 0),
+                'episode_nr': val.get('episode_nr', 0)
+            }
+            transposed.append(item)
+
+    show_df = pd.DataFrame(transposed)
     return df, show_df
 
 def calc_embeddings(df, model_names):
@@ -152,6 +180,8 @@ def filterKeys(document, keys):
 def doc_generator(df, index_name, keys):
     df_iter = df.iterrows()
     for index, document in df_iter:
+        if not document.get('id'):
+            continue
         yield {
             "_index": index_name,
             "_type": "_doc",
@@ -180,6 +210,7 @@ def upload_show_luts(df, client, target_idx):
         progress.update(1)
         successes += ok
 
+    logger.info("Indexed [" + str(successes) + '] show documents')
 
 def upload_data_oss(df, client, embedding_field_names, embedding_sizes, index_prefix="reco_pa_test"):
     # Determine target index name by timestamp
@@ -188,11 +219,6 @@ def upload_data_oss(df, client, embedding_field_names, embedding_sizes, index_pr
     current_idx_alias = index_prefix + '_idx_current'
     logger.info(f"Target index name: {target_idx_name}")
     logger.info(f"Target index alias: {current_idx_alias}")
-
-    #
-    #
-    #
-    return target_idx_name
 
     # make sure the index doesn't exists yet
     delete_oss_index(client, target_idx_name)
@@ -264,15 +290,14 @@ if __name__ == "__main__":
         indexing_sources['base_data_file'],
         indexing_sources['subgenre_lut_file'],
         indexing_sources['thematic_lut_file'],
-        indexing_sources['show_lut_file'],
         index_sample
     )
 
-    #logger.info("Calculate embeddings")
-    #df, embedding_field_names, embedding_sizes = calc_embeddings(df, c2c_models)
+    logger.info("Calculate embeddings")
+    df, embedding_field_names, embedding_sizes = calc_embeddings(df, c2c_models)
     
-    #logger.info("Postprocess data")
-    #df = postprocess_data(df)
+    logger.info("Postprocess data")
+    df = postprocess_data(df)
 
     # initialize OSS client
     oss_client = OpenSearch(
@@ -284,13 +309,13 @@ if __name__ == "__main__":
         timeout=600,
     )
     
-    #logger.info("Upload new index to OSS")
-    #print(
-    #    "index prefix [" + index_prefix + "]\n"
-    #    "embedding field names [" + '_'.join(embedding_field_names) + "]"
-    #)
+    logger.info("Upload new index to OSS")
+    print(
+        "index prefix [" + index_prefix + "]\n"
+        "embedding field names [" + '_'.join(embedding_field_names) + "]"
+    )
 
-    #target_idx = upload_data_oss(df, oss_client, embedding_field_names, embedding_sizes, index_prefix)
-    target_idx = "audiothek_pa_prod_idx_20240612_02_33"
+    target_idx = upload_data_oss(df, oss_client, embedding_field_names, embedding_sizes, index_prefix)
     logger.info("Upload show luts to OSS idx [" + target_idx + ']')
+    show_df = show_df[show_df['id'].notna()]
     upload_show_luts(show_df, oss_client, target_idx)
