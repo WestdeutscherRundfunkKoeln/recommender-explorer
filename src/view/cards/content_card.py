@@ -23,7 +23,7 @@ class ContentCard():
                        **Inhalt:** {self.controller.get_upper_genres_and_subgenres(content_dto.subgenreCategories)} 
                        **Subgenre:** {', '.join(set(content_dto.subgenreCategories))}
                        **Themen:** {', '.join(set(content_dto.thematicCategories))}
-                       **Sendereihe:** {content_dto.showTitle}
+                       **Show-Titel:** {content_dto.showTitle}
                        **Datum:** {content_dto.createdFormatted}
                        **{id_key}:** {content_dto.__getattribute__(id_val)}
                 """),

@@ -57,8 +57,9 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
                 "Couldn't find item identified by field ["
                 + field
                 + ".keyword] and value ["
-                + item_ident,
-                {},
+                + item_ident
+                + "]",
+                {}
             )
         else:
             return response["hits"]["hits"][0]["_id"]
