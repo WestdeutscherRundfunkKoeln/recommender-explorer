@@ -29,7 +29,7 @@ class NnSeekerPaServiceShow(NnSeekerPaService):
         for idx, show_id in enumerate(reco_ids):
             item_dto = dto_from_classname(
                 class_name='ShowItemDto',
-                position=constants.ITEM_POSITION_START,
+                position=constants.ITEM_POSITION_RECO,
                 item_type=constants.ITEM_TYPE_CONTENT,
                 provenance=constants.ITEM_PROVENANCE_C2C,
             )
