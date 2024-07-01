@@ -8,7 +8,7 @@ from exceptions.config_error import ConfigError
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.WARNING)
 
 
 def getExplorerInstance(config_full_path: str, config: dict[str, str]):
