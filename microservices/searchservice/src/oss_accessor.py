@@ -13,7 +13,7 @@ class OssAccessor:
         host = config["opensearch"]["host"]
         auth = (config["opensearch"]["user"], config["opensearch"]["pass"])
         port = config["opensearch"]["port"]
-        use_ssl = config["deployment_env"] != "DEV"
+        use_ssl = config["deployment_env"] != "LOCAL"
 
         logger.info("Host: " + host)
 
