@@ -1,10 +1,13 @@
 from dataclasses import dataclass, fields
 from dto.item import ItemDto
 from dto.content_item import ContentItemDto
+from dto.show_item import ShowItemDto
+from dto.pa_service_content_item import PaServiceContentItemDto
 from dto.user_item import UserItemDto
 from dto.history_item import HistoryItemDto
 from dto.model_params_item import ModelParametersDto
 from dto.not_found_item import NotFoundDto
+from dto.wdr_content_item import WDRContentItemDto
 import logging
 import sys
 

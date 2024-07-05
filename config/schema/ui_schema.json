@@ -1,0 +1,463 @@
+{
+  "type": "object",
+  "properties": {
+    "ui_config": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the App. Is Shown in the visible Header."
+        },
+        "logo": {
+          "type": "string",
+          "format": "uri",
+          "description": "Can contain a URL to an Icon or Logo Image."
+        },
+        "header_background": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Background color of the Header. Must be a valid HEX color code."
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "headline of the block"
+              },
+              "show_reset_button": {
+                "type": "boolean",
+                "description": "sets if reset button for block is rendered"
+              },
+              "components": {
+                "type": "array",
+                "description": "contains the configuration of the widgets which can be shown.",
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/text_field"
+                    },
+                    {
+                      "$ref": "#/$defs/date_time_picker"
+                    },
+                    {
+                      "$ref": "#/$defs/multi_select"
+                    },
+                    {
+                      "$ref": "#/$defs/accordion"
+                    },
+                    {
+                      "$ref": "#/$defs/radio_box"
+                    },
+                    {
+                      "$ref": "#/$defs/slider"
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "components"
+            ]
+          }
+        },
+        "costom_css": {
+          "type": "string",
+          "description": "Custom CSS to be included in the App."
+        }
+      },
+      "required": [
+        "blocks"
+      ]
+    }
+  },
+  "required": [
+    "ui_config"
+  ],
+  "$defs": {
+    "text_field": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text_field"
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the Text Field."
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Placeholder of the Text Field."
+        },
+        "validator_function": {
+          "type": "string",
+          "description": "Validator function name, which checks the given content in the controller before searching."
+        },
+        "accessor_function": {
+          "type": "string",
+          "description": "Accessor function name, which is used to create the search query."
+        },
+        "url_parameter": {
+          "type": "string",
+          "description": "Name of the URL parameter, which is used to pass the value to the controller."
+        },
+        "component_group": {
+          "type": "string",
+          "description": "Name of the component group the text field gets assigned to."
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "component_group": {
+                    "const": "item_choice"
+                  }
+                },
+                "required": [
+                  "component_group"
+                ]
+              }
+            },
+            {
+              "required": [
+                "validator_function",
+                "accessor_function"
+              ]
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "label"
+              ]
+            },
+            {
+              "required": [
+                "placeholder"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "text_area_input": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text_area_input"
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the Text Area Input."
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Placeholder of the Text Area Input."
+        },
+        "validator_function": {
+          "type": "string",
+          "description": "Validator function name, which checks the given content in the controller before searching."
+        },
+        "accessor_function": {
+          "type": "string",
+          "description": "Accessor function name, which is used to create the search query."
+        },
+        "url_parameter": {
+          "type": "string",
+          "description": "Name of the URL parameter, which is used to pass the value to the controller."
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "date_time_picker": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "date_time_picker"
+        },
+        "name": {
+          "type": "string",
+          "description": "Header of the Date Time Picker."
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the Date Time Picker."
+        },
+        "validator": {
+          "type": "string",
+          "description": "Validator function name, which checks the given content in the controller before searching."
+        },
+        "accessor_function": {
+          "type": "string",
+          "description": "Accessor function name, which is used to create the search query."
+        }
+      },
+      "required": [
+        "type",
+        "validator",
+        "accessor_function"
+      ]
+    },
+    "multi_select": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "multi_select"
+        },
+        "label": {
+          "type": "string",
+          "description": "component_group the Multi Select gets assigned to."
+        },
+        "display_name": {
+          "type": "string",
+          "description": "Header of the Multi Select."
+        },
+        "register_as": {
+          "type": "string",
+          "description": "Sets the value which gets registered in the controller."
+        },
+        "linked_filter_name": {
+          "type": "string",
+          "description": "Name of the filter which is linked to this Multi Select."
+        },
+        "filter_category": {
+          "type": "string",
+          "description": "Category of the filter."
+        },
+        "options": {
+          "type": "array",
+          "description": "Array of options which can be selected.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "default": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "display_name"
+            ]
+          }
+        },
+        "dictionary_options": {
+          "type": "array",
+          "description": "Array of options which can be selected.",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "option_default": {
+          "type": "string",
+          "description": "Key of the default option."
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "options"
+          ]
+        },
+        {
+          "required": [
+            "dictionary_options"
+          ]
+        },
+        {
+          "required": [
+            "option_default"
+          ]
+        }
+      ],
+      "action_option": {
+        "type": "array",
+        "description": "Array of action options which can be configured.",
+        "items": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "accordion": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "accordion"
+        },
+        "label": {
+          "type": "string",
+          "description": "Header of the Accordion."
+        },
+        "active": {
+          "type": "integer",
+          "description": "which accordion should be open by default."
+        },
+        "toggle": {
+          "type": "boolean",
+          "description": "If true, multiple accordions can be opened at the same time."
+        },
+        "content": {
+          "type": "array",
+          "description": "Array of objects which can be shown in the accordion.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/text_field"
+              },
+              {
+                "$ref": "#/$defs/text_area_input"
+              },
+              {
+                "$ref": "#/$defs/multi_select"
+              },
+              {
+                "$ref": "#/$defs/date_time_picker"
+              },
+              {
+                "$ref": "#/$defs/radio_box"
+              },
+              {
+                "$ref": "#/$defs/slider"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ]
+    },
+    "radio_box": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "radio_box"
+        },
+        "label": {
+          "type": "string",
+          "description": "Header of the Radio Box."
+        },
+        "options": {
+          "description": "Options which can be selected.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/text_field"
+                },
+                {
+                  "$ref": "#/$defs/text_area_input"
+                },
+                {
+                  "$ref": "#/$defs/multi_select"
+                },
+                {
+                  "$ref": "#/$defs/date_time_picker"
+                },
+                {
+                  "$ref": "#/$defs/slider"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "required": [
+        "type",
+        "options"
+      ]
+    },
+    "slider": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "slider"
+        },
+        "name": {
+          "type": "string",
+          "description": "Label of the slider."
+        },
+        "start": {
+          "type": "number",
+          "description": "start value"
+        },
+        "end": {
+          "type": "number",
+          "description": "end value"
+        },
+        "step": {
+          "type": "number",
+          "description": "step size"
+        },
+        "unit": {
+          "type": "string",
+          "description": "unit to display"
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the slider."
+        },
+        "component_group": {
+          "type": "string",
+          "description": "component_group the slider gets assigned to."
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

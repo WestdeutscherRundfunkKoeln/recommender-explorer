@@ -1,0 +1,302 @@
+{
+  "type": "object",
+  "properties": {
+    "display_name": {
+      "type": "string"
+    },
+    "indexing_sources": {
+      "type": "object",
+      "properties": {
+        "base_data_bucket": {
+          "type": "string"
+        },
+        "base_data_file": {
+          "type": "string"
+        },
+        "subgenre_lut_file": {
+          "type": "string"
+        },
+        "thematic_lut_file": {
+          "type": "string"
+        },
+        "models_to_index": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "base_data_bucket",
+        "base_data_file",
+        "subgenre_lut_file",
+        "thematic_lut_file",
+        "models_to_index"
+      ]
+    },
+    "databackend": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "opensearch": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        },
+        "pass": {
+          "type": "string"
+        },
+        "index": {
+          "type": "string"
+        },
+        "use_ssl": {
+          "type": "boolean"
+        },
+        "field_mapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "primary_field": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "host",
+        "port",
+        "user",
+        "pass",
+        "index",
+        "primary_field"
+      ],
+      "additionalProperties": false
+    },
+    "ingest": {
+      "type": "object",
+      "properties": {
+        "api_key": {
+          "type": "string"
+        },
+        "base_url_embedding": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "api_key",
+        "base_url_embedding"
+      ]
+    },
+    "c2c_config": {
+      "type": "object",
+      "properties": {
+        "c2c_models": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "handler": {
+                "type": "string",
+                "pattern": "^[^@]*@[^@]*$"
+              },
+              "endpoint": {
+                "type": "string",
+                "format": "uri"
+              },
+              "start_color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{6}$"
+              },
+              "reco_color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{6}$"
+              },
+              "content_type": {
+                "type": "string"
+              },
+              "default": {
+                "type": "boolean"
+              },
+              "properties": {
+                "type": "object",
+                "properties": {
+                  "auth_header": {
+                    "type": "string"
+                  },
+                  "auth_header_value": {
+                    "type": "string"
+                  }
+                }
+              },
+              "item_accessor": {
+                "type": "string"
+              },
+              "pa_service_rest_url": {
+                "type": "string"
+              },
+              "pa_service_rest_endpoint": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "display_name",
+              "handler",
+              "endpoint",
+              "start_color",
+              "reco_color",
+              "content_type",
+              "default"
+            ]
+          }
+        }
+      },
+      "required": [
+        "c2c_models"
+      ]
+    },
+    "u2c_config": {
+      "type": "object",
+      "properties": {
+        "u2c_models": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "handler": {
+                "type": "string",
+                "pattern": "^[^@]*@[^@]*$"
+              },
+              "endpoint": {
+                "type": "string",
+                "foarmat": "uri"
+              },
+              "start_color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{6}$"
+              },
+              "reco_color": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{6}$"
+              },
+              "content_type": {
+                "type": "string"
+              },
+              "properties": {
+                "type": "object",
+                "properties": {
+                  "auth_header": {
+                    "type": "string"
+                  },
+                  "auth_header_value": {
+                    "type": "string"
+                  },
+                  "param_model_type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "auth_header",
+                  "auth_header_value",
+                  "param_model_type"
+                ]
+              },
+              "user_type": {
+                "type": "string"
+              },
+              "default": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "display_name",
+              "handler",
+              "endpoint",
+              "start_color",
+              "reco_color",
+              "content_type",
+              "properties",
+              "user_type",
+              "default"
+            ]
+          }
+        },
+        "clustering_models": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "handler": {
+                "type": "string",
+                "pattern": "^[^@]*@[^@]*$"
+              },
+              "endpoint": {
+                "type": "string",
+                "format": "uri"
+              },
+              "role_arn": {
+                "type": "string",
+                "pattern": "^arn:aws:iam::[0-9]{12}:role/.*$"
+              },
+              "user_type": {
+                "type": "string"
+              },
+              "field_mapping": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "default": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "display_name",
+              "handler",
+              "endpoint",
+              "role_arn",
+              "user_type",
+              "field_mapping",
+              "default"
+            ]
+          }
+        }
+      }
+    },
+    "ui_config": {
+      "type": "string",
+      "pattern": "^.*\\.yaml$"
+    }
+  },
+  "required": [
+    "indexing_sources",
+    "databackend",
+    "opensearch",
+    "c2c_config"
+  ]
+}
