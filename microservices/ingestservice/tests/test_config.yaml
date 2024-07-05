@@ -1,5 +1,0 @@
-mapping_definition: '{ "id": .id, "externalid": .externalid, "uuid": .uuid, "title": .title, "description": .description, "longDescription": .longDescription, "availableFrom": .availableFrom, "availableTo": .availableTo, "duration": .durationSeconds, "embedText": .embedText, "embedTextHash": .embedTextHash, "thematicCategories": .thematicCategories, "thematicCategoriesIds": .thematicCategoriesIds, "thematicCategoriesTitle": .thematicCategoriesTitle, "genreCategory": .genreCategory, "genreCategoryId": .genreCategoryId, "subgenreCategories": .subgenreCategories, "subgenreCategoriesIds": .subgenreCategoriesIds, "subgenreCategoriesTitle": .subgenreCategoriesTitle, "teaserimage": .teaserimage, "geoAvailability": .geoAvailability }'
-api_prefix: $API_PREFIX
-api_key: $API_KEY
-base_url_search: $BASE_URL_SEARCH
-base_url_embedding: $BASE_URL_EMBEDDING

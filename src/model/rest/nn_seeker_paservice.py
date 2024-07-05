@@ -4,8 +4,6 @@ import constants
 from model.rest.nn_seeker_rest import NnSeekerRest
 from dto.item import ItemDto
 from util.dto_utils import get_primary_idents
-from exceptions.item_not_found_error import UnknownItemError
-from exceptions.user_not_found_error import UnknownUserError
 
 logger = logging.getLogger(__name__)
 
@@ -33,23 +31,15 @@ class NnSeekerPaService(NnSeekerRest):
 
         params = {
             "configuration": self.__configuration_c2c,
-            "similarityType": model_props['param_similarity_type'],
-            "assetId": content_id,
-            "limit": self.__max_num_neighbours
+            "similarityType": model_props['param_model_type'],
+            "limit": self.__max_num_neighbours,
+            "assetId": content_id
         }
-
-        if "param_model_type" in model_props:
-            params["modelType"] = model_props["param_model_type"]
 
         status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
 
-        logger.info('Got status code [' + str(status) + '] and data: ')
-        logger.info(pa_recos)
-
         recomm_content_ids = []
         nn_dists = []
-
-
 
         #
         # TODO - add better status and error handling
@@ -60,7 +50,6 @@ class NnSeekerPaService(NnSeekerRest):
                 recomm_content_ids.append(reco['asset']['assetId'])
         else:
             logger.warning('Got status code [' + str(status) + ']. Discarding this item [' + params['assetId'] + ']')
-            raise UnknownItemError('Item with primary id [' + content_id + '] not found in endpoint [' + self.__model_config['endpoint'] + ']', {})
 
         return recomm_content_ids, nn_dists, oss_field
 
@@ -88,9 +77,6 @@ class NnSeekerPaService(NnSeekerRest):
         recomm_content_ids = []
         nn_dists = []
 
-        logger.info('Got status code [' + str(status) + '] and data: ')
-        logger.info(pa_recos)
-
         #
         # TODO - add better status and error handling
         #
@@ -99,8 +85,7 @@ class NnSeekerPaService(NnSeekerRest):
                 nn_dists.append(reco['score'])
                 recomm_content_ids.append(reco['asset']['assetId'])
         else:
-            logger.warning('Got status code [' + str(status) + ']. Discarding this user [' + user_id + ']')
-            raise UnknownUserError('User with primary id [' + user_id + '] not found in endpoint [' + self.__model_config['endpoint'] + ']', {})
+            logger.warning('discarding not found item [' + params['assetId'] + ']')
 
         return recomm_content_ids, nn_dists, oss_field
 

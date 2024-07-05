@@ -1,8 +1,14 @@
 api_prefix: $API_PREFIX
-api_key: $API_KEY
 base_url_search: $BASE_URL_SEARCH
 base_url_ingest: $BASE_URL_INGEST
 base_url_embedding: $BASE_URL_EMBEDDING
+deployment_env: $DEPLOYMENT_ENVIRONMENT
+opensearch:
+  host: $OPENSEARCH_HOST
+  port: $OPENSEARCH_PORT
+  user: $OPENSEARCH_USER
+  pass: $OPENSEARCH_PASS
+  index: $OPENSEARCH_INDEX
 mapping_definition: $MAPPING_DEFINITION
 models:
   - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2

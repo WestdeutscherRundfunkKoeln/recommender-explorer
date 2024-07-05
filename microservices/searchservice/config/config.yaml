@@ -9,5 +9,6 @@ opensearch:
   user: $OPENSEARCH_USER
   pass: $OPENSEARCH_PASS
   index: $OPENSEARCH_INDEX
+mapping_definition: $MAPPING_DEFINITION
 models:
   - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2

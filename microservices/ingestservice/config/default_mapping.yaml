@@ -1,1 +1,24 @@
-mapping: '{ "id": .id, "externalid": .externalid, "uuid": .uuid, "title": .title, "description": .description, "longDescription": .longDescription, "availableFrom": .availableFrom, "availableTo": .availableTo, "duration": .durationSeconds, "embedText": .embedText, "embedTextHash": .embedTextHash, "thematicCategories": .thematicCategories, "thematicCategoriesIds": .thematicCategoriesIds, "thematicCategoriesTitle": .thematicCategoriesTitle, "genreCategory": .genreCategory, "genreCategoryId": .genreCategoryId, "subgenreCategories": .subgenreCategories, "subgenreCategoriesIds": .subgenreCategoriesIds, "subgenreCategoriesTitle": .subgenreCategoriesTitle, "teaserimage": .teaserImage.url, "geoAvailability": .geoAvailability }'
+mapping:
+  '{
+    "id": .id,
+    "externalid": .externalid,
+    "uuid": .uuid,
+    "title": .title,
+    "description": .description,
+    "longDescription": .longDescription,
+    "availableFrom": .availableFrom,
+    "availableTo": .availableTo,
+    "duration": .durationSeconds,
+    "embedText": .embedText,
+    "embedTextHash": .embedTextHash,
+    "thematicCategories": .thematicCategories,
+    "thematicCategoriesIds": .thematicCategoriesIds,
+    "thematicCategoriesTitle": .thematicCategoriesTitle,
+    "genreCategory": .genreCategory,
+    "genreCategoryId": .genreCategoryId,
+    "subgenreCategories": .subgenreCategories,
+    "subgenreCategoriesIds": .subgenreCategoriesIds,
+    "subgenreCategoriesTitle": .subgenreCategoriesTitle,
+    "teaserimage": .teaserImage.url,
+    "geoAvailability": .geoAvailability
+    }'

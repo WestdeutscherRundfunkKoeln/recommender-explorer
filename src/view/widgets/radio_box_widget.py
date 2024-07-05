@@ -9,21 +9,6 @@ class RadioBoxWidget:
         self.controller_instance = controller_instance
 
     def create_radio_box_component(self, radio_box_config):
-        """
-        Builds a radio widget based on the given config from config yaml.
-        First get the Label Keys from the configured options and store them.
-        Then iterate over the options and try to render the configured widgets in these options.
-        Connect key and option by adding a watcher to the Label Key Radio Button to the configured
-        and build option widget. The watcher controls the visibility of the option widgets. These are
-        only visible when connected option label key radio button is selected.
-
-        Args:
-            multi_select_config (config): config of a multi select from config yaml.
-            If its a filter it should contain a register_as value.
-
-        Returns:
-            multi_select_widget (widget): final widget built from given config
-        """
         if radio_box_config.get(c.RADIO_BOX_OPTION_KEY):
             radio_box_group = pn.widgets.RadioBoxGroup(options=list(radio_box_config['options'].keys()))
 

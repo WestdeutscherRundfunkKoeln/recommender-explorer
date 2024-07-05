@@ -22,10 +22,6 @@ opensearch:
         "duration": "<your duration property>"
     primary_field: "<your primary field identifier>"
 
-ingest:
-    api_key: $API_KEY
-    base_url_embedding: $BASE_URL_EMBEDDING
-
 c2c_config:
     c2c_models:
         # Example for opensearch endpoint

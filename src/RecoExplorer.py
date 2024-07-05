@@ -23,9 +23,7 @@ try:
 
     # replace config from url param, if given
     if pn.state.location.search:
-        new_config_full_path = get_config_from_search(pn.state.location.search, config_full_path)
-        if new_config_full_path:
-            config_full_path = new_config_full_path
+        config_full_path = get_config_from_search(pn.state.location.search, config_full_path)
 
     getExplorerInstance().server_doc()
 

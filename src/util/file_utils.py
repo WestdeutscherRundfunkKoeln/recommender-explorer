@@ -22,13 +22,12 @@ def get_config_from_arg(arg) -> str:
 
 def get_config_from_search(search, config_full_path) -> str:
     client_ident = get_client_ident_from_search(search)
-    if client_ident:
-        path, name = _segment_arg_config(config_full_path)
-        full_path = path + '/' + _replace_config(name, client_ident)
-        if os.path.isfile(full_path):
-            return full_path
-        else:
-            raise ConfigError('Config file from search param [' + search + '] not found at path [' + full_path + ']', {})
+    path, name = _segment_arg_config(config_full_path)
+    full_path = path + '/' + _replace_config(name, client_ident)
+    if os.path.isfile(full_path):
+        return full_path
+    else:
+        raise ConfigError('Config file from search param [' + search + '] not found at path [' + full_path + ']', {})
 
 def get_client_from_path(full_path):
     match = re.search(r'/config_(\w+)\.yaml$', full_path)
@@ -47,8 +46,8 @@ def get_client_ident_from_search(search) -> str:
             app_ident = val
     if app_ident:
         return app_ident
-    # else:
-        # raise Exception('Client identifier not found')
+    else:
+        raise Exception('Client identifier not found')
 
 def get_client_options(config_full_path):
     all_configs = get_all_config_files(config_full_path)

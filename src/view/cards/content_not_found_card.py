@@ -17,7 +17,7 @@ class NotFoundCard():
         )
 
         card_objects = [
-           pn.pane.Markdown(f""" #### Keine Empfehlungen für diesen Benutzer oder dieses Item in diesem Modell""")
+           pn.pane.Markdown(f""" #### Keine Empfehlungen für diesen Benutzer in diesem Modell""")
         ]
         card.objects = card_objects
         return card

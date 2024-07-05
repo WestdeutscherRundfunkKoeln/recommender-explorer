@@ -7,7 +7,3 @@ envyaml
 opensearch-py
 pyjq
 httpx
-pytest
-pytest-mock
-pytest-httpx
-google-cloud-storage

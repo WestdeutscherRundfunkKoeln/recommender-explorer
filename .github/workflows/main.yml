@@ -1,4 +1,4 @@
-name: Main Workflow
+name: CI Workflow
 
 on:
   push:
@@ -41,8 +41,9 @@ jobs:
             pytest test/unit --doctest-modules --junitxml=junit/test-results.xml
 
   
-  #Build Images (not publish) on pull to dev & main
+  # Build Images (not publish) on pull to dev & main
   docker_build:
+    needs: unit_tests
     name: docker_build
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && (github.base_ref == 'dev' || github.base_ref == 'main')
@@ -59,3 +60,59 @@ jobs:
           echo "search service image build OK"
           docker build --file ./microservices/embeddingservice/docker/Dockerfile ./microservices/embeddingservice
           echo "embedding service image build OK"
+
+  
+  docker_build_publish_dev:
+    needs: unit_tests
+    name: docker_build_publish_dev
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PAT }}
+      
+      - name: Extract short SHA
+        run: |
+          shortSha=$(git rev-parse --short ${{ github.sha }})
+          echo "COMMIT_SHORT_SHA=$shortSha" >> $GITHUB_ENV
+    
+      - name: Downcase Repository
+        run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Build and push Docker Image - Ingest Service
+        uses: docker/build-push-action@v2
+        with:
+          context: ./microservices/ingestservice
+          file: ./microservices/ingestservice/docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}:dev-ingest-${{ env.COMMIT_SHORT_SHA }}
+            ghcr.io/${{ env.REPO_LOWER }}:dev-ingest-latest
+    
+      - name: Build and push Docker Image - Search Service
+        uses: docker/build-push-action@v2
+        with:
+          context: ./microservices/searchservice
+          file: ./microservices/searchservice/docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}:dev-search-${{ env.COMMIT_SHORT_SHA }}
+            ghcr.io/${{ env.REPO_LOWER }}:dev-search-latest
+
+      - name: Build and push Docker Image - Embedding Service
+        uses: docker/build-push-action@v2
+        with:
+          context: ./microservices/embeddingservice
+          file: ./microservices/embeddingservice/docker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}:dev-embedding-${{ env.COMMIT_SHORT_SHA }}
+            ghcr.io/${{ env.REPO_LOWER }}:dev-embedding-latest
