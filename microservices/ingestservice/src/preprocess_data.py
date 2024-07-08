@@ -38,5 +38,6 @@ class DataPreprocessor:
                 timeout=0.0001,
                 headers={"x-api-key": self.api_key},
             )
-        except httpx.ReadTimeout as e:
+        except (httpx.ReadTimeout, httpx.ConnectTimeout) as e:
+            print(e)
             pass
