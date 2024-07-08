@@ -35,9 +35,8 @@ class DataPreprocessor:
             httpx.post(
                 f"{self.base_url_embedding}/add-embedding-to-doc",
                 json=request_payload,
-                timeout=0.0001,
+                timeout=0.25,
                 headers={"x-api-key": self.api_key},
             )
-        except (httpx.ReadTimeout, httpx.ConnectTimeout) as e:
-            print(e)
+        except httpx.ReadTimeout as e:
             pass
