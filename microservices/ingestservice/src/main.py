@@ -4,7 +4,6 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
 from typing import Annotated, Any
 
 import httpx
@@ -13,6 +12,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header
 from fastapi.exceptions import HTTPException
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
+from google.cloud.exceptions import NotFound
 from google.oauth2 import service_account
 from pydantic import ValidationError
 from src.models import (
@@ -152,7 +152,15 @@ def bulk_ingest(
         item_dict = {}
         for _, blob in enumerate(bucket.list_blobs(match_glob=f"{prefix}*.json")):
             logger.info(f"Preprocessing {blob.name}")
-            data = json.loads(blob.download_as_text())
+            try:
+                data = json.loads(
+                    blob.download_as_text()
+                )  # TODO: add retry logic, see https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob#google_cloud_storage_blob_Blob_download_as_text
+            except NotFound as e:
+                logger.error("Could not load file: %s", blob.name, exc_info=True)
+                error_message = f"Could not load file {blob.name}: {str(e)}"
+                task_status.add_error(error_message)
+                continue
 
             try:
                 mapped_data = data_preprocessor.map_data(data)
@@ -165,18 +173,28 @@ def bulk_ingest(
                 continue
 
             # Trigger embedding service to add embeddings to index
-            embeddings = request(
-                data={
-                    "embedText": mapped_data.embedText,
-                },
-                url=f"{BASE_URL_EMBEDDING}/embedding",
-            )
-            if embeddings.status_code != 200:
-                raise Exception(
-                    f"Error during embedding in embedding service for item {blob.name}"
+            try:
+                embeddings = request(
+                    data={
+                        "embedText": mapped_data.embedText,
+                    },
+                    url=f"{BASE_URL_EMBEDDING}/embedding",
                 )
-            mapped_data = {**mapped_data.model_dump(), **embeddings.json()}
-            item_dict[mapped_data["id"]] = mapped_data
+                if embeddings.status_code != 200:
+                    raise Exception(
+                        f"Error during embedding in embedding service for item {blob.name}"
+                    )
+                mapped_data = {**mapped_data.model_dump(), **embeddings.json()}
+                item_dict[mapped_data["id"]] = mapped_data
+            except httpx.TimeoutException as e:
+                logger.error(
+                    "Error during embedding calculation for file %s",
+                    blob.name,
+                    exc_info=True,
+                )
+                error_message = f"An error occurred during embedding calculation for item {blob.name}: {str(e)}"
+                task_status.add_error(error_message)
+                continue
 
         task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
         response = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")

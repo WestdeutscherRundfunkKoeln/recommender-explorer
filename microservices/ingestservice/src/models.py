@@ -46,6 +46,7 @@ class BulkIngestTask(BaseModel):
     status: BulkIngestTaskStatus
     errors: list[str]
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
+    completed_at: str = ""
 
 
 class SingleTaskResponse(BaseModel):

@@ -19,6 +19,10 @@ class TaskStatus:
 
     def set_status(self, status: BulkIngestTaskStatus) -> None:
         self._tasks[self.id].status = status
+        if status == BulkIngestTaskStatus.COMPLETED:
+            self._tasks[self.id].completed_at = datetime.now().strftime(
+                "%Y-%m-%dT%H:%M:%S.%f"
+            )  # TODO: change to datetime, like created_at
 
     def add_error(self, error: str) -> None:
         self._tasks[self.id].errors.append(error)
