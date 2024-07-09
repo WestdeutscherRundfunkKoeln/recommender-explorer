@@ -4,7 +4,6 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
 from typing import Annotated, Any
 
 import httpx
@@ -154,11 +153,11 @@ def bulk_ingest(
         for _, blob in enumerate(bucket.list_blobs(match_glob=f"{prefix}*.json")):
             logger.info(f"Preprocessing {blob.name}")
             try:
-                data = json.loads(blob.download_as_text()) # TODO: add retry logic, see https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob#google_cloud_storage_blob_Blob_download_as_text
+                data = json.loads(
+                    blob.download_as_text()
+                )  # TODO: add retry logic, see https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob#google_cloud_storage_blob_Blob_download_as_text
             except NotFound as e:
-                logger.error(
-                    "Could not load file: %s", blob.name, exc_info=True
-                )
+                logger.error("Could not load file: %s", blob.name, exc_info=True)
                 error_message = f"Could not load file {blob.name}: {str(e)}"
                 task_status.add_error(error_message)
                 continue
@@ -189,7 +188,9 @@ def bulk_ingest(
                 item_dict[mapped_data["id"]] = mapped_data
             except httpx.TimeoutException as e:
                 logger.error(
-                    "Error during embedding calculation for file %s", blob.name, exc_info=True
+                    "Error during embedding calculation for file %s",
+                    blob.name,
+                    exc_info=True,
                 )
                 error_message = f"An error occurred during embedding calculation for item {blob.name}: {str(e)}"
                 task_status.add_error(error_message)

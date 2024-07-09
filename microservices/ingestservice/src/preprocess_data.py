@@ -1,6 +1,3 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import ValidationError
-from envyaml import EnvYAML
 from dto.recoexplorer_item import RecoExplorerItem
 import logging
 import json
@@ -38,5 +35,5 @@ class DataPreprocessor:
                 timeout=0.25,
                 headers={"x-api-key": self.api_key},
             )
-        except httpx.ReadTimeout as e:
+        except httpx.ReadTimeout:
             pass
