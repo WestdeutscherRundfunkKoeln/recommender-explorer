@@ -42,6 +42,7 @@ BASE_URL_EMBEDDING = config.get("base_url_embedding", "")
 BASE_URL_SEARCH = config.get("base_url_search", "")
 API_PREFIX = config.get("API_PREFIX", "")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
+CHUNKSIZE = 50
 
 data_preprocessor = DataPreprocessor(config)
 
@@ -150,7 +151,10 @@ def bulk_ingest(
     task_status = TaskStatus.spawn(id=task_id)
     try:
         item_dict = {}
-        for _, blob in enumerate(bucket.list_blobs(match_glob=f"{prefix}*.json")):
+        item_blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
+        total_count_of_items = len(item_blobs)
+        for idx, blob in enumerate(item_blobs):
+            task_status.set_status(BulkIngestTaskStatus.PREPROCESSING)
             logger.info(f"Preprocessing {blob.name}")
             try:
                 data = json.loads(
@@ -196,10 +200,26 @@ def bulk_ingest(
                 task_status.add_error(error_message)
                 continue
 
-        task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
-        response = request(item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents")
-        if response.status_code != 200:
-            raise Exception("Error during bulk ingest in search service")
+            if (idx + 1) % CHUNKSIZE == 0 or idx + 1 == total_count_of_items:
+                task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
+                response = request(
+                    item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents"
+                )
+                if response.status_code != 200:
+                    raise Exception(
+                        f"Error during bulk ingest in search service: {response.status_code}"
+                    )
+                item_dict = {}
+
+                if (idx + 1) % CHUNKSIZE == 0:
+                    # logging full chunk
+                    logger.info(f"Processed items {(idx+2) - CHUNKSIZE} to {idx+1}")
+                else:
+                    # logging last chunk if not a full chunk
+                    logger.info(
+                        f"Processed items {(idx+2) - ((idx + 1) % CHUNKSIZE)} to {idx + 1}"
+                    )
+
         task_status.set_status(BulkIngestTaskStatus.COMPLETED)
     except Exception as e:
         task_status.add_error(str(e))
