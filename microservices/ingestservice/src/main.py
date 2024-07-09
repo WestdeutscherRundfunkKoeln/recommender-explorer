@@ -154,6 +154,7 @@ def bulk_ingest(
         item_blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
         total_count_of_items = len(item_blobs)
         for idx, blob in enumerate(item_blobs):
+            task_status.set_status(BulkIngestTaskStatus.PREPROCESSING)
             logger.info(f"Preprocessing {blob.name}")
             try:
                 data = json.loads(
