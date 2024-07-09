@@ -151,8 +151,8 @@ def bulk_ingest(
     task_status = TaskStatus.spawn(id=task_id)
     try:
         item_dict = {}
-        item_blobs = bucket.list_blobs(match_glob=f"{prefix}*.json")
-        total_count_of_items = len(list(item_blobs))
+        item_blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
+        total_count_of_items = len(item_blobs)
         for idx, blob in enumerate(item_blobs):
             logger.info(f"Preprocessing {blob.name}")
             try:
