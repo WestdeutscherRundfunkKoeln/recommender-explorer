@@ -66,6 +66,12 @@ To run the backend services and opensearch locally just execute:
 ```docker-compose up```
 If you have a specific mapping definition you might need to change the corresponding environment variable in the docker-compose.yaml.
 
+### Run linter/formatter
+- Install the pre-commit package using pip: ```pip install pre-commit```
+- Set up pre-commit to run the linter/formatter automatically before each commit: ```pre-commit install``` 
+- To run the formatter on all files, execute ```pre-commit run --all-files```
+- To run the formatter on specific files, execute ```pre-commit run --files <FILENAME>```
+
 ## How to contribute
 
 Recommender Explorer as a whole is distributed under the MIT license. You are welcome to contribute code in order to fix bugs or to implement new features. 
