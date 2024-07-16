@@ -17,6 +17,7 @@ class SliderWidget(UIWidget):
             end=config.get(c.SLIDER_END_KEY, 1),
             step=config.get(c.SLIDER_STEP_KEY, 0.01),
             value=config.get(c.SLIDER_START_KEY, 0),
+            width=250,
         )
         slider.params = {
             "label": config.get(c.SLIDER_LABEL_KEY, "relativerangefilter_duration"),
@@ -40,4 +41,8 @@ class SliderWidget(UIWidget):
 
         slider.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
 
-        return slider
+        tooltip = pn.widgets.TooltipIcon(
+            value=config.get(c.SLIDER_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
+        )
+
+        return pn.Row(slider, tooltip)

@@ -85,6 +85,7 @@ SLIDER_START_KEY = "start"
 SLIDER_END_KEY = "end"
 SLIDER_STEP_KEY = "step"
 SLIDER_COMPONENT_GROUP_KEY = "component_group"
+SLIDER_TOOLTIP_KEY = "tooltip"
 
 # Block
 BLOCKS_CONFIG_KEY = "blocks"
@@ -117,3 +118,5 @@ FALLBACK_BLOCK_LABEL_VALUE = "Default Block Headline"
 FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE = "Default Text Area Input"
 
 UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
+
+TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
