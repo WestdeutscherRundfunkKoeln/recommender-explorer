@@ -15,6 +15,7 @@ TEXT_INPUT_ACCESSOR_KEY = "accessor_function"
 TEXT_INPUT_HAS_PAGING_KEY = ""
 TEXT_INPUT_URL_PARAMETER_KEY = "url_parameter"
 TEXT_INPUT_COMPONENT_GROUP_KEY = "component_group"
+TEXT_INPUT_TOOLTIP_KEY = "tooltip"
 
 # Multi Select
 MULTI_SELECT_LABEL_KEY = "label"
@@ -120,3 +121,4 @@ FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE = "Default Text Area Input"
 UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
 
 TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
+FILTER_WIDTH = 250
