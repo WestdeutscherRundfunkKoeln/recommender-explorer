@@ -285,6 +285,10 @@
         "option_default": {
           "type": "string",
           "description": "Key of the default option."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Tooltip of the multi_select."
         }
       },
       "required": [

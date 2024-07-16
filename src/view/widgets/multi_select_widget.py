@@ -66,6 +66,7 @@ class MultiSelectionWidget(UIWidget):
             value=default,
             size=min(len(options), 5),
             name=multi_select_name,
+            width=c.FILTER_WIDTH,
         )
 
         multi_select_widget.params = {
@@ -74,7 +75,7 @@ class MultiSelectionWidget(UIWidget):
         }
         return multi_select_widget
 
-    def create(self, config: dict[str, Any]) -> pn.widgets.MultiSelect | None:
+    def create(self, config: dict[str, Any]) -> pn.Row | None:
         """
         Builds a multi select widget based on the given config from config yaml.
         First only decides which kind of multi select should be built. This is based on the register_as value from config.
@@ -87,13 +88,16 @@ class MultiSelectionWidget(UIWidget):
         Returns:
             multi_select_widget (widget): final widget built from given config
         """
-        multi_select_register_value = config.get(c.MULTI_SELECT_REGISTER_AS_KEY)
+        multi_select_register_value = config.get(c.MULTI_SELECT_REGISTER_AS_KEY, "")
         registered_multi_select_widget = {
             "item_filter": ItemFilterWidget,
             "upper_item_filter": UpperItemFilterWidget,
             "reco_filter": RecoFilterWidget,
             "model_choice": ModelChoiceWidget,
-        }.get(multi_select_register_value, None)
+        }.get(multi_select_register_value)
+
+        if multi_select_register_value is None:
+            return
 
         if registered_multi_select_widget:
             multi_select_widget = registered_multi_select_widget(
@@ -104,9 +108,13 @@ class MultiSelectionWidget(UIWidget):
 
         if multi_select_widget is not None:
             multi_select_widget.is_leaf_widget = True
+            self.set_action_parameter(config, multi_select_widget)
 
-        self.set_action_parameter(config, multi_select_widget)
-        return multi_select_widget
+        tooltip = pn.widgets.TooltipIcon(
+            value=config.get(c.MULTI_SELECT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
+        )
+
+        return pn.Row(multi_select_widget, tooltip)
 
     def set_action_parameter(
         self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect
@@ -123,7 +131,7 @@ class MultiSelectionWidget(UIWidget):
         if config.get(c.MULTI_SELECT_ACTION_OPTION_KEY):
             action_parameter = {
                 list(pair.keys())[0]: list(pair.values())[0]
-                for pair in config.get(c.MULTI_SELECT_ACTION_OPTION_KEY)
+                for pair in config.get(c.MULTI_SELECT_ACTION_OPTION_KEY, [])
             }
             if action_parameter:
                 multi_select_widget.action_parameter = action_parameter

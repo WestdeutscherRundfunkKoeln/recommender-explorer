@@ -34,6 +34,7 @@ MULTI_SELECT_DEFAULT_OPTION_KEY = "default"
 MULTI_SELECT_ACTION_OPTION_KEY = "action_option"
 MULTI_SELECT_ACTION_OPTION_VALUE_KEY = "option_value"
 MULTI_SELECT_ACTION_TARGET_WIDGET_KEY = "target_widget"
+MULTI_SELECT_TOOLTIP_KEY = "tooltip"
 
 # Reset Button
 RESET_BUTTON_LABEL = "Auswahl zurücksetzen"
