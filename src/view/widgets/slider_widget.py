@@ -7,7 +7,7 @@ from view.widgets.widget import UIWidget
 
 
 class SliderWidget(UIWidget):
-    def create(self, config: dict[str, Any]) -> pn.widgets.FloatSlider:
+    def create(self, config: dict[str, Any]) -> pn.Row:
         slider = pn.widgets.FloatSlider(
             name=config.get(c.SLIDER_NAME_KEY, "Wert"),
             format=PrintfTickFormatter(
