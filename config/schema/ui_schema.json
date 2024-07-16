@@ -107,6 +107,10 @@
         "component_group": {
           "type": "string",
           "description": "Name of the component group the text field gets assigned to."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Tooltip of the slider."
         }
       },
       "required": [
@@ -452,6 +456,10 @@
         "component_group": {
           "type": "string",
           "description": "component_group the slider gets assigned to."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Tooltip of the slider."
         }
       },
       "required": [
