@@ -44,9 +44,6 @@ def load_and_preprocess_data(s3_bucket,
     # decode IDs in subgenre and thematic cats
     s3 = boto3.resource('s3')
 
-    #print(df["editorialCategories"])
-    #exit(0)
-
     subgenre_obj = s3.Object(s3_bucket, s3_subgenre_lut_file)
     subgenre_lut = json.load(subgenre_obj.get()['Body'])
 
