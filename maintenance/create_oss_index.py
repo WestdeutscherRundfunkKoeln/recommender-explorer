@@ -159,7 +159,8 @@ def postprocess_data(df):
         df["availableTo"], errors="coerce", utc=True
     ).fillna(pd.Timestamp("2099-12-31T00:00:00Z"))
 
-    df["editorialCategories"].fillna('n/a', inplace=True)
+    if "editorialCategories" in df.columns:
+        df["editorialCategories"].fillna('n/a', inplace=True)
 
     has_col_naval = df.isna().any()
     nacols = has_col_naval[has_col_naval == True].index
