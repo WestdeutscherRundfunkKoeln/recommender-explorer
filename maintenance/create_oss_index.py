@@ -17,7 +17,7 @@ from oss_utils import ModelConfig, Embedder, safe_value, get_approx_knn_mapping
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-SAMPLE_SIZE = 1000
+SAMPLE_SIZE = 10000
 
 def load_and_preprocess_data(s3_bucket,
                              s3_base_pa_data_filename,
@@ -43,6 +43,9 @@ def load_and_preprocess_data(s3_bucket,
 
     # decode IDs in subgenre and thematic cats
     s3 = boto3.resource('s3')
+
+    #print(df["editorialCategories"])
+    #exit(0)
 
     subgenre_obj = s3.Object(s3_bucket, s3_subgenre_lut_file)
     subgenre_lut = json.load(subgenre_obj.get()['Body'])
@@ -156,6 +159,8 @@ def postprocess_data(df):
         df["availableTo"], errors="coerce", utc=True
     ).fillna(pd.Timestamp("2099-12-31T00:00:00Z"))
 
+    df["editorialCategories"].fillna('n/a', inplace=True)
+
     has_col_naval = df.isna().any()
     nacols = has_col_naval[has_col_naval == True].index
 
@@ -180,6 +185,7 @@ def filterKeys(document, keys):
 def doc_generator(df, index_name, keys):
     df_iter = df.iterrows()
     for index, document in df_iter:
+        print("Indexing [" + document.get('id') + ']')
         if not document.get('id'):
             continue
         yield {
@@ -230,7 +236,9 @@ def upload_data_oss(df, client, embedding_field_names, embedding_sizes, index_pr
 
     # transfer all columns, we could subset here
     use_these_keys = df.columns.tolist()
-    
+
+    print("using: " + ','.join(use_these_keys))
+
     # Set total number of documents
     number_of_docs = df.shape[0]
 
@@ -295,7 +303,7 @@ if __name__ == "__main__":
 
     logger.info("Calculate embeddings")
     df, embedding_field_names, embedding_sizes = calc_embeddings(df, c2c_models)
-    
+
     logger.info("Postprocess data")
     df = postprocess_data(df)
 

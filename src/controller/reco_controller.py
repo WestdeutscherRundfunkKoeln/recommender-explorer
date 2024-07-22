@@ -586,6 +586,10 @@ class RecommendationController:
         if genre_field.value not in self.get_item_defaults("genreCategory"):
             raise ValueError("Unknown category [" + genre_field.value + "]")
 
+    def _check_editorial_category(self, editorial_categ):
+        if editorial_categ.value not in self.get_item_defaults("editorialCategories"):
+            raise ValueError("Unknown editorial category [" + editorial_categ.value + "]")
+
     #
     def _get_active_start_components(self) -> list:
         """Gets a list of active components
