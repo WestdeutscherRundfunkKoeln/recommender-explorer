@@ -6,7 +6,7 @@ from view.widgets.widget import UIWidget
 
 
 class TextFieldWidget(UIWidget):
-    def create(self, config: dict[str, Any]) -> pn.widgets.TextInput:
+    def create(self, config: dict[str, Any]) -> pn.Row:
         """
         Builds a textField widget based on the given config from config yaml. When a url_parameter value is given
         in the config, this string gets saved in a dictionary (url_parameter_text_field_mapping) to be used when
@@ -28,7 +28,9 @@ class TextFieldWidget(UIWidget):
         component_group = config.get(c.TEXT_INPUT_COMPONENT_GROUP_KEY)
 
         text_input_widget = pn.widgets.TextInput(
-            placeholder=text_field_placeholder, name=text_field_label
+            placeholder=text_field_placeholder,
+            name=text_field_label,
+            width=c.FILTER_WIDTH,
         )
 
         if text_field_label == "" and text_field_placeholder != "":
@@ -83,4 +85,8 @@ class TextFieldWidget(UIWidget):
 
         text_input_widget.is_leaf_widget = True
 
-        return text_input_widget
+        tooltip = pn.widgets.TooltipIcon(
+            value=config.get(c.TEXT_INPUT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
+        )
+
+        return pn.Row(text_input_widget, tooltip)
