@@ -11,3 +11,4 @@ sentencepiece
 protobuf
 pytest
 pytest-httpx
+google-cloud-storage
