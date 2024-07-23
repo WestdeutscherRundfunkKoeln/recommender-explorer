@@ -67,7 +67,6 @@ class NnSeekerPaService(NnSeekerRest):
         return recomm_content_ids, nn_dists, oss_field
 
     def get_recos_user(self, user: UserItemDto, n_recos:int, nn_filter: dict[str, Any] = False) -> tuple[list, list, str]:
-
         primary_ident, oss_field = get_primary_idents(self.__config)
         model_props = self.__model_config['properties']
 
@@ -76,7 +75,7 @@ class NnSeekerPaService(NnSeekerRest):
             model_props['auth_header']: model_props['auth_header_value']
         }
 
-        params = {
+        default_params = {
             "configuration": self.__configuration_u2c,
             "explain": True,
             "userId": user_id,
@@ -84,7 +83,14 @@ class NnSeekerPaService(NnSeekerRest):
         }
 
         if "param_model_type" in model_props:
-            params["modelType"] = model_props["param_model_type"]
+            default_params["modelType"] = model_props["param_model_type"]
+
+
+        selected_params = {}
+        if "editorialCategories" in nn_filter and len(nn_filter["editorialCategories"]) > 0:
+            selected_params["includedCategories"] = ",".join(nn_filter["editorialCategories"])
+
+        params = {**default_params, **selected_params}
 
         status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
 
