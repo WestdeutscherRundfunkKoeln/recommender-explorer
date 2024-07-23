@@ -1,8 +1,10 @@
 import logging
 import constants
 
+from typing import Any
 from model.rest.nn_seeker_rest import NnSeekerRest
 from dto.item import ItemDto
+from dto.user_item import UserItemDto
 from util.dto_utils import get_primary_idents
 from exceptions.item_not_found_error import UnknownItemError
 from exceptions.user_not_found_error import UnknownUserError
@@ -64,7 +66,8 @@ class NnSeekerPaService(NnSeekerRest):
 
         return recomm_content_ids, nn_dists, oss_field
 
-    def get_recos_user(self, user, n_recos):
+    def get_recos_user(self, user: UserItemDto, n_recos:int, nn_filter: dict[str, Any] = False) -> tuple[list, list, str]:
+
         primary_ident, oss_field = get_primary_idents(self.__config)
         model_props = self.__model_config['properties']
 

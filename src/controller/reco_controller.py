@@ -470,9 +470,13 @@ class RecommendationController:
         )
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
+
+        reco_filter = self._get_current_filter_state("reco_filter")
+
         kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
-            start_item, (self.num_NN + 1)
+            start_item, (self.num_NN + 1), reco_filter
         )
+
         ident, db_ident = get_primary_idents(self.config)
         kidxs_prim = []
         try:
