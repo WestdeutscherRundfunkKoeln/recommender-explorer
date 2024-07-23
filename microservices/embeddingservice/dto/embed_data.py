@@ -1,8 +1,12 @@
 from pydantic import BaseModel
-from typing import Optional
 
 
-class EmbedData(BaseModel):
-    id: Optional[str] = ""
-    models: Optional[list[str]] = None
+class EmbeddingRequest(BaseModel):
     embedText: str
+    models: list[str] | None = None
+
+
+class AddEmbeddingToDocRequest(BaseModel):
+    id: str
+    embedText: str
+

@@ -9,3 +9,5 @@ opensearch-py
 httpx
 sentencepiece
 protobuf
+pytest
+pytest-httpx
