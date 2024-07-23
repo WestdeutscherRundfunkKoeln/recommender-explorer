@@ -832,7 +832,9 @@ class RecoExplorerApp:
             "reset_to": []
         }
 
-        self.editorial_choice.options = self.controller.get_item_defaults("editorialCategories")
+        self.editorial_choice.options = list(
+            filter(lambda item: item != "n/a", self.controller.get_item_defaults("editorialCategories"))
+        )
 
         user_editorial_watcher =  self.editorial_choice.param.watch(
             self.trigger_reco_filter_choice, "value", onlychanged=True
