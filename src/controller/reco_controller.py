@@ -471,7 +471,8 @@ class RecommendationController:
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
 
-        reco_filter = self._get_current_filter_state("reco_filter")
+        reco_filter = self._get_current_filter_state("reco_filter_u2c")
+
 
         kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
             start_item, (self.num_NN + 1), reco_filter

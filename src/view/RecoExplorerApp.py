@@ -92,6 +92,7 @@ class RecoExplorerApp:
             self.define_start_item_selections()
             self.define_start_item_filtering()
             self.define_reco_filtering_selection()
+            self.define_reco_filtering_selection_u2c()
             self.define_reco_sorting()
             self.define_reco_duplicate_filtering()
             self.define_reco_incomplete_filtering()
@@ -99,7 +100,6 @@ class RecoExplorerApp:
             self.define_user_selections()
             self.define_reco_duration_filtering()
             self.define_score_threshold()
-            self.define_editorial_categories_filtering()
 
         # a grid for start items/users and recos
         self.item_grid = pn.GridSpec()
@@ -419,6 +419,46 @@ class RecoExplorerApp:
             self.enddate,
         )
 
+    # Filtering block u2c
+    def define_reco_filtering_selection_u2c(self):
+        self.editorial_choice = pn.widgets.MultiSelect(
+            name="Empfehlungen auf Kategorie einschränken", options=[], visible=True, size=4
+        )
+
+        self.editorial_choice.params = {
+            "label": "editorialCategories",
+            "validator": "_check_editorial_category",
+            "reset_to": []
+        }
+
+        self.editorial_choice.options = list(
+            filter(lambda item: item != "n/a", self.controller.get_item_defaults("editorialCategories"))
+        )
+
+        user_editorial_watcher =  self.editorial_choice.param.watch(
+            self.trigger_reco_filter_choice, "value", onlychanged=True
+        )
+
+        self.controller.register(
+            "reco_filter_u2c",
+            self.editorial_choice,
+            user_editorial_watcher,
+            self.trigger_reco_filter_choice
+        )
+
+        # reset button
+        self.reco_resetter_u2c = pn.widgets.Button(
+            name="Auswahl zurücksetzen", button_type="primary", margin=10
+        )
+
+        self.reco_resetter_u2c.params = {
+            "label": "reco_resetter_u2c",
+            "resets": ["reco_filter_u2c"],
+        }
+
+        self.reco_resetter_u2c.on_click(self.trigger_reco_reset)
+
+    # Filtering blokc c2c
     def define_reco_filtering_selection(self):
         # Select if same, other, mix or custom choice of genre, subgenre, theme and show
         # genre filter selector
@@ -819,31 +859,6 @@ class RecoExplorerApp:
             self.score_threshold_filter,
             score_threshold_filter_watcher,
             self.trigger_reco_filter_choice,
-        )
-
-    def define_editorial_categories_filtering(self):
-        self.editorial_choice = pn.widgets.MultiSelect(
-            name="Empfehlungen auf Kategorie einschränken", options=[], visible=True, size=4
-        )
-
-        self.editorial_choice.params = {
-            "label": "editorialCategories",
-            "validator": "_check_editorial_category",
-            "reset_to": []
-        }
-
-        self.editorial_choice.options = list(
-            filter(lambda item: item != "n/a", self.controller.get_item_defaults("editorialCategories"))
-        )
-
-        user_editorial_watcher =  self.editorial_choice.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.editorial_choice,
-            user_editorial_watcher,
-            self.trigger_reco_filter_choice
         )
 
     def define_user_selections(self):
@@ -1482,9 +1497,11 @@ class RecoExplorerApp:
                 self.reco_items,
                 self.reco_resetter,
             ]
-            self.filter_block[1] = ["### Empfehlungen beeinflussen",
+            self.filter_block[1] = [
+                "### Empfehlungen beeinflussen",
                 self.reco_items_u2c,
-                self.reco_resetter,]
+                self.reco_resetter_u2c,
+            ]
 
             self.put_navigational_block(3, self.filter_block[0])
             self.assemble_navigation_elements()
