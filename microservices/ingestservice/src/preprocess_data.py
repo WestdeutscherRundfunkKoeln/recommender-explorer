@@ -1,6 +1,3 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import ValidationError
-from envyaml import EnvYAML
 from dto.recoexplorer_item import RecoExplorerItem
 import logging
 import json
@@ -23,15 +20,20 @@ class DataPreprocessor:
         response = RecoExplorerItem.model_validate(mapped_data)
         return response
 
-    def add_embeddings(self, mapped_data):  # TODO: Make this asynchronous
+    def add_embeddings(self, mapped_data):
         # get embedding
         request_payload = {
             "id": mapped_data.id,
             "embedText": mapped_data.embedText,
         }
-        httpx.post(
-            f"{self.base_url_embedding}/add-embedding-to-doc",
-            json=request_payload,
-            timeout=None,
-            headers={"x-api-key": self.api_key},
-        ).json()
+
+        # Hint: Transformed to fire and forget request
+        try:
+            httpx.post(
+                f"{self.base_url_embedding}/add-embedding-to-doc",
+                json=request_payload,
+                timeout=0.25,
+                headers={"x-api-key": self.api_key},
+            )
+        except httpx.ReadTimeout:
+            pass

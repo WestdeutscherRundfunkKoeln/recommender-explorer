@@ -1,4 +1,4 @@
-from opensearchpy import OpenSearch, RequestsHttpConnection, helpers
+from opensearchpy import OpenSearch, RequestsHttpConnection, helpers, NotFoundError
 import logging
 import json
 
@@ -13,7 +13,7 @@ class OssAccessor:
         host = config["opensearch"]["host"]
         auth = (config["opensearch"]["user"], config["opensearch"]["pass"])
         port = config["opensearch"]["port"]
-        use_ssl = config["deployment_env"] != "DEV"
+        use_ssl = config["deployment_env"] != "LOCAL"
 
         logger.info("Host: " + host)
 
@@ -41,10 +41,25 @@ class OssAccessor:
         return response
 
     def delete_oss_doc(self, id):
-        response = self.oss_client.delete(
-            index=self.target_idx_name,
-            id=id
-        )
+        try:
+            response = self.oss_client.delete(
+                index=self.target_idx_name,
+                id=id
+            )
+        except NotFoundError as e:
+            response = {
+             '_index': self.target_idx_name,
+             '_id': id,
+             '_version': 0,
+             'result': 'id not found',
+             '_shards': {
+                 'total': 0,
+                 'successful': 0,
+                 'failed': 0
+                },
+             '_seq_no': 0,
+             '_primary_term': 0
+            }
         return response
 
     def bulk_ingest(self, jsonlst):

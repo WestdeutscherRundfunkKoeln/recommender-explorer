@@ -77,7 +77,7 @@ class NnSeekerPaService(NnSeekerRest):
             "configuration": self.__configuration_u2c,
             "explain": True,
             "userId": user_id,
-            "assetReturnType": 'episode'
+            "assetReturnType": model_props["param_asset_type"]
         }
 
         if "param_model_type" in model_props:
