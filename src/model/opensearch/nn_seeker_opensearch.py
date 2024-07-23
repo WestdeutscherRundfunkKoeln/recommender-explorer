@@ -26,6 +26,11 @@ class NnSeekerOpenSearch(NnSeeker):
         "theme": "thematicCategories",
         "show": "showId",
     }
+    LIST_FILTER_TERMS = {
+        "structurePath",
+        "type",
+        "keywords",
+    }
 
     def __init__(
         self,
@@ -226,6 +231,8 @@ class NnSeekerOpenSearch(NnSeeker):
             if not value:
                 continue
 
+            values_list = value
+
             if isinstance(value, list):
                 value = value[0]
 
@@ -255,9 +262,10 @@ class NnSeekerOpenSearch(NnSeeker):
                         }
                     )
                 case _:
-                    logger.warning(
-                        "Received unknown filter action [" + action + "]. Omitting."
-                    )
+                    if action in self.LIST_FILTER_TERMS:
+                        self._prepare_query_term_list_condition_statement(values_list, action, bool_terms)
+                    else:
+                        logger.warning("Received unknown filter action [" + action + "]. Omitting.")
 
         if bool_terms:
             transposed["bool"] = dict(bool_terms)
@@ -330,6 +338,9 @@ class NnSeekerOpenSearch(NnSeeker):
 
     def _prepare_query_bool_script_statement(self, value):
         return {"script": {"script": {"source": f"doc['{value}.keyword'].length > 0"}}}
+
+    def _prepare_query_term_list_condition_statement(self, values_list, term, bool_terms):
+        bool_terms["must"].append({"terms": {term+".keyword": values_list}})
 
     # TODO: this should probably happen somewhere in the controller
     def get_genres_and_subgenres_from_upper_category(
