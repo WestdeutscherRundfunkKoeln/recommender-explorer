@@ -23,9 +23,10 @@ def test_embedding__malformed_request(test_client: TestClient):
     assert response.json() == {
         "detail": [
             {
+                "input": {"malformed": "request"},
                 "loc": ["body", "embedText"],
-                "msg": "field required",
-                "type": "value_error.missing",
+                "msg": "Field required",
+                "type": "missing",
             }
         ]
     }
@@ -139,14 +140,16 @@ def test_add_embedding_to_document__malformed_request(test_client: TestClient):
     assert response.json() == {
         "detail": [
             {
+                "input": {"malformed": "request"},
                 "loc": ["body", "id"],
-                "msg": "field required",
-                "type": "value_error.missing",
+                "msg": "Field required",
+                "type": "missing",
             },
             {
+                "input": {"malformed": "request"},
                 "loc": ["body", "embedText"],
-                "msg": "field required",
-                "type": "value_error.missing",
+                "msg": "Field required",
+                "type": "missing",
             },
         ]
     }
