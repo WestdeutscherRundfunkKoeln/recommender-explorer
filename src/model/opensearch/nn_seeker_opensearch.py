@@ -26,11 +26,6 @@ class NnSeekerOpenSearch(NnSeeker):
         "theme": "thematicCategories",
         "show": "showId",
     }
-    LIST_FILTER_TERMS = {
-        "structurePath",
-        "type",
-        "keywords",
-    }
 
     def __init__(
         self,
@@ -227,6 +222,12 @@ class NnSeekerOpenSearch(NnSeeker):
         bool_terms = collections.defaultdict(list)
         script_term = collections.defaultdict(dict)
 
+        self.LIST_FILTER_TERMS = {
+            "structurePath": self._prepare_query_term_list_condition_statement,
+            "type": self._prepare_query_term_list_condition_statement,
+            "keywords": self._prepare_query_term_list_condition_statement,
+        }
+
         for label, value in reco_filter.items():
             if not value:
                 continue
@@ -261,11 +262,10 @@ class NnSeekerOpenSearch(NnSeeker):
                             }
                         }
                     )
+                case captured_action if captured_action in self.LIST_FILTER_TERMS:
+                    self.LIST_FILTER_TERMS[captured_action](values_list, captured_action, bool_terms)
                 case _:
-                    if action in self.LIST_FILTER_TERMS:
-                        self._prepare_query_term_list_condition_statement(values_list, action, bool_terms)
-                    else:
-                        logger.warning("Received unknown filter action [" + action + "]. Omitting.")
+                    logger.warning("Received unknown filter action [" + action + "]. Omitting.")
 
         if bool_terms:
             transposed["bool"] = dict(bool_terms)
