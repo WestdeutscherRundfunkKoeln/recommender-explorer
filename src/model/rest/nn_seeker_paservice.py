@@ -87,7 +87,7 @@ class NnSeekerPaService(NnSeekerRest):
 
 
         selected_params = {}
-        if "editorialCategories" in nn_filter and len(nn_filter["editorialCategories"]) > 0:
+        if nn_filter and "editorialCategories" in nn_filter and len(nn_filter["editorialCategories"]) > 0:
             selected_params["includedCategories"] = ",".join(nn_filter["editorialCategories"])
 
         params = {**default_params, **selected_params}

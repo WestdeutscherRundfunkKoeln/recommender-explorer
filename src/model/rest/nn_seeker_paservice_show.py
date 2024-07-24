@@ -25,7 +25,7 @@ class NnSeekerPaServiceShow(NnSeekerPaService):
         super().__init__(config)
 
     def get_recos_user(self, user, n_recos, nn_filter=False):
-        reco_ids, nn_dists, oss_field = super().get_recos_user(user, n_recos)
+        reco_ids, nn_dists, oss_field = super().get_recos_user(user, n_recos, nn_filter)
         for idx, show_id in enumerate(reco_ids):
             item_dto = dto_from_classname(
                 class_name='ShowItemDto',
