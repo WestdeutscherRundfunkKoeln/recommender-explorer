@@ -40,6 +40,7 @@ class AccordionWidget(UIWidget):
         accordion_widget.toggle = config.get(c.ACCORDION_TOGGLE_KEY, False)
 
         accordion_widget.is_leaf_widget = False
+        accordion_widget.max_width = c.ACCORDION_MAX_WIDTH
 
         return accordion_widget
 
@@ -77,11 +78,17 @@ class AccordionWidget(UIWidget):
             return accordion_content
 
         for source_widget in accordion_content:
-            source_multi_select_widget = self.get_multi_select_widget_from_row_with_tooltip(source_widget)
+            source_multi_select_widget = (
+                self.get_multi_select_widget_from_row_with_tooltip(source_widget)
+            )
             if source_multi_select_widget:
-                action_parameter = getattr(source_multi_select_widget, "action_parameter", None)
+                action_parameter = getattr(
+                    source_multi_select_widget, "action_parameter", None
+                )
                 if action_parameter is not None:
-                    self.hide_target_widgets(accordion_content, source_multi_select_widget)
+                    self.hide_target_widgets(
+                        accordion_content, source_multi_select_widget
+                    )
         return accordion_content
 
     def hide_target_widgets(self, accordion_content, source_widget):
@@ -108,8 +115,13 @@ class AccordionWidget(UIWidget):
         :return: The widget the given label or None
         """
         for widget in accordion_content:
-            multi_select_widget = self.get_multi_select_widget_from_row_with_tooltip(widget)
-            if multi_select_widget is not None and multi_select_widget.name == target_widget_label:
+            multi_select_widget = self.get_multi_select_widget_from_row_with_tooltip(
+                widget
+            )
+            if (
+                multi_select_widget is not None
+                and multi_select_widget.name == target_widget_label
+            ):
                 return widget
         return None
 
@@ -121,7 +133,11 @@ class AccordionWidget(UIWidget):
         :type widget: panel.Row
         :return: The multi-select widget if it matches the conditions, otherwise None.
         """
-        if isinstance(widget, pn.Row) and len(widget) == 2 and isinstance(widget[0], panel.widgets.select.MultiSelect):
+        if (
+            isinstance(widget, pn.Row)
+            and len(widget) == 2
+            and isinstance(widget[0], panel.widgets.select.MultiSelect)
+        ):
             return widget[0]
         else:
             return None
