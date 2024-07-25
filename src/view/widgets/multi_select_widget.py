@@ -153,27 +153,32 @@ class MultiSelectionWidget(UIWidget):
                 action_target_widget = self.find_widget_by_name_recursive(
                     self.reco_explorer_app_instance.config_based_nav_controls,
                     action_target_widget_label,
+                    True,
                 )
                 if action_target_widget:
                     action_target_widget.visible = action_option_value == event.new[0]
 
         self.reco_explorer_app_instance.get_items_with_parameters()
 
-    def find_widget_by_name_recursive(self, widget, target_name):
+    def find_widget_by_name_recursive(self, widget, target_name, return_parent=False):
         """
         Gets a widget from a widget group (for example panels widgets box) and search it by given name (label).
         Calls itself for nested widgets (recursive).
 
+        If return_parent is set to True, the function will return containing widget of the target widget
+        instead of the target widget itself.
+
         :param widget: Widget that is the source for the search.
         :param target_name: Name of the target widget.
-        :return: The widget if found or None if no widget is found.
+        :param return_parent: If set to True, return the container of the widget found.
+        :return: The widget or container of widget if found, or None if no widget found.
         """
-        if hasattr(widget, "name") and widget.name == target_name:
-            return widget
-
         if hasattr(widget, "objects"):
             for obj in widget.objects:
-                found_widget = self.find_widget_by_name_recursive(obj, target_name)
+                if hasattr(obj, "name") and obj.name == target_name:
+                    return widget if return_parent else obj
+
+                found_widget = self.find_widget_by_name_recursive(obj, target_name, return_parent)
                 if found_widget is not None:
                     return found_widget
 
