@@ -7,49 +7,70 @@ import httpx
 from numpy import ndarray
 from sentence_transformers import SentenceTransformer
 import shutil
-import tempfile
 from google.cloud import storage
+from google.oauth2 import service_account
 import pathlib
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
-def download_model(bucket_name: str, gs_path: str) -> SentenceTransformer | None:
+def download_model(
+    bucket: storage.Bucket,
+    model_zip: str,
+    local_path: str,
+) -> None:
     """Creats a temp directory and download the model to it. Synchronize download between processces via FileLock."""
+    if model_zip not in [blob.name for blob in bucket.list_blobs()]:
+        logger.info("Model %s not found in bucket.", model_zip)
+        return
 
-    client = storage.Client()
-    bucket = client.get_bucket(bucket_name)
-    if gs_path not in [blob.name for blob in bucket.list_blobs()]:
-        return None
+    zip_path = pathlib.Path(f"{local_path}.zip")
 
-    with tempfile.TemporaryDirectory() as temp_path:
-        local_path = pathlib.Path(temp_path)
-        zip_path = local_path / f"{gs_path}.zip"
-        model_path = local_path / gs_path
-        blob = bucket.blob(gs_path)
-        logging.info(f"model {model_path} download started")
-        blob.download_to_filename(zip_path)
-        logging.info(f"model {model_path} download complete -> unpacking...")
-        shutil.unpack_archive(zip_path, model_path)
-        logging.info(f"Download model {gs_path} to {model_path} -> sucessfull")
-    return SentenceTransformer(model_path.absolute().as_posix(), device="cpu")
+    if not os.path.exists(zip_path.parent):
+        os.makedirs(zip_path.parent)
+
+    blob = bucket.blob(model_zip)
+    logging.info("model %s download started", model_zip)
+    blob.download_to_filename(zip_path)
+    logging.info("model %s download complete -> unpacking...", model_zip)
+    shutil.unpack_archive(zip_path, local_path)
+    logging.info("Download model %s to %s -> sucessfull", model_zip, local_path)
 
 
 class EmbedText:
     def __init__(self, config):
         self.config = config
         self.models = {}
+<<<<<<< HEAD
+=======
+        self.configured_models = []
+        credentials = service_account.Credentials.from_service_account_info(
+            self.config["service_account"]
+        )
+        client = storage.Client(credentials=credentials)
+        bucket = client.bucket(self.config["bucket_name"])
+>>>>>>> 019822c (feat: add local loading logic)
         for model in self.config["models"]:
             for model_name, model_path in model.items():
-                model = download_model(
-                    bucket_name=self.config["bucket_name"],
-                    gs_path=model_path,
+                bucket_path = (
+                    f'{self.config["bucket_path"]}/{model_path.split("/")[-1]}.zip'
                 )
-                self.models[model_name] = (
-                    model
-                    if model is not None
-                    else SentenceTransformer(model_path, device="cpu")
+                local_path = (
+                    (pathlib.Path(config["local_model_path"]) / bucket_path)
+                    .as_posix()
+                    .split(".")[0]
+                )
+                if not os.path.exists(local_path):
+                    logger.info("Model %s not found at %s", model_path, local_path)
+                    download_model(
+                        bucket=bucket,
+                        model_zip=bucket_path,
+                        local_path=local_path,
+                    )
+                load_path = local_path if os.path.exists(local_path) else model_path
+                self.models[model_name] = SentenceTransformer(
+                    load_path, device="cpu", cache_folder=config["local_model_path"]
                 )
 
     def embed_text(self, embed_text: str, models_to_use: list[str] | None):
