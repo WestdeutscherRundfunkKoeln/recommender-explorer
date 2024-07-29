@@ -43,10 +43,11 @@ class RadioBoxWidget(UIWidget):
             ):
                 for option, widgets in options.items():
                     for widget in widgets:
-                        widget.visible = False
+                        self.set_widget_visibility(widget, False)
+
                     selected_option = radio_box_group.value
                     for selected_widget in options.get(selected_option, []):
-                        selected_widget.visible = True
+                        self.set_widget_visibility(selected_widget, True)
 
             radio_box_group.param.watch(show_hide_widgets, "value")
             show_hide_widgets("value")
@@ -61,3 +62,10 @@ class RadioBoxWidget(UIWidget):
             )
         else:
             return None
+
+    def set_widget_visibility(self, widget, visibility):
+        if isinstance(widget, pn.layout.Row):
+            for content in widget:
+                content.visible = visibility
+        else:
+            widget.visible = visibility
