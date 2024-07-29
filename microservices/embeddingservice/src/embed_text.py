@@ -42,15 +42,11 @@ class EmbedText:
     def __init__(self, config):
         self.config = config
         self.models = {}
-<<<<<<< HEAD
-=======
-        self.configured_models = []
         credentials = service_account.Credentials.from_service_account_info(
             self.config["service_account"]
         )
         client = storage.Client(credentials=credentials)
         bucket = client.bucket(self.config["bucket_name"])
->>>>>>> 019822c (feat: add local loading logic)
         for model in self.config["models"]:
             for model_name, model_path in model.items():
                 bucket_path = (
