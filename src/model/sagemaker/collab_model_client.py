@@ -41,7 +41,7 @@ class CollabModelClient(U2CSeeker):
 
         }
 
-    def get_recos_user(self, user_item: UserItemDto, num_recos: int) -> tuple[list, list, str]:
+    def get_recos_user(self, user_item: UserItemDto, num_recos: int, reco_filter: dict[str, Any] = False) -> tuple[list, list, str]:
 
         json_body = json.dumps({
             "userId": user_item.id,

@@ -28,11 +28,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-##
+#
 # Main App
 #
 class RecoExplorerApp:
-    #
+
     def __init__(self, config_full_path: str, config: dict[str, str]) -> None:
         # basic setup
         self.config = config
@@ -92,6 +92,7 @@ class RecoExplorerApp:
             self.define_start_item_selections()
             self.define_start_item_filtering()
             self.define_reco_filtering_selection()
+            self.define_reco_filtering_selection_u2c()
             self.define_reco_sorting()
             self.define_reco_duplicate_filtering()
             self.define_reco_incomplete_filtering()
@@ -136,12 +137,11 @@ class RecoExplorerApp:
         else:
             logger.error("u2c feature disabled")
 
-    ### all the pn component definitions come here
+    # pn component definitions
     def define_item_pagination(self):
         self.pagination = pn.Row()
         self.floating_elements = pn.Row(height=0, width=0)
 
-    #
     def define_start_item_filtering(self):
         # genre selector
         self.genreRadio = pn.widgets.RadioBoxGroup(
@@ -299,7 +299,6 @@ class RecoExplorerApp:
 
         self.item_resetter.on_click(self.trigger_item_reset)
 
-    ##
     def define_start_item_selections(self):
         # startvideo selector
         self.startvid = pn.widgets.RadioBoxGroup(
@@ -420,7 +419,46 @@ class RecoExplorerApp:
             self.enddate,
         )
 
-    #
+    # Filtering block u2c
+    def define_reco_filtering_selection_u2c(self):
+        self.editorial_choice = pn.widgets.MultiSelect(
+            name="Empfehlungen auf Kategorie einschränken", options=[], visible=True, size=4
+        )
+
+        self.editorial_choice.params = {
+            "label": "editorialCategories",
+            "validator": "_check_editorial_category",
+            "reset_to": []
+        }
+
+        self.editorial_choice.options = list(
+            filter(lambda item: item != "n/a", self.controller.get_item_defaults("editorialCategories"))
+        )
+
+        user_editorial_watcher =  self.editorial_choice.param.watch(
+            self.trigger_reco_filter_choice, "value", onlychanged=True
+        )
+
+        self.controller.register(
+            "reco_filter_u2c",
+            self.editorial_choice,
+            user_editorial_watcher,
+            self.trigger_reco_filter_choice
+        )
+
+        # reset button
+        self.reco_resetter_u2c = pn.widgets.Button(
+            name="Auswahl zurücksetzen", button_type="primary", margin=10
+        )
+
+        self.reco_resetter_u2c.params = {
+            "label": "reco_resetter_u2c",
+            "resets": ["reco_filter_u2c"],
+        }
+
+        self.reco_resetter_u2c.on_click(self.trigger_reco_reset)
+
+    # Filtering blokc c2c
     def define_reco_filtering_selection(self):
         # Select if same, other, mix or custom choice of genre, subgenre, theme and show
         # genre filter selector
@@ -692,7 +730,6 @@ class RecoExplorerApp:
 
         self.reco_resetter.on_click(self.trigger_reco_reset)
 
-    #
     def define_reco_sorting(self):
         # sorting filter selector
         self.sort = pn.widgets.MultiSelect(
@@ -707,7 +744,6 @@ class RecoExplorerApp:
             "reco_filter", self.sort, sort_watcher, self.trigger_item_selection
         )
 
-    #
     def define_reco_duplicate_filtering(self):
         # duplicate filter selector
         self.duplicate = pn.widgets.MultiSelect(
@@ -732,7 +768,6 @@ class RecoExplorerApp:
             self.trigger_item_selection,
         )
 
-    #
     def define_reco_incomplete_filtering(self):
         # incomplete filter selector
         self.incompleteSelect = pn.widgets.MultiSelect(
@@ -827,37 +862,10 @@ class RecoExplorerApp:
         )
 
     def define_user_selections(self):
-        if 0:  # temporarily removing user-clustering
-            self.user_cluster_choice = pn.widgets.Select(
-                name="Nutzer:in gehört zum Cluster",
-                options=[],
-            )
-            self.user_cluster_choice.params = {
-                "validator": "_check_user",
-                "accessor": "get_users_by_genotype",
-                "label": "cluster_users",
-                "has_paging": True,
-                "reset_to": None,
-                "active": False,
-            }
-
-            self.user_cluster_choice.options = self.controller.get_user_cluster()
-            self.user_cluster_choice.param.watch(
-                self.toggle_start_components, "visible"
-            )
-            user_cluster_watcher = self.user_cluster_choice.param.watch(
-                self.trigger_user_cluster_choice, "value", onlychanged=True
-            )
-            self.controller.register(
-                "user_choice",
-                self.user_cluster_choice,
-                user_cluster_watcher,
-                self.trigger_user_cluster_choice,
-            )
-
         self.user_filter_choice = pn.widgets.Select(
-            name="Nutzer:in schaut in erster Linie", options=[], visible=True, size=4
+            name="Nutzer:in rezipiert in erster Linie", options=[], visible=True, size=4
         )
+
         self.user_filter_choice.params = {
             "validator": "_check_category",
             "accessor": "get_users_by_category",
@@ -879,7 +887,6 @@ class RecoExplorerApp:
             self.trigger_user_filter_choice,
         )
 
-    #
     def define_model_selections(self):
         ## c2c selections
         self.c2c_choice = pn.widgets.MultiSelect(
@@ -927,9 +934,7 @@ class RecoExplorerApp:
 
         self.model_resetter.on_click(self.trigger_model_reset)
 
-    ## all the event handling comes here
-
-    #
+    # event handling
     def trigger_reco_filter_choice(self, event):
         logger.info(event)
         self.toggle_visibility(event)
@@ -940,7 +945,6 @@ class RecoExplorerApp:
         self.toggle_visibility(event)
         self.get_items_with_parameters()
 
-    #
     def trigger_item_pagination(self, event):
         logger.info(event)
         if event.obj.name == self.RIGHT_ARROW:
@@ -950,14 +954,12 @@ class RecoExplorerApp:
         self.get_items_with_parameters()
         self.disablePageButtons()
 
-    #
     def trigger_item_filter_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
         self.get_items_with_parameters()
 
-    #
     def trigger_model_choice(self, event):
         logger.info(event)
         if self.model_choice.active[0] == 0:
@@ -990,7 +992,6 @@ class RecoExplorerApp:
         self.disablePageButtons()
         self.get_items_with_parameters()
 
-    #
     def trigger_item_selection(self, event):
         # if the "new" parameter of the event contains a string, load that string
         logger.info(event)
@@ -1003,7 +1004,6 @@ class RecoExplorerApp:
         self.controller.reset_page_number()
         self.disablePageButtons()
 
-    #
     def trigger_item_reset(self, event):
         logger.info(event)
         self.controller.reset_defaults(event.obj.params["resets"])
@@ -1012,7 +1012,6 @@ class RecoExplorerApp:
         self.floating_elements.objects = []
         self.draw_pagination()
 
-    #
     def trigger_reco_reset(self, event):
         logger.info(event)
         self.controller.reset_defaults(event.obj.params["resets"])
@@ -1080,9 +1079,8 @@ class RecoExplorerApp:
             )
             self.floating_elements.append(floatpanel)
 
-    # toggling ui components comes here
+    # toggling ui components
 
-    #
     def toggle_start_components(self, event):
         logger.info(event)
         # disable a component depending on the value of another component
@@ -1131,7 +1129,6 @@ class RecoExplorerApp:
             self.text_input.visible = True
         # shorten this, either combine last two elifs or with dict of widget groups
 
-    #
     def toggle_model_choice(self, event):
         logger.info(event)
         active_block = event.obj.active[0]
@@ -1180,7 +1177,6 @@ class RecoExplorerApp:
                 upper_category.value, category
             )
 
-    #
     def toggle_visibility(self, event):
         for action in ["visible_action", "visible_action_2"]:
             if event.type == "changed" and event.obj.params.get(action, False):
@@ -1202,7 +1198,6 @@ class RecoExplorerApp:
         elif event.obj.params["label"] == "filter_subgenre":
             self.inhaltSelect.value = []
 
-    #
     def disablePageButtons(self):
         if self.controller.get_page_number() == 1:
             self.previousPage.disabled = True
@@ -1214,7 +1209,7 @@ class RecoExplorerApp:
         else:
             self.nextPage.disabled = False
 
-    ## and the more meaningful stuff - here
+    # assembly & rendering
 
     def draw_pagination(self):
         if not self.item_grid.objects:
@@ -1376,7 +1371,6 @@ class RecoExplorerApp:
         for block_component in block.get(ui_constants.BLOCK_WIDGETS_LIST_KEY):
             self.config_based_nav_controls.append(block_component)
 
-    #
     def assemble_components(self):
         accordion_max_width = ui_constants.ACCORDION_MAX_WIDTH
         if ui_constants.UI_CONFIG_BLOCKS in self.config:
@@ -1454,12 +1448,10 @@ class RecoExplorerApp:
 
             # User source
             self.user_source = pn.Accordion(
-                ("User-Filter", self.user_filter_choice),
-                # temporarily removing user-clustering
-                # ('User-Cluster', self.user_cluster_choice)
+                ("User-Filter", self.user_filter_choice)
             )
-            self.user_source.active = [0]
-            self.user_source.toggle = True
+#            self.user_source.active = [1,1]
+            self.user_source.toggle = False
             self.user_source.max_width = accordion_max_width
             self.user_source.param.watch(
                 self.toggle_user_choice, "active", onlychanged=True
@@ -1489,9 +1481,15 @@ class RecoExplorerApp:
                 ("Genre-Filter", self.genre_col),
                 ("Subgenre-Filter", self.subgenre_col),
                 ("Themen-Filter", self.theme_col),
-                ("Sendereihe-Filter", self.show_col),
+                ("Sendereihe-Filter", self.show_col)
             )
             self.reco_items.max_width = accordion_max_width
+
+            # Postprocessing and Filtering U2C
+            self.reco_items_u2c = pn.Accordion(
+                ("Editorial-Categories", self.editorial_choice)
+            )
+            self.reco_items_u2c.max_width = accordion_max_width
 
             self.filter_block = {}
             self.filter_block[0] = [
@@ -1499,7 +1497,11 @@ class RecoExplorerApp:
                 self.reco_items,
                 self.reco_resetter,
             ]
-            self.filter_block[1] = []
+            self.filter_block[1] = [
+                "### Empfehlungen beeinflussen",
+                self.reco_items_u2c,
+                self.reco_resetter_u2c,
+            ]
 
             self.put_navigational_block(3, self.filter_block[0])
             self.assemble_navigation_elements()
@@ -1537,12 +1539,12 @@ class RecoExplorerApp:
         self.nextPage.on_click(self.trigger_item_pagination)
         self.pagination.append(self.nextPage)
 
-    #
     def get_items_with_parameters(self):
         """
         Calls the actual search function in controller to get results for query
         """
         self.item_grid.objects = {}
+        
         try:
             models, items, config = self.controller.get_items()
             for idx, row in enumerate(items):
@@ -1573,7 +1575,6 @@ class RecoExplorerApp:
     def render_404():
         return pn.pane.Markdown("""## Unknown location""")
 
-    #
     def render(self):
         logger.info("assemble components")
         self.assemble_components()
