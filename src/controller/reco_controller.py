@@ -470,9 +470,14 @@ class RecommendationController:
         )
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
+
+        reco_filter = self._get_current_filter_state("reco_filter_u2c")
+
+
         kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
-            start_item, (self.num_NN + 1)
+            start_item, (self.num_NN + 1), reco_filter
         )
+
         ident, db_ident = get_primary_idents(self.config)
         kidxs_prim = []
         try:
@@ -585,6 +590,10 @@ class RecommendationController:
     def _check_category(self, genre_field):
         if genre_field.value not in self.get_item_defaults("genreCategory"):
             raise ValueError("Unknown category [" + genre_field.value + "]")
+
+    def _check_editorial_category(self, editorial_categ):
+        if editorial_categ.value not in self.get_item_defaults("editorialCategories"):
+            raise ValueError("Unknown editorial category [" + editorial_categ.value + "]")
 
     #
     def _get_active_start_components(self) -> list:

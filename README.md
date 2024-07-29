@@ -66,6 +66,12 @@ To run the backend services and opensearch locally just execute:
 ```docker-compose up```
 If you have a specific mapping definition you might need to change the corresponding environment variable in the docker-compose.yaml.
 
+### Run linter/formatter
+- Install the pre-commit package using pip: ```pip install pre-commit```
+- Set up pre-commit to run the linter/formatter automatically before each commit: ```pre-commit install``` 
+- To run the formatter on all files, execute ```pre-commit run --all-files```
+- To run the formatter on specific files, execute ```pre-commit run --files <FILENAME>```
+
 ## How to contribute
 
 Recommender Explorer as a whole is distributed under the MIT license. You are welcome to contribute code in order to fix bugs or to implement new features. 
@@ -175,6 +181,7 @@ This Configuration will create 2 Blocks with Headlines 'Block A' and 'Block B'. 
 | accessor_function  | yes       | -              | a accessor function name, which is used to create the search query. **Accessor function must be defined in base_data_accessor_opensearch.py**                                                                                          |
 | url_parameter      | no        | -              | text inputs can be set by a url parameter. This parameter name can be set here, so when its named: aParameterName a call like .../RecoExplorer?aParameterName=test would set test into the text field an trigger a search immediately. |
 | component_group      | no        | -              | defines the component_group of the widget gets registered to. |
+| tooltip      | no        | !! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!! | tooltip to show to the user |
 
 ### Example of a Text Input Widget Configuration
 
@@ -236,6 +243,7 @@ If you want to have a date search for the start items (I want to see start items
 | options                   | no        | -              | define options which should be displayed in the multi select widgets. For details see See ['Multi Select Options'](#multi-select-options-headline-link) in this Documentation. **At least one** options key must be defined for a multi select widget (either **options**, **dictionary_options** or **option_default**) |
 | dictionary_options        | no        | -              | define options which should be displayed in the multi select widgets. For details see See ['Multi Select Options'](#multi-select-options-headline-link) in this Documentation. **At least one** options key must be defined for a multi select widget (either **options**, **dictionary_options** or **option_default**) |
 | option_default            | no        | -              | define options which should be displayed in the multi select widgets. For details see See ['Multi Select Options'](#multi-select-options-headline-link) in this Documentation. **At least one** options key must be defined for a multi select widget (either **options**, **dictionary_options** or **option_default**) |
+| tooltip      | no        | !! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!! | tooltip to show to the user |
 
 
 ### Example of a Multi Select Widget Configuration
@@ -483,6 +491,7 @@ This Example would create three radio Buttons with the labels: Option A, Option 
 | unit    | no        | -              | unit that will be displayed after the slider value
 | label   | no        | relativerangefilter_duration | defines the filter that will be applied
 | component_group   | no        | reco_filter | defines component_group the filter that will be assigned to
+| tooltip      | no        | !! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!! | tooltip to show to the user |
 
 ### Example of a Slider Widget Configuration
 

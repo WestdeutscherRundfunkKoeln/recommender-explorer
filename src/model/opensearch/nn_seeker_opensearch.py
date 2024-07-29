@@ -222,9 +222,17 @@ class NnSeekerOpenSearch(NnSeeker):
         bool_terms = collections.defaultdict(list)
         script_term = collections.defaultdict(dict)
 
+        self.LIST_FILTER_TERMS = {
+            "structurePath": self._prepare_query_term_list_condition_statement,
+            "type": self._prepare_query_term_list_condition_statement,
+            "keywords": self._prepare_query_term_list_condition_statement,
+        }
+
         for label, value in reco_filter.items():
             if not value:
                 continue
+
+            values_list = value
 
             if isinstance(value, list):
                 value = value[0]
@@ -254,10 +262,10 @@ class NnSeekerOpenSearch(NnSeeker):
                             }
                         }
                     )
+                case captured_action if captured_action in self.LIST_FILTER_TERMS:
+                    self.LIST_FILTER_TERMS[captured_action](values_list, captured_action, bool_terms)
                 case _:
-                    logger.warning(
-                        "Received unknown filter action [" + action + "]. Omitting."
-                    )
+                    logger.warning("Received unknown filter action [" + action + "]. Omitting.")
 
         if bool_terms:
             transposed["bool"] = dict(bool_terms)
@@ -330,6 +338,9 @@ class NnSeekerOpenSearch(NnSeeker):
 
     def _prepare_query_bool_script_statement(self, value):
         return {"script": {"script": {"source": f"doc['{value}.keyword'].length > 0"}}}
+
+    def _prepare_query_term_list_condition_statement(self, values_list, term, bool_terms):
+        bool_terms["must"].append({"terms": {term+".keyword": values_list}})
 
     # TODO: this should probably happen somewhere in the controller
     def get_genres_and_subgenres_from_upper_category(

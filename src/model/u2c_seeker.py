@@ -1,9 +1,12 @@
+from typing import Any
 from abc import ABC, abstractmethod
+from dto.user_item import UserItemDto
 
 class U2CSeeker(ABC):
 
     @abstractmethod
-    def get_recos_user( self, user, num_recos ):
+    def get_recos_user( self, user: UserItemDto, num_recos: int, nn_filter: dict[str, Any] = False
+    ) -> tuple[list, list, str]:
         pass
 
     @abstractmethod
