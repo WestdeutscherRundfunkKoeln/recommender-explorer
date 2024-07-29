@@ -1,15 +1,16 @@
 import json
 import logging
+import os
+import pathlib
+import shutil
 from hashlib import sha256
 from typing import cast
 
 import httpx
-from numpy import ndarray
-from sentence_transformers import SentenceTransformer
-import shutil
 from google.cloud import storage
 from google.oauth2 import service_account
-import pathlib
+from numpy import ndarray
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -42,11 +43,13 @@ class EmbedText:
     def __init__(self, config):
         self.config = config
         self.models = {}
-        credentials = service_account.Credentials.from_service_account_info(
-            self.config["service_account"]
-        )
-        client = storage.Client(credentials=credentials)
-        bucket = client.bucket(self.config["bucket_name"])
+        bucket = None
+        if "service_account" in self.config:
+            credentials = service_account.Credentials.from_service_account_info(
+                self.config["service_account"]
+            )
+            client = storage.Client(credentials=credentials)
+            bucket = client.bucket(self.config["bucket_name"])
         for model in self.config["models"]:
             for model_name, model_path in model.items():
                 bucket_path = (
@@ -59,11 +62,12 @@ class EmbedText:
                 )
                 if not os.path.exists(local_path):
                     logger.info("Model %s not found at %s", model_path, local_path)
-                    download_model(
-                        bucket=bucket,
-                        model_zip=bucket_path,
-                        local_path=local_path,
-                    )
+                    if bucket:
+                        download_model(
+                            bucket=bucket,
+                            model_zip=bucket_path,
+                            local_path=local_path,
+                        )
                 load_path = local_path if os.path.exists(local_path) else model_path
                 self.models[model_name] = SentenceTransformer(
                     load_path, device="cpu", cache_folder=config["local_model_path"]
