@@ -1548,7 +1548,7 @@ class RecoExplorerApp:
         :param sidebar: The sidebar to append the version information.
         :return: The updated sidebar.
         """
-        deployment_version_info = self.config.get("deployment_version_info", None)
+        deployment_version_info = self.config.get("deployment_version_info")
         if deployment_version_info:
             version_widget = pn.pane.Markdown(deployment_version_info)
             sidebar.append(pn.layout.Divider())

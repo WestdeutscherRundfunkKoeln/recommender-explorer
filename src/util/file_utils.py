@@ -116,7 +116,9 @@ def load_deployment_version_config(config: dict[str, str]) -> dict[str, str]:
     """
     version_config = {}
     try:
-        version_config = EnvYAML("config/wdr/version_information.yaml").export()
+        version_config = EnvYAML(
+            "config/wdr/version_information.yaml", include_environment=False
+        ).export()
     except FileNotFoundError:
         logger.info("No version information yaml found. Only used for dev environment")
 
