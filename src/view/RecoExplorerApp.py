@@ -1539,12 +1539,29 @@ class RecoExplorerApp:
         self.nextPage.on_click(self.trigger_item_pagination)
         self.pagination.append(self.nextPage)
 
+    def get_version_information_and_append_to_sidebar(self, sidebar):
+        """
+        Method to get version information and append it to the sidebar.
+        Only used in version information in config. Gets added to config by
+        deployment pipeline.
+
+        :param sidebar: The sidebar to append the version information.
+        :return: The updated sidebar.
+        """
+        deployment_version_info = self.config.get("deployment_version_info")
+        if deployment_version_info:
+            version_widget = pn.pane.Markdown(deployment_version_info)
+            sidebar.append(pn.layout.Divider())
+            sidebar.append(version_widget)
+        return sidebar
+
+    #
     def get_items_with_parameters(self):
         """
         Calls the actual search function in controller to get results for query
         """
         self.item_grid.objects = {}
-        
+
         try:
             models, items, config = self.controller.get_items()
             for idx, row in enumerate(items):
@@ -1601,6 +1618,8 @@ class RecoExplorerApp:
             sidebar = self.nav_controls
         else:
             sidebar = self.config_based_nav_controls
+
+        sidebar = self.get_version_information_and_append_to_sidebar(sidebar)
 
         # finally add onload, check if url parameter are defined in config and link to widgets
         pn.state.onload(self.update_widgets_from_url_parameter)
