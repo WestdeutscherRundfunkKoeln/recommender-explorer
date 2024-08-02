@@ -44,6 +44,10 @@ class TextFieldWidget(UIWidget):
             "label": text_field_label,
             "reset_to": "",
         }
+        if url_parameter is not None:
+            self.reco_explorer_app_instance.url_parameter_text_field_mapping[
+                url_parameter
+            ] = text_input_widget
         match component_group:
             case "item_choice":
                 text_input_widget.params.update(
@@ -59,11 +63,7 @@ class TextFieldWidget(UIWidget):
                     onlychanged=True,
                 )
                 self.controller_instance.register(component_group, text_input_widget)
-                if url_parameter is not None:
-                    self.reco_explorer_app_instance.url_parameter_text_field_mapping[
-                        url_parameter
-                    ] = text_input_widget
-                    text_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
+                text_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
             case "reco_filter" | "item_filter":
                 text_input_watcher = text_input_widget.param.watch(
                     self.reco_explorer_app_instance.trigger_reco_filter_choice,
