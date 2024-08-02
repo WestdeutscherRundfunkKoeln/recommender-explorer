@@ -5,3 +5,5 @@ dataclasses
 pydantic>=2.5.1
 envyaml
 opensearch-py
+pytest
+pytest-mock

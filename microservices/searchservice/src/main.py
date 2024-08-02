@@ -1,5 +1,5 @@
-from fastapi import FastAPI, APIRouter
-from pydantic import ValidationError
+from fastapi import FastAPI, APIRouter, Depends
+from src.models import CreateDocumentRequest
 from src.oss_accessor import OssAccessor
 from envyaml import EnvYAML
 import os
@@ -11,9 +11,13 @@ API_PREFIX = os.environ.get("API_PREFIX", default="")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 
 config = EnvYAML(CONFIG_PATH)
-oss_doc_generator = OssAccessor(config)
+oss_doc_generator = OssAccessor.from_config(config)
 
 router = APIRouter()
+
+
+def get_oss_accessor():
+    return oss_doc_generator
 
 
 @router.get("/health-check")
@@ -22,22 +26,30 @@ def health_check():
 
 
 @router.post("/create-single-document")
-def create_document(data: dict):
+def create_document(
+    data: CreateDocumentRequest, oss_accessor: OssAccessor = Depends(get_oss_accessor)
+):
     # Add data to index
-    response = oss_doc_generator.create_oss_doc(data)
+    print(data, type(data))
+    response = oss_accessor.create_oss_doc(data)
     return response
 
 
 @router.post("/create-multiple-documents")
-def bulk_create_document(data: dict):
+def bulk_create_document(
+    data: dict[str, CreateDocumentRequest],
+    oss_accessor: OssAccessor = Depends(get_oss_accessor),
+):
     # add data to index
-    response = oss_doc_generator.bulk_ingest(data)
+    response = oss_accessor.bulk_ingest(data)
     return response
 
 
 @router.delete("/delete-data")
-def delete_document(document_id: str):
-    response = oss_doc_generator.delete_oss_doc(document_id)
+def delete_document(
+    document_id: str, oss_accessor: OssAccessor = Depends(get_oss_accessor)
+):
+    response = oss_accessor.delete_oss_doc(document_id)
     return response
 
 
