@@ -1556,6 +1556,7 @@ class RecoExplorerApp:
         return sidebar
 
     #
+
     def get_items_with_parameters(self):
         """
         Calls the actual search function in controller to get results for query
