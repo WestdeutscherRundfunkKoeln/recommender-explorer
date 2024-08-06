@@ -103,3 +103,24 @@ def load_ui_config(config: dict[str, str]) -> dict[str, str]:
 
     config.update(ui_config)
     return config
+
+
+def load_deployment_version_config(config: dict[str, str]) -> dict[str, str]:
+    """
+    This method updates the provided configuration dictionary with the deployment version information
+    from the "version_information.yaml" file located at "config/wdr/version_information.yaml".
+    This file gets added by the build pipeline. The updated configuration dictionary is then returned.
+
+    :param config: A dictionary containing the current configuration.
+    :return: A dictionary containing the updated configuration with the deployment version information.
+    """
+    version_config = {}
+    try:
+        version_config = EnvYAML(
+            "config/wdr/version_information.yaml", include_environment=False
+        ).export()
+    except FileNotFoundError:
+        logger.info("No version information yaml found. Only used for dev environment")
+
+    config.update(version_config)
+    return config
