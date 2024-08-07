@@ -1,4 +1,5 @@
 import panel as pn
+import panel.layout.base
 from view.widgets.widget import UIWidget
 
 from .. import ui_constants as c
@@ -109,6 +110,8 @@ class ResetButtonWidget(UIWidget):
         `layout_widget_types`, the method recursively collects leaf widgets from its children.
         """
         leaf_widgets = []
+        if isinstance(widget, panel.layout.base.Row) and isinstance(widget[1], panel.widgets.indicators.TooltipIcon):
+            widget = widget[0]
         is_leaf_widget = hasattr(widget, "is_leaf_widget") and widget.is_leaf_widget
 
         if not is_leaf_widget and isinstance(widget, self.layout_widget_types):
