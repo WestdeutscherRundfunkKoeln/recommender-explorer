@@ -7,8 +7,9 @@ from util.dto_utils import get_primary_idents
 logger = logging.getLogger(__name__)
 class ContentCard():
 
-    def __init__(self, config):
+    def __init__(self, config, reco_explorer_app_instance=None):
         self.config = config
+        self.reco_explorer_app_instance = reco_explorer_app_instance
         self.controller = RecommendationController(self.config)
 
     def draw(self, content_dto: ContentItemDto, card):

@@ -5,11 +5,9 @@ from view.cards.content_card import ContentCard
 
 logger = logging.getLogger(__name__)
 
-class ContentStartCard(ContentCard):
 
+class ContentStartCard(ContentCard):
     CARD_HEIGHT = 600
-    def __init__(self, config):
-        super().__init__(config)
 
     def draw(self, content_dto: ContentItemDto, nr, model, model_config, modal_viewer):
         stylesheet_image = """
@@ -76,7 +74,7 @@ class ContentStartCard(ContentCard):
         ]
 
         card = pn.Card(
-            styles={ 'background': self.config[model_config][content_dto.provenance][model]['start_color'], 'overflow': 'auto' },
+            styles={'background': self.config[model_config][content_dto.provenance][model]['start_color'], 'overflow': 'auto'},
             margin=5,
             height=self.CARD_HEIGHT,
             hide_header=True

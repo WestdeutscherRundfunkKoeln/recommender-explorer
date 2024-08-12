@@ -15,10 +15,11 @@ class WDRContentCard:
 
     domain_mapping = {"wdr.de": "https://www1.wdr.de"}
 
-    def __init__(self, config):
+    def __init__(self, config, reco_explorer_app_instance=None):
         self.config = config
+        self.reco_explorer_app_instance = reco_explorer_app_instance
 
-    def draw(self, content_dto: WDRContentItemDto, card):
+    def draw(self, content_dto: WDRContentItemDto, card, button=None):
         base_card_objects = [
             pn.pane.Markdown(f"""
                        #### {content_dto.title}
@@ -36,6 +37,9 @@ class WDRContentCard:
             {" ".join(content_dto.longDescription.split(" ")[:500])}...
             """),
         ]
+
+        if button:
+            base_card_objects.insert(1, button)
 
         card.objects = card.objects + base_card_objects
         return card

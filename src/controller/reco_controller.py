@@ -141,12 +141,12 @@ class RecommendationController:
     #
     # TODO - refactor this into a factory class or similar
     #
-    def get_item_viewer(self, item_dto: ItemDto):
+    def get_item_viewer(self, item_dto: ItemDto, app_explorer_instance=None):
         matches = re.search("^(.*)@(.*)$", item_dto.viewer)
         viewer_name, viewer_dir = matches.group(1), matches.group(2)
         module = importlib.import_module(viewer_dir)
         class_ = getattr(module, viewer_name)
-        return class_(self.config)
+        return class_(self.config, app_explorer_instance)
 
     def set_model_and_strategy(self, model_info):
         """Sets an active model and a strategy in the controller for search
