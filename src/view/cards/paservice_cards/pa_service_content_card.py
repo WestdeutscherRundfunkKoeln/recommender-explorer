@@ -2,6 +2,7 @@ import logging
 
 import panel as pn
 from dto.pa_service_content_item import PaServiceContentItemDto
+from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,9 @@ class PaServiceContentCard:
 
     domain_mapping = {"wdr.de": "https://www1.wdr.de"}
 
-    def __init__(self, config):
+    def __init__(self, config, reco_explorer_app_instance:RecoExplorerApp=None):
         self.config = config
+        self.reco_explorer_app_instance = reco_explorer_app_instance
 
     def draw(self, content_dto: PaServiceContentItemDto, card):
         base_card_objects = [
