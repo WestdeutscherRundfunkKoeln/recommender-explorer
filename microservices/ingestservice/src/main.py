@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import json
 import logging
 import os
@@ -150,75 +151,72 @@ def bulk_ingest(
     logger.info("Starting bulk ingest")
     task_status = TaskStatus.spawn(id=task_id)
     try:
-        item_dict = {}
-        item_blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
-        total_count_of_items = len(item_blobs)
-        for idx, blob in enumerate(item_blobs):
+        blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
+        blobs_iter = iter(blobs)
+        batch_start = 1
+        batch_end = 0
+        while batch := list(itertools.islice(blobs_iter, CHUNKSIZE)):
             task_status.set_status(BulkIngestTaskStatus.PREPROCESSING)
-            logger.info(f"Preprocessing {blob.name}")
-            try:
-                data = json.loads(
-                    blob.download_as_text()
-                )  # TODO: add retry logic, see https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob#google_cloud_storage_blob_Blob_download_as_text
-            except NotFound as e:
-                logger.error("Could not load file: %s", blob.name, exc_info=True)
-                error_message = f"Could not load file {blob.name}: {str(e)}"
-                task_status.add_error(error_message)
-                continue
+            item_dict = {}
+            for blob in batch:
+                batch_end += 1
+                logger.info(f"Preprocessing {blob.name}")
+                try:
+                    data = json.loads(
+                        blob.download_as_text()
+                    )  # TODO: add retry logic, see https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob#google_cloud_storage_blob_Blob_download_as_text
+                except NotFound as e:
+                    logger.error("Could not load file: %s", blob.name, exc_info=True)
+                    error_message = f"Could not load file {blob.name}: {str(e)}"
+                    task_status.add_error(error_message)
+                    continue
 
-            try:
-                mapped_data = data_preprocessor.map_data(data)
-            except ValidationError as e:
-                logger.error(
-                    "Error during preprocessing of file %s", blob.name, exc_info=True
-                )
-                error_message = f"An error occurred during preprocessing of item {blob.name}: {str(e)}"
-                task_status.add_error(error_message)
-                continue
-
-            # Trigger embedding service to add embeddings to index
-            try:
-                embeddings = request(
-                    data={
-                        "embedText": mapped_data.embedText,
-                    },
-                    url=f"{BASE_URL_EMBEDDING}/embedding",
-                )
-                if embeddings.status_code != 200:
-                    raise Exception(
-                        f"Error during embedding in embedding service for item {blob.name}"
+                try:
+                    mapped_data = data_preprocessor.map_data(data)
+                except ValidationError as e:
+                    logger.error(
+                        "Error during preprocessing of file %s",
+                        blob.name,
+                        exc_info=True,
                     )
-                mapped_data = {**mapped_data.model_dump(), **embeddings.json()}
-                item_dict[mapped_data["id"]] = mapped_data
-            except httpx.TimeoutException as e:
-                logger.error(
-                    "Error during embedding calculation for file %s",
-                    blob.name,
-                    exc_info=True,
-                )
-                error_message = f"An error occurred during embedding calculation for item {blob.name}: {str(e)}"
-                task_status.add_error(error_message)
-                continue
+                    error_message = f"An error occurred during preprocessing of item {blob.name}: {str(e)}"
+                    task_status.add_error(error_message)
+                    continue
 
-            if (idx + 1) % CHUNKSIZE == 0 or idx + 1 == total_count_of_items:
-                task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
-                response = request(
-                    item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents"
-                )
-                if response.status_code != 200:
-                    raise Exception(
-                        f"Error during bulk ingest in search service: {response.status_code}"
+                # Trigger embedding service to add embeddings to index
+                try:
+                    embeddings = request(
+                        data={
+                            "embedText": mapped_data.embedText,
+                        },
+                        url=f"{BASE_URL_EMBEDDING}/embedding",
                     )
-                item_dict = {}
+                    if embeddings.status_code != 200:
+                        raise Exception(
+                            f"Error during embedding in embedding service for item {blob.name}"
+                        )
+                    mapped_data = {**mapped_data.model_dump(), **embeddings.json()}
+                    item_dict[mapped_data["id"]] = mapped_data
+                except httpx.TimeoutException as e:
+                    logger.error(
+                        "Error during embedding calculation for file %s",
+                        blob.name,
+                        exc_info=True,
+                    )
+                    error_message = f"An error occurred during embedding calculation for item {blob.name}: {str(e)}"
+                    task_status.add_error(error_message)
+                    continue
 
-                if (idx + 1) % CHUNKSIZE == 0:
-                    # logging full chunk
-                    logger.info(f"Processed items {(idx+2) - CHUNKSIZE} to {idx+1}")
-                else:
-                    # logging last chunk if not a full chunk
-                    logger.info(
-                        f"Processed items {(idx+2) - ((idx + 1) % CHUNKSIZE)} to {idx + 1}"
-                    )
+            task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
+            response = request(
+                item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents"
+            )
+            if response.status_code != 200:
+                raise Exception(
+                    f"Error during bulk ingest in search service: {response.status_code}"
+                )
+            logger.info("Uploaded items %s to %s", batch_start, batch_end)
+            batch_start = batch_end + 1
 
         task_status.set_status(BulkIngestTaskStatus.COMPLETED)
     except Exception as e:
