@@ -1,8 +1,8 @@
-from fastapi import FastAPI, APIRouter, Depends
-from src.models import CreateDocumentRequest
-from src.oss_accessor import OssAccessor
-from envyaml import EnvYAML
 import os
+
+from envyaml import EnvYAML
+from fastapi import APIRouter, FastAPI
+from src.oss_accessor import OssAccessor
 
 NAMESPACE = "search"
 
