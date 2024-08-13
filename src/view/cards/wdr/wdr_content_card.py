@@ -21,7 +21,7 @@ class WDRContentCard:
         self.config = config
         self.reco_explorer_app_instance = reco_explorer_app_instance
 
-    def draw(self, content_dto: WDRContentItemDto, card, button:pn.widgets.Button=None):
+    def draw(self, content_dto: WDRContentItemDto, card, button:pn.widgets.Button or None = None):
         base_card_objects = [
             pn.pane.Markdown(f"""
                        #### {content_dto.title}

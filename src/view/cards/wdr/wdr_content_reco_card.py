@@ -1,4 +1,5 @@
 import logging
+from typing import Callable, Any
 
 import panel as pn
 import view.ui_constants as c
@@ -13,7 +14,7 @@ class WDRContentRecoCard(WDRContentCard):
     CARD_HEIGHT = 600
     IMAGE_HEIGHT = 200
 
-    def _create_click_handler(self, external_id):
+    def _create_click_handler(self, external_id) -> Callable[[Any], None]:
         """
         Create a click handler function that sets the value of a target widget
         to the external_id. Uses view utils function to get widget by accessor name.

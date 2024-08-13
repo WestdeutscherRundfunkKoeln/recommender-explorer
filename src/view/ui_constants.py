@@ -124,5 +124,5 @@ UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
 TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
 FILTER_WIDTH = 250
 
-# WDR Content Card
+# Content Cards
 INSERT_ID_BUTTON_LABEL = "Als Start Item übernehmen"
