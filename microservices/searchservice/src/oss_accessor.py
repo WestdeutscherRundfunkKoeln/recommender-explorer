@@ -84,3 +84,12 @@ class OssAccessor:
                 "_id": item.id,
                 "_source": {"doc": item.model_dump(), "doc_as_upsert": True},
             }
+
+    def get_oss_doc(self, id: str, fields: list[str]) -> dict:
+        return self.oss_client.search(
+            index=self.target_idx_name,
+            body={
+                "query": {"ids": {"values": [id]}},
+                "_source": {"includes": fields},
+            },
+        ).json()

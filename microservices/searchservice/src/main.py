@@ -1,7 +1,8 @@
 import os
+from typing import Annotated
 
 from envyaml import EnvYAML
-from fastapi import APIRouter, FastAPI, Depends
+from fastapi import APIRouter, FastAPI, Depends, Query
 from src.oss_accessor import OssAccessor
 from src.models import CreateDocumentRequest
 
@@ -51,6 +52,17 @@ def delete_document(
     document_id: str, oss_accessor: OssAccessor = Depends(get_oss_accessor)
 ):
     response = oss_accessor.delete_oss_doc(document_id)
+    return response
+
+
+@router.get("/document/{document_id}")
+def get_document(
+    document_id: str,
+    fields: Annotated[str | None, Query()] = None,
+    oss_accessor: OssAccessor = Depends(get_oss_accessor),
+):
+    _fields = fields.split(",") if fields else []
+    response = oss_accessor.get_oss_doc(document_id, _fields)
     return response
 
 
