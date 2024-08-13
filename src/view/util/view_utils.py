@@ -14,11 +14,9 @@ def get_first_widget_by_accessor_function(widget, target_accessor):
     :param target_accessor: The accessor function used to identify the target widget.
     :return: The target widget if found, otherwise None.
     """
-    nested_widget_result = _process_nested_widgets(widget, target_accessor)
-    if nested_widget_result is not None:
-        return nested_widget_result
     if hasattr(widget, 'params') and "accessor" in widget.params and widget.params["accessor"] == target_accessor:
         return widget
+    return _process_nested_widgets(widget, target_accessor)
 
 
 def _process_nested_widgets(widget, target_accessor):
