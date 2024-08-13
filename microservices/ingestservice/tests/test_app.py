@@ -1,6 +1,7 @@
 import datetime
 import json
 from typing import Any
+from pytest_httpx import HTTPXMock
 
 import pytest
 from dotenv import load_dotenv
@@ -106,7 +107,9 @@ def overwrite_tasks():
     TaskStatus.clear()
 
 
-def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
+def test_upsert_event_with_available_correct_document(
+    test_client: TestClient, httpx_mock: HTTPXMock
+):
     httpx_mock.add_response(
         headers={"Content-Type": "application/json"},
         json={
@@ -206,7 +209,7 @@ def test_upsert_event_with_available_correct_document(test_client, httpx_mock):
     )
 
 
-def test_upsert_event_no_document_found(test_client, httpx_mock):
+def test_upsert_event_no_document_found(test_client: TestClient, httpx_mock: HTTPXMock):
     response = test_client.post(
         "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
@@ -236,7 +239,7 @@ def test_upsert_event_no_document_found(test_client, httpx_mock):
     assert len(httpx_mock.get_requests()) == 0
 
 
-def test_upsert_event_invalid_document(test_client, httpx_mock):
+def test_upsert_event_invalid_document(test_client: TestClient, httpx_mock: HTTPXMock):
     response = test_client.post(
         "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
@@ -265,7 +268,9 @@ def test_upsert_event_invalid_document(test_client, httpx_mock):
     assert len(httpx_mock.get_requests()) == 0
 
 
-def test_delete_event_with_available_correct_document(test_client, httpx_mock):
+def test_delete_event_with_available_correct_document(
+    test_client: TestClient, httpx_mock: HTTPXMock
+):
     httpx_mock.add_response(
         headers={"Content-Type": "application/json"},
         json={
@@ -314,7 +319,9 @@ def test_delete_event_with_available_correct_document(test_client, httpx_mock):
     assert request.headers["x-api-key"] == "test-key"
 
 
-def test_bulk_ingest__with_validation_error(test_client, httpx_mock):
+def test_bulk_ingest__with_validation_error(
+    test_client: TestClient, httpx_mock: HTTPXMock
+):
     httpx_mock.add_response(
         url=BASE_URL_EMBEDDING + "/embedding", json={"model": [1, 2]}
     )
@@ -428,7 +435,7 @@ def test_bulk_ingest__with_general_error(test_client, httpx_mock):
     assert task["errors"] == ["Test error"]
 
 
-def test_get_task__exists(test_client, overwrite_tasks):
+def test_get_task__exists(test_client: TestClient, overwrite_tasks):
     response = test_client.get("/tasks/exists")
 
     assert response.status_code == 200
@@ -442,14 +449,14 @@ def test_get_task__exists(test_client, overwrite_tasks):
     }
 
 
-def test_get_task__not_exists(test_client, overwrite_tasks):
+def test_get_task__not_exists(test_client: TestClient, overwrite_tasks):
     response = test_client.get("/tasks/_not_exists")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
 
 
-def test_get_tasks(test_client, overwrite_tasks):
+def test_get_tasks(test_client: TestClient, overwrite_tasks):
     response = test_client.get("/tasks")
 
     assert response.status_code == 200
@@ -460,6 +467,7 @@ def test_get_tasks(test_client, overwrite_tasks):
                 "status": "PREPROCESSING",
                 "errors": [],
                 "created_at": "2023-10-23T23:00:00",
+                "completed_at": "",
             }
         ]
     }
