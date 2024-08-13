@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_widget_by_accessor_function(widget, target_accessor):
+def get_first_widget_by_accessor_function(widget, target_accessor):
     """
     This method searches for a widget using the provided target accessor function. It first checks if the widget is a nested widget by calling
     the _process_nested_widgets function recursively. If a nested widget is found, it is returned. If no nested widget is found, it checks if
@@ -29,8 +29,8 @@ def _process_nested_widgets(widget, target_accessor):
     :param target_accessor: The target accessor of the widget to find.
     :return: The found widget with the target accessor, or None if not found.
     """
-    if 'objects' in dir(widget):
+    if hasattr(widget, 'objects'):
         for child in widget.objects:
-            result = get_widget_by_accessor_function(child, target_accessor)
+            result = get_first_widget_by_accessor_function(child, target_accessor)
             if result is not None:
                 return result

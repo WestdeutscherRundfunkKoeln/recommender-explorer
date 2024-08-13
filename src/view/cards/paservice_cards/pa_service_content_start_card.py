@@ -8,8 +8,6 @@ logger = logging.getLogger(__name__)
 class PaServiceContentStartCard(PaServiceContentCard):
 
     CARD_HEIGHT = 600
-    def __init__(self, config):
-        super().__init__(config)
 
     def draw(self, content_dto: PaServiceContentItemDto, nr, model, model_config, modal_viewer):
         stylesheet_image = """

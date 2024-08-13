@@ -4,7 +4,7 @@ import panel as pn
 import view.ui_constants as c
 from dto.wdr_content_item import WDRContentItemDto
 from view.cards.wdr.wdr_content_card import WDRContentCard
-from view.util.view_utils import get_widget_by_accessor_function
+from view.util.view_utils import get_first_widget_by_accessor_function
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +22,13 @@ class WDRContentRecoCard(WDRContentCard):
         :return: The click handler function.
         """
         def click_handler(event):
-            target_widget = get_widget_by_accessor_function(self.reco_explorer_app_instance.config_based_nav_controls, "get_item_by_crid")
+            target_widget = get_first_widget_by_accessor_function(self.reco_explorer_app_instance.config_based_nav_controls, "get_item_by_crid")
             if target_widget:
                 target_widget.value = external_id
 
         return click_handler
 
-    def _insert_id_button(self, click_handler):
+    def _insert_id_button(self, click_handler) -> pn.widgets.Button:
         """
         Creates and returns a Button widget and assigns the
         specified click_handler function to its on_click event.

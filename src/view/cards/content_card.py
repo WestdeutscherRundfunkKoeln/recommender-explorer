@@ -3,11 +3,12 @@ import logging
 from dto.content_item import ContentItemDto
 from controller.reco_controller import RecommendationController
 from util.dto_utils import get_primary_idents
+from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
 class ContentCard():
 
-    def __init__(self, config, reco_explorer_app_instance=None):
+    def __init__(self, config, reco_explorer_app_instance:RecoExplorerApp=None):
         self.config = config
         self.reco_explorer_app_instance = reco_explorer_app_instance
         self.controller = RecommendationController(self.config)

@@ -25,6 +25,10 @@ from util.dto_utils import (
 from dto.user_item import UserItemDto
 from dto.item import ItemDto
 from envyaml import EnvYAML
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +145,7 @@ class RecommendationController:
     #
     # TODO - refactor this into a factory class or similar
     #
-    def get_item_viewer(self, item_dto: ItemDto, app_explorer_instance=None):
+    def get_item_viewer(self, item_dto: ItemDto, app_explorer_instance: "RecoExplorerApp"=None):
         matches = re.search("^(.*)@(.*)$", item_dto.viewer)
         viewer_name, viewer_dir = matches.group(1), matches.group(2)
         module = importlib.import_module(viewer_dir)

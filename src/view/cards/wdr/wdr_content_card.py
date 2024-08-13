@@ -2,6 +2,8 @@ import logging
 
 import panel as pn
 from dto.wdr_content_item import WDRContentItemDto
+from view.RecoExplorerApp import RecoExplorerApp
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +17,11 @@ class WDRContentCard:
 
     domain_mapping = {"wdr.de": "https://www1.wdr.de"}
 
-    def __init__(self, config, reco_explorer_app_instance=None):
+    def __init__(self, config, reco_explorer_app_instance:RecoExplorerApp=None):
         self.config = config
         self.reco_explorer_app_instance = reco_explorer_app_instance
 
-    def draw(self, content_dto: WDRContentItemDto, card, button=None):
+    def draw(self, content_dto: WDRContentItemDto, card, button:pn.widgets.Button=None):
         base_card_objects = [
             pn.pane.Markdown(f"""
                        #### {content_dto.title}
