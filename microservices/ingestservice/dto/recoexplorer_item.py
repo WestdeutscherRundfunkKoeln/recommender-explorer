@@ -1,9 +1,9 @@
 from typing import Optional
-from pydantic import BaseModel, Extra, field_serializer
+from pydantic import BaseModel, field_serializer
 from datetime import datetime
 
 
-class RecoExplorerItem(BaseModel, extra=Extra.allow):
+class RecoExplorerItem(BaseModel, extra="allow"):
     externalid: str
     id: str
     title: str
