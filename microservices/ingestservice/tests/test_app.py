@@ -109,10 +109,11 @@ def overwrite_tasks():
     TaskStatus.clear()
 
 
-def test_upsert_event_with_available_correct_document(
+def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
     test_client: TestClient, httpx_mock: HTTPXMock
 ):
     httpx_mock.add_response(
+        method="POST",
         headers={"Content-Type": "application/json"},
         json={
             "_index": "sample-index1",
@@ -122,6 +123,288 @@ def test_upsert_event_with_available_correct_document(
             "_shards": {"total": 2, "successful": 2, "failed": 0},
             "_seq_no": 4,
             "_primary_term": 17,
+        },
+    )
+    httpx_mock.add_response(
+        url=BASE_URL_SEARCH + "/document/test?fields=embedTextHash",
+        method="GET",
+        json={
+            "took": 1,
+            "timed_out": False,
+            "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
+            "hits": {
+                "total": {"value": 1, "relation": "eq"},
+                "max_score": 1,
+                "hits": [
+                    {
+                        "_index": "sample-index1",
+                        "_id": "1",
+                        "_score": 1,
+                        "_source": {},
+                    }
+                ],
+            },
+        },
+    )
+
+    response = test_client.post(
+        "/events",
+        headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
+        json={
+            "kind": "storage#object",
+            "id": "wdr-recommender-exporter-dev-import/produktion/c65b43ee-cd44-4653-a03d-241ac052c36b.json/1712568938633012",
+            "selfLink": "https://www.googleapis.com/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json",
+            "name": "prod/valid.json",
+            "bucket": "wdr-recommender-exporter-dev-import",
+            "generation": "1712568938633012",
+            "metageneration": "1",
+            "contentType": "application/json",
+            "timeCreated": "2024-04-08T09:35:38.666Z",
+            "updated": "2024-04-08T09:35:38.666Z",
+            "storageClass": "STANDARD",
+            "timeStorageClassUpdated": "2024-04-08T09:35:38.666Z",
+            "size": "1504",
+            "md5Hash": "nUoVmkcgy2xR5l676DzUgw==",
+            "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json?generation=1712568938633012&alt=media",
+            "crc32c": "+IKxJA==",
+            "etag": "CLSu9rmosoUDEAE=",
+        },
+    )
+
+    assert response.status_code == 200
+    requests = httpx_mock.get_requests()
+    assert len(requests) == 3
+    # Request to the search service to check hash
+    request = requests[1]
+    assert request.method == "GET"
+    assert request.url == BASE_URL_SEARCH + "/document/test?fields=embedTextHash"
+    assert request.headers["x-api-key"] == "test-key"
+
+    # Request to the embedding service
+    request = requests[2]
+    assert request.method == "POST"
+    assert request.url == BASE_URL_EMBEDDING + "/add-embedding-to-doc"
+    assert request.headers["x-api-key"] == "test-key"
+    assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
+
+    # Request to the search service for upsert
+    request = requests[0]
+    assert request.method == "POST"
+    assert request.url == BASE_URL_SEARCH + "/create-single-document"
+    assert request.headers["x-api-key"] == "test-key"
+    assert (
+        request.content
+        == json.dumps(
+            {
+                "externalid": "test",
+                "id": "test",
+                "title": "test",
+                "description": "test",
+                "longDescription": "test",
+                "availableFrom": "2023-10-23T23:00:00+0200",
+                "availableTo": "2023-10-23T23:00:00+0200",
+                "duration": None,
+                "thematicCategories": [],
+                "thematicCategoriesIds": None,
+                "thematicCategoriesTitle": None,
+                "genreCategory": "test",
+                "genreCategoryId": None,
+                "subgenreCategories": [],
+                "subgenreCategoriesIds": None,
+                "subgenreCategoriesTitle": None,
+                "teaserimage": "test",
+                "geoAvailability": None,
+                "embedText": "test",
+                "episodeNumber": "",
+                "hasAudioDescription": False,
+                "hasDefaultVersion": False,
+                "hasSignLanguage": False,
+                "hasSubtitles": False,
+                "isChildContent": False,
+                "isOnlineOnly": False,
+                "isOriginalLanguage": False,
+                "producer": "",
+                "publisherId": "",
+                "seasonNumber": "",
+                "sections": "",
+                "showCrid": "",
+                "showId": "",
+                "showTitel": "",
+                "showType": "",
+                "uuid": None,
+            }
+        ).encode()
+    )
+
+
+def test_upsert_event__with_available_correct_document__no_matching_hash(
+    test_client: TestClient, httpx_mock: HTTPXMock
+):
+    httpx_mock.add_response(
+        method="POST",
+        headers={"Content-Type": "application/json"},
+        json={
+            "_index": "sample-index1",
+            "_id": "1",
+            "_version": 3,
+            "result": "updated",
+            "_shards": {"total": 2, "successful": 2, "failed": 0},
+            "_seq_no": 4,
+            "_primary_term": 17,
+        },
+    )
+    httpx_mock.add_response(
+        url=BASE_URL_SEARCH + "/document/test?fields=embedTextHash",
+        method="GET",
+        json={
+            "took": 1,
+            "timed_out": False,
+            "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
+            "hits": {
+                "total": {"value": 1, "relation": "eq"},
+                "max_score": 1,
+                "hits": [
+                    {
+                        "_index": "sample-index1",
+                        "_id": "1",
+                        "_score": 1,
+                        "_source": {
+                            "embedTextHash": "testHash",
+                        },
+                    }
+                ],
+            },
+        },
+    )
+
+    response = test_client.post(
+        "/events",
+        headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
+        json={
+            "kind": "storage#object",
+            "id": "wdr-recommender-exporter-dev-import/produktion/c65b43ee-cd44-4653-a03d-241ac052c36b.json/1712568938633012",
+            "selfLink": "https://www.googleapis.com/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json",
+            "name": "prod/valid.json",
+            "bucket": "wdr-recommender-exporter-dev-import",
+            "generation": "1712568938633012",
+            "metageneration": "1",
+            "contentType": "application/json",
+            "timeCreated": "2024-04-08T09:35:38.666Z",
+            "updated": "2024-04-08T09:35:38.666Z",
+            "storageClass": "STANDARD",
+            "timeStorageClassUpdated": "2024-04-08T09:35:38.666Z",
+            "size": "1504",
+            "md5Hash": "nUoVmkcgy2xR5l676DzUgw==",
+            "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json?generation=1712568938633012&alt=media",
+            "crc32c": "+IKxJA==",
+            "etag": "CLSu9rmosoUDEAE=",
+        },
+    )
+
+    assert response.status_code == 200
+    requests = httpx_mock.get_requests()
+    assert len(requests) == 3
+
+    # Request to the search service to check hash
+    request = requests[1]
+    assert request.method == "GET"
+    assert request.url == BASE_URL_SEARCH + "/document/test?fields=embedTextHash"
+    assert request.headers["x-api-key"] == "test-key"
+
+    # Request to the embedding service
+    request = requests[2]
+    assert request.method == "POST"
+    assert request.url == BASE_URL_EMBEDDING + "/add-embedding-to-doc"
+    assert request.headers["x-api-key"] == "test-key"
+    assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
+
+    # Request to the search service for upsert
+    request = requests[0]
+    assert request.method == "POST"
+    assert request.url == BASE_URL_SEARCH + "/create-single-document"
+    assert request.headers["x-api-key"] == "test-key"
+    assert (
+        request.content
+        == json.dumps(
+            {
+                "externalid": "test",
+                "id": "test",
+                "title": "test",
+                "description": "test",
+                "longDescription": "test",
+                "availableFrom": "2023-10-23T23:00:00+0200",
+                "availableTo": "2023-10-23T23:00:00+0200",
+                "duration": None,
+                "thematicCategories": [],
+                "thematicCategoriesIds": None,
+                "thematicCategoriesTitle": None,
+                "genreCategory": "test",
+                "genreCategoryId": None,
+                "subgenreCategories": [],
+                "subgenreCategoriesIds": None,
+                "subgenreCategoriesTitle": None,
+                "teaserimage": "test",
+                "geoAvailability": None,
+                "embedText": "test",
+                "episodeNumber": "",
+                "hasAudioDescription": False,
+                "hasDefaultVersion": False,
+                "hasSignLanguage": False,
+                "hasSubtitles": False,
+                "isChildContent": False,
+                "isOnlineOnly": False,
+                "isOriginalLanguage": False,
+                "producer": "",
+                "publisherId": "",
+                "seasonNumber": "",
+                "sections": "",
+                "showCrid": "",
+                "showId": "",
+                "showTitel": "",
+                "showType": "",
+                "uuid": None,
+            }
+        ).encode()
+    )
+
+
+def test_upsert_event__with_available_correct_document__matching_hash(
+    test_client: TestClient, httpx_mock: HTTPXMock
+):
+    httpx_mock.add_response(
+        method="POST",
+        headers={"Content-Type": "application/json"},
+        json={
+            "_index": "sample-index1",
+            "_id": "1",
+            "_version": 3,
+            "result": "updated",
+            "_shards": {"total": 2, "successful": 2, "failed": 0},
+            "_seq_no": 4,
+            "_primary_term": 17,
+        },
+    )
+    httpx_mock.add_response(
+        url=BASE_URL_SEARCH + "/document/test?fields=embedTextHash",
+        method="GET",
+        json={
+            "took": 1,
+            "timed_out": False,
+            "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
+            "hits": {
+                "total": {"value": 1, "relation": "eq"},
+                "max_score": 1,
+                "hits": [
+                    {
+                        "_index": "sample-index1",
+                        "_id": "1",
+                        "_score": 1,
+                        "_source": {
+                            "embedTextHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+                        },
+                    }
+                ],
+            },
         },
     )
 
@@ -153,14 +436,13 @@ def test_upsert_event_with_available_correct_document(
     requests = httpx_mock.get_requests()
     assert len(requests) == 2
 
-    # Request to the embedding service
+    # Request to the search service to check hash
     request = requests[1]
-    assert request.method == "POST"
-    assert request.url == BASE_URL_EMBEDDING + "/add-embedding-to-doc"
+    assert request.method == "GET"
+    assert request.url == BASE_URL_SEARCH + "/document/test?fields=embedTextHash"
     assert request.headers["x-api-key"] == "test-key"
-    assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
 
-    # Request to the search service
+    # Request to the search service for upsert
     request = requests[0]
     assert request.method == "POST"
     assert request.url == BASE_URL_SEARCH + "/create-single-document"
@@ -188,7 +470,6 @@ def test_upsert_event_with_available_correct_document(
                 "teaserimage": "test",
                 "geoAvailability": None,
                 "embedText": "test",
-                "embedTextHash": None,
                 "episodeNumber": "",
                 "hasAudioDescription": False,
                 "hasDefaultVersion": False,
@@ -378,7 +659,6 @@ def test_bulk_ingest__with_validation_error(
                     "teaserimage": "test",
                     "geoAvailability": None,
                     "embedText": "test",
-                    "embedTextHash": None,
                     "episodeNumber": "",
                     "hasAudioDescription": False,
                     "hasDefaultVersion": False,

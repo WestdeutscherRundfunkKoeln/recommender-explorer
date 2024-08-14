@@ -5,6 +5,7 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
+from hashlib import sha256
 from typing import Annotated, Any
 
 import httpx
@@ -117,14 +118,33 @@ def ingest_item(
     else:
         try:
             document = data_preprocessor.map_data(download_document(storage, event))
-            document_json = document.model_dump()
             # Add metadata to index
             retval = request(
-                document_json, f"{BASE_URL_SEARCH}/create-single-document"
+                document.model_dump(), f"{BASE_URL_SEARCH}/create-single-document"
             ).json()
+
+            if not document.embedText:
+                return retval
+
+            embed_hash = (
+                httpx.get(
+                    f"{BASE_URL_SEARCH}/document/{document.id}",
+                    params={"fields": "embedTextHash"},
+                    headers={"x-api-key": config["api_key"]},
+                )
+                .json()["hits"]["hits"][0]["_source"]
+                .get("embedTextHash")
+            )
+
+            if (
+                embed_hash is not None
+                and embed_hash == sha256(document.embedText.encode("utf-8")).hexdigest()
+            ):
+                return retval
             # Trigger embedding service to add embeddings to index
             data_preprocessor.add_embeddings(document)
             return retval  # TODO: check for meaningful return object. kept for backward compatibility?
+
         except ValidationError as exc:
             error_message = repr(exc.errors()[0]["type"])
             logger.error("Validation error: " + repr(exc.errors()))
