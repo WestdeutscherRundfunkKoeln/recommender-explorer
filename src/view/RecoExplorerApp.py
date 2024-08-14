@@ -1567,7 +1567,7 @@ class RecoExplorerApp:
             models, items, config = self.controller.get_items()
             for idx, row in enumerate(items):
                 for idz, item_dto in enumerate(row):
-                    card = self.controller.get_item_viewer(item_dto)
+                    card = self.controller.get_item_viewer(item_dto, self)
                     if (
                         self.controller.get_display_mode()
                         == constants.DISPLAY_MODE_SINGLE

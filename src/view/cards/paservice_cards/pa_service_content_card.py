@@ -15,7 +15,7 @@ class PaServiceContentCard:
 
     domain_mapping = {"wdr.de": "https://www1.wdr.de"}
 
-    def __init__(self, config):
+    def __init__(self, config, *kwargs):
         self.config = config
 
     def draw(self, content_dto: PaServiceContentItemDto, card):

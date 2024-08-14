@@ -5,13 +5,10 @@ from view.cards.content_card import ContentCard
 
 logger = logging.getLogger(__name__)
 
-class ContentRecoCard(ContentCard):
 
+class ContentRecoCard(ContentCard):
     CARD_HEIGHT = 600
     IMAGE_HEIGHT = 200
-
-    def __init__(self, config):
-        super().__init__(config)
 
     def draw(self, content_dto: ContentItemDto, nr, model, model_config, modal_func):
         stylesheet_image = """
@@ -78,7 +75,7 @@ class ContentRecoCard(ContentCard):
         ]
 
         card = pn.Card(
-            styles={ 'background': self.config[model_config][content_dto.provenance][model]['reco_color'], 'overflow': 'auto'},
+            styles={'background': self.config[model_config][content_dto.provenance][model]['reco_color'], 'overflow': 'auto'},
             margin=5,
             height=self.CARD_HEIGHT,
             hide_header=True
