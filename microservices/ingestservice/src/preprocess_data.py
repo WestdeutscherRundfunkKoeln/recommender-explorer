@@ -20,7 +20,7 @@ class DataPreprocessor:
         response = RecoExplorerItem.model_validate(mapped_data)
         return response
 
-    def add_embeddings(self, mapped_data):
+    def add_embeddings(self, mapped_data: RecoExplorerItem):
         # get embedding
         request_payload = {
             "id": mapped_data.id,
