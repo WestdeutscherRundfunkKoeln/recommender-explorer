@@ -17,6 +17,7 @@ from google.cloud import storage
 from google.cloud.exceptions import NotFound
 from google.oauth2 import service_account
 from pydantic import ValidationError
+from src.clients import SearchServiceClient
 from src.models import (
     BulkIngestTaskStatus,
     FullLoadRequest,
@@ -41,12 +42,12 @@ STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
 
 config = EnvYAML(CONFIG_PATH)
 BASE_URL_EMBEDDING = config.get("base_url_embedding", "")
-BASE_URL_SEARCH = config.get("base_url_search", "")
 API_PREFIX = config.get("API_PREFIX", "")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 CHUNKSIZE = 50
 
 data_preprocessor = DataPreprocessor(config)
+search_service_client = SearchServiceClient.from_config(config)
 
 
 def request(data: dict[str, Any], url: str):
@@ -92,6 +93,7 @@ async def lifespan(app: FastAPI):
 
     asyncio.create_task(task_cleaner())
     yield
+    search_service_client.close()
 
 
 router = APIRouter()
@@ -110,45 +112,35 @@ def ingest_item(
 ):
     if event_type == EVENT_TYPE_DELETE:
         id = event.name.split("/")[-1].split(".")[0]
-        return httpx.delete(
-            f"{BASE_URL_SEARCH}/delete-data",
-            params={"document_id": id},
-            headers={"x-api-key": config["api_key"]},
-        ).json()
-    else:
-        try:
-            document = data_preprocessor.map_data(download_document(storage, event))
-            # Add metadata to index
-            retval = request(
-                document.model_dump(), f"{BASE_URL_SEARCH}/create-single-document"
-            ).json()
+        return search_service_client.delete(id)
 
-            if not document.embedText:
-                return retval
+    try:
+        document = data_preprocessor.map_data(download_document(storage, event))
+        # Add metadata to index
+        upsert_response = search_service_client.create_single_document(
+            document.model_dump()
+        )
 
-            embed_hash = (
-                httpx.get(
-                    f"{BASE_URL_SEARCH}/document/{document.id}",
-                    params={"fields": "embedTextHash"},
-                    headers={"x-api-key": config["api_key"]},
-                )
-                .json()["hits"]["hits"][0]["_source"]
-                .get("embedTextHash")
-            )
+        if not document.embedText:
+            return upsert_response
 
-            if (
-                embed_hash is not None
-                and embed_hash == sha256(document.embedText.encode("utf-8")).hexdigest()
-            ):
-                return retval
-            # Trigger embedding service to add embeddings to index
-            data_preprocessor.add_embeddings(document)
-            return retval  # TODO: check for meaningful return object. kept for backward compatibility?
+        embed_hash_in_oss = search_service_client.get(
+            document.id, ["embedTextHash"]
+        ).get("embedTextHash")
+        embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
+        print(embed_hash_in_oss, embed_hash)
 
-        except ValidationError as exc:
-            error_message = repr(exc.errors()[0]["type"])
-            logger.error("Validation error: " + repr(exc.errors()))
-            raise HTTPException(status_code=422, detail=error_message)
+        if embed_hash_in_oss is not None and embed_hash_in_oss == embed_hash:
+            return upsert_response
+
+        # Trigger embedding service to add embeddings to index
+        data_preprocessor.add_embeddings(document)
+        return upsert_response  # TODO: check for meaningful return object. kept for backward compatibility?
+
+    except ValidationError as exc:
+        error_message = repr(exc.errors()[0]["type"])
+        logger.error("Validation error: " + repr(exc.errors()))
+        raise HTTPException(status_code=422, detail=error_message)
 
 
 @router.post("/ingest-multiple-items", status_code=202)
@@ -228,9 +220,7 @@ def bulk_ingest(
                     continue
 
             task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
-            response = request(
-                item_dict, f"{BASE_URL_SEARCH}/create-multiple-documents"
-            )
+            response = search_service_client.create_multiple_documents(item_dict)
             if response.status_code != 200:
                 raise Exception(
                     f"Error during bulk ingest in search service: {response.status_code}"
@@ -240,6 +230,7 @@ def bulk_ingest(
 
         task_status.set_status(BulkIngestTaskStatus.COMPLETED)
     except Exception as e:
+        logger.error("Error during bulk ingest", exc_info=True)
         task_status.add_error(str(e))
         task_status.set_status(BulkIngestTaskStatus.FAILED)
 
