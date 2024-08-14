@@ -92,4 +92,4 @@ class OssAccessor:
                 "query": {"ids": {"values": [id]}},
                 "_source": {"includes": fields},
             },
-        ).json()
+        )
