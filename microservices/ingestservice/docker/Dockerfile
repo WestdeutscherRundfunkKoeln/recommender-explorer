@@ -12,10 +12,7 @@ RUN apt-get update && apt-get install -y \
 RUN python -m pip install wheel && \
     python -m pip install --no-cache-dir --upgrade -r requirements.txt
 
-COPY src/main.py src/main.py
-COPY src/preprocess_data.py src/preprocess_data.py
-COPY src/models.py src/models.py
-COPY src/task_status.py src/task_status.py
+COPY src src
 COPY dto/recoexplorer_item.py dto/recoexplorer_item.py
 
 COPY config/config.yaml config.yaml
