@@ -1,4 +1,5 @@
 from typing import Any
+from fastapi import HTTPException
 import httpx
 
 
@@ -21,17 +22,17 @@ class SearchServiceClient:
             "/delete-data",
             params={"document_id": id},
         )
-        response.raise_for_status()
+        _raise_for_status(response)
         return response.json()
 
     def create_single_document(self, document: dict):
         response = self.client.post("/create-single-document", json=document)
-        response.raise_for_status()
+        _raise_for_status(response)
         return response.json()
 
     def create_multiple_documents(self, documents: dict[str, Any]):
         response = self.client.post("/create-multiple-documents", json=documents)
-        response.raise_for_status()
+        _raise_for_status(response)
         return response
 
     def get(self, id: str, fields: list[str] | None = None):
@@ -39,5 +40,12 @@ class SearchServiceClient:
             f"/document/{id}",
             params={"fields": ",".join(fields) if fields else None},
         )
-        response.raise_for_status()
+        _raise_for_status(response)
         return response.json()["hits"]["hits"][0]["_source"]
+
+
+def _raise_for_status(response: httpx.Response):
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)

@@ -13,7 +13,6 @@ from src.models import BulkIngestTask, BulkIngestTaskStatus
 load_dotenv("tests/test.env")
 
 from src.main import (
-    BASE_URL_EMBEDDING,
     config,
     app,
     get_storage_client,
@@ -97,13 +96,14 @@ def overwrite_storage_client():
 @pytest.fixture
 def overwrite_tasks():
     TaskStatus._lifetime_seconds = 0
-    TaskStatus("exists").put(
+    TaskStatus.put(
+        "exists",
         BulkIngestTask(
             id="exists",
             status=BulkIngestTaskStatus.PREPROCESSING,
             errors=[],
             created_at=datetime.datetime.fromisoformat("2023-10-23T23:00:00"),
-        )
+        ),
     )
     yield
     TaskStatus.clear()
@@ -185,7 +185,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
     # Request to the embedding service
     request = requests[2]
     assert request.method == "POST"
-    assert request.url == BASE_URL_EMBEDDING + "/add-embedding-to-doc"
+    assert request.url == config["base_url_embedding"] + "/add-embedding-to-doc"
     assert request.headers["x-api-key"] == "test-key"
     assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
 
@@ -318,7 +318,7 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
     # Request to the embedding service
     request = requests[2]
     assert request.method == "POST"
-    assert request.url == BASE_URL_EMBEDDING + "/add-embedding-to-doc"
+    assert request.url == config["base_url_embedding"] + "/add-embedding-to-doc"
     assert request.headers["x-api-key"] == "test-key"
     assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
 
@@ -612,7 +612,7 @@ def test_bulk_ingest__with_validation_error(
     test_client: TestClient, httpx_mock: HTTPXMock
 ):
     httpx_mock.add_response(
-        url=BASE_URL_EMBEDDING + "/embedding", json={"model": [1, 2]}
+        url=config["base_url_embedding"] + "/embedding", json={"model": [1, 2]}
     )
     httpx_mock.add_response(
         url=config["base_url_search"] + "/create-multiple-documents",
@@ -637,7 +637,7 @@ def test_bulk_ingest__with_validation_error(
     # Request to the search service
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == BASE_URL_EMBEDDING + "/embedding"
+    assert request.url == config["base_url_embedding"] + "/embedding"
     assert request.headers["x-api-key"] == "test-key"
     assert request.content == json.dumps({"embedText": "test"}).encode()
 
@@ -699,7 +699,7 @@ def test_bulk_ingest__with_validation_error(
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
     assert task["errors"] == [
-        "An error occurred during preprocessing of item prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type"
+        "Error during preprocessing of file prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type"
     ]
 
 
