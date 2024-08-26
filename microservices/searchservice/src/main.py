@@ -1,5 +1,5 @@
 import os
-from typing import Annotated
+from typing import Annotated, Any
 
 from envyaml import EnvYAML
 from fastapi import APIRouter, FastAPI, Depends, Query
@@ -35,8 +35,7 @@ def create_document(
 ):
     # Add data to index
     print(data, type(data))
-    response = oss_accessor.create_oss_doc(document_id, data)
-    return response
+    return oss_accessor.create_oss_doc(document_id, data)
 
 
 @router.post("/documents")
@@ -45,16 +44,14 @@ def bulk_create_document(
     oss_accessor: OssAccessor = Depends(get_oss_accessor),
 ):
     # add data to index
-    response = oss_accessor.bulk_ingest(data)
-    return response
+    return oss_accessor.bulk_ingest(data)
 
 
 @router.delete("/documents/{document_id}")
 def delete_document(
     document_id: str, oss_accessor: OssAccessor = Depends(get_oss_accessor)
 ):
-    response = oss_accessor.delete_oss_doc(document_id)
-    return response
+    return oss_accessor.delete_oss_doc(document_id)
 
 
 @router.get("/documents/{document_id}")
@@ -64,19 +61,15 @@ def get_document(
     oss_accessor: OssAccessor = Depends(get_oss_accessor),
 ):
     _fields = fields.split(",") if fields else []
-    response = oss_accessor.get_oss_doc(document_id, _fields)
-    return response
+    return oss_accessor.get_oss_doc(document_id, _fields)
 
 
-@router.get("/documents")
-def get_document_without_embedding(
-    document_id: str,
-    fields: Annotated[str | None, Query()] = None,
+@router.post("/query")
+def get_document_with_query(
+    query: dict[str, Any],
     oss_accessor: OssAccessor = Depends(get_oss_accessor),
 ):
-    _fields = fields.split(",") if fields else []
-    response = oss_accessor.get_oss_doc(document_id, _fields)
-    return response
+    return oss_accessor.get_oss_docs(query)
 
 
 # TODO: search query for nearest neighbors

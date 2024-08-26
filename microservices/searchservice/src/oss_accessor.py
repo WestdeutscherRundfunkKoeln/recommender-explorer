@@ -1,4 +1,11 @@
-from opensearchpy import OpenSearch, RequestsHttpConnection, helpers, NotFoundError
+from fastapi import HTTPException
+from opensearchpy import (
+    OpenSearch,
+    RequestsHttpConnection,
+    helpers,
+    NotFoundError,
+    RequestError,
+)
 from typing import Any, Iterator, Self
 import logging
 import json
@@ -93,3 +100,11 @@ class OssAccessor:
                 "_source": {"includes": fields},
             },
         )
+
+    def get_oss_docs(self, query: dict[str, str]) -> dict:
+        try:
+            return self.oss_client.search(index=self.target_idx_name, body=query)
+        except RequestError as e:
+            raise HTTPException(
+                detail=f"Invalid query: {e.info}", status_code=400
+            ) from e
