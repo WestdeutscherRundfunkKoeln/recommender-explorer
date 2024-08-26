@@ -42,6 +42,11 @@ class SearchServiceClient:
         _raise_for_status(response)
         return response.json()["hits"]["hits"][0]["_source"]
 
+    def query(self, query: dict):
+        response = self.client.post("/query", json=query)
+        _raise_for_status(response)
+        return response.json()
+
 
 def _raise_for_status(response: httpx.Response):
     try:
