@@ -27,17 +27,19 @@ def health_check():
     return {"status": "OK"}
 
 
-@router.post("/create-single-document")
+@router.post("/documents/{document_id}")
 def create_document(
-    data: CreateDocumentRequest, oss_accessor: OssAccessor = Depends(get_oss_accessor)
+    document_id: str,
+    data: CreateDocumentRequest,
+    oss_accessor: OssAccessor = Depends(get_oss_accessor),
 ):
     # Add data to index
     print(data, type(data))
-    response = oss_accessor.create_oss_doc(data)
+    response = oss_accessor.create_oss_doc(document_id, data)
     return response
 
 
-@router.post("/create-multiple-documents")
+@router.post("/documents")
 def bulk_create_document(
     data: dict[str, CreateDocumentRequest],
     oss_accessor: OssAccessor = Depends(get_oss_accessor),
@@ -47,7 +49,7 @@ def bulk_create_document(
     return response
 
 
-@router.delete("/delete-data")
+@router.delete("/documents/{document_id}")
 def delete_document(
     document_id: str, oss_accessor: OssAccessor = Depends(get_oss_accessor)
 ):
@@ -55,8 +57,19 @@ def delete_document(
     return response
 
 
-@router.get("/document/{document_id}")
+@router.get("/documents/{document_id}")
 def get_document(
+    document_id: str,
+    fields: Annotated[str | None, Query()] = None,
+    oss_accessor: OssAccessor = Depends(get_oss_accessor),
+):
+    _fields = fields.split(",") if fields else []
+    response = oss_accessor.get_oss_doc(document_id, _fields)
+    return response
+
+
+@router.get("/documents")
+def get_document_without_embedding(
     document_id: str,
     fields: Annotated[str | None, Query()] = None,
     oss_accessor: OssAccessor = Depends(get_oss_accessor),

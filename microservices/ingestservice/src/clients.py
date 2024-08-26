@@ -19,25 +19,24 @@ class SearchServiceClient:
 
     def delete(self, id: str):
         response = self.client.delete(
-            "/delete-data",
-            params={"document_id": id},
+            f"/documents/{id}",
         )
         _raise_for_status(response)
         return response.json()
 
-    def create_single_document(self, document: dict):
-        response = self.client.post("/create-single-document", json=document)
+    def create_single_document(self, id: str, document: dict):
+        response = self.client.post(f"/documents/{id}", json=document)
         _raise_for_status(response)
         return response.json()
 
     def create_multiple_documents(self, documents: dict[str, Any]):
-        response = self.client.post("/create-multiple-documents", json=documents)
+        response = self.client.post("/documents", json=documents)
         _raise_for_status(response)
         return response
 
     def get(self, id: str, fields: list[str] | None = None):
         response = self.client.get(
-            f"/document/{id}",
+            f"/documents/{id}",
             params={"fields": ",".join(fields) if fields else None},
         )
         _raise_for_status(response)

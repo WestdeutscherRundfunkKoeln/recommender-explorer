@@ -138,9 +138,7 @@ def test_health_check(test_client):
 
 
 def test_create_single_document__valid_request(test_client, mock_oss):
-    response = test_client.post(
-        "/create-single-document", json={"id": "test", "text": "test"}
-    )
+    response = test_client.post("/documents/test", json={"id": "test", "text": "test"})
     assert response.status_code == 200
 
     assert mock_oss.update.call_count == 1
@@ -163,7 +161,7 @@ def test_create_single_document__valid_request(test_client, mock_oss):
 
 
 def test_create_single_document__malformed_request(test_client):
-    response = test_client.post("/create-single-document", json={"text": "test"})
+    response = test_client.post("/documents/test", json={"text": "test"})
     assert response.status_code == 422
     assert response.json() == {
         "detail": [
@@ -179,7 +177,7 @@ def test_create_single_document__malformed_request(test_client):
 
 def test_create_multiple_documents__valid_request(test_client, mock_oss, mocker):
     response = test_client.post(
-        "/create-multiple-documents",
+        "/documents",
         json={"test1": {"id": "test1"}, "test2": {"id": "test2"}},
     )
     assert response.status_code == 200
@@ -193,7 +191,7 @@ def test_create_multiple_documents__valid_request(test_client, mock_oss, mocker)
 
 
 def test_create_multiple_documents__malformed_request(test_client):
-    response = test_client.post("/create-multiple-documents", json={"id": "test"})
+    response = test_client.post("/documents", json={"id": "test"})
     assert response.status_code == 422
     assert response.json() == {
         "detail": [
@@ -208,7 +206,7 @@ def test_create_multiple_documents__malformed_request(test_client):
 
 
 def test_delete_document__valid_request(test_client, mock_oss):
-    response = test_client.delete("/delete-data", params={"document_id": "test"})
+    response = test_client.delete("/documents/test")
     assert response.status_code == 200
 
     assert mock_oss.delete.call_count == 1
@@ -228,23 +226,8 @@ def test_delete_document__valid_request(test_client, mock_oss):
     }
 
 
-def test_delete_document__malformed_request(test_client):
-    response = test_client.delete("/delete-data", params={"id": "test"})
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": [
-            {
-                "input": None,
-                "loc": ["query", "document_id"],
-                "msg": "Field required",
-                "type": "missing",
-            }
-        ]
-    }
-
-
 def test_get_document__valid_request_with_no_fields(test_client, mock_oss):
-    response = test_client.get("/document/test")
+    response = test_client.get("/documents/test")
     assert response.status_code == 200
     assert mock_oss.search.call_count == 1
     assert mock_oss.search.call_args[1] == {
@@ -275,7 +258,7 @@ def test_get_document__valid_request_with_no_fields(test_client, mock_oss):
 
 
 def test_get_document__valid_request_with_fields(test_client, mock_oss):
-    response = test_client.get("/document/test?fields=embedTextHash%2Cid")
+    response = test_client.get("/documents/test?fields=embedTextHash%2Cid")
     assert response.status_code == 200
     assert mock_oss.search.call_count == 1
     assert mock_oss.search.call_args[1] == {

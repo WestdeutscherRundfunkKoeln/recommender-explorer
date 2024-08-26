@@ -36,13 +36,13 @@ class OssAccessor:
 
         return cls(index, client)
 
-    def create_oss_doc(self, data: CreateDocumentRequest):
+    def create_oss_doc(self, id: str, data: CreateDocumentRequest):
         # add document to index
         print(data, type(data))
         response = self.oss_client.update(
             index=self.target_idx_name,
             body={"doc": data.model_dump(), "doc_as_upsert": True},
-            id=data.id,
+            id=id,
             refresh=True,
         )
 

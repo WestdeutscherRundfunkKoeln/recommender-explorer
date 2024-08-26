@@ -81,7 +81,7 @@ def ingest_item(
         raise HTTPException(status_code=422, detail=str(exc))
 
     upsert_response = search_service_client.create_single_document(
-        document.model_dump()
+        document.id, document.model_dump()
     )
 
     if not document.embedText:
