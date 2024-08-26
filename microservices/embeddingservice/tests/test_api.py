@@ -191,3 +191,12 @@ def test_add_embedding_to_document(httpx_mock, test_client: TestClient):
     assert requests[0].url == "https://test.io/search/documents/test"
     assert requests[0].headers["x-api-key"] == "test_key"
     assert requests[0].content == json.dumps(response_json).encode()
+
+
+def test_get_models(test_client: TestClient):
+    response = test_client.get("/models")
+    assert response.status_code == 200
+    assert response.json() == [
+        "all-MiniLM-L6-v2",
+        "distiluse-base-multilingual-cased-v1",
+    ]

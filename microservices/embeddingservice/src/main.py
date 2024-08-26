@@ -37,5 +37,10 @@ def add_embedding_to_document(data: AddEmbeddingToDocRequest):
     return result
 
 
+@router.get("/models")
+def get_models():
+    return list(text_embedder.models.keys())
+
+
 app = FastAPI(title="Embedding Service")
 app.include_router(router, prefix=ROUTER_PREFIX)
