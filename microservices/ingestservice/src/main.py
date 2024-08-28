@@ -152,5 +152,5 @@ def get_tasks() -> TasksResponse:
     return TasksResponse(tasks=tasks.values())
 
 
-app = FastAPI(title="Ingest Service")
+app = FastAPI(title="Ingest Service", lifespan=lifespan)
 app.include_router(router, prefix=ROUTER_PREFIX)

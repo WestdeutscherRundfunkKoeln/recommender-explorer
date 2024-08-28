@@ -15,6 +15,7 @@ async def reembedding_background_task(
 ):
     while True:
         await asyncio.sleep(interval_seconds)
+        logger.info("Running re-embedding task")
         try:
             await embed_partially_created_records(search_service_client, config)
         except Exception:
@@ -95,5 +96,6 @@ def build_query(models: list[str]) -> dict:
 
 async def task_cleaner(interval_seconds: float):
     while True:
+        logger.info("Cleaning up tasks")
         TaskStatus.clear()
         await asyncio.sleep(interval_seconds)
