@@ -13,7 +13,7 @@ from google.cloud import storage
 from pydantic import ValidationError
 from src.bulk import bulk_ingest
 from src.clients import SearchServiceClient
-from src.maintenance import task_cleaner, reembedding_background_task
+from src.maintenance import reembedding_background_task, task_cleaner
 from src.models import (
     FullLoadRequest,
     FullLoadResponse,
@@ -44,7 +44,7 @@ TASK_CLEANER_INTERVAL_SECONDS = float(
 REEMBED_INTERVAL_SECONDS = float(
     os.environ.get(
         "REEMBED_INTERVAL_SECONDS",
-        60,  # 1 minute
+        60 * 60,  # 1 hour
     )
 )
 
