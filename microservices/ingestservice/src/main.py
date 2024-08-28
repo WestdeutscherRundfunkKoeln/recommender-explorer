@@ -13,6 +13,7 @@ from google.cloud import storage
 from pydantic import ValidationError
 from src.bulk import bulk_ingest
 from src.clients import SearchServiceClient
+from src.maintenance import task_cleaner, reembedding_background_task
 from src.models import (
     FullLoadRequest,
     FullLoadResponse,
@@ -34,6 +35,18 @@ EVENT_TYPE_DELETE = "OBJECT_DELETE"
 
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
+TASK_CLEANER_INTERVAL_SECONDS = float(
+    os.environ.get(
+        "TASK_CLEANER_INTERVAL_SECONDS",
+        60 * 60 * 24,  # 24 hours
+    )
+)
+REEMBED_INTERVAL_SECONDS = float(
+    os.environ.get(
+        "REEMBED_INTERVAL_SECONDS",
+        60,  # 1 minute
+    )
+)
 
 config = EnvYAML(CONFIG_PATH)
 API_PREFIX = config.get("API_PREFIX", "")
@@ -43,15 +56,23 @@ HASH_FIELD = "embedTextHash"
 data_preprocessor = DataPreprocessor(config)
 search_service_client = SearchServiceClient.from_config(config)
 
+maintenance_tasks = set()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async def task_cleaner():
-        while True:
-            TaskStatus.clear()
-            await asyncio.sleep(5 * 60)
-
-    asyncio.create_task(task_cleaner())
+    maintenance_tasks.add(
+        asyncio.create_task(task_cleaner(TASK_CLEANER_INTERVAL_SECONDS))
+    )
+    maintenance_tasks.add(
+        asyncio.create_task(
+            reembedding_background_task(
+                interval_seconds=REEMBED_INTERVAL_SECONDS,
+                search_service_client=search_service_client,
+                config=config,
+            )
+        )
+    )
     yield
     search_service_client.close()
 

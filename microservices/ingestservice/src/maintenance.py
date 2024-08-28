@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 from envyaml import EnvYAML
 from src.clients import SearchServiceClient
+from src.task_status import TaskStatus
 
 logger = logging.getLogger(__name__)
 
@@ -90,3 +91,9 @@ def build_query(models: list[str]) -> dict:
     }
     logger.debug("Maintenance query: %s", query)
     return query
+
+
+async def task_cleaner(interval_seconds: float):
+    while True:
+        TaskStatus.clear()
+        await asyncio.sleep(interval_seconds)
