@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Any
 
 import httpx
 from envyaml import EnvYAML
@@ -22,28 +23,38 @@ async def reembedding_background_task(
 async def embed_partially_created_records(
     search_service_client: SearchServiceClient, config: EnvYAML
 ):
-    models = await get_models_info(config)
+    async with httpx.AsyncClient(
+        base_url=config["base_url_embedding"], headers={"x-api-key": config["api_key"]}
+    ) as embedding_service_client:
+        models = await get_models_info(embedding_service_client)
 
-    records = await get_partially_created_records(search_service_client, models)
+        records = await get_partially_created_records(search_service_client, models)
 
-    for record in records:
-        models_for_embedding = [model for model in models if model in records]
-
-        async with httpx.AsyncClient() as client:
-            await client.post(
-                f"{config['base_url_embedding']}/add-embedding-to-doc",
-                json={
-                    "id": record["id"],
-                    "embedText": record["embedText"],
-                    "models": models_for_embedding,
-                },
+        for record in records:
+            await embed_partially_created_record(
+                embedding_service_client, models, record
             )
 
 
-async def get_models_info(config: EnvYAML) -> list[str]:
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"{config['base_url_embedding']}/models")
+async def embed_partially_created_record(
+    client: httpx.AsyncClient, models: list[str], record: dict[str, Any]
+):
+    models_for_embedding = [
+        model for model in models if (model not in record) or (not record[model])
+    ]
 
+    await client.post(
+        "/add-embedding-to-doc",
+        json={
+            "id": record["id"],
+            "embedText": record["embedText"],
+            "models": models_for_embedding,
+        },
+    )
+
+
+async def get_models_info(client: httpx.AsyncClient) -> list[str]:
+    response = await client.get("/models")
     response.raise_for_status()
 
     models = response.json()
@@ -54,10 +65,9 @@ async def get_models_info(config: EnvYAML) -> list[str]:
 
 
 async def get_partially_created_records(
-    search_service_client: SearchServiceClient, models=list[str]
-) -> list[dict]:
+    search_service_client: SearchServiceClient, models: list[str]
+) -> list[dict[str, Any]]:
     response = await asyncio.to_thread(search_service_client.query, build_query(models))
-    response.raise_for_status()
 
     hits = response.get("hits", {}).get("hits", [])
     if not hits:
