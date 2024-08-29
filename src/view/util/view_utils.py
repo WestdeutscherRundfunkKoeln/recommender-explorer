@@ -1,9 +1,15 @@
+from typing import Callable, cast
 import logging
+
+import panel as pn
+
 
 logger = logging.getLogger(__name__)
 
 
-def get_first_widget_by_accessor_function(widget, target_accessor):
+def get_first_widget_by_accessor_function(
+    widget: pn.viewable.Viewable, target_accessor: str
+) -> pn.viewable.Viewable | None:
     """
     This method searches for a widget using the provided target accessor function. It first checks if the widget is a nested widget by calling
     the _process_nested_widgets function recursively. If a nested widget is found, it is returned. If no nested widget is found, it checks if
@@ -14,21 +20,105 @@ def get_first_widget_by_accessor_function(widget, target_accessor):
     :param target_accessor: The accessor function used to identify the target widget.
     :return: The target widget if found, otherwise None.
     """
-    if hasattr(widget, 'params') and "accessor" in widget.params and widget.params["accessor"] == target_accessor:
-        return widget
-    return _process_nested_widgets(widget, target_accessor)
+
+    def _widget_with_accessor(w):
+        return (
+            hasattr(w, "params")
+            and "accessor" in w.params
+            and w.params["accessor"] == target_accessor
+        )
+
+    return find_widget(widget, _widget_with_accessor)
 
 
-def _process_nested_widgets(widget, target_accessor):
+def collect_leaf_widgets(
+    widget: pn.viewable.Viewable,
+    layout_widget_types: tuple[
+        type[pn.layout.ListPanel] | type[pn.layout.base.NamedListPanel], ...
+    ],
+) -> set[pn.viewable.Viewable]:
     """
-    Process nested widgets to find a specific widget by its target accessor.
+    This method collects leaf widgets from a given widget.
 
-    :param widget: The parent widget to search for nested widgets.
-    :param target_accessor: The target accessor of the widget to find.
-    :return: The found widget with the target accessor, or None if not found.
+    :param widget: The widget from which to collect leaf widgets.
+    :return: A list of leaf widgets.
+
+    The leaf widgets are collected recursively by traversing through the widget hierarchy.
+    Leaf widgets are considered to be widgets with the attribute `is_leaf_widget` set to
+    `True`. If the widget is an instance of one of the layout widget types specified in
+    `layout_widget_types`, the method recursively collects leaf widgets from its children.
     """
-    if hasattr(widget, 'objects'):
-        for child in widget.objects:
-            result = get_first_widget_by_accessor_function(child, target_accessor)
-            if result is not None:
-                return result
+
+    return collect_widgets(
+        widget, lambda w: hasattr(w, "is_leaf_widget") and getattr(w, "is_leaf_widget")
+    )
+
+
+def find_widget_by_name_recursive(
+    widget: pn.reactive.Reactive, target_name: str, return_parent: bool = False
+) -> pn.viewable.Viewable | None:
+    """
+    Gets a widget from a widget group (for example panels widgets box) and search it by given name (label).
+    Calls itself for nested widgets (recursive).
+
+    If return_parent is set to True, the function will return containing widget of the target widget
+    instead of the target widget itself.
+
+    :param widget: Widget that is the source for the search.
+    :param target_name: Name of the target widget.
+    :param return_parent: If set to True, return the container of the widget found.
+    :return: The widget or container of widget if found, or None if no widget found.
+    """
+
+    def _find_parent(w):
+        if isinstance(w, (pn.layout.ListPanel, pn.layout.base.NamedListPanel)):
+            for child in w:
+                if hasattr(child, "name") and child.name == target_name:
+                    return True
+        return False
+
+    if return_parent:
+        return find_widget(widget, _find_parent)
+
+    return find_widget(widget, lambda w: hasattr(w, "name") and w.name == target_name)
+
+
+def find_widget_by_type_and_label(
+    widget: pn.viewable.Viewable, widget_type: type, label: str
+) -> pn.viewable.Viewable | None:
+    def _predicate(w):
+        return (
+            isinstance(w, widget_type)
+            and hasattr(w, "params")
+            and w.params.get("label") == label
+        )
+
+    return find_widget(widget, _predicate)
+
+
+def find_widget(
+    start_widget: pn.viewable.Viewable,
+    predicate: Callable[[pn.viewable.Viewable], bool],
+) -> pn.viewable.Viewable | None:
+    stack = [start_widget]
+    while stack:
+        current = stack.pop()
+        if predicate(current):
+            return current
+        if isinstance(current, (pn.layout.ListPanel, pn.layout.base.NamedListPanel)):
+            stack.extend([widget for widget in current])
+
+
+def collect_widgets(
+    start_widget: pn.viewable.Viewable,
+    predicate: Callable[[pn.viewable.Viewable], bool],
+) -> set[pn.viewable.Viewable]:
+    widgets = set()
+    stack = [start_widget]
+    while stack:
+        current = stack.pop()
+        if predicate(current):
+            widgets.add(current)
+        if isinstance(current, (pn.layout.ListPanel, pn.layout.base.NamedListPanel)):
+            stack.extend([widget for widget in current])
+    return widgets

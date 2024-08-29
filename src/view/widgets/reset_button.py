@@ -1,6 +1,6 @@
 import panel as pn
-import panel.layout.base
 from view.widgets.widget import UIWidget
+from view.util.view_utils import collect_leaf_widgets
 
 from .. import ui_constants as c
 
@@ -94,29 +94,7 @@ class ResetButtonWidget(UIWidget):
         """
         widgets_to_reset = []
         for widget in block:
-            widgets_to_reset.extend(self.collect_leaf_widgets(widget))
+            widgets_to_reset.extend(
+                collect_leaf_widgets(widget, self.layout_widget_types)
+            )
         return widgets_to_reset
-
-    def collect_leaf_widgets(self, widget):
-        """
-        This method collects leaf widgets from a given widget.
-
-        :param widget: The widget from which to collect leaf widgets.
-        :return: A list of leaf widgets.
-
-        The leaf widgets are collected recursively by traversing through the widget hierarchy.
-        Leaf widgets are considered to be widgets with the attribute `is_leaf_widget` set to
-        `True`. If the widget is an instance of one of the layout widget types specified in
-        `layout_widget_types`, the method recursively collects leaf widgets from its children.
-        """
-        leaf_widgets = []
-        if isinstance(widget, panel.layout.base.Row) and isinstance(widget[1], panel.widgets.indicators.TooltipIcon):
-            widget = widget[0]
-        is_leaf_widget = hasattr(widget, "is_leaf_widget") and widget.is_leaf_widget
-
-        if not is_leaf_widget and isinstance(widget, self.layout_widget_types):
-            for child in widget:
-                leaf_widgets.extend(self.collect_leaf_widgets(child))
-        elif is_leaf_widget and hasattr(widget, "reset_identifier"):
-            leaf_widgets.append(widget)
-        return leaf_widgets
