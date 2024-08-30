@@ -1,12 +1,17 @@
 import panel as pn
 
-from typing import Any
+from typing import Any, Optional
 from view.widgets.widget import UIWidget
 from view import ui_constants as c
 
 
-class RadioBoxWidget(UIWidget):
-    def create(self, config: dict[str, Any]) -> pn.Column | None:
+class RadioBoxWidget(pn.Column, UIWidget):
+
+    def __init__(self, reco_explorer_app_instance, controller_instance):
+        pn.Column.__init__(self)
+        UIWidget.__init__(self, reco_explorer_app_instance, controller_instance)
+
+    def create(self, config: dict[str, Any]) -> Optional["RadioBoxWidget"]:
         """
         Builds a radio widget based on the given config from config yaml.
         First get the Label Keys from the configured options and store them.
@@ -23,11 +28,7 @@ class RadioBoxWidget(UIWidget):
             multi_select_widget (widget): final widget built from given config
         """
         if config.get(c.RADIO_BOX_OPTION_KEY):
-            radio_box_group = pn.widgets.RadioBoxGroup(
-                options=list(config["options"].keys())
-            )
-
-            result_dictionary = {}
+            option_widgets_dict = {}
             for option, widgets in config["options"].items():
                 widgets_for_option = []
                 for widget_config in widgets:
@@ -36,14 +37,19 @@ class RadioBoxWidget(UIWidget):
                     )
                     if widget_for_option:
                         widgets_for_option.append(widget_for_option)
-                result_dictionary[option] = widgets_for_option
+                widget_group_wrapper = WidgetGroupWrapper(*widgets_for_option, option_of_widget_group=option)
+                option_widgets_dict[option] = widget_group_wrapper
+
+            options = list(option_widgets_dict.keys())
+            radio_box_group = pn.widgets.RadioBoxGroup(options=options)
 
             def show_hide_widgets(
-                event, radio_box_group=radio_box_group, options=result_dictionary
+                    event, radio_box_group=radio_box_group, options=option_widgets_dict
             ):
                 for option, widgets in options.items():
                     for widget in widgets:
                         self.set_widget_visibility(widget, False)
+                        self.reset_widget_value(widget)
 
                     selected_option = radio_box_group.value
                     for selected_widget in options.get(selected_option, []):
@@ -52,14 +58,11 @@ class RadioBoxWidget(UIWidget):
             radio_box_group.param.watch(show_hide_widgets, "value")
             show_hide_widgets("value")
 
-            return pn.Column(
-                radio_box_group,
-                *[
-                    element
-                    for sublist in result_dictionary.values()
-                    for element in sublist
-                ],
-            )
+            self.append(radio_box_group)
+            for widget_wrapper in option_widgets_dict.values():
+                self.append(widget_wrapper)
+
+            return self
         else:
             return None
 
@@ -69,3 +72,27 @@ class RadioBoxWidget(UIWidget):
                 content.visible = visibility
         else:
             widget.visible = visibility
+
+    def reset_widget_value(self, widget):
+        """
+        Reset the value of the given widget.
+
+        :param widget: The widget whose value needs to be reset.
+        :return: None
+        """
+        if isinstance(widget, pn.layout.Row):
+            for content in widget:
+                if isinstance(content, pn.widgets.TextInput):
+                    content.value = ""
+        elif isinstance(widget, pn.widgets.TextAreaInput) or isinstance(widget, pn.widgets.TextInput):
+            widget.value = ""
+        elif isinstance(widget, pn.widgets.DatetimePicker):
+            widget.value = None
+        elif isinstance(widget, pn.widgets.MultiSelect):
+            widget.value = []
+
+
+class WidgetGroupWrapper(pn.Column):
+    def __init__(self, *objects, option_of_widget_group=None, **params):
+        super().__init__(*objects, **params)
+        self.option_of_widget_group = option_of_widget_group

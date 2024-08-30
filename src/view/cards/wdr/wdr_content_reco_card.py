@@ -6,6 +6,8 @@ import view.ui_constants as c
 from dto.wdr_content_item import WDRContentItemDto
 from view.cards.wdr.wdr_content_card import WDRContentCard
 from view.util.view_utils import get_first_widget_by_accessor_function
+from view.util.view_utils import get_custom_radio_box_widgets
+from view.util.view_utils import extract_widgets_from_radio_box_widget
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +24,21 @@ class WDRContentRecoCard(WDRContentCard):
         :param external_id: The external ID.
         :return: The click handler function.
         """
+
         def click_handler(event):
-            target_widget = get_first_widget_by_accessor_function(self.reco_explorer_app_instance.config_based_nav_controls, "get_item_by_crid")
-            if target_widget:
-                target_widget.value = external_id
+            for radio_box_widgets in get_custom_radio_box_widgets(self.reco_explorer_app_instance.config_based_nav_controls):
+                radio_box_group, widget_groups = extract_widgets_from_radio_box_widget(radio_box_widgets)
+
+                for widget_group in widget_groups:
+                    target_widget = get_first_widget_by_accessor_function(widget_group, "get_item_by_crid")
+
+                    if target_widget and widget_group.option_of_widget_group in radio_box_group.options:
+                        radio_box_group.value = widget_group.option_of_widget_group
+                        target_widget.value = external_id
+                        break
+                else:
+                    continue
+                break
 
         return click_handler
 
