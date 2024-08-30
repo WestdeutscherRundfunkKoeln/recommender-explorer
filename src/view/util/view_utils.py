@@ -1,10 +1,12 @@
-from typing import Callable, cast
 import logging
+from typing import Callable
+from collections import deque
 
 import panel as pn
 
-
 logger = logging.getLogger(__name__)
+
+WidgetWithCildren = (pn.layout.ListPanel, pn.layout.base.NamedListPanel)
 
 
 def get_first_widget_by_accessor_function(
@@ -100,13 +102,13 @@ def find_widget(
     start_widget: pn.viewable.Viewable,
     predicate: Callable[[pn.viewable.Viewable], bool],
 ) -> pn.viewable.Viewable | None:
-    stack = [start_widget]
-    while stack:
-        current = stack.pop()
+    queue = deque([start_widget])
+    while queue:
+        current = queue.popleft()
         if predicate(current):
             return current
-        if isinstance(current, (pn.layout.ListPanel, pn.layout.base.NamedListPanel)):
-            stack.extend([widget for widget in current])
+        if isinstance(current, WidgetWithCildren):
+            queue.extend([widget for widget in current])
 
 
 def collect_widgets(
@@ -119,6 +121,6 @@ def collect_widgets(
         current = stack.pop()
         if predicate(current):
             widgets.add(current)
-        if isinstance(current, (pn.layout.ListPanel, pn.layout.base.NamedListPanel)):
+        if isinstance(current, WidgetWithCildren):
             stack.extend([widget for widget in current])
     return widgets
