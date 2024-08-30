@@ -1,12 +1,13 @@
 import logging
-from typing import Callable
 from collections import deque
+from typing import Callable, TypeVar, cast
 
 import panel as pn
 
 logger = logging.getLogger(__name__)
 
 WidgetWithCildren = (pn.layout.ListPanel, pn.layout.base.NamedListPanel)
+T = TypeVar("T")
 
 
 def get_first_widget_by_accessor_function(
@@ -56,7 +57,7 @@ def collect_leaf_widgets(
     )
 
 
-def find_widget_by_name_recursive(
+def find_widget_by_name(
     widget: pn.reactive.Reactive, target_name: str, return_parent: bool = False
 ) -> pn.viewable.Viewable | None:
     """
@@ -86,16 +87,16 @@ def find_widget_by_name_recursive(
 
 
 def find_widget_by_type_and_label(
-    widget: pn.viewable.Viewable, widget_type: type, label: str
-) -> pn.viewable.Viewable | None:
+    widget: pn.viewable.Viewable, widget_type: type[T], label: str
+) -> T | None:
     def _predicate(w):
         return (
             isinstance(w, widget_type)
             and hasattr(w, "params")
-            and w.params.get("label") == label
+            and getattr(w, "params").get("label") == label
         )
 
-    return find_widget(widget, _predicate)
+    return cast(T | None, find_widget(widget, _predicate))
 
 
 def find_widget(
