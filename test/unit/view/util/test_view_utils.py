@@ -3,7 +3,7 @@ import panel as pn
 from src.view.util.view_utils import (
     collect_leaf_widgets,
     get_first_widget_by_accessor_function,
-    find_widget_by_name_recursive,
+    find_widget_by_name,
     find_widget_by_type_and_label,
 )
 
@@ -36,9 +36,9 @@ def test_find_widget_by_name_recursive():
     row = pn.Row(objects=[text_input_2, card])
     col = pn.Column(objects=[text_input_1, row])
 
-    assert find_widget_by_name_recursive(col, "1") == text_input_1
-    assert find_widget_by_name_recursive(col, "2") == text_input_3
-    assert find_widget_by_name_recursive(col, "2", True) == card
+    assert find_widget_by_name(col, "1") == text_input_1
+    assert find_widget_by_name(col, "2") == text_input_3
+    assert find_widget_by_name(col, "2", True) == card
 
 
 def test_collect_leaf_widgets():
