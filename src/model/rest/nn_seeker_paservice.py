@@ -33,15 +33,23 @@ class NnSeekerPaService(NnSeekerRest):
             model_props['auth_header']: model_props['auth_header_value']
         }
 
+
+        ## static args
         params = {
             "configuration": self.__configuration_c2c,
-            "similarityType": model_props['param_similarity_type'],
+#            "similarityType": model_props['param_similarity_type'],
             "assetId": content_id,
             "limit": self.__max_num_neighbours
         }
 
-        if "param_model_type" in model_props:
-            params["modelType"] = model_props["param_model_type"]
+        ## any other args are taken verbatim from config
+        for prop in model_props:
+            prop_short = prop.removeprefix('param_')
+            if prop not in params:
+                params[prop_short] = model_props[prop]
+
+#        if "param_model_type" in model_props:
+ #           params["modelType"] = model_props["param_model_type"]
 
         status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
 

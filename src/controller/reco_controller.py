@@ -456,9 +456,14 @@ class RecommendationController:
         :return:
         """
         reco_filter = self._get_current_filter_state("reco_filter")
-        kidxs, nn_dists = self.reco_accessor.get_k_NN(
+        logger.warning("calling " + str(self.reco_accessor))
+
+        kidxs, nn_dists, oss_field = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
+
+        logger.warning("RETRIEVED WITH OSS FIELD " + oss_field)
+
         kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
         item_dto = dto_from_model(
             model=model,
@@ -466,6 +471,9 @@ class RecommendationController:
             item_type=constants.ITEM_TYPE_CONTENT,
             provenance=constants.ITEM_PROVENANCE_C2C,
         )
+
+        logger.warning("ALIVE")
+
         return (
             self.item_accessor.get_items_by_ids(
                 item_dto, kidxs[: self.num_NN], constants.MODEL_TYPE_C2C

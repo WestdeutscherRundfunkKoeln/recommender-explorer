@@ -7,7 +7,7 @@ class UserCard():
     def __init__(self, config, *kwargs):
         self.config = config
 
-def draw(self, user_dto: UserItemDto, nr, model, model_config, modal_func):
+    def draw(self, user_dto: UserItemDto, nr, model, model_config, modal_func):
 
         card_optional_objects = []
 

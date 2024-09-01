@@ -7,6 +7,7 @@ from dto.item import ItemDto
 from envyaml import EnvYAML
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
+from util.dto_utils import get_primary_idents
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +83,11 @@ class NnSeekerOpenSearch(NnSeeker):
     def get_k_NN(
         self, item: ItemDto, k: int, nn_filter: dict[str, Any]
     ) -> tuple[list[str], list[float]]:
+
+        #primary_ident, oss_field = get_primary_idents(self.__config)
         logger.info(f"Seeking {k} neighours.")
         content_id = item.id
+
 
         if content_id:
             embedding = self.__get_vec_for_content_id(content_id)
@@ -102,7 +106,7 @@ class NnSeekerOpenSearch(NnSeeker):
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(
             embedding, k, reco_filter
         )
-        return recomm_content_ids, nn_dists
+        return recomm_content_ids, nn_dists, ""
 
     def get_max_num_neighbours(self, content_id):
         return self.__max_num_neighbours
