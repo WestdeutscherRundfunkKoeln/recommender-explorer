@@ -62,7 +62,6 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
                 {}
             )
         else:
-            logger.warning("RETURNING " + response["hits"]["hits"][0]["_id"])
             return response["hits"]["hits"][0]["_id"]
 
     def get_items_by_ids(
