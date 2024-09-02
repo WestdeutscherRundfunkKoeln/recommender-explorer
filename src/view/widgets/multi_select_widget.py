@@ -3,7 +3,7 @@ from typing import Any
 import panel as pn
 from view import ui_constants as c
 from view.widgets.widget import UIWidget
-from view.util.view_utils import find_widget_by_name_recursive
+from view.util.view_utils import find_widget_by_name
 
 
 class MultiSelectionWidget(UIWidget):
@@ -151,7 +151,7 @@ class MultiSelectionWidget(UIWidget):
                 action_option_value,
                 action_target_widget_label,
             ) in event.obj.action_parameter.items():
-                action_target_widget = find_widget_by_name_recursive(
+                action_target_widget = find_widget_by_name(
                     self.reco_explorer_app_instance.config_based_nav_controls,
                     action_target_widget_label,
                     True,

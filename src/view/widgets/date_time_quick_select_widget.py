@@ -10,12 +10,18 @@ from src.view.widgets.widget import UIWidget
 logger = logging.getLogger(__name__)
 
 
-class DateTimeQuickSelect(UIWidget):
+class DateTimeQuickSelectWidget(UIWidget):
     def create(self, config: dict[str, Any]) -> pn.widgets.Button | None:
-        start_picker_label = config.get("start_picker_label", "Start Date Time")
-        end_picker_label = config.get("end_picker_label", "End Date Time")
-        start_delta = timedelta(config.get("start_delta", 0))
-        end_delta = timedelta(config.get("end_delta", 0))
+        start_picker_label = config.get(
+            c.DATE_TIME_QUICK_SELECT_START_PICKER_LABEL_KEY, "start"
+        )
+        end_picker_label = config.get(
+            c.DATE_TIME_QUICK_SELECT_END_PICKER_LABEL_KEY, "end"
+        )
+        start_delta = timedelta(
+            config.get(c.DATE_TIME_QUICK_SELECT_START_DELTA_DAYS, 0)
+        )
+        end_delta = timedelta(config.get(c.DATE_TIME_QUICK_SELECT_END_DELTA_DAYS, 0))
 
         if start_delta < end_delta:
             logger.error("Start date is greater than end date.")
@@ -25,7 +31,9 @@ class DateTimeQuickSelect(UIWidget):
             self.set_picker(start_picker_label, start_delta, time.min)
             self.set_picker(end_picker_label, end_delta, time.max)
 
-        button = pn.widgets.Button(name=config.get("label", "New Year"))
+        button = pn.widgets.Button(
+            name=config.get(c.DATE_TIME_QUICK_SELECT_LABEL_KEY, "Today")
+        )
         button.on_click(_set_date_range)
         return button
 
