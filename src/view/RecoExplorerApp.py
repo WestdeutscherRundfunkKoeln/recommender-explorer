@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import traceback
 from typing import Any
@@ -948,32 +949,32 @@ class RecoExplorerApp:
         self.model_resetter.on_click(self.trigger_model_reset)
 
     # event handling
-    def trigger_reco_filter_choice(self, event):
+    async def trigger_reco_filter_choice(self, event):
         logger.info(event)
         self.toggle_visibility(event)
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_start_filter_choice(self, event):
+    async def trigger_start_filter_choice(self, event):
         logger.info(event)
         self.toggle_visibility(event)
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_item_pagination(self, event):
+    async def trigger_item_pagination(self, event):
         logger.info(event)
         if event.obj.name == self.RIGHT_ARROW:
             self.controller.increase_page_number()
         elif event.obj.name == self.LEFT_ARROW:
             self.controller.decrease_page_number()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
         self.disablePageButtons()
 
-    def trigger_item_filter_choice(self, event):
+    async def trigger_item_filter_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_model_choice(self, event):
+    async def trigger_model_choice(self, event):
         logger.info(event)
         if self.model_choice.active[0] == 0:
             self.controller.reset_component(
@@ -985,31 +986,31 @@ class RecoExplorerApp:
             )
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_model_choice_new(self, event):
+    async def trigger_model_choice_new(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_user_cluster_choice(self, event):
+    async def trigger_user_cluster_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_user_filter_choice(self, event):
+    async def trigger_user_filter_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_item_selection(self, event):
+    async def trigger_item_selection(self, event):
         # if the "new" parameter of the event contains a string, load that string
         logger.info(event)
         if event.new:
-            self.get_items_with_parameters()
+            await self.get_items_with_parameters()
             self.pagination[4] = self.controller.get_num_pages()
         else:
             self.item_grid.objects = {}
@@ -1025,11 +1026,11 @@ class RecoExplorerApp:
         self.floating_elements.objects = []
         self.draw_pagination()
 
-    def trigger_reco_reset(self, event):
+    async def trigger_reco_reset(self, event):
         logger.info(event)
         self.controller.reset_defaults(event.obj.params["resets"])
         self.controller.reset_page_number()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
     def trigger_model_reset(self, event):
         logger.info(event)
@@ -1568,14 +1569,14 @@ class RecoExplorerApp:
 
     #
 
-    def get_items_with_parameters(self):
+    async def get_items_with_parameters(self):
         """
         Calls the actual search function in controller to get results for query
         """
         self.item_grid.objects = {}
 
         try:
-            models, items, config = self.controller.get_items()
+            models, items, config = await asyncio.to_thread(self.controller.get_items)
             for idx, row in enumerate(items):
                 for idz, item_dto in enumerate(row):
                     card = self.controller.get_item_viewer(item_dto, self)

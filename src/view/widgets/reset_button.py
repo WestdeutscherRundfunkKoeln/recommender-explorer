@@ -48,7 +48,7 @@ class ResetButtonWidget(UIWidget):
         }
         return reset_button_widget
 
-    def reset_block_contents(self, event, block):
+    async def reset_block_contents(self, event, block):
         """
         Resets the contents of the given block by setting the value of
         each widget to its specified reset value. Additionally, resets
@@ -83,7 +83,7 @@ class ResetButtonWidget(UIWidget):
                 self.reco_explorer_app_instance.floating_elements.objects = []
                 self.reco_explorer_app_instance.draw_pagination()
             elif reset_type in reset_identifiers_reco:
-                self.reco_explorer_app_instance.get_items_with_parameters()
+                await self.reco_explorer_app_instance.get_items_with_parameters()
 
     def get_widgets_to_reset(self, block):
         """
