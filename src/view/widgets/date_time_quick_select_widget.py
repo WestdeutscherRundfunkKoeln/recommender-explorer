@@ -3,9 +3,9 @@ import logging
 from typing import Any
 
 import panel as pn
-from src.view import ui_constants as c
-from src.view.util.view_utils import find_widget_by_type_and_label
-from src.view.widgets.widget import UIWidget
+from view import ui_constants as c
+from view.util.view_utils import find_widget_by_type_and_label
+from view.widgets.widget import UIWidget
 
 logger = logging.getLogger(__name__)
 

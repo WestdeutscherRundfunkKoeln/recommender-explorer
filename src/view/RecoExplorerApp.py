@@ -17,6 +17,7 @@ from util.file_utils import (
 from view import ui_constants
 from view.widgets.accordion_widget import AccordionWidget
 from view.widgets.date_time_picker_widget import DateTimePickerWidget
+from view.widgets.date_time_quick_select_widget import DateTimeQuickSelectWidget
 from view.widgets.multi_select_widget import MultiSelectionWidget
 from view.widgets.radio_box_widget import RadioBoxWidget
 from view.widgets.reset_button import ResetButtonWidget
@@ -54,6 +55,9 @@ class RecoExplorerApp:
                 self, self.controller
             ),
             ui_constants.ACCORDION_WITH_CARDS_TYPE_VALUE: AccordionWidgetWithCards(
+                self, self.controller
+            ),
+            ui_constants.DATE_TIME_QUICK_SELECT_TYPE_VALUE: DateTimeQuickSelectWidget(
                 self, self.controller
             ),
         }
