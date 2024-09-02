@@ -106,7 +106,8 @@ class NnSeekerOpenSearch(NnSeeker):
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(
             embedding, k, reco_filter
         )
-        return recomm_content_ids, nn_dists, ""
+
+        return recomm_content_ids, nn_dists, "id"
 
     def get_max_num_neighbours(self, content_id):
         return self.__max_num_neighbours

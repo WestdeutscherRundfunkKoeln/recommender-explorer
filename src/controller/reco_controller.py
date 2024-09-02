@@ -462,17 +462,26 @@ class RecommendationController:
             start_item, (self.num_NN + 1), reco_filter
         )
 
-        logger.warning("RETRIEVED WITH OSS FIELD " + oss_field)
+        if oss_field != 'id':
+            ident, db_ident = get_primary_idents(self.config)
+            kidxs_prim = []
+            try:
+                for kidx in kidxs:
+                    kidxs_prim.append(
+                        self.item_accessor.get_primary_key_by_field(kidx, db_ident)
+                    )
+            except EmptySearchError as e:
+                    logger.warning(str(e))
+            kidxs = kidxs_prim
+        else:
+            kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
 
-        kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
         item_dto = dto_from_model(
             model=model,
             position=constants.ITEM_POSITION_RECO,
             item_type=constants.ITEM_TYPE_CONTENT,
             provenance=constants.ITEM_PROVENANCE_C2C,
         )
-
-        logger.warning("ALIVE")
 
         return (
             self.item_accessor.get_items_by_ids(
