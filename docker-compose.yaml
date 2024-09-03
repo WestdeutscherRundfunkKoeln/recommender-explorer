@@ -106,7 +106,7 @@ services:
       - OPENSEARCH_USER=admin
       - OPENSEARCH_PASS=admin
       - OPENSEARCH_INDEX=test_index
-      - DEPLOYMENT_ENVIRONMENT=DEV
+      - DEPLOYMENT_ENVIRONMENT=LOCAL
     networks:
       - opensearch-net
   embedding-service:
