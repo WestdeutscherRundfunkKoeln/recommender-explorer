@@ -45,11 +45,14 @@ RESET_IDENTIFIER_UPPER_ITEM_FILTER = "upper_item_filter"
 RESET_IDENTIFIER_RECO_FILTER = "reco_filter"
 RESET_IDENTIFIER_UPPER_RECO_FILTER = "upper_reco_filter"
 
+# Accordion Cards
+ACCORDION_CARD_TOGGLE_KEY = "toggle"
+ACCORDION_CARD_ACTIVE_KEY = "active"
+
 # Accordion
 ACCORDION_CONTENT_KEY = "content"
 ACCORDION_LABEL_KEY = "label"
 ACCORDION_ACTIVE_KEY = "active"
-ACCORDION_TOGGLE_KEY = "toggle"
 ACCORDION_RESET_BUTTON_KEY = "accordion-reset-button"
 ACCORDION_MAX_WIDTH = 323
 
@@ -105,6 +108,7 @@ DATE_TIME_PICKER_TYPE_VALUE = "date_time_picker"
 RADIO_BOX_TYPE_VALUE = "radio_box"
 TEXT_AREA_INPUT_TYPE_VALUE = "text_area_input"
 ACCORDION_RESET_BUTTON_TYPE_VALUE = "accordion-reset-button"
+ACCORDION_WITH_CARDS_TYPE_VALUE = "accordion_with_cards"
 
 
 # Fallbacks (if no key and value was given in the config yaml)

@@ -434,7 +434,6 @@ In this example the second multi select Widget is hidden on load. When the User 
 | type    | yes       | -                          | widget type definition: **accordion**                                                                                                                                                                                                                                                  |
 | label   | no        | Default Accordion Headline | headline of the accordion widget                                                                                                                                                                                                                                                       |
 | active  | no        | []                         | When there are multiple widgets in the accordion this defines which accordion content widget should be open when the application is started (0 -> first). Each widget which should be open must be in the list, when the list is empty (fallback) no accordion content widget is open. |
-| toggle  | no        | False                      | Option Flag which defines if more than one accordion content type can be opened if there are multiple ones. If True and first accordion content is opened and user opens the second accordion content, the first one gets closed automatically.                                        |
 | content | yes       | -                          | This defines the content of the accordion. There can be multiple entries of other widgets here which need to be exactly configured like they would, when standing alone. Available widget options are: TextWidget, MultiSelectWidget, DateTimePickerWidget, RadioBoxWidget             |
 
 ### Example of a Accordion Widget Configuration
@@ -449,6 +448,29 @@ In this example the second multi select Widget is hidden on load. When the User 
 		    -	type: 'text_field'
 			    ...
 This configuration would create a Accordion Widget with a label and two contents inside, a Multi Select Widget and a Text Field Widget. The Multi Select Widget will be initially visible and wont close when the text field is selected.  Be aware that the widgets inside the content are treated as standard widgets so they have all the features and requirements as if you would confige it outside the Accordion.
+
+## Accordion Cards Widget
+
+###  Accordion Cards Config Overview
+
+| keyword | mandatory | fallback value | description                                                                                                                                                                                                                                                                                   |
+|---------|-----------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| type    | yes       | -              | widget type definition: **accordion_with_cards**                                                                                                                                                                                                                                              |
+| active  | no        | [0]            | When there are multiple widgets in the accordion this defines which accordion content widget should be open when the application is started (0 -> first). Each widget which should be open must be in the list, when the list is empty (fallback) the first accordion content widget is open. |
+| toggle  | no        | False          | Option Flag which defines if more than one accordion content type can be opened if there are multiple ones. If True and first accordion content is opened and user opens the second accordion content, the first one gets closed automatically.                                               |
+| content | yes       | -              | This defines the cards of the accordion. There can be multiple entries of other accordion widgets here which need to be exactly configured like they would, when standing alone.                                                                                                              |
+
+### Example of an Accordion Cards Widget Configuration
+
+    -   type: 'accordion_with_cards'
+	    active: 0
+	    toggle: True
+	    content:
+		    -	type: 'accordion'
+			    ...
+		    -	type: 'accordion'
+			    ...
+This Widget Configuration is just a Pool if you want to create multiple accordion widgets which can interact with each other (Toggle). So you can just use this if you want to display multiple accordion cards
 
 ## Radio Box Widget
 
