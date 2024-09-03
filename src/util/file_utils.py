@@ -16,30 +16,28 @@ def get_all_config_files(path) -> list:
     return all_configs
 
 
-def get_config_from_arg(arg) -> str:
-    full_path = arg.removeprefix("config=")
-    if os.path.isfile(full_path):
-        return full_path
-    else:
-        raise Exception("Config file not found at path [" + full_path + "]")
+def get_configs_from_arg(arg: str) -> tuple[str, str, dict[str, str]]:
+    config_paths = arg.removeprefix("config=").split(",")
+    for config_path in config_paths:
+        if not os.path.isfile(config_path):
+            raise Exception("Config file not found at path [" + config_path + "]")
+    kv_pairs = [
+        (get_client_from_path(config_path), config_path) for config_path in config_paths
+    ]
+    return *kv_pairs[0], dict(kv_pairs)
 
 
-def get_config_from_search(search, config_full_path) -> str:
-    client_ident = get_client_ident_from_search(search)
-    if client_ident:
-        path, name = _segment_arg_config(config_full_path)
-        full_path = path + "/" + _replace_config(name, client_ident)
-        if os.path.isfile(full_path):
-            return full_path
-        else:
-            raise ConfigError(
-                "Config file from search param ["
-                + search
-                + "] not found at path ["
-                + full_path
-                + "]",
-                {},
-            )
+def get_config_from_search(
+    search: str, config_full_paths: dict[str, str]
+) -> tuple[str, str] | None:
+    client = get_client_ident_from_search(search)
+    if not client:
+        logger.error("No client identifier found in search")
+        return
+
+    if client not in config_full_paths:
+        raise ConfigError(f"Config for client {client}", {})
+    return client, config_full_paths[client]
 
 
 def get_client_from_path(full_path):
@@ -52,26 +50,18 @@ def get_client_from_path(full_path):
         raise Exception("Client could not be matched from path [" + full_path + "]")
 
 
-def get_client_ident_from_search(search) -> str:
-    app_ident = ""
+def get_client_ident_from_search(search: str) -> str | None:
     for pair in search.removeprefix("?").split("&"):
-        param, val = list(pair.split("="))
+        param, val = pair.split("=")
         if param == constants.CLIENT_IDENTIFIER:
-            app_ident = val
-    if app_ident:
-        return app_ident
-    # else:
-    # raise Exception('Client identifier not found')
+            return val
 
 
-def get_client_options(config_full_path):
-    all_configs = get_all_config_files(config_full_path)
-    options = {}
-    for config_path in all_configs:
-        client = get_client_from_path(config_path)
-        key = EnvYAML(config_path).get("display_name", client.capitalize())
-        options[key] = client
-    return options
+def get_client_options(all_configs: dict[str, str]) -> dict[str, str]:
+    return {
+        EnvYAML(config_path).get("display_name", client.capitalize()): client
+        for client, config_path in all_configs.items()
+    }
 
 
 def _segment_arg_config(config_name) -> tuple[str, str]:

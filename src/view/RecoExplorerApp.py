@@ -11,8 +11,6 @@ from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
-    get_all_config_files,
-    get_client_from_path,
     get_client_options,
 )
 from view import ui_constants
@@ -35,11 +33,16 @@ logger.setLevel(logging.INFO)
 # Main App
 #
 class RecoExplorerApp:
-    def __init__(self, config_full_path: str, config: dict[str, str]) -> None:
+    def __init__(
+        self, config_full_paths: dict[str, str], config: dict[str, str], client: str
+    ) -> None:
         # basic setup
         self.config = config
-        self.config_full_path = config_full_path
+        self.client = client
+        self.config_full_paths = config_full_paths
+        self.config_full_path = config_full_paths[client]
         self.controller = RecommendationController(self.config)
+        print("yay")
 
         self.widgets = {
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
@@ -75,9 +78,6 @@ class RecoExplorerApp:
         # display mode
         self.model_type = constants.MODEL_CONFIG_C2C
 
-        # client
-        self.set_client()
-
         # start items
         self.start_items = []
 
@@ -93,6 +93,7 @@ class RecoExplorerApp:
         self.nav_controls = pn.WidgetBox()
         self.navigational_components = {}
         self.config_based_nav_controls = pn.WidgetBox()
+        self.client_choice_visibility = len(self.config_full_paths) > 1
 
         #
         self.define_item_pagination()
@@ -117,18 +118,6 @@ class RecoExplorerApp:
         self.set_u2c_model_definitions()
 
         self.url_parameter_text_field_mapping = {}
-
-    def set_client(self):
-        # Check if there are multiple config files. If yes, make config widget visible.
-        all_configs = get_all_config_files(self.config_full_path)
-        logger.debug("all_configs: %s", all_configs)
-
-        if len(all_configs) > 1:
-            self.client_choice_visibility = True
-        else:
-            self.client_choice_visibility = False
-
-        self.client = get_client_from_path(self.config_full_path)
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -1395,7 +1384,7 @@ class RecoExplorerApp:
             # Client
             client_choice = pn.widgets.RadioButtonGroup(
                 name="",
-                options=get_client_options(self.config_full_path),
+                options=get_client_options(self.config_full_paths),
                 value=self.client,
             )
 
@@ -1415,7 +1404,7 @@ class RecoExplorerApp:
             # Client
             self.client_choice = pn.widgets.RadioButtonGroup(
                 name="",
-                options=get_client_options(self.config_full_path),
+                options=get_client_options(self.config_full_paths),
                 value=self.client,
             )
 
