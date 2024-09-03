@@ -7,7 +7,6 @@ from dto.item import ItemDto
 from envyaml import EnvYAML
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
-from util.dto_utils import get_primary_idents
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +83,6 @@ class NnSeekerOpenSearch(NnSeeker):
         self, item: ItemDto, k: int, nn_filter: dict[str, Any]
     ) -> tuple[list[str], list[float]]:
 
-        #primary_ident, oss_field = get_primary_idents(self.__config)
         logger.info(f"Seeking {k} neighours.")
         content_id = item.id
 
