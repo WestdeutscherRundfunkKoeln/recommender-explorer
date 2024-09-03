@@ -37,9 +37,11 @@ class AccordionWidget(UIWidget):
             )
 
         accordion_widget.active = [config.get(c.ACCORDION_ACTIVE_KEY, [])]
-        accordion_widget.toggle = config.get(c.ACCORDION_TOGGLE_KEY, False)
 
         accordion_widget.is_leaf_widget = False
+        accordion_widget.hidden_label = config.get(
+            c.ACCORDION_LABEL_KEY, c.FALLBACK_ACCORDION_LABEL_VALUE
+        )
         accordion_widget.max_width = c.ACCORDION_MAX_WIDTH
 
         return accordion_widget
@@ -139,5 +141,64 @@ class AccordionWidget(UIWidget):
             and isinstance(widget[0], panel.widgets.select.MultiSelect)
         ):
             return widget[0]
+        else:
+            return None
+
+
+class AccordionWidgetWithCards(AccordionWidget):
+    def create(self, config: dict[str, Any]) -> pn.Accordion:
+        """
+        Create an accordion widget with configured content and options. This Widget
+        displays just the content (other accordion widgets) and does not have any
+        ui widgets itself.
+
+        :param config: A dictionary representing the configuration.
+
+        :return: An instance of pn.Accordion with configured content and options.
+        """
+        accordion_contents = self.create_accordion_content(
+            config.get(c.ACCORDION_CONTENT_KEY, "")
+        )
+
+        accordion_contents = [
+            content
+            for content in accordion_contents
+            if hasattr(content, "hidden_label")
+        ]
+        accordion_cards_tuples = [
+            (content.hidden_label, content[0]) for content in accordion_contents
+        ]
+        accordion_widget_with_cards = pn.Accordion(*accordion_cards_tuples)
+
+        active_list = self.get_config_value(config, c.ACCORDION_CARD_ACTIVE_KEY, int)
+        if active_list:
+            accordion_widget_with_cards.active = list(map(int, str(active_list)))
+
+        accordion_widget_with_cards.toggle = self.get_config_value(
+            config, c.ACCORDION_CARD_TOGGLE_KEY, bool
+        )
+
+        return accordion_widget_with_cards
+
+    def get_config_value(self, config: dict, key: str, expected_type: type):
+        """
+        Get the value from the given configuration dictionary based on the specified key and expected type.
+
+        :param config: A dictionary representing the configuration.
+        :param key: A string representing the key to retrieve the value from the configuration.
+        :param expected_type: The expected type of the value.
+
+        :return: The value from the configuration if it exists and matches the expected type.
+                 If the expected type is a list, it returns [0] as a default value. If the expected type is bool, it
+                 returns False as a default value. If the value doesn't exist or doesn't match the expected type,
+                 it returns None.
+        """
+        config_value = config.get(key)
+        if config_value and isinstance(config_value, expected_type):
+            return config_value
+        elif expected_type is list:
+            return [0]
+        elif expected_type is bool:
+            return False
         else:
             return None

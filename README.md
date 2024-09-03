@@ -229,6 +229,50 @@ If you want to have a date search for the start items (I want to see start items
         validator: '_check_date'
         accessor_function: 'get_items_by_date'
 
+## Date Time Quick Select
+
+### Date Time Quick Select Config Overview
+
+| keyword           | mandatory | fallback value   | description                                          |
+|-------------------|-----------|------------------|------------------------------------------------------|
+| type              | yes       | -                | widget type definition: **date_time_quick_select**   |
+| label             | no        | Today            | label shown on the quick select button               |
+| start_picker_label| no        | start            | label of the start datetime picker widget            | 
+| end_picker_label  | no        | end              | label of the end datetime picker widget              | 
+| start_delta_days  | no        | 0                | how many days in the past the start date is          |
+| end_delta_days    | no        | 0                | how many days in the past the end date is            |
+
+### Example of a Date Time Quick Select Widget Configuration
+
+    type: date_time_quick_select
+    label: last week
+    start_picker_label: startdateinput
+    end_picker_label: enddateinput
+    start_delta_days: 6
+    end_delta_days: 0
+
+### A real live use
+
+If you want to have a quick selection right after the date search simply put: 
+
+    -   type: 'date_time_picker'
+        name: 'Startdatum'
+        label: 'startdateinput'
+        validator: '_check_date'
+        accessor_function: 'get_items_by_date'
+    -   type: 'date_time_picker'
+        name: 'Enddatum'
+        label: 'enddateinput'
+        validator: '_check_date'
+        accessor_function: 'get_items_by_date'
+    -   type: date_time_quick_select
+        label: last week
+        start_picker_label: startdateinput
+        end_picker_label: enddateinput
+        start_delta_days: 6
+        end_delta_days: 0
+
+
 ## Multi Select Widget
 
 ### Multi Select Config Overview
@@ -434,7 +478,6 @@ In this example the second multi select Widget is hidden on load. When the User 
 | type    | yes       | -                          | widget type definition: **accordion**                                                                                                                                                                                                                                                  |
 | label   | no        | Default Accordion Headline | headline of the accordion widget                                                                                                                                                                                                                                                       |
 | active  | no        | []                         | When there are multiple widgets in the accordion this defines which accordion content widget should be open when the application is started (0 -> first). Each widget which should be open must be in the list, when the list is empty (fallback) no accordion content widget is open. |
-| toggle  | no        | False                      | Option Flag which defines if more than one accordion content type can be opened if there are multiple ones. If True and first accordion content is opened and user opens the second accordion content, the first one gets closed automatically.                                        |
 | content | yes       | -                          | This defines the content of the accordion. There can be multiple entries of other widgets here which need to be exactly configured like they would, when standing alone. Available widget options are: TextWidget, MultiSelectWidget, DateTimePickerWidget, RadioBoxWidget             |
 
 ### Example of a Accordion Widget Configuration
@@ -449,6 +492,29 @@ In this example the second multi select Widget is hidden on load. When the User 
 		    -	type: 'text_field'
 			    ...
 This configuration would create a Accordion Widget with a label and two contents inside, a Multi Select Widget and a Text Field Widget. The Multi Select Widget will be initially visible and wont close when the text field is selected.  Be aware that the widgets inside the content are treated as standard widgets so they have all the features and requirements as if you would confige it outside the Accordion.
+
+## Accordion Cards Widget
+
+###  Accordion Cards Config Overview
+
+| keyword | mandatory | fallback value | description                                                                                                                                                                                                                                                                                   |
+|---------|-----------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| type    | yes       | -              | widget type definition: **accordion_with_cards**                                                                                                                                                                                                                                              |
+| active  | no        | [0]            | When there are multiple widgets in the accordion this defines which accordion content widget should be open when the application is started (0 -> first). Each widget which should be open must be in the list, when the list is empty (fallback) the first accordion content widget is open. |
+| toggle  | no        | False          | Option Flag which defines if more than one accordion content type can be opened if there are multiple ones. If True and first accordion content is opened and user opens the second accordion content, the first one gets closed automatically.                                               |
+| content | yes       | -              | This defines the cards of the accordion. There can be multiple entries of other accordion widgets here which need to be exactly configured like they would, when standing alone.                                                                                                              |
+
+### Example of an Accordion Cards Widget Configuration
+
+    -   type: 'accordion_with_cards'
+	    active: 0
+	    toggle: True
+	    content:
+		    -	type: 'accordion'
+			    ...
+		    -	type: 'accordion'
+			    ...
+This Widget Configuration is just a Pool if you want to create multiple accordion widgets which can interact with each other (Toggle). So you can just use this if you want to display multiple accordion cards
 
 ## Radio Box Widget
 
