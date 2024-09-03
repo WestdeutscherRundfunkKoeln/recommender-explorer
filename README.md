@@ -229,6 +229,50 @@ If you want to have a date search for the start items (I want to see start items
         validator: '_check_date'
         accessor_function: 'get_items_by_date'
 
+## Date Time Quick Select
+
+### Date Time Quick Select Config Overview
+
+| keyword           | mandatory | fallback value   | description                                          |
+|-------------------|-----------|------------------|------------------------------------------------------|
+| type              | yes       | -                | widget type definition: **date_time_quick_select**   |
+| label             | no        | Today            | label shown on the quick select button               |
+| start_picker_label| no        | start            | label of the start datetime picker widget            | 
+| end_picker_label  | no        | end              | label of the end datetime picker widget              | 
+| start_delta_days  | no        | 0                | how many days in the past the start date is          |
+| end_delta_days    | no        | 0                | how many days in the past the end date is            |
+
+### Example of a Date Time Quick Select Widget Configuration
+
+    type: date_time_quick_select
+    label: last week
+    start_picker_label: startdateinput
+    end_picker_label: enddateinput
+    start_delta_days: 6
+    end_delta_days: 0
+
+### A real live use
+
+If you want to have a quick selection right after the date search simply put: 
+
+    -   type: 'date_time_picker'
+        name: 'Startdatum'
+        label: 'startdateinput'
+        validator: '_check_date'
+        accessor_function: 'get_items_by_date'
+    -   type: 'date_time_picker'
+        name: 'Enddatum'
+        label: 'enddateinput'
+        validator: '_check_date'
+        accessor_function: 'get_items_by_date'
+    -   type: date_time_quick_select
+        label: last week
+        start_picker_label: startdateinput
+        end_picker_label: enddateinput
+        start_delta_days: 6
+        end_delta_days: 0
+
+
 ## Multi Select Widget
 
 ### Multi Select Config Overview

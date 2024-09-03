@@ -43,6 +43,9 @@
                       "$ref": "#/$defs/date_time_picker"
                     },
                     {
+                      "$ref": "#/$defs/date_time_quick_select"
+                    },
+                    {
                       "$ref": "#/$defs/multi_select"
                     },
                     {
@@ -215,6 +218,38 @@
         "type",
         "validator",
         "accessor_function"
+      ]
+    },
+    "date_time_quick_select": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "date_time_quick_select"
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the quick select button."
+        },
+        "start_picker_label": {
+          "type": "string",
+          "description": "Label of the Start Date Time Picker."
+        },
+        "end_picker_label": {
+          "type": "string",
+          "description": "Label of the End Date Time Picker."
+        },
+        "start_delta_days": {
+          "type": "integer",
+          "description": "Number of date past today as start date"
+        },
+        "end_delta_days": {
+          "type": "integer",
+          "description": "Number of date past today as:end date"
+        }
+      },
+      "required": [
+        "type"
       ]
     },
     "multi_select": {
