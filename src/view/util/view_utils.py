@@ -89,6 +89,15 @@ def find_widget_by_name(
 def find_widget_by_type_and_label(
     widget: pn.viewable.Viewable, widget_type: type[T], label: str
 ) -> T | None:
+    """
+    Finds all widget of a certain type with a certain label in a given widget collection.
+
+    param widget: The widget to search for the target widget.
+    param widget_type: The type of the target widget.
+    param label: The label of the target widget.
+    return: The target widget if found, otherwise None.
+    """
+
     def _predicate(w):
         return (
             isinstance(w, widget_type)
@@ -103,6 +112,13 @@ def find_widget(
     start_widget: pn.viewable.Viewable,
     predicate: Callable[[pn.viewable.Viewable], bool],
 ) -> pn.viewable.Viewable | None:
+    """
+    performs a breadth-first search on the widget tree starting at start_widget and returns the first widget for which the predicate is True.
+
+    param start_widget: The widget to start the search from.
+    param predicate: The predicate to test each widget against.
+    return: The first widget for which the predicate is True, or None if no such widget is found.
+    """
     queue = deque([start_widget])
     while queue:
         current = queue.popleft()
@@ -116,6 +132,13 @@ def collect_widgets(
     start_widget: pn.viewable.Viewable,
     predicate: Callable[[pn.viewable.Viewable], bool],
 ) -> set[pn.viewable.Viewable]:
+    """
+    performs a depth-first search on the widget tree starting at start_widget and returns all widgets for which the predicate is True.
+
+    param start_widget: The widget to start the search from.
+    param predicate: The predicate to test each widget against.
+    return: All widgets for which the predicate is True.
+    """
     widgets = set()
     stack = [start_widget]
     while stack:
