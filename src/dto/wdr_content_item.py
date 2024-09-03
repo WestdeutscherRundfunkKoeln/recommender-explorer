@@ -31,6 +31,7 @@ class WDRContentItemDto(ItemDto):
     longDescription: str = ''
     producer: str = ''
     publisherId: str = ''
+    score: int = 0
     sections: str = ''
     seasonNumber: str = ''
     showCrid: str = ''
