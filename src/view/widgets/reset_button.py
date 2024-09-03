@@ -22,9 +22,11 @@ class ResetButtonWidget(UIWidget):
         reset_button_widget = self.set_reset_button_params(
             reset_button_widget, widgets_to_reset
         )
-        reset_button_widget.on_click(
-            lambda event: self.reset_block_contents(event, widgets_to_reset)
-        )
+
+        async def _reset_block_contents(event):
+            await self.reset_block_contents(event, widgets_to_reset)
+
+        reset_button_widget.on_click(_reset_block_contents)
 
         return reset_button_widget
 
