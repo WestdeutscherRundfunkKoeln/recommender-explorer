@@ -138,7 +138,7 @@ class MultiSelectionWidget(UIWidget):
                 multi_select_widget.action_parameter = action_parameter
         return multi_select_widget
 
-    def trigger_multi_select_reco_filter_choice(self, event):
+    async def trigger_multi_select_reco_filter_choice(self, event):
         """
         Checks multi select widget for action parameters and sets visibility trigger for each of them.
         After that runs the usual get items function to search for items with given filters and parameters.
@@ -159,7 +159,7 @@ class MultiSelectionWidget(UIWidget):
                 if action_target_widget:
                     action_target_widget.visible = action_option_value == event.new[0]
 
-        self.reco_explorer_app_instance.get_items_with_parameters()
+        await self.reco_explorer_app_instance.get_items_with_parameters()
 
 
 class ItemFilterWidget(MultiSelectionWidget):
