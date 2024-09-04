@@ -42,7 +42,6 @@ class RecoExplorerApp:
         self.config_full_paths = config_full_paths
         self.config_full_path = config_full_paths[client]
         self.controller = RecommendationController(self.config)
-        print("yay")
 
         self.widgets = {
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
