@@ -46,7 +46,7 @@ class EmbedText:
         bucket = None
         if "service_account" in self.config:
             credentials = service_account.Credentials.from_service_account_info(
-                self.config["service_account"]
+                json.loads(self.config["service_account"])
             )
             client = storage.Client(credentials=credentials)
             bucket = client.bucket(self.config["bucket_name"])
