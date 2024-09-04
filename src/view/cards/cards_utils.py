@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple, Callable, Any
+from typing import Callable, Any
 
 import view.ui_constants as c
 from view.widgets.radio_box_widget import RadioBoxWidget
@@ -36,7 +36,7 @@ def create_click_handler(external_id, widgets) -> Callable[[Any], None]:
 
 def _extract_widgets_from_radio_box_widget(
         radio_box_widget: RadioBoxWidget,
-) -> Tuple[pn.widgets.RadioBoxGroup, List[WidgetGroupWrapper]]:
+) -> tuple[pn.widgets.RadioBoxGroup, list[WidgetGroupWrapper]]:
     """
     Get panel radio box group and widgets groups from the given custom RadioBoxGroup.
 
@@ -68,7 +68,7 @@ def _get_target_widget_from_radio_box_set_value_and_select_option(
     :return: the target widget if found, None otherwise
     """
     for widget_group in widget_groups:
-        target_widget = get_first_widget_by_accessor_function(widget_group, "get_item_by_crid")
+        target_widget = get_first_widget_by_accessor_function(widget_group, ["get_item_by_crid"])
 
         if target_widget and widget_group.option_of_widget_group in radio_box_group.options:
             radio_box_group.value = widget_group.option_of_widget_group
@@ -84,9 +84,7 @@ def _get_target_widget_set_value(widgets, external_id):
     :param external_id: the external_id used to identify the target widget
     :return: None
     """
-    target_widget = get_first_widget_by_accessor_function(widgets, "get_item_by_crid")
-    if not target_widget:
-        target_widget = get_first_widget_by_accessor_function(widgets, "get_item_by_external_id")
+    target_widget = get_first_widget_by_accessor_function(widgets, ["get_item_by_crid", "get_item_by_external_id"])
     if target_widget:
         target_widget.value = external_id
 

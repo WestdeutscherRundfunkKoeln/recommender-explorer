@@ -49,7 +49,8 @@ class RadioBoxWidget(pn.Column, UIWidget):
                 for option, widgets in options.items():
                     for widget in widgets:
                         self.set_widget_visibility(widget, False)
-                        self.reset_widget_value(widget)
+                        if hasattr(widget, 'reset_identifier'):
+                            self.controller_instance.reset_defaults([widget.reset_identifier])
 
                     selected_option = radio_box_group.value
                     for selected_widget in options.get(selected_option, []):
@@ -72,24 +73,6 @@ class RadioBoxWidget(pn.Column, UIWidget):
                 content.visible = visibility
         else:
             widget.visible = visibility
-
-    def reset_widget_value(self, widget):
-        """
-        Reset the value of the given widget.
-
-        :param widget: The widget whose value needs to be reset.
-        :return: None
-        """
-        if isinstance(widget, pn.layout.Row):
-            for content in widget:
-                if isinstance(content, pn.widgets.TextInput):
-                    content.value = ""
-        elif isinstance(widget, pn.widgets.TextAreaInput) or isinstance(widget, pn.widgets.TextInput):
-            widget.value = ""
-        elif isinstance(widget, pn.widgets.DatetimePicker):
-            widget.value = None
-        elif isinstance(widget, pn.widgets.MultiSelect):
-            widget.value = []
 
 
 class WidgetGroupWrapper(pn.Column):

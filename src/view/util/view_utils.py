@@ -13,7 +13,7 @@ T = TypeVar("T")
 
 
 def get_first_widget_by_accessor_function(
-    widget: pn.viewable.Viewable, target_accessor: str
+    widget: pn.viewable.Viewable, target_accessor: list[str]
 ) -> pn.viewable.Viewable | None:
     """
     This method searches for a widget using the provided target accessor function. It first checks if the widget is a nested widget by calling
@@ -30,7 +30,7 @@ def get_first_widget_by_accessor_function(
         return (
             hasattr(w, "params")
             and "accessor" in w.params
-            and w.params["accessor"] == target_accessor
+            and w.params["accessor"] in target_accessor
         )
 
     return find_widget(widget, _widget_with_accessor)
