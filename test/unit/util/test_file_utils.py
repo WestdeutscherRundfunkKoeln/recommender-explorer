@@ -1,6 +1,22 @@
+import pytest
 from pathlib import Path
 
-from src.util.file_utils import get_client_options, load_ui_config
+from src.util.file_utils import (
+    get_client_options,
+    get_configs_from_arg,
+    load_ui_config,
+    get_client_ident_from_search,
+)
+
+
+@pytest.fixture
+def config_dummy():
+    return str(Path(__file__).parent / "config_dummy.yaml")
+
+
+@pytest.fixture
+def config_test():
+    return str(Path(__file__).parent / "config_test.yaml")
 
 
 def test_load_ui_config__valid_config():
@@ -45,7 +61,28 @@ def test_load_ui_config__inline_config():
     assert result == config
 
 
-def test_get_client_options():
-    result = get_client_options(Path(__file__).parent / "config_test.yaml")
+def test_get_client_options(config_dummy, config_test):
+    result = get_client_options({"test": config_test, "dummy": config_dummy})
 
     assert result == {"test_entry_from_config_file": "test", "Dummy": "dummy"}
+
+
+def test_get_configs_from_arg__multiple_configs(config_test, config_dummy):
+    args = f"config={config_test},{config_dummy}"
+
+    result = get_configs_from_arg(args)
+
+    assert result == ("test", config_test, {"test": config_test, "dummy": config_dummy})
+
+
+def test_get_configs_from_arg__invalid_config(config_test, config_dummy):
+    config_dummy = Path(__file__).parent / "config_dummy.yaml"
+    args = f"config=./nonexistent.yaml,{config_dummy}"
+
+    with pytest.raises(Exception):
+        get_configs_from_arg(args)
+
+
+def test_get_client_ident_from_search():
+    assert get_client_ident_from_search("?client=test") == "test"
+    assert get_client_ident_from_search("?field=test") is None
