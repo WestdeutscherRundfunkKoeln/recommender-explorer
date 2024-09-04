@@ -1,6 +1,6 @@
 import panel as pn
-import panel.layout.base
 from view.widgets.widget import UIWidget
+from view.util.view_utils import collect_leaf_widgets
 
 from .. import ui_constants as c
 
@@ -22,9 +22,11 @@ class ResetButtonWidget(UIWidget):
         reset_button_widget = self.set_reset_button_params(
             reset_button_widget, widgets_to_reset
         )
-        reset_button_widget.on_click(
-            lambda event: self.reset_block_contents(event, widgets_to_reset)
-        )
+
+        async def _reset_block_contents(event):
+            await self.reset_block_contents(event, widgets_to_reset)
+
+        reset_button_widget.on_click(_reset_block_contents)
 
         return reset_button_widget
 
@@ -48,7 +50,7 @@ class ResetButtonWidget(UIWidget):
         }
         return reset_button_widget
 
-    def reset_block_contents(self, event, block):
+    async def reset_block_contents(self, event, block):
         """
         Resets the contents of the given block by setting the value of
         each widget to its specified reset value. Additionally, resets
@@ -83,7 +85,7 @@ class ResetButtonWidget(UIWidget):
                 self.reco_explorer_app_instance.floating_elements.objects = []
                 self.reco_explorer_app_instance.draw_pagination()
             elif reset_type in reset_identifiers_reco:
-                self.reco_explorer_app_instance.get_items_with_parameters()
+                await self.reco_explorer_app_instance.get_items_with_parameters()
 
     def get_widgets_to_reset(self, block):
         """
@@ -94,29 +96,7 @@ class ResetButtonWidget(UIWidget):
         """
         widgets_to_reset = []
         for widget in block:
-            widgets_to_reset.extend(self.collect_leaf_widgets(widget))
+            widgets_to_reset.extend(
+                collect_leaf_widgets(widget, self.layout_widget_types)
+            )
         return widgets_to_reset
-
-    def collect_leaf_widgets(self, widget):
-        """
-        This method collects leaf widgets from a given widget.
-
-        :param widget: The widget from which to collect leaf widgets.
-        :return: A list of leaf widgets.
-
-        The leaf widgets are collected recursively by traversing through the widget hierarchy.
-        Leaf widgets are considered to be widgets with the attribute `is_leaf_widget` set to
-        `True`. If the widget is an instance of one of the layout widget types specified in
-        `layout_widget_types`, the method recursively collects leaf widgets from its children.
-        """
-        leaf_widgets = []
-        if isinstance(widget, panel.layout.base.Row) and isinstance(widget[1], panel.widgets.indicators.TooltipIcon):
-            widget = widget[0]
-        is_leaf_widget = hasattr(widget, "is_leaf_widget") and widget.is_leaf_widget
-
-        if not is_leaf_widget and isinstance(widget, self.layout_widget_types):
-            for child in widget:
-                leaf_widgets.extend(self.collect_leaf_widgets(child))
-        elif is_leaf_widget and hasattr(widget, "reset_identifier"):
-            leaf_widgets.append(widget)
-        return leaf_widgets
