@@ -2,6 +2,7 @@ import logging
 from typing import Callable, Any
 
 import view.ui_constants as c
+from dto.item import ItemDto
 from view.widgets.radio_box_widget import RadioBoxWidget
 from view.widgets.radio_box_widget import WidgetGroupWrapper
 from view.util.view_utils import find_widget_by_type
@@ -12,7 +13,9 @@ import panel as pn
 logger = logging.getLogger(__name__)
 
 
-def create_click_handler(external_id, widgets) -> Callable[[Any], None]:
+def create_click_handler(
+        external_id: str, widgets: pn.viewable.Viewable
+) -> Callable[[Any], None]:
     """
     Create a click handler function that sets the value of a target widget
     to the external_id. Uses view utils function to get widget by accessor name.
@@ -54,9 +57,9 @@ def _extract_widgets_from_radio_box_widget(
 
 
 def _get_target_widget_from_radio_box_set_value_and_select_option(
-        radio_box_group,
-        widget_groups,
-        external_id
+        radio_box_group: pn.widgets.RadioBoxGroup,
+        widget_groups: list[WidgetGroupWrapper],
+        external_id: str
 ):
     """
     Sets the value of the target widget identified by the given external_id and selects the correct
@@ -76,7 +79,10 @@ def _get_target_widget_from_radio_box_set_value_and_select_option(
             break
 
 
-def _get_target_widget_set_value(widgets, external_id):
+def _get_target_widget_set_value(
+        widgets: pn.viewable.Viewable,
+        external_id: str
+):
     """
     Sets the value of the target widget identified by the given external_id.
 
@@ -89,7 +95,9 @@ def _get_target_widget_set_value(widgets, external_id):
         target_widget.value = external_id
 
 
-def insert_id_button(click_handler) -> pn.widgets.Button:
+def insert_id_button(
+        click_handler: Callable
+) -> pn.widgets.Button:
     """
     Creates and returns a Button widget and assigns the
     specified click_handler function to its on_click event.
@@ -102,7 +110,12 @@ def insert_id_button(click_handler) -> pn.widgets.Button:
     return insert_id_button_widget
 
 
-def append_custom_css_for_insert_id_button(config, model_config, content_dto, model):
+def append_custom_css_for_insert_id_button(
+        config: dict[str, Any],
+        model_config: str,
+        content_dto: ItemDto,
+        model: dict[str, Any]
+):
     """
     Appends custom CSS for the "insert id button" on the recommended item card. Colors depends on
     the start item and reco items card color from the config.
