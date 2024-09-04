@@ -124,17 +124,8 @@ class WDRContentRecoCard(WDRContentCard):
 
         child_objects = [
             teaserimage,
+            pn.pane.Markdown(f""" ### Score: {str(round(content_dto.dist, 2))}"""),
         ]
-
-        dto_score_attribute = None
-        if hasattr(content_dto, "dist"):
-            dto_score_attribute = "dist"
-        elif hasattr(content_dto, "score"):
-            dto_score_attribute = "score"
-
-        if dto_score_attribute:
-            value = getattr(content_dto, dto_score_attribute)
-            child_objects.append(pn.pane.Markdown(f""" ### Score: {str(round(value, 2))}"""),)
 
         card = pn.Card(
             styles={
