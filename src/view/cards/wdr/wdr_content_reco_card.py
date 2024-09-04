@@ -1,13 +1,13 @@
 import logging
-from typing import Callable, Any
 
 import panel as pn
-import view.ui_constants as c
+
 from dto.wdr_content_item import WDRContentItemDto
 from view.cards.wdr.wdr_content_card import WDRContentCard
-from view.util.view_utils import get_first_widget_by_accessor_function
-from view.util.view_utils import get_custom_radio_box_widgets
-from view.util.view_utils import extract_widgets_from_radio_box_widget
+from view.cards.cards_utils import create_click_handler
+from view.cards.cards_utils import append_custom_css_for_insert_id_button
+from view.cards.cards_utils import insert_id_button
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,66 +15,6 @@ logger = logging.getLogger(__name__)
 class WDRContentRecoCard(WDRContentCard):
     CARD_HEIGHT = 600
     IMAGE_HEIGHT = 200
-
-    def _create_click_handler(self, external_id) -> Callable[[Any], None]:
-        """
-        Create a click handler function that sets the value of a target widget
-        to the external_id. Uses view utils function to get widget by accessor name.
-
-        :param external_id: The external ID.
-        :return: The click handler function.
-        """
-
-        def click_handler(event):
-            for radio_box_widgets in get_custom_radio_box_widgets(self.reco_explorer_app_instance.config_based_nav_controls):
-                radio_box_group, widget_groups = extract_widgets_from_radio_box_widget(radio_box_widgets)
-
-                for widget_group in widget_groups:
-                    target_widget = get_first_widget_by_accessor_function(widget_group, "get_item_by_crid")
-
-                    if target_widget and widget_group.option_of_widget_group in radio_box_group.options:
-                        radio_box_group.value = widget_group.option_of_widget_group
-                        target_widget.value = external_id
-                        break
-                else:
-                    continue
-                break
-
-        return click_handler
-
-    def _insert_id_button(self, click_handler) -> pn.widgets.Button:
-        """
-        Creates and returns a Button widget and assigns the
-        specified click_handler function to its on_click event.
-
-        :param click_handler: The function to be called when the button is clicked.
-        :return: A Button widget with the assigned click_handler function for the on_click event.
-        """
-        insert_id_button = pn.widgets.Button(name=c.INSERT_ID_BUTTON_LABEL)
-        insert_id_button.on_click(click_handler)
-        return insert_id_button
-
-    def _append_custom_css_for_insert_id_button(self, model_config, content_dto, model):
-        """
-        Appends custom CSS for the "insert id button" on the recommended item card. Colors depends on
-        the start item and reco items card color from the config.
-
-        :param model_config: The configuration for the model.
-        :param content_dto: The data transfer object for the content.
-        :param model: The model to append the custom CSS for.
-
-        :return: None
-        """
-        css = f"""
-            .bk.bk-btn.bk-btn-default {{
-                background-color: {self.config[model_config][content_dto.provenance][model]["start_color"]} !important;
-                font-weight: bolder;
-            }}
-            .bk.bk-btn.bk-btn-default:hover {{
-                border-color: {self.config[model_config][content_dto.provenance][model]["reco_color"]} !important;
-            }}
-            """
-        pn.extension(raw_css=[css])
 
     def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_func):
         stylesheet_image = """
@@ -154,8 +94,8 @@ class WDRContentRecoCard(WDRContentCard):
 
         card.objects = child_objects
 
-        self._append_custom_css_for_insert_id_button(model_config, content_dto, model)
-        click_handler = self._create_click_handler(content_dto.externalid)
-        insert_id_button = self._insert_id_button(click_handler)
+        append_custom_css_for_insert_id_button(self.config, model_config, content_dto, model)
+        click_handler = create_click_handler(content_dto.externalid, self.reco_explorer_app_instance.config_based_nav_controls)
+        insert_id_button_widget = insert_id_button(click_handler)
 
-        return super().draw(content_dto, card, insert_id_button)
+        return super().draw(content_dto, card, insert_id_button_widget)

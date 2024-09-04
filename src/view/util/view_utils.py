@@ -88,6 +88,25 @@ def find_widget_by_name(
     return find_widget(widget, lambda w: hasattr(w, "name") and w.name == target_name)
 
 
+def find_widget_by_type(
+        widget: pn.viewable.Viewable, widget_type: type[T]
+) -> T | None:
+    """
+    Finds all widget of a certain type in a given widget collection.
+
+    param widget: The widget to search for the target widget.
+    param widget_type: The type of the target widget.
+    return: The target widget if found, otherwise None.
+    """
+
+    def _predicate(w):
+        return (
+            isinstance(w, widget_type)
+        )
+
+    return cast(T | None, find_widget(widget, _predicate))
+
+
 def find_widget_by_type_and_label(
     widget: pn.viewable.Viewable, widget_type: type[T], label: str
 ) -> T | None:
@@ -150,42 +169,3 @@ def collect_widgets(
         if isinstance(current, WidgetWithCildren):
             stack.extend([widget for widget in current])
     return widgets
-
-
-def get_custom_radio_box_widgets(widgets) -> List[RadioBoxWidget]:
-    """
-    Get all custom radio box widgets from the given widget.
-
-    :param widgets: The widget to search for custom radio box widgets.
-    :return: A list of custom radio box widgets found in the given widget.
-    """
-    radio_box_widgets = []
-    if isinstance(widgets, RadioBoxWidget):
-        radio_box_widgets.append(widgets)
-    else:
-        if hasattr(widgets, "objects"):
-            radio_box_widgets += [
-                radio_child
-                for obj in widgets.objects
-                for radio_child in get_custom_radio_box_widgets(obj)
-            ]
-    return radio_box_widgets
-
-
-def extract_widgets_from_radio_box_widget(
-    radio_box_widget: RadioBoxWidget,
-) -> Tuple[pn.widgets.RadioBoxGroup, List[WidgetGroupWrapper]]:
-    """
-    Get panel radio box group and widgets groups from the given custom RadioBoxGroup.
-
-    :param radio_box_widget: The radio box widget from which to extract widgets
-    :return: A tuple containing the radio box group widget and a list of widget group wrappers
-    """
-    radio_box_group = None
-    widget_group_wrappers = []
-    for widget in radio_box_widget:
-        if isinstance(widget, pn.widgets.RadioBoxGroup) and radio_box_group is None:
-            radio_box_group = widget
-        elif isinstance(widget, WidgetGroupWrapper):
-            widget_group_wrappers.append(widget)
-    return radio_box_group, widget_group_wrappers
