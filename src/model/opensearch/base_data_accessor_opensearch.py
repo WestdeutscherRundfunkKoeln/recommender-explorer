@@ -246,7 +246,6 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         :return: List of item dtos, total items count
         """
         total_items = response["hits"]["total"]["value"]
-
         items = [x["_source"] for x in response["hits"]["hits"]]
         if total_items < 1 or not len(items):
             raise EmptySearchError("Keine Treffer gefunden", {})
