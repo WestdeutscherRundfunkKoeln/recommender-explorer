@@ -1,14 +1,18 @@
 import logging
+import panel as pn
+
 from typing import Callable, Any
 
 import view.ui_constants as c
 from dto.item import ItemDto
-from view.widgets.radio_box_widget import RadioBoxWidget
-from view.widgets.radio_box_widget import WidgetGroupWrapper
-from view.util.view_utils import find_widget_by_type
-from view.util.view_utils import get_first_widget_by_accessor_function
-
-import panel as pn
+from view.widgets.radio_box_widget import (
+    RadioBoxWidget,
+    WidgetGroupWrapper
+)
+from view.util.view_utils import (
+    find_widget_by_type,
+    get_first_widget_by_accessor_function,
+)
 
 logger = logging.getLogger(__name__)
 

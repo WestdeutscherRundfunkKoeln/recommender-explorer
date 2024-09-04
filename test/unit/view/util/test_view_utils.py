@@ -20,9 +20,9 @@ def test_get_first_widget_by_accessor_function():
     row = pn.Row(objects=[text_input_2, card])
     col = pn.Column(objects=[text_input_1, row])
 
-    assert get_first_widget_by_accessor_function(col, "test_accessor") == text_input_1
+    assert get_first_widget_by_accessor_function(col, ["test_accessor"]) == text_input_1
     assert (
-        get_first_widget_by_accessor_function(col, "other_test_accessor")
+        get_first_widget_by_accessor_function(col, ["other_test_accessor"])
         == text_input_3
     )
 
