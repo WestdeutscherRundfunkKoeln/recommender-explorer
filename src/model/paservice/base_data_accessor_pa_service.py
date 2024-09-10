@@ -123,6 +123,12 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]: {e.response.read().decode()}",
                 {"exc": str(e)},
             )
+        except Exception as e:
+            logging.error(e, exc_info=True)
+            raise EndpointError(
+                f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]: {str(e)}",
+                {"exc": str(e)},
+            )
 
     def __get_items_from_response(
         self, item_dto: ItemDto, response: dict[str, Any]
