@@ -30,24 +30,6 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             self.endpoint = self.pa_service_config.get("endpoint")
             self.field_mapping = self.pa_service_config.get("field_mapping")
 
-            headers = (
-                {
-                    "Content-Type": "application/json",
-                    "accept": "*/*",
-                    self.auth_header: self.auth_header_value,
-                }
-                if self.auth_header and self.auth_header_value
-                else None
-            )
-            proxies = (
-                {"http://": self.http_proxy, "https://": self.https_proxy}
-                if self.http_proxy and self.https_proxy
-                else None
-            )
-            self.client = httpx.Client(
-                proxies=proxies, headers=headers, base_url=self.host
-            )
-
         if not self.pa_service_config:
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
@@ -84,6 +66,21 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 "expect Configuration in Key: pa_service.auth_header_value",
                 {},
             )
+        headers = (
+            {
+                "Content-Type": "application/json",
+                "accept": "*/*",
+                self.auth_header: self.auth_header_value,
+            }
+            if self.auth_header and self.auth_header_value
+            else None
+        )
+        proxies = (
+            {"http://": self.http_proxy, "https://": self.https_proxy}
+            if self.http_proxy and self.https_proxy
+            else None
+        )
+        self.client = httpx.Client(proxies=proxies, headers=headers, base_url=self.host)
 
     def get_items_by_ids(self, ids):
         raise NotImplementedError(self.not_implemented_error_message)
@@ -158,14 +155,13 @@ class BaseDataAccessorPaService(BaseDataAccessor):
 
 
 def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
-    request_body = {"referenceId": external_id, "reco": "true"}
+    request_body: dict[str, Any] = {"referenceId": external_id, "reco": "true"}
     if "relativerangefilter_duration" in filter:
         request_body["maxDurationFactor"] = filter["relativerangefilter_duration"]
     if "blacklist_externalid" in filter:
         request_body["excludedIds"] = (
             filter["blacklist_externalid"].replace(" ", "").split(",")
         )
-
     request_body["weights"] = [
         {"type": w.removeprefix("weight_"), "weight": filter[w]}
         for w in WEIGHTS
