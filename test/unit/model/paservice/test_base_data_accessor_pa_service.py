@@ -48,6 +48,7 @@ def test_get_item_by_external_id__valid_request(httpx_mock: HTTPXMock):
         ],
         3,
     )
+    assert httpx_mock.get_requests()[0].url == "https://test.io/wdrRecommendation"
     assert (
         httpx_mock.get_requests()[0].content
         == json.dumps(

@@ -14,6 +14,9 @@ from util.dto_utils import update_from_props
 logger = logging.getLogger(__name__)
 
 
+WEIGHTS = ("weight_audio", "weight_video", "weight_beitrag")
+
+
 class BaseDataAccessorPaService(BaseDataAccessor):
     def __init__(self, config):
         self.not_implemented_error_message = "This method is not implemented yet"
@@ -26,6 +29,24 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             self.https_proxy = self.pa_service_config.get("https_proxy")
             self.endpoint = self.pa_service_config.get("endpoint")
             self.field_mapping = self.pa_service_config.get("field_mapping")
+
+            headers = (
+                {
+                    "Content-Type": "application/json",
+                    "accept": "*/*",
+                    self.auth_header: self.auth_header_value,
+                }
+                if self.auth_header and self.auth_header_value
+                else None
+            )
+            proxies = (
+                {"http://": self.http_proxy, "https://": self.https_proxy}
+                if self.http_proxy and self.https_proxy
+                else None
+            )
+            self.client = httpx.Client(
+                proxies=proxies, headers=headers, base_url=self.host
+            )
 
         if not self.pa_service_config:
             raise ConfigError(
@@ -94,60 +115,17 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :return: Start Item and Recommendations in the given Item DTO
         """
         try:
-            if not self.host or not self.endpoint:
-                return
-
-            url = self.host + "/" + self.endpoint
-
-            request_body = {"referenceId": external_id, "reco": "true"}
-            if "relativerangefilter_duration" in filter:
-                request_body["maxDurationFactor"] = filter[
-                    "relativerangefilter_duration"
-                ]
-            if "blacklist_externalid" in filter:
-                request_body["excludedIds"] = (
-                    filter["blacklist_externalid"].replace(" ", "").split(",")
-                )
-
-            request_body["weights"] = [
-                {"type": w.removeprefix("weight_"), "weight": filter[w]}
-                for w in ("weight_audio", "weight_video")
-                if w in filter and filter[w] > 0
-            ]
-
-            request_params = {"url": url, "json": request_body}
-
-            if self.auth_header and self.auth_header_value:
-                request_params["headers"] = {
-                    "Content-Type": "application/json",
-                    "accept": "*/*",
-                    self.auth_header: self.auth_header_value,
-                }
-
-            proxies = (
-                {"http://": self.http_proxy, "https://": self.https_proxy}
-                if self.http_proxy and self.https_proxy
-                else None
+            response = self.client.post(
+                self.endpoint, json=build_request(external_id, filter)
             )
+            response.raise_for_status()
 
-            client = httpx.Client(proxies=proxies)
-
-            response = client.post(**request_params)
-
-            if response.status_code != 200:
-                logging.error(
-                    "Request Error: %s, %s", response.status_code, response.text
-                )
-                raise EndpointError(
-                    f"Could not get result from Endpoint: {url} with request parameters: {json.dumps(request_params, indent=4)}. Status Code: {response.status_code}",
-                    {},
-                )
             return self.__get_items_from_response(item, response.json())
         except Exception as e:
             logging.error(e, exc_info=True)
             raise EndpointError(
-                f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]",
-                {},
+                f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]: {str(e)}",
+                {"exc": str(e)},
             )
 
     def __get_items_from_response(
@@ -177,3 +155,20 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             new_item_dto._position = "start" if index == 0 else "reco"
             item_dtos.append(new_item_dto)
         return item_dtos[:6], total_items
+
+
+def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
+    request_body = {"referenceId": external_id, "reco": "true"}
+    if "relativerangefilter_duration" in filter:
+        request_body["maxDurationFactor"] = filter["relativerangefilter_duration"]
+    if "blacklist_externalid" in filter:
+        request_body["excludedIds"] = (
+            filter["blacklist_externalid"].replace(" ", "").split(",")
+        )
+
+    request_body["weights"] = [
+        {"type": w.removeprefix("weight_"), "weight": filter[w]}
+        for w in WEIGHTS
+        if w in filter and filter[w] > 0
+    ]
+    return request_body
