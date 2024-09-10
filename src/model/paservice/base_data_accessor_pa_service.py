@@ -1,5 +1,4 @@
 import copy
-import json
 import logging
 from typing import Any
 
@@ -118,10 +117,10 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             response.raise_for_status()
 
             return self.__get_items_from_response(item, response.json())
-        except Exception as e:
+        except httpx.HTTPStatusError as e:
             logging.error(e, exc_info=True)
             raise EndpointError(
-                f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]: {str(e)}",
+                f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]: {e.response.read().decode()}",
                 {"exc": str(e)},
             )
 
@@ -162,9 +161,11 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
         request_body["excludedIds"] = (
             filter["blacklist_externalid"].replace(" ", "").split(",")
         )
-    request_body["weights"] = [
+    weights = [
         {"type": w.removeprefix("weight_"), "weight": filter[w]}
         for w in WEIGHTS
         if w in filter and filter[w] > 0
     ]
+    if weights:
+        request_body["weights"] = weights
     return request_body
