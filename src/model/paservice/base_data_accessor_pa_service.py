@@ -2,14 +2,13 @@ import copy
 import json
 import logging
 from typing import Any
-import httpx
-import constants
 
-from model.base_data_accessor import BaseDataAccessor
+import httpx
+from dto.item import ItemDto
+from exceptions.config_error import ConfigError
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.endpoint_error import EndpointError
-from exceptions.config_error import ConfigError
-from dto.item import ItemDto
+from model.base_data_accessor import BaseDataAccessor
 from util.dto_utils import update_from_props
 
 logger = logging.getLogger(__name__)
