@@ -45,8 +45,6 @@ class EmbedText:
         self.models = {}
         bucket = None
         if "service_account" in self.config:
-            print(type(self.config["service_account"]))
-            print(self.config["service_account"])
             credentials = service_account.Credentials.from_service_account_info(
                 self.config["service_account"]
             )
