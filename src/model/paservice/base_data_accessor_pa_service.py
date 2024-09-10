@@ -112,7 +112,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
 
             request_body["weights"] = [
                 {"type": w.removeprefix("weight_"), "weight": filter[w]}
-                for w in ("audio_weight", "video_weight")
+                for w in ("weight_audio", "weight_video")
                 if w in filter and filter[w] > 0
             ]
 
@@ -136,25 +136,18 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             response = client.post(**request_params)
 
             if response.status_code != 200:
-                logging.error("Request Error:", response.status_code, response.text)
+                logging.error(
+                    "Request Error: %s, %s", response.status_code, response.text
+                )
                 raise EndpointError(
-                    "Could not get result from Endpoint: "
-                    + url
-                    + "with request parameters: "
-                    + json.dumps(request_params, indent=4)
-                    + ". Status Code: "
-                    + response.status_code,
+                    f"Could not get result from Endpoint: {url} with request parameters: {json.dumps(request_params, indent=4)}. Status Code: {response.status_code}",
                     {},
                 )
             return self.__get_items_from_response(item, response.json())
         except Exception as e:
             logging.error(e, exc_info=True)
             raise EndpointError(
-                "Couldn't get a valid response from endpoint ["
-                + self.host
-                + "/"
-                + self.endpoint
-                + "]",
+                f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]",
                 {},
             )
 
