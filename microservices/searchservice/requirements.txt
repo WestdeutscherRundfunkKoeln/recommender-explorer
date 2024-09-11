@@ -1,8 +1,5 @@
 fastapi
 uvicorn
-constants
-dataclasses
-pydantic>=2.5.1
 envyaml
 opensearch-py
 pytest
