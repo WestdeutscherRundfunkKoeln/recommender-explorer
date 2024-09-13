@@ -1,4 +1,6 @@
 from dto.recoexplorer_item import RecoExplorerItem
+from fastapi import HTTPException
+from pydantic import ValidationError
 import logging
 import json
 import pyjq
@@ -20,18 +22,15 @@ class DataPreprocessor:
         response = RecoExplorerItem.model_validate(mapped_data)
         return response
 
-    def add_embeddings(self, mapped_data):
-        # get embedding
-        request_payload = {
-            "id": mapped_data.id,
-            "embedText": mapped_data.embedText,
-        }
-
+    def add_embeddings(self, mapped_data: RecoExplorerItem):
         # Hint: Transformed to fire and forget request
         try:
             httpx.post(
                 f"{self.base_url_embedding}/add-embedding-to-doc",
-                json=request_payload,
+                json={
+                    "id": mapped_data.id,
+                    "embedText": mapped_data.embedText,
+                },
                 timeout=0.25,
                 headers={"x-api-key": self.api_key},
             )

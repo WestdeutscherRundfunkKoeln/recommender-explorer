@@ -11,3 +11,4 @@ pytest
 pytest-mock
 pytest-httpx
 google-cloud-storage
+python-dotenv
