@@ -165,9 +165,7 @@ def test_add_embedding_to_document(httpx_mock, test_client: TestClient):
         "embedTextHash",
         "all-MiniLM-L6-v2",
         "distiluse-base-multilingual-cased-v1",
-        "id",
     }
-    assert response_json["id"] == "test"
 
     assert (
         response_json["embedTextHash"]
@@ -190,7 +188,10 @@ def test_add_embedding_to_document(httpx_mock, test_client: TestClient):
     assert requests[0].method == "POST"
     assert requests[0].url == "https://test.io/search/documents/test"
     assert requests[0].headers["x-api-key"] == "test_key"
-    assert requests[0].content == json.dumps(response_json).encode()
+    assert (
+        requests[0].content
+        == json.dumps({"id": "test", "data": response_json}).encode()
+    )
 
 
 def test_get_models(test_client: TestClient):

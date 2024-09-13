@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
 
-class CreateDocumentRequest(BaseModel, extra="allow"):
+class CreateDocumentRequest(BaseModel):
     id: str
+    data: dict

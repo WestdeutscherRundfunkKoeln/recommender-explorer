@@ -1,10 +1,11 @@
-from time import sleep
-import pytest
-from opensearchpy import OpenSearch, RequestError
-from src.oss_accessor import OssAccessor
-from fastapi.testclient import TestClient
-from testcontainers.opensearch import OpenSearchContainer
 import os
+from time import sleep
+
+import pytest
+from fastapi.testclient import TestClient
+from opensearchpy import OpenSearch
+from src.oss_accessor import OssAccessor
+from testcontainers.opensearch import OpenSearchContainer
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -66,15 +67,16 @@ def test_health_check(test_client: TestClient):
 
 
 def test_create_single_document__valid_request(test_client: TestClient):
-    response = test_client.post("/documents/test", json={"id": "test", "text": "test"})
+    document = {"text": "test"}
+    response = test_client.post(
+        "/documents/test",
+        json={"id": "test", "data": document},
+    )
     assert response.status_code == 200
 
     response = test_client.get("/document/test")
     assert response.status_code == 200
-    assert response.json()["hits"]["hits"][0]["_source"] == {
-        "id": "test",
-        "text": "test",
-    }
+    assert response.json()["_source"] == document
 
 
 def test_create_single_document__malformed_request(test_client: TestClient):
@@ -87,15 +89,23 @@ def test_create_single_document__malformed_request(test_client: TestClient):
                 "loc": ["body", "id"],
                 "msg": "Field required",
                 "type": "missing",
-            }
+            },
+            {
+                "input": {"text": "test"},
+                "loc": ["body", "data"],
+                "msg": "Field required",
+                "type": "missing",
+            },
         ]
     }
 
 
 def test_create_multiple_documents__valid_request(test_client: TestClient):
+    document1 = {"id": "test1", "externalid": "external_test1"}
+    document2 = {"id": "test2", "externalid": "external_test2"}
     response = test_client.post(
         "/documents",
-        json={"test1": {"id": "test1"}, "test2": {"id": "test2"}},
+        json={"test1": document1, "test2": document2},
     )
     assert response.status_code == 200
     assert response.json() is None
@@ -103,11 +113,11 @@ def test_create_multiple_documents__valid_request(test_client: TestClient):
     sleep(1)  # wait for data to be available
     response = test_client.get("/document/test1")
     assert response.status_code == 200
-    assert response.json()["hits"]["hits"][0]["_source"] == {"id": "test1"}
+    assert response.json()["_source"] == document1
 
     response = test_client.get("/document/test2")
     assert response.status_code == 200
-    assert response.json()["hits"]["hits"][0]["_source"] == {"id": "test2"}
+    assert response.json()["_source"] == document2
 
 
 def test_create_multiple_documents__malformed_request(test_client):
@@ -118,8 +128,8 @@ def test_create_multiple_documents__malformed_request(test_client):
             {
                 "input": "test",
                 "loc": ["body", "id"],
-                "msg": "Input should be a valid dictionary or object to extract fields from",
-                "type": "model_attributes_type",
+                "msg": "Input should be a valid dictionary",
+                "type": "dict_type",
             }
         ]
     }
@@ -128,14 +138,14 @@ def test_create_multiple_documents__malformed_request(test_client):
 def test_delete_document__valid_request(
     test_client: TestClient, oss_client: OpenSearch, oss_index: str
 ):
-    oss_client.index(oss_index, {"id": "to_be_deleted"})
+    oss_client.index(oss_index, {"id": "to_be_deleted"}, "to_be_deleted")
 
     response = test_client.delete("/documents/to_be_deleted")
     assert response.status_code == 200
 
     response = test_client.get("/document/to_be_deleted")
-    assert response.status_code == 200
-    assert response.json()["hits"]["total"]["value"] == 0
+
+    assert response.status_code == 404
 
 
 def test_get_document__valid_request_with_no_fields(
@@ -146,8 +156,7 @@ def test_get_document__valid_request_with_no_fields(
 
     response = test_client.get("/document/test")
     assert response.status_code == 200
-    print(response.json())
-    assert response.json()["hits"]["hits"][0]["_source"] == document
+    assert response.json()["_source"] == document
 
 
 def test_get_document__valid_request_with_fields(
@@ -162,8 +171,7 @@ def test_get_document__valid_request_with_fields(
 
     response = test_client.get("/document/test?fields=embedTextHash%2Cid")
     assert response.status_code == 200
-    print(response.json())
-    assert response.json()["hits"]["hits"][0]["_source"] == {
+    assert response.json()["_source"] == {
         "id": "test",
         "embedTextHash": "hash",
     }
