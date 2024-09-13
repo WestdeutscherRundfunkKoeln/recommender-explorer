@@ -138,7 +138,7 @@ services:
     profiles:
       - mock_gcs
     image: fsouza/fake-gcs-server
-    entrypoint: ["/bin/fake-gcs-server", "-data", "/data", "-scheme", "http"]
+    entrypoint: ["/bin/fake-gcs-server", "-data", "/data", "-scheme", "http", "-external-url", "http://fake-gcs-server:4443"]
     ports:
       - 4443:4443
     networks:

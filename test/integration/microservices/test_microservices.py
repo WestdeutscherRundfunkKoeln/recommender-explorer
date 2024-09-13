@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 import json
 import time
 from pathlib import Path
@@ -25,7 +26,6 @@ def embedding_service():
         yield client
 
 
-@pytest.fixture(scope="module")
 def models():
     path = (
         Path(__file__).parent.parent.parent.parent
@@ -48,9 +48,13 @@ def files():
     return [file.name for file in dir.glob("*.json")]
 
 
-def _get_sophora_id(file: Path) -> str:
-    with file.open() as f:
-        return json.load(f)["sophoraId"]
+def assert_document_is_in_opensearch(resp: httpx.Response, id: str) -> None:
+    assert resp.is_success
+    payload = resp.json()
+    assert payload["_id"] == id
+    assert "embedTextHash" in payload["_source"]
+    for model in models():
+        assert model in payload["_source"]
 
 
 def test_health_check(
@@ -66,11 +70,10 @@ def test_health_check(
 def test_events(
     search_service: httpx.Client,
     ingest_service: httpx.Client,
-    models: list[str],
     files: list[str],
 ):
     file = files[0]
-    id = files[0].split(".")[0]
+    id = files[0].removesuffix(".json")
 
     # A creation event comes in
     resp = ingest_service.post(
@@ -86,13 +89,7 @@ def test_events(
 
     # The document is available in the opensearch with embeddings
     resp = search_service.get(f"/document/{id}")
-    assert resp.is_success
-    payload = resp.json()
-    print(list(payload["_source"].keys()))
-    assert payload["_id"] == id
-    assert "embedTextHash" in payload["_source"]
-    for model in models:
-        assert model in payload["_source"]
+    assert_document_is_in_opensearch(resp, id)
 
     # A deletion event comes in
     resp = ingest_service.post(
@@ -106,3 +103,52 @@ def test_events(
     # The document is available in the opensearch with embeddings
     resp = search_service.get(f"/document/{id}")
     assert resp.status_code == 404
+
+
+def test_bulk_ingest(
+    search_service: httpx.Client,
+    ingest_service: httpx.Client,
+    files: list[str],
+):
+    start_ts = datetime.now(tz=timezone.utc)
+
+    # trigger full ingest
+    resp = ingest_service.post(
+        "/ingest-multiple-items",
+        json={"bucket": "test", "prefix": ""},
+    )
+    assert resp.is_success
+    task_id = resp.json()["task_id"]
+
+    # check task status
+    resp = ingest_service.get(f"/tasks/{task_id}")
+    assert resp.is_success
+    task = resp.json()["task"]
+    assert task["id"] == task_id
+    assert task["status"] == "PREPROCESSING"
+    assert task["errors"] == []
+    assert datetime.fromisoformat(task["created_at"]) > start_ts
+    assert task["completed_at"] is None
+
+    # poll task status
+    for _ in range(6):
+        time.sleep(10)
+        resp = ingest_service.get(f"/tasks/{task_id}")
+        task = resp.json()["task"]
+        if task["status"] == "COMPLETED":
+            break
+
+    # check final task status
+    assert task["id"] == task_id
+    assert task["status"] == "COMPLETED"
+    assert task["errors"] == []
+    assert datetime.fromisoformat(task["created_at"]) > start_ts
+    assert datetime.fromisoformat(task["completed_at"]) < start_ts + timedelta(
+        minutes=1
+    )
+
+    # check documents in opensearch
+    ids = [f.removesuffix(".json") for f in files]
+    for id in ids:
+        resp = search_service.get(f"/document/{id}")
+        assert_document_is_in_opensearch(resp, id)

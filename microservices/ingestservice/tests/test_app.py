@@ -109,7 +109,9 @@ def overwrite_tasks():
             id="exists",
             status=BulkIngestTaskStatus.PREPROCESSING,
             errors=[],
-            created_at=datetime.datetime.fromisoformat("2023-10-23T23:00:00"),
+            created_at=datetime.datetime.fromisoformat(
+                "2023-10-23T23:00:00.000000+00:00"
+            ),
         ),
     )
     yield
@@ -749,11 +751,11 @@ def test_get_task__exists(test_client: TestClient, overwrite_tasks):
     assert response.status_code == 200
     assert response.json() == {
         "task": {
-            "completed_at": "",
+            "completed_at": None,
             "id": "exists",
             "status": "PREPROCESSING",
             "errors": [],
-            "created_at": "2023-10-23T23:00:00",
+            "created_at": "2023-10-23T23:00:00Z",
         }
     }
 
@@ -775,8 +777,8 @@ def test_get_tasks(test_client: TestClient, overwrite_tasks):
                 "id": "exists",
                 "status": "PREPROCESSING",
                 "errors": [],
-                "created_at": "2023-10-23T23:00:00",
-                "completed_at": "",
+                "created_at": "2023-10-23T23:00:00Z",
+                "completed_at": None,
             }
         ]
     }
