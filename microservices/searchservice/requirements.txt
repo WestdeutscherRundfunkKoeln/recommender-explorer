@@ -1,6 +1,6 @@
-fastapi
-uvicorn
-envyaml
-opensearch-py
-pytest
-pytest-mock
+envyaml==1.10.211231
+fastapi==0.114.1
+opensearch-py==2.7.1
+pytest-mock==3.14.0
+pytest==8.3.3
+uvicorn==0.30.6
