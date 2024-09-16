@@ -70,5 +70,6 @@ if __name__ == "__main__":
     print("Config validated")
 
     ui_config = load_ui_config(config)
-    validate_schema(args.ui_schema_path, ui_config)
-    print("UI Config validated")
+    if ui_config:
+        validate_schema(args.ui_schema_path, ui_config)
+        print("UI Config validated")
