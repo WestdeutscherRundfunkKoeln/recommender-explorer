@@ -29,7 +29,7 @@ if [ -z "$CONFIG_FILE" ]; then
   exit 1
 fi
 
-python scripts/validate.py --config $CONFIG_FILE --schema $SCHEMA_FILE --ui_schema $UI_SCHEMA_FILE
+python scripts/validate.py --config $CONFIG_FILE --schema $SCHEMA_FILE --ui_schema $UI_SCHEMA_FILE || exit 1
 
 panel serve src/RecoExplorer.py --autoreload --show --args config=$CONFIG_FILE
 
