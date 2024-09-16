@@ -209,14 +209,14 @@
                   "auth_header_value": {
                     "type": "string"
                   },
-                  "param_model_type": {
+                  "param_modelType": {
                     "type": "string"
                   }
                 },
                 "required": [
                   "auth_header",
                   "auth_header_value",
-                  "param_model_type"
+                  "param_modelType"
                 ]
               },
               "user_type": {
