@@ -5,5 +5,4 @@ pandas
 panel
 pytest
 pytest-mock
-s3fs
 httpx
