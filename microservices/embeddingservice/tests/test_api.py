@@ -23,10 +23,9 @@ def test_embedding__malformed_request(test_client: TestClient):
     assert response.json() == {
         "detail": [
             {
-                "input": {"malformed": "request"},
                 "loc": ["body", "embedText"],
-                "msg": "Field required",
-                "type": "missing",
+                "msg": "field required",
+                "type": "value_error.missing",
             }
         ]
     }
@@ -140,23 +139,21 @@ def test_add_embedding_to_document__malformed_request(test_client: TestClient):
     assert response.json() == {
         "detail": [
             {
-                "input": {"malformed": "request"},
                 "loc": ["body", "id"],
-                "msg": "Field required",
-                "type": "missing",
+                "msg": "field required",
+                "type": "value_error.missing",
             },
             {
-                "input": {"malformed": "request"},
                 "loc": ["body", "embedText"],
-                "msg": "Field required",
-                "type": "missing",
+                "msg": "field required",
+                "type": "value_error.missing",
             },
         ]
     }
 
 
 def test_add_embedding_to_document(httpx_mock, test_client: TestClient):
-    httpx_mock.add_response("https://test.io/search/create-single-document", json={})
+    httpx_mock.add_response("https://test.io/search/documents/test", json={})
 
     response = test_client.post(
         "/add-embedding-to-doc", json={"id": "test", "embedText": "This is a test."}
@@ -191,6 +188,15 @@ def test_add_embedding_to_document(httpx_mock, test_client: TestClient):
     requests = httpx_mock.get_requests()
     assert len(requests) == 1
     assert requests[0].method == "POST"
-    assert requests[0].url == "https://test.io/search/create-single-document"
+    assert requests[0].url == "https://test.io/search/documents/test"
     assert requests[0].headers["x-api-key"] == "test_key"
     assert requests[0].content == json.dumps(response_json).encode()
+
+
+def test_get_models(test_client: TestClient):
+    response = test_client.get("/models")
+    assert response.status_code == 200
+    assert response.json() == [
+        "all-MiniLM-L6-v2",
+        "distiluse-base-multilingual-cased-v1",
+    ]

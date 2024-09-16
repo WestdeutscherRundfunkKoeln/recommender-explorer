@@ -126,7 +126,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
         },
     )
     httpx_mock.add_response(
-        url=config["base_url_search"] + "/document/test?fields=embedTextHash",
+        url=config["base_url_search"] + "/documents/test?fields=embedTextHash",
         method="GET",
         json={
             "took": 1,
@@ -178,7 +178,8 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
     request = requests[1]
     assert request.method == "GET"
     assert (
-        request.url == config["base_url_search"] + "/document/test?fields=embedTextHash"
+        request.url
+        == config["base_url_search"] + "/documents/test?fields=embedTextHash"
     )
     assert request.headers["x-api-key"] == "test-key"
 
@@ -192,7 +193,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
     # Request to the search service for upsert
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == config["base_url_search"] + "/create-single-document"
+    assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content
@@ -256,7 +257,7 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
         },
     )
     httpx_mock.add_response(
-        url=config["base_url_search"] + "/document/test?fields=embedTextHash",
+        url=config["base_url_search"] + "/documents/test?fields=embedTextHash",
         method="GET",
         json={
             "took": 1,
@@ -311,7 +312,8 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
     request = requests[1]
     assert request.method == "GET"
     assert (
-        request.url == config["base_url_search"] + "/document/test?fields=embedTextHash"
+        request.url
+        == config["base_url_search"] + "/documents/test?fields=embedTextHash"
     )
     assert request.headers["x-api-key"] == "test-key"
 
@@ -325,7 +327,7 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
     # Request to the search service for upsert
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == config["base_url_search"] + "/create-single-document"
+    assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content
@@ -389,7 +391,7 @@ def test_upsert_event__with_available_correct_document__matching_hash(
         },
     )
     httpx_mock.add_response(
-        url=config["base_url_search"] + "/document/test?fields=embedTextHash",
+        url=config["base_url_search"] + "/documents/test?fields=embedTextHash",
         method="GET",
         json={
             "took": 1,
@@ -444,14 +446,15 @@ def test_upsert_event__with_available_correct_document__matching_hash(
     request = requests[1]
     assert request.method == "GET"
     assert (
-        request.url == config["base_url_search"] + "/document/test?fields=embedTextHash"
+        request.url
+        == config["base_url_search"] + "/documents/test?fields=embedTextHash"
     )
     assert request.headers["x-api-key"] == "test-key"
 
     # Request to the search service for upsert
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == config["base_url_search"] + "/create-single-document"
+    assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content
@@ -604,7 +607,7 @@ def test_delete_event_with_available_correct_document(
     # Request to the search service
     request = requests[0]
     assert request.method == "DELETE"
-    assert request.url == config["base_url_search"] + "/delete-data?document_id=valid"
+    assert request.url == config["base_url_search"] + "/documents/valid"
     assert request.headers["x-api-key"] == "test-key"
 
 
@@ -615,7 +618,7 @@ def test_bulk_ingest__with_validation_error(
         url=config["base_url_embedding"] + "/embedding", json={"model": [1, 2]}
     )
     httpx_mock.add_response(
-        url=config["base_url_search"] + "/create-multiple-documents",
+        url=config["base_url_search"] + "/documents",
         json={"status": "ok"},
         status_code=200,
     )
@@ -643,7 +646,7 @@ def test_bulk_ingest__with_validation_error(
 
     request = requests[1]
     assert request.method == "POST"
-    assert request.url == config["base_url_search"] + "/create-multiple-documents"
+    assert request.url == config["base_url_search"] + "/documents"
     assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content

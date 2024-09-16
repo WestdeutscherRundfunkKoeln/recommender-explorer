@@ -98,7 +98,7 @@ class EmbedText:
         embedding["id"] = id
         # Send request to search service to add embedding to index
         httpx.post(
-            url=f"{self.config.get('base_url_search')}/create-single-document",
+            url=f"{self.config.get('base_url_search')}/documents/{id}",
             json=embedding,
             headers={"x-api-key": self.config["api_key"]},
         )
