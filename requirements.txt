@@ -6,3 +6,4 @@ panel
 pytest
 pytest-mock
 httpx
+jsonschema
