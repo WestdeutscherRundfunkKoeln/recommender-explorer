@@ -60,7 +60,7 @@ services:
       - OPENSEARCH_INDEX=test_index
       - MAPPING_DEFINITION='{"id":.sophoraId,"externalid":.externalId,"uuid":.uuid,"type":.type,"title":.title,"description":.["description"],"longDescription":.["longDescription"],"embedText":(.title+""+.longDescription),"availableFrom":.availableFrom,"availableTo":.availableTo,"firstPublicationDate":.firstPublicationDate,"keywords":.keywords,"language":.language,"duration":.durationSeconds,"thematicCategories":.thematicCategories,"genreCategory":.genreCategory,"subgenreCategories":.subgenreCategories,"filterCategory":.filterCategory,"structurePath":.structurePath,"site":.site,"domain":.domain,"teaserimage":.teaserImage.url,"fskAgeRating":.fskAgeRating,"contentRatings":.contentRatings,"geoAvailability":.geoAvailability,"all-MiniLM-L6-v2_title_desc_nokeywords":.["all-MiniLM-L6-v2_title_desc_nokeywords"],"sophoraid":.sophoraId}'
       - STORAGE_SERVICE_ACCOUNT
-      - REEMBED_INTERVAL_SECONDS=60
+      - REEMBED_INTERVAL_SECONDS=10
       - GCS_URL=http://fake-gcs-server
     networks:
       - opensearch-net
