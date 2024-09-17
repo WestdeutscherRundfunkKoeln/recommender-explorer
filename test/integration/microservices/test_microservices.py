@@ -88,7 +88,7 @@ def test_events(
     time.sleep(1)
 
     # The document is available in the opensearch with embeddings
-    resp = search_service.get(f"/document/{id}")
+    resp = search_service.get(f"/documents/{id}")
     assert_document_is_in_opensearch(resp, id)
 
     # A deletion event comes in
@@ -101,7 +101,7 @@ def test_events(
     assert resp.json()["_id"] == id
 
     # The document is available in the opensearch with embeddings
-    resp = search_service.get(f"/document/{id}")
+    resp = search_service.get(f"/documents/{id}")
     assert resp.status_code == 404
 
 
@@ -150,5 +150,5 @@ def test_bulk_ingest(
     # check documents in opensearch
     ids = [f.removesuffix(".json") for f in files]
     for id in ids:
-        resp = search_service.get(f"/document/{id}")
+        resp = search_service.get(f"/documents/{id}")
         assert_document_is_in_opensearch(resp, id)

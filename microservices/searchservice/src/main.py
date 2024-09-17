@@ -5,7 +5,6 @@ from envyaml import EnvYAML
 from fastapi import APIRouter, Depends, FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 from opensearchpy.exceptions import TransportError
-from src.models import CreateDocumentRequest
 from src.oss_accessor import OssAccessor
 
 NAMESPACE = "search"
@@ -32,11 +31,9 @@ def health_check():
 @router.post("/documents/{document_id}")
 def create_document(
     document_id: str,
-    data: CreateDocumentRequest,
+    data: dict[str, Any],
     oss_accessor: OssAccessor = Depends(get_oss_accessor),
 ):
-    # Add data to index
-    print(data, type(data))
     return oss_accessor.create_oss_doc(document_id, data)
 
 

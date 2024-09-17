@@ -95,7 +95,7 @@ def ingest_item(
             raise
 
         upsert_response = search_service_client.create_single_document(
-            document.id, document.model_dump()
+            document.externalid, document.model_dump()
         )
 
         if not document.embedText:

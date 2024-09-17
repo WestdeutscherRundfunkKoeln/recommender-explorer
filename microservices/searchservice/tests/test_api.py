@@ -70,31 +70,25 @@ def test_create_single_document__valid_request(test_client: TestClient):
     document = {"text": "test"}
     response = test_client.post(
         "/documents/test",
-        json={"id": "test", "data": document},
+        json=document,
     )
     assert response.status_code == 200
 
-    response = test_client.get("/document/test")
+    response = test_client.get("/documents/test")
     assert response.status_code == 200
     assert response.json()["_source"] == document
 
 
 def test_create_single_document__malformed_request(test_client: TestClient):
-    response = test_client.post("/documents/test", json={"text": "test"})
+    response = test_client.post("/documents/test", json="test")
     assert response.status_code == 422
     assert response.json() == {
         "detail": [
             {
-                "input": {"text": "test"},
-                "loc": ["body", "id"],
-                "msg": "Field required",
-                "type": "missing",
-            },
-            {
-                "input": {"text": "test"},
-                "loc": ["body", "data"],
-                "msg": "Field required",
-                "type": "missing",
+                "input": "test",
+                "loc": ["body"],
+                "msg": "Input should be a valid dictionary",
+                "type": "dict_type",
             },
         ]
     }
@@ -111,11 +105,11 @@ def test_create_multiple_documents__valid_request(test_client: TestClient):
     assert response.json() is None
 
     sleep(1)  # wait for data to be available
-    response = test_client.get("/document/test1")
+    response = test_client.get("/documents/test1")
     assert response.status_code == 200
     assert response.json()["_source"] == document1
 
-    response = test_client.get("/document/test2")
+    response = test_client.get("/documents/test2")
     assert response.status_code == 200
     assert response.json()["_source"] == document2
 
@@ -143,7 +137,7 @@ def test_delete_document__valid_request(
     response = test_client.delete("/documents/to_be_deleted")
     assert response.status_code == 200
 
-    response = test_client.get("/document/to_be_deleted")
+    response = test_client.get("/documents/to_be_deleted")
 
     assert response.status_code == 404
 
@@ -154,7 +148,7 @@ def test_get_document__valid_request_with_no_fields(
     document = {"id": "test", "test_field": "test_value"}
     oss_client.index(oss_index, document, "test", params={"refresh": "true"})
 
-    response = test_client.get("/document/test")
+    response = test_client.get("/documents/test")
     assert response.status_code == 200
     assert response.json()["_source"] == document
 
@@ -169,7 +163,7 @@ def test_get_document__valid_request_with_fields(
         params={"refresh": "true"},
     )
 
-    response = test_client.get("/document/test?fields=embedTextHash%2Cid")
+    response = test_client.get("/documents/test?fields=embedTextHash%2Cid")
     assert response.status_code == 200
     assert response.json()["_source"] == {
         "id": "test",
@@ -177,7 +171,12 @@ def test_get_document__valid_request_with_fields(
     }
 
 
-def test_documents_no_embedding__valid_request(test_client, mock_oss):
+def test_query__valid_request(test_client: TestClient):
+    response = test_client.post(
+        "/documents/no_test_field", json={"id": "no_test_field"}
+    )
+    assert response.status_code == 200
+
     response = test_client.post(
         "query",
         json={
@@ -185,52 +184,18 @@ def test_documents_no_embedding__valid_request(test_client, mock_oss):
             "query": {"bool": {"must_not": [{"exists": {"field": "test"}}]}},
         },
     )
-    assert response.status_code == 200
-    assert mock_oss.search.call_count == 1
-    assert mock_oss.search.call_args[1] == {
-        "index": "test",
-        "body": {
-            "_source": {"includes": ["id"]},
-            "query": {"bool": {"must_not": [{"exists": {"field": "test"}}]}},
-        },
-    }
-    assert response.json() == {
-        "took": 1,
-        "timed_out": False,
-        "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-        "hits": {
-            "total": {"value": 1, "relation": "eq"},
-            "max_score": 1,
-            "hits": [
-                {
-                    "_index": "test",
-                    "_id": "no_embedding",
-                    "_score": 0,
-                    "_source": {
-                        "id": "no_embedding",
-                        "test_field": "test_value",
-                    },
-                }
-            ],
-        },
+    assert response.json()["hits"]["total"]["value"] == 1
+    assert response.json()["hits"]["hits"][0]["_source"] == {
+        "id": "no_test_field",
     }
 
 
-def test_documents_no_embedding__invalid_request(test_client, mock_oss):
+def test_documents_no_embedding__invalid_request(test_client: TestClient):
     response = test_client.post(
         "query",
         json={
             "_source": {"includes": ["id"]},
-            "query": {"bool": {"must_not": [{"exists": {"field": ["test"]}}]}},
+            "query": {"bool": {"must_not": [{"exists": {"wrong": ["test"]}}]}},
         },
     )
     assert response.status_code == 400
-    assert mock_oss.search.call_count == 1
-    assert mock_oss.search.call_args[1] == {
-        "index": "test",
-        "body": {
-            "_source": {"includes": ["id"]},
-            "query": {"bool": {"must_not": [{"exists": {"field": ["test"]}}]}},
-        },
-    }
-    assert response.json() == {"detail": "Invalid query: test"}

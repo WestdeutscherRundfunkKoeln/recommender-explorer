@@ -9,7 +9,6 @@ from opensearchpy import (
     RequestsHttpConnection,
     helpers,
 )
-from src.models import CreateDocumentRequest
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -42,11 +41,11 @@ class OssAccessor:
 
         return cls(index, client)
 
-    def create_oss_doc(self, id: str, data: CreateDocumentRequest):
+    def create_oss_doc(self, id: str, data: dict[str, Any]):
         # add document to index
         response = self.oss_client.update(
             index=self.target_idx_name,
-            body={"doc": data.model_dump(), "doc_as_upsert": True},
+            body={"doc": data, "doc_as_upsert": True},
             id=id,
             refresh=True,
         )

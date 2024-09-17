@@ -27,7 +27,7 @@ class SearchServiceClient:
     def create_single_document(self, id: str, document: dict):
         response = self.client.post(
             f"/documents/{id}",
-            json={"id": document["externalid"], "data": document},
+            json=document,
         )
         _raise_for_status(response)
         return response.json()
