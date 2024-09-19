@@ -24,6 +24,10 @@ class StorageChangeEvent(BaseModel):
     name: str
     bucket: str
 
+    @property
+    def blob_id(self):
+        return self.name.split("/")[-1].split(".")[0]
+
 
 class FullLoadRequest(BaseModel):
     bucket: str

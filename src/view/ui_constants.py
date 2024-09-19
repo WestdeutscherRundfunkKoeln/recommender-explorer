@@ -45,11 +45,14 @@ RESET_IDENTIFIER_UPPER_ITEM_FILTER = "upper_item_filter"
 RESET_IDENTIFIER_RECO_FILTER = "reco_filter"
 RESET_IDENTIFIER_UPPER_RECO_FILTER = "upper_reco_filter"
 
+# Accordion Cards
+ACCORDION_CARD_TOGGLE_KEY = "toggle"
+ACCORDION_CARD_ACTIVE_KEY = "active"
+
 # Accordion
 ACCORDION_CONTENT_KEY = "content"
 ACCORDION_LABEL_KEY = "label"
 ACCORDION_ACTIVE_KEY = "active"
-ACCORDION_TOGGLE_KEY = "toggle"
 ACCORDION_RESET_BUTTON_KEY = "accordion-reset-button"
 ACCORDION_MAX_WIDTH = 323
 
@@ -65,6 +68,12 @@ DATE_TIME_PICKER_VALIDATOR_KEY = "validator"
 DATE_TIME_PICKER_LABEL_KEY = "label"
 DATE_TIME_PICKER_ACCESSOR_KEY = "accessor_function"
 DATE_TIME_PICKER_HAS_PAGING_KEY = "hasPaging"
+
+DATE_TIME_QUICK_SELECT_LABEL_KEY = "label"
+DATE_TIME_QUICK_SELECT_START_PICKER_LABEL_KEY = "start_picker_label"
+DATE_TIME_QUICK_SELECT_END_PICKER_LABEL_KEY = "end_picker_label"
+DATE_TIME_QUICK_SELECT_START_DELTA_DAYS = "start_delta_days"
+DATE_TIME_QUICK_SELECT_END_DELTA_DAYS = "end_delta_days"
 
 # Text Area Input
 TEXT_AREA_INPUT_LABEL_KEY = "label"
@@ -102,9 +111,11 @@ TEXT_INPUT_TYPE_VALUE = "text_field"
 MULTI_SELECT_TYPE_VALUE = "multi_select"
 ACCORDION_TYPE_VALUE = "accordion"
 DATE_TIME_PICKER_TYPE_VALUE = "date_time_picker"
+DATE_TIME_QUICK_SELECT_TYPE_VALUE = "date_time_quick_select"
 RADIO_BOX_TYPE_VALUE = "radio_box"
 TEXT_AREA_INPUT_TYPE_VALUE = "text_area_input"
 ACCORDION_RESET_BUTTON_TYPE_VALUE = "accordion-reset-button"
+ACCORDION_WITH_CARDS_TYPE_VALUE = "accordion_with_cards"
 
 
 # Fallbacks (if no key and value was given in the config yaml)
@@ -123,3 +134,6 @@ UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
 
 TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
 FILTER_WIDTH = 250
+
+# Content Cards
+INSERT_ID_BUTTON_LABEL = "Als Start Item übernehmen"

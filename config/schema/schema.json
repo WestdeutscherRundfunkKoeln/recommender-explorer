@@ -52,7 +52,7 @@
           "type": "string"
         },
         "port": {
-          "type": "string"
+          "type": "number"
         },
         "user": {
           "type": "string"
@@ -212,14 +212,14 @@
                   "auth_header_value": {
                     "type": "string"
                   },
-                  "param_model_type": {
+                  "param_modelType": {
                     "type": "string"
                   }
                 },
                 "required": [
                   "auth_header",
                   "auth_header_value",
-                  "param_model_type"
+                  "param_modelType"
                 ]
               },
               "user_type": {
@@ -289,8 +289,15 @@
       }
     },
     "ui_config": {
-      "type": "string",
-      "pattern": "^.*\\.yaml$"
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^.*\\.yaml$"
+        },
+        {
+          "type": "object"
+        }
+      ]
     }
   },
   "required": [

@@ -180,4 +180,4 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             else:
                 new_item_dto.__setattr__("_position", "reco")
             item_dtos.append(new_item_dto)
-        return item_dtos, total_items
+        return item_dtos[:6], total_items

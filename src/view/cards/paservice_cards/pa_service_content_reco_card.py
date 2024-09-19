@@ -10,9 +10,6 @@ class PaServiceContentRecoCard(PaServiceContentCard):
     CARD_HEIGHT = 600
     IMAGE_HEIGHT = 200
 
-    def __init__(self, config):
-        super().__init__(config)
-
     def draw(self, content_dto: PaServiceContentItemDto, nr, model, model_config, modal_func):
         stylesheet_image = """
                                  .img_wrapper {

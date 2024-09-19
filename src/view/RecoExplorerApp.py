@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import traceback
 from typing import Any
@@ -10,19 +11,19 @@ from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
-    get_all_config_files,
-    get_client_from_path,
     get_client_options,
 )
 from view import ui_constants
 from view.widgets.accordion_widget import AccordionWidget
 from view.widgets.date_time_picker_widget import DateTimePickerWidget
+from view.widgets.date_time_quick_select_widget import DateTimeQuickSelectWidget
 from view.widgets.multi_select_widget import MultiSelectionWidget
 from view.widgets.radio_box_widget import RadioBoxWidget
 from view.widgets.reset_button import ResetButtonWidget
 from view.widgets.slider_widget import SliderWidget
 from view.widgets.text_area_input_widget import TextAreaInputWidget
 from view.widgets.text_field_widget import TextFieldWidget
+from view.widgets.accordion_widget import AccordionWidgetWithCards
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -32,11 +33,14 @@ logger.setLevel(logging.INFO)
 # Main App
 #
 class RecoExplorerApp:
-
-    def __init__(self, config_full_path: str, config: dict[str, str]) -> None:
+    def __init__(
+        self, config_full_paths: dict[str, str], config: dict[str, str], client: str
+    ) -> None:
         # basic setup
         self.config = config
-        self.config_full_path = config_full_path
+        self.client = client
+        self.config_full_paths = config_full_paths
+        self.config_full_path = config_full_paths[client]
         self.controller = RecommendationController(self.config)
 
         self.widgets = {
@@ -53,6 +57,12 @@ class RecoExplorerApp:
             ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(
                 self, self.controller
             ),
+            ui_constants.ACCORDION_WITH_CARDS_TYPE_VALUE: AccordionWidgetWithCards(
+                self, self.controller
+            ),
+            ui_constants.DATE_TIME_QUICK_SELECT_TYPE_VALUE: DateTimeQuickSelectWidget(
+                self, self.controller
+            ),
         }
 
         pn.extension(sizing_mode="stretch_width")
@@ -66,9 +76,6 @@ class RecoExplorerApp:
 
         # display mode
         self.model_type = constants.MODEL_CONFIG_C2C
-
-        # client
-        self.set_client()
 
         # start items
         self.start_items = []
@@ -85,6 +92,7 @@ class RecoExplorerApp:
         self.nav_controls = pn.WidgetBox()
         self.navigational_components = {}
         self.config_based_nav_controls = pn.WidgetBox()
+        self.client_choice_visibility = len(self.config_full_paths) > 1
 
         #
         self.define_item_pagination()
@@ -109,18 +117,6 @@ class RecoExplorerApp:
         self.set_u2c_model_definitions()
 
         self.url_parameter_text_field_mapping = {}
-
-    def set_client(self):
-        # Check if there are multiple config files. If yes, make config widget visible.
-        all_configs = get_all_config_files(self.config_full_path)
-        logger.debug("all_configs: %s", all_configs)
-
-        if len(all_configs) > 1:
-            self.client_choice_visibility = True
-        else:
-            self.client_choice_visibility = False
-
-        self.client = get_client_from_path(self.config_full_path)
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -422,20 +418,26 @@ class RecoExplorerApp:
     # Filtering block u2c
     def define_reco_filtering_selection_u2c(self):
         self.editorial_choice = pn.widgets.MultiSelect(
-            name="Empfehlungen auf Kategorie einschränken", options=[], visible=True, size=4
+            name="Empfehlungen auf Kategorie einschränken",
+            options=[],
+            visible=True,
+            size=4,
         )
 
         self.editorial_choice.params = {
             "label": "editorialCategories",
             "validator": "_check_editorial_category",
-            "reset_to": []
+            "reset_to": [],
         }
 
         self.editorial_choice.options = list(
-            filter(lambda item: item != "n/a", self.controller.get_item_defaults("editorialCategories"))
+            filter(
+                lambda item: item != "n/a",
+                self.controller.get_item_defaults("editorialCategories"),
+            )
         )
 
-        user_editorial_watcher =  self.editorial_choice.param.watch(
+        user_editorial_watcher = self.editorial_choice.param.watch(
             self.trigger_reco_filter_choice, "value", onlychanged=True
         )
 
@@ -443,7 +445,7 @@ class RecoExplorerApp:
             "reco_filter_u2c",
             self.editorial_choice,
             user_editorial_watcher,
-            self.trigger_reco_filter_choice
+            self.trigger_reco_filter_choice,
         )
 
         # reset button
@@ -935,32 +937,32 @@ class RecoExplorerApp:
         self.model_resetter.on_click(self.trigger_model_reset)
 
     # event handling
-    def trigger_reco_filter_choice(self, event):
+    async def trigger_reco_filter_choice(self, event):
         logger.info(event)
         self.toggle_visibility(event)
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_start_filter_choice(self, event):
+    async def trigger_start_filter_choice(self, event):
         logger.info(event)
         self.toggle_visibility(event)
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_item_pagination(self, event):
+    async def trigger_item_pagination(self, event):
         logger.info(event)
         if event.obj.name == self.RIGHT_ARROW:
             self.controller.increase_page_number()
         elif event.obj.name == self.LEFT_ARROW:
             self.controller.decrease_page_number()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
         self.disablePageButtons()
 
-    def trigger_item_filter_choice(self, event):
+    async def trigger_item_filter_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_model_choice(self, event):
+    async def trigger_model_choice(self, event):
         logger.info(event)
         if self.model_choice.active[0] == 0:
             self.controller.reset_component(
@@ -972,31 +974,31 @@ class RecoExplorerApp:
             )
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_model_choice_new(self, event):
+    async def trigger_model_choice_new(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_user_cluster_choice(self, event):
+    async def trigger_user_cluster_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_user_filter_choice(self, event):
+    async def trigger_user_filter_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
-    def trigger_item_selection(self, event):
+    async def trigger_item_selection(self, event):
         # if the "new" parameter of the event contains a string, load that string
         logger.info(event)
         if event.new:
-            self.get_items_with_parameters()
+            await self.get_items_with_parameters()
             self.pagination[4] = self.controller.get_num_pages()
         else:
             self.item_grid.objects = {}
@@ -1012,11 +1014,11 @@ class RecoExplorerApp:
         self.floating_elements.objects = []
         self.draw_pagination()
 
-    def trigger_reco_reset(self, event):
+    async def trigger_reco_reset(self, event):
         logger.info(event)
         self.controller.reset_defaults(event.obj.params["resets"])
         self.controller.reset_page_number()
-        self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
     def trigger_model_reset(self, event):
         logger.info(event)
@@ -1381,7 +1383,7 @@ class RecoExplorerApp:
             # Client
             client_choice = pn.widgets.RadioButtonGroup(
                 name="",
-                options=get_client_options(self.config_full_path),
+                options=get_client_options(self.config_full_paths),
                 value=self.client,
             )
 
@@ -1401,7 +1403,7 @@ class RecoExplorerApp:
             # Client
             self.client_choice = pn.widgets.RadioButtonGroup(
                 name="",
-                options=get_client_options(self.config_full_path),
+                options=get_client_options(self.config_full_paths),
                 value=self.client,
             )
 
@@ -1447,10 +1449,8 @@ class RecoExplorerApp:
             self.item_source.max_width = accordion_max_width
 
             # User source
-            self.user_source = pn.Accordion(
-                ("User-Filter", self.user_filter_choice)
-            )
-#            self.user_source.active = [1,1]
+            self.user_source = pn.Accordion(("User-Filter", self.user_filter_choice))
+            #            self.user_source.active = [1,1]
             self.user_source.toggle = False
             self.user_source.max_width = accordion_max_width
             self.user_source.param.watch(
@@ -1481,7 +1481,7 @@ class RecoExplorerApp:
                 ("Genre-Filter", self.genre_col),
                 ("Subgenre-Filter", self.subgenre_col),
                 ("Themen-Filter", self.theme_col),
-                ("Sendereihe-Filter", self.show_col)
+                ("Sendereihe-Filter", self.show_col),
             )
             self.reco_items.max_width = accordion_max_width
 
@@ -1557,17 +1557,17 @@ class RecoExplorerApp:
 
     #
 
-    def get_items_with_parameters(self):
+    async def get_items_with_parameters(self):
         """
         Calls the actual search function in controller to get results for query
         """
         self.item_grid.objects = {}
 
         try:
-            models, items, config = self.controller.get_items()
+            models, items, config = await asyncio.to_thread(self.controller.get_items)
             for idx, row in enumerate(items):
                 for idz, item_dto in enumerate(row):
-                    card = self.controller.get_item_viewer(item_dto)
+                    card = self.controller.get_item_viewer(item_dto, self)
                     if (
                         self.controller.get_display_mode()
                         == constants.DISPLAY_MODE_SINGLE

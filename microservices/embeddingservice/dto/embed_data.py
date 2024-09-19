@@ -9,4 +9,4 @@ class EmbeddingRequest(BaseModel):
 class AddEmbeddingToDocRequest(BaseModel):
     id: str
     embedText: str
-
+    models: list[str] | None = None

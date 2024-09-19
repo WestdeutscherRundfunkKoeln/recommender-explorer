@@ -5,7 +5,12 @@ import panel as pn
 from envyaml import EnvYAML
 
 from exceptions.config_error import ConfigError
-from util.file_utils import get_config_from_search, get_config_from_arg, load_ui_config, load_deployment_version_config
+from util.file_utils import (
+    get_config_from_search,
+    get_configs_from_arg,
+    load_ui_config,
+    load_deployment_version_config,
+)
 from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
@@ -13,8 +18,10 @@ logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
 
-def getExplorerInstance(config_full_path: str, config: dict[str, str]):
-    return RecoExplorerApp(config_full_path, config).render()
+def getExplorerInstance(
+    config_full_paths: dict[str, str], config: dict[str, str], client: str
+):
+    return RecoExplorerApp(config_full_paths, config, client).render()
 
 
 #
@@ -24,15 +31,13 @@ if not len(sys.argv[1:]):
     exit("Unable to start Reco Explorer - no config was passed.")
 
 try:
-    config_full_path = get_config_from_arg(sys.argv[1:][0])
+    client, config_full_path, config_full_paths = get_configs_from_arg(sys.argv[1])
 
     # replace config from url param, if given
     if pn.state.location.search:
-        new_config_full_path = get_config_from_search(
-            pn.state.location.search, config_full_path
-        )
-        if new_config_full_path:
-            config_full_path = new_config_full_path
+        search = get_config_from_search(pn.state.location.search, config_full_paths)
+        if search:
+            client, config_full_path = search
 
     config = load_ui_config(EnvYAML(config_full_path).export())
     config = load_deployment_version_config(config)
@@ -40,7 +45,7 @@ try:
         pn.state.location.search, ""
     )
 
-    getExplorerInstance(config_full_path, config).server_doc()
+    getExplorerInstance(config_full_paths, config, client).server_doc()
 
 except ConfigError as e:
     logger.critical(e.message)

@@ -12,8 +12,9 @@ class TaskStatus:
     @classmethod
     def spawn(cls, id: str) -> "TaskStatus":
         task_status = cls(id)
-        task_status.put(
-            BulkIngestTask(id=id, status=BulkIngestTaskStatus.PREPROCESSING, errors=[])
+        cls.put(
+            id,
+            BulkIngestTask(id=id, status=BulkIngestTaskStatus.PREPROCESSING, errors=[]),
         )
         return task_status
 
@@ -27,11 +28,13 @@ class TaskStatus:
     def add_error(self, error: str) -> None:
         self._tasks[self.id].errors.append(error)
 
-    def get(self) -> BulkIngestTask | None:
-        return self._tasks.get(self.id)
+    @classmethod
+    def get(cls, id: str) -> BulkIngestTask | None:
+        return cls._tasks.get(id)
 
-    def put(self, task: BulkIngestTask) -> None:
-        self._tasks[self.id] = task
+    @classmethod
+    def put(cls, id: str, task: BulkIngestTask) -> None:
+        cls._tasks[id] = task
 
     @classmethod
     def get_tasks(cls) -> dict[str, BulkIngestTask]:
