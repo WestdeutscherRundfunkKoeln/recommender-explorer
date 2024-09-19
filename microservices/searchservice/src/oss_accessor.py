@@ -1,6 +1,12 @@
 import json
 import logging
-from typing import Any, Iterator, Self
+from typing import Any, Iterator
+
+import sys
+if sys.version_info.major==3 and sys.version_info.minor < 11: # if python version is lower than 3.11
+    from typing_extensions import Self
+else:
+    from typing import Self
 
 from fastapi import HTTPException
 from opensearchpy import (
