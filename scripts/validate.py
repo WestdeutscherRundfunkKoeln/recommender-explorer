@@ -39,13 +39,18 @@ def validate_schema(schema_path: str, config: dict[str, Any]) -> None:
     raise err
 
 
-def load_ui_config(config: dict[str, Any]) -> dict[str, Any]:
+def load_ui_config(config: dict[str, Any], config_path: pathlib.Path) -> dict[str, Any]:
     ui_config = config.get("ui_config")
     if not ui_config:
         print("No ui_config found in config")
         return {}
+
+    if isinstance(ui_config, dict):
+        return ui_config
+
+    ui_config_path = config_path.parent / ui_config
     return (
-        EnvYAML(ui_config, flatten=False).export()
+        EnvYAML(ui_config_path, flatten=False).export()
         if isinstance(ui_config, str)
         else {"ui_config": ui_config}
     )
@@ -65,11 +70,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    config = EnvYAML(root_path / args.config_path, flatten=False, strict=False).export()
+    config_path = root_path / args.config_path
+    config = EnvYAML(config_path, flatten=False, strict=False).export()
     validate_schema(args.schema_path, config)
     print("Config validated")
 
-    ui_config = load_ui_config(config)
+    ui_config = load_ui_config(config, config_path)
     if ui_config:
         validate_schema(args.ui_schema_path, ui_config)
         print("UI Config validated")

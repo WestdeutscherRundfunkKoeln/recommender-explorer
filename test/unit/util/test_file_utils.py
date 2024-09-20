@@ -11,12 +11,12 @@ from src.util.file_utils import (
 
 @pytest.fixture
 def config_dummy():
-    return str(Path(__file__).parent / "config_dummy.yaml")
+    return Path(__file__).parent / "config_dummy.yaml"
 
 
 @pytest.fixture
 def config_test():
-    return str(Path(__file__).parent / "config_test.yaml")
+    return Path(__file__).parent / "config_test.yaml"
 
 
 def test_load_ui_config__valid_config():
