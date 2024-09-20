@@ -1,9 +1,12 @@
-import logging
-import re
 import glob
+import logging
 import os
-import constants
+import re
+from pathlib import Path
+
 from envyaml import EnvYAML
+
+import constants
 from exceptions.config_error import ConfigError
 from view import ui_constants
 
@@ -16,13 +19,14 @@ def get_all_config_files(path) -> list:
     return all_configs
 
 
-def get_configs_from_arg(arg: str) -> tuple[str, str, dict[str, str]]:
+def get_configs_from_arg(arg: str) -> tuple[str, Path, dict[str, Path]]:
     config_paths = arg.removeprefix("config=").split(",")
     for config_path in config_paths:
         if not os.path.isfile(config_path):
             raise Exception("Config file not found at path [" + config_path + "]")
     kv_pairs = [
-        (get_client_from_path(config_path), config_path) for config_path in config_paths
+        (get_client_from_path(config_path), Path(config_path))
+        for config_path in config_paths
     ]
     return *kv_pairs[0], dict(kv_pairs)
 
@@ -64,33 +68,29 @@ def get_client_options(all_configs: dict[str, str]) -> dict[str, str]:
     }
 
 
-def _segment_arg_config(config_name) -> tuple[str, str]:
-    configuration_string = config_name.removeprefix("config=")
-    config_path = os.path.dirname(os.path.normpath(configuration_string))
-    config_name = os.path.basename(os.path.normpath(configuration_string))
-    return config_path, config_name
+def load_config(full_path: Path) -> dict[str, str]:
+    config = EnvYAML(full_path).export()
+
+    return load_ui_config(config, full_path)
 
 
-def _replace_config(config_name, app_ident) -> str:
-    replaced_config_name = re.sub(
-        "(^config_)(.*)(\.yaml$)", (r"\1" + app_ident + r"\3"), config_name
-    )
-    return replaced_config_name
+def load_ui_config(config: dict[str, str], full_path: Path) -> dict[str, str]:
+    ui_config_path = config.get(ui_constants.UI_CONFIG_KEY)
 
+    if not ui_config_path:
+        logger.warning("UI config not found in config file %s.", full_path)
+        return config
 
-def load_ui_config(config: dict[str, str]) -> dict[str, str]:
-    ui_config = {}
-    try:
-        ui_config = EnvYAML(
-            config[ui_constants.UI_CONFIG_KEY], include_environment=False
-        ).export()
-    except KeyError:
-        logger.warning("UI config not found in config file")
-    except FileNotFoundError:
-        logger.warning("UI config file not found")
-    except TypeError:
+    if isinstance(ui_config_path, dict):
         logger.warning("UI config seems to be defined inline")
+        return config
 
+    full_ui_config_path = Path(full_path.parent, ui_config_path)
+    if not full_ui_config_path.exists():
+        logger.warning("UI config file at %s not found.", full_ui_config_path)
+        return config
+
+    ui_config = EnvYAML(full_ui_config_path, include_environment=False).export()
     config.update(ui_config)
     return config
 

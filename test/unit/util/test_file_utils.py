@@ -11,21 +11,26 @@ from src.util.file_utils import (
 
 @pytest.fixture
 def config_dummy():
-    return str(Path(__file__).parent / "config_dummy.yaml")
+    return Path(__file__).parent / "config_dummy.yaml"
 
 
 @pytest.fixture
 def config_test():
-    return str(Path(__file__).parent / "config_test.yaml")
+    return Path(__file__).parent / "config_test.yaml"
 
 
-def test_load_ui_config__valid_config():
+@pytest.fixture
+def full_path():
+    return Path(__file__).parent / "test_config.yaml"
+
+
+def test_load_ui_config__valid_config(full_path):
     config = {
         "test": "test",
         "ui_config": Path(__file__).parent / "test_ui_config.yaml",
     }
 
-    result = load_ui_config(config)
+    result = load_ui_config(config, full_path)
 
     assert result == {
         "test": "test",
@@ -34,29 +39,29 @@ def test_load_ui_config__valid_config():
     }
 
 
-def test_load_ui_config__no_config():
+def test_load_ui_config__no_config(full_path):
     config = {"test": "test"}
 
-    result = load_ui_config(config)
+    result = load_ui_config(config, full_path)
 
     assert result == config
 
 
-def test_load_ui_config__wrong_config():
+def test_load_ui_config__wrong_config(full_path):
     config = {
         "test": "test",
         "ui_config": Path(__file__).parent / "this_config_does_not_exist.yaml",
     }
 
-    result = load_ui_config(config)
+    result = load_ui_config(config, full_path)
 
     assert result == config
 
 
-def test_load_ui_config__inline_config():
+def test_load_ui_config__inline_config(full_path):
     config = {"test": "test", "ui_config": {"title": "Test Recommender Explorer"}}
 
-    result = load_ui_config(config)
+    result = load_ui_config(config, full_path)
 
     assert result == config
 
@@ -75,8 +80,7 @@ def test_get_configs_from_arg__multiple_configs(config_test, config_dummy):
     assert result == ("test", config_test, {"test": config_test, "dummy": config_dummy})
 
 
-def test_get_configs_from_arg__invalid_config(config_test, config_dummy):
-    config_dummy = Path(__file__).parent / "config_dummy.yaml"
+def test_get_configs_from_arg__invalid_config(config_dummy):
     args = f"config=./nonexistent.yaml,{config_dummy}"
 
     with pytest.raises(Exception):

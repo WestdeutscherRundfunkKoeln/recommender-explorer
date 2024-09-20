@@ -9,6 +9,7 @@ from util.file_utils import (
     get_config_from_search,
     get_configs_from_arg,
     load_ui_config,
+    load_config,
     load_deployment_version_config,
 )
 from view.RecoExplorerApp import RecoExplorerApp
@@ -39,7 +40,7 @@ try:
         if search:
             client, config_full_path = search
 
-    config = load_ui_config(EnvYAML(config_full_path).export())
+    config = load_config(config_full_path)
     config = load_deployment_version_config(config)
     config["reco_explorer_url_base"] = pn.state.location.href.replace(
         pn.state.location.search, ""
