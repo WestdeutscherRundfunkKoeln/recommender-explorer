@@ -68,30 +68,20 @@ def get_client_options(all_configs: dict[str, str]) -> dict[str, str]:
     }
 
 
-def _segment_arg_config(config_name) -> tuple[str, str]:
-    configuration_string = config_name.removeprefix("config=")
-    config_path = os.path.dirname(os.path.normpath(configuration_string))
-    config_name = os.path.basename(os.path.normpath(configuration_string))
-    return config_path, config_name
-
-
-def _replace_config(config_name, app_ident) -> str:
-    replaced_config_name = re.sub(
-        "(^config_)(.*)(\.yaml$)", (r"\1" + app_ident + r"\3"), config_name
-    )
-    return replaced_config_name
-
-
 def load_config(full_path: Path) -> dict[str, str]:
     config = EnvYAML(full_path).export()
 
+    return load_ui_config(config, full_path)
+
+
+def load_ui_config(config: dict[str, str], full_path: Path) -> dict[str, str]:
     ui_config_path = config.get(ui_constants.UI_CONFIG_KEY)
 
     if not ui_config_path:
         logger.warning("UI config not found in config file %s.", full_path)
         return config
 
-    if not isinstance(ui_config_path, str):
+    if isinstance(ui_config_path, dict):
         logger.warning("UI config seems to be defined inline")
         return config
 
@@ -101,23 +91,6 @@ def load_config(full_path: Path) -> dict[str, str]:
         return config
 
     ui_config = EnvYAML(full_ui_config_path, include_environment=False).export()
-    config.update(ui_config)
-    return config
-
-
-def load_ui_config(config: dict[str, str]) -> dict[str, str]:
-    ui_config = {}
-    try:
-        ui_config = EnvYAML(
-            config[ui_constants.UI_CONFIG_KEY], include_environment=False
-        ).export()
-    except KeyError:
-        logger.warning("UI config not found in config file")
-    except FileNotFoundError:
-        logger.warning("UI config file not found")
-    except TypeError:
-        logger.warning("UI config seems to be defined inline")
-
     config.update(ui_config)
     return config
 
