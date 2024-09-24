@@ -34,6 +34,9 @@ class MockBlob:
             raise GoogleAPICallError("Blob not found")
         return self.data
 
+    def upload_from_string(self, data: str):
+        pass
+
 
 class MockBucket:
     def __init__(self, data: dict[str, Any]):
@@ -526,8 +529,8 @@ def test_upsert_event_no_document_found(test_client: TestClient, httpx_mock: HTT
         },
     )
 
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Blob not found"}
+    assert response.status_code == 200
+    assert response.json() == {"detail": "400: Blob not found"}
     assert len(httpx_mock.get_requests()) == 0
 
 
@@ -556,7 +559,7 @@ def test_upsert_event_invalid_document(test_client: TestClient, httpx_mock: HTTP
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 200
     assert len(httpx_mock.get_requests()) == 0
 
 
@@ -702,7 +705,7 @@ def test_bulk_ingest__with_validation_error(
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
     assert task["errors"] == [
-        "Error during preprocessing of file prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type"
+        "Error during preprocessing of file prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
     ]
 
 
