@@ -12,6 +12,7 @@ from envyaml import EnvYAML
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header
 from fastapi.exceptions import HTTPException
 from google.cloud import storage
+from google.cloud.exceptions import GoogleCloudError
 from pydantic import ValidationError
 from src.bulk import bulk_ingest
 from src.clients import SearchServiceClient
@@ -126,9 +127,12 @@ def ingest_item(
         data["event_type"] = event_type
         data["timestamp"] = ts
         data["exception"] = str(e)
-        storage.bucket(config["dead_letter_bucket"]).blob(
-            f"{ts}.json"
-        ).upload_from_string(json.dumps(data))
+        try:
+            storage.bucket(config["dead_letter_bucket"]).blob(
+                f"{ts}.json"
+            ).upload_from_string(json.dumps(data))
+        except GoogleCloudError:
+            logger.error("Error during upload of log file", exc_info=True)
         raise HTTPException(status_code=200, detail=str(e))
 
 
