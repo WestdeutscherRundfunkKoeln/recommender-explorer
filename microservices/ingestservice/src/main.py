@@ -127,7 +127,7 @@ def ingest_item(
         data["timestamp"] = ts
         data["exception"] = str(e)
         storage.bucket(config["dead_letter_bucket"]).blob(
-            f"{ts}.txt"
+            f"{ts}.json"
         ).upload_from_string(json.dumps(data))
         raise HTTPException(status_code=200, detail=str(e))
 
