@@ -4,5 +4,5 @@ opensearch:
   host: test_host
   port: 443
   user: test_user
-  pass: test
+  pass: test_pass
   index: test
