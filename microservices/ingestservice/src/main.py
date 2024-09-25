@@ -39,7 +39,7 @@ EVENT_TYPE_DELETE = "OBJECT_DELETE"
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 
 config = EnvYAML(CONFIG_PATH)
-API_PREFIX = config.get("API_PREFIX", "")
+API_PREFIX = config.get("api_prefix", "")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 HASH_FIELD = "embedTextHash"
 
