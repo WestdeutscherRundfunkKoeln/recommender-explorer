@@ -1,18 +1,19 @@
 import json
+import logging
+from typing import Any
+
 from envyaml import EnvYAML
+from fastapi.exceptions import HTTPException
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
 from google.oauth2 import service_account
-from fastapi.exceptions import HTTPException
 from src.models import StorageChangeEvent
-
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class StorageClientFactory:
-    def __init__(self, storage_service_account: str):
+    def __init__(self, storage_service_account: dict[str, Any]):
         self.storage_service_account = storage_service_account
 
     @classmethod
