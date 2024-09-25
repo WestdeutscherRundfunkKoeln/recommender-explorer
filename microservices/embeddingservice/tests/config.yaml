@@ -1,4 +1,4 @@
-api_prefix: test_prefix
+api_prefix: ""
 api_key: test_key
 base_url_search: https://test.io/search
 base_url_ingest: https://test.io/ingest

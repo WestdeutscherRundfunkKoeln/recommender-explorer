@@ -12,13 +12,11 @@ NAMESPACE = "embedding"
 
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 
-# TODO: Remove direct environment var access, use config file instead!!
-API_PREFIX = os.environ.get("API_PREFIX", default="")
-ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
-
 config = EnvYAML(CONFIG_PATH)
 text_embedder = EmbedText(config)
 
+API_PREFIX = config.get("api_prefix", default="")
+ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 router = APIRouter()
 
 
