@@ -3,6 +3,6 @@ deployment_env: test
 opensearch:
   host: test_host
   port: 443
-  user: test
+  user: test_user
   pass: test
   index: test
