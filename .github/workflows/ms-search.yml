@@ -5,11 +5,20 @@ on:
     branches:
       - main
       - dev
+      - SNTWREC-132-run-microservice-unit-tests-in-cicd
     paths:
       - 'microservices/searchservice/**'
 
 jobs:
-  build_publish_deploy_ingest:
+  run_unit_tests_search:
+    uses: ./.github/workflows/run-unit-tests.yml
+    with:
+      service-name: search
+      python-version: "3.11"
+    secrets: inherit
+
+  build_publish_deploy_search:
+    needs: run_unit_tests_search
     uses: ./.github/workflows/build-publish-deploy.yml
     with:
       service-name: search
