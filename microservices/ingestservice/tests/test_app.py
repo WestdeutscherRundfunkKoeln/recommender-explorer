@@ -15,7 +15,7 @@ load_dotenv("tests/test.env")
 from src.main import (
     config,
     app,
-    get_storage_client,
+    storage_client_factory,
 )
 
 
@@ -95,9 +95,9 @@ def overwrite_storage_client():
     }
 
     mock_client = MockStorageClient(data)
-    app.dependency_overrides[get_storage_client] = lambda: mock_client
+    app.dependency_overrides[storage_client_factory] = lambda: mock_client
     yield mock_client
-    app.dependency_overrides.pop(get_storage_client)
+    app.dependency_overrides.pop(storage_client_factory)
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 import os
 import json
+from envyaml import EnvYAML
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
 from google.oauth2 import service_account
@@ -12,11 +13,19 @@ logger = logging.getLogger(__name__)
 STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
 
 
-def get_storage_client():
-    credentials = service_account.Credentials.from_service_account_info(
-        json.loads(STORAGE_SERVICE_ACCOUNT)
-    )
-    return storage.Client(credentials=credentials)
+class StorageClientFactory:
+    def __init__(self, storage_service_account: str):
+        self.storage_service_account = storage_service_account
+
+    @classmethod
+    def from_config(cls, config: EnvYAML) -> "StorageClientFactory":
+        return cls(config["storage_service_account"])
+
+    def __call__(self) -> storage.Client:
+        credentials = service_account.Credentials.from_service_account_info(
+            self.storage_service_account
+        )
+        return storage.Client(credentials=credentials)
 
 
 def download_document(
