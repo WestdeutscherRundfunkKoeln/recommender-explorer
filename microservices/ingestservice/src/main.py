@@ -9,7 +9,7 @@ from hashlib import sha256
 from typing import Annotated
 
 from envyaml import EnvYAML
-from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header, Request
 from fastapi.exceptions import HTTPException
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
@@ -93,6 +93,7 @@ def ingest_item(
     storage: Annotated[storage.Client, Depends(get_storage_client)],
     event: StorageChangeEvent,
     event_type: Annotated[str, Header(alias="eventType")],
+    request: Request,
 ):
     try:
         if event_type == EVENT_TYPE_DELETE:
@@ -127,6 +128,7 @@ def ingest_item(
         data["event_type"] = event_type
         data["timestamp"] = ts
         data["exception"] = str(e)
+        data["url"] = str(request.url)
         try:
             storage.bucket(config["dead_letter_bucket"]).blob(
                 f"{ts}.json"
