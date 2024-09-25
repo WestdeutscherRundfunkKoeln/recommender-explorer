@@ -4,7 +4,7 @@ base_url_search: $BASE_URL_SEARCH
 base_url_ingest: $BASE_URL_INGEST
 base_url_embedding: $BASE_URL_EMBEDDING
 models:
-  - jina-embeddings-v2-base-de-8192: jinaai/jina-embeddings-v2-base-de
+  - jina-embeddings-v2-base-de-8000: jinaai/jina-embeddings-v2-base-de
 bucket_name: $BUCKET_NAME
 bucket_path: $BUCKET_PATH
 service_account: $SERVICE_ACCOUNT
