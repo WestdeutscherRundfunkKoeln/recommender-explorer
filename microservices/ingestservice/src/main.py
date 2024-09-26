@@ -1,4 +1,6 @@
 import asyncio
+from datetime import datetime
+import json
 import logging
 import os
 import uuid
@@ -7,9 +9,10 @@ from hashlib import sha256
 from typing import Annotated
 
 from envyaml import EnvYAML
-from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header, Request
 from fastapi.exceptions import HTTPException
 from google.cloud import storage
+from google.cloud.exceptions import GoogleCloudError
 from pydantic import ValidationError
 from src.bulk import bulk_ingest
 from src.clients import SearchServiceClient
@@ -90,33 +93,49 @@ def ingest_item(
     storage: Annotated[storage.Client, Depends(get_storage_client)],
     event: StorageChangeEvent,
     event_type: Annotated[str, Header(alias="eventType")],
+    request: Request,
 ):
-    if event_type == EVENT_TYPE_DELETE:
-        return search_service_client.delete(event.blob_id)
-
-    document = download_document(storage, event)
     try:
-        document = data_preprocessor.map_data(document)
-    except ValidationError as exc:
-        logger.error("Validation error: %s", str(exc))
-        raise HTTPException(status_code=422, detail=str(exc))
+        if event_type == EVENT_TYPE_DELETE:
+            return search_service_client.delete(event.blob_id)
 
-    upsert_response = search_service_client.create_single_document(
-        document.id, document.model_dump()
-    )
+        document = download_document(storage, event)
+        try:
+            document = data_preprocessor.map_data(document)
+        except ValidationError as exc:
+            logger.error("Validation error: %s", str(exc))
+            raise
 
-    if not document.embedText:
-        return upsert_response
+        upsert_response = search_service_client.create_single_document(
+            document.id, document.model_dump()
+        )
 
-    embed_hash_in_oss = search_service_client.get(document.id, [HASH_FIELD]).get(
-        HASH_FIELD
-    )
-    embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
+        if not document.embedText:
+            return upsert_response
 
-    if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):
-        data_preprocessor.add_embeddings(document)
+        embed_hash_in_oss = search_service_client.get(document.id, [HASH_FIELD]).get(
+            HASH_FIELD
+        )
+        embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
 
-    return upsert_response  # TODO: check for meaningful return object. kept for backward compatibility?
+        if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):
+            data_preprocessor.add_embeddings(document)
+
+        return upsert_response  # TODO: check for meaningful return object. kept for backward compatibility?
+    except Exception as e:
+        ts = datetime.now().isoformat()
+        data = event.model_dump()
+        data["event_type"] = event_type
+        data["timestamp"] = ts
+        data["exception"] = str(e)
+        data["url"] = str(request.url)
+        try:
+            storage.bucket(config["dead_letter_bucket"]).blob(
+                f"{ts}.json"
+            ).upload_from_string(json.dumps(data))
+        except GoogleCloudError:
+            logger.error("Error during upload of log file", exc_info=True)
+        raise HTTPException(status_code=200, detail=str(e))
 
 
 @router.post("/ingest-multiple-items", status_code=202)
