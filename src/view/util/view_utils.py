@@ -1,6 +1,8 @@
 import logging
 from collections import deque
-from typing import Callable, TypeVar, cast
+from typing import Callable, TypeVar, cast, List, Tuple
+from view.widgets.radio_box_widget import RadioBoxWidget
+from view.widgets.radio_box_widget import WidgetGroupWrapper
 
 import panel as pn
 
@@ -11,7 +13,7 @@ T = TypeVar("T")
 
 
 def get_first_widget_by_accessor_function(
-    widget: pn.viewable.Viewable, target_accessor: str
+    widget: pn.viewable.Viewable, target_accessor: list[str]
 ) -> pn.viewable.Viewable | None:
     """
     This method searches for a widget using the provided target accessor function. It first checks if the widget is a nested widget by calling
@@ -28,7 +30,7 @@ def get_first_widget_by_accessor_function(
         return (
             hasattr(w, "params")
             and "accessor" in w.params
-            and w.params["accessor"] == target_accessor
+            and w.params["accessor"] in target_accessor
         )
 
     return find_widget(widget, _widget_with_accessor)
@@ -84,6 +86,25 @@ def find_widget_by_name(
         return find_widget(widget, _find_parent)
 
     return find_widget(widget, lambda w: hasattr(w, "name") and w.name == target_name)
+
+
+def find_widget_by_type(
+        widget: pn.viewable.Viewable, widget_type: type[T]
+) -> T | None:
+    """
+    Finds all widget of a certain type in a given widget collection.
+
+    param widget: The widget to search for the target widget.
+    param widget_type: The type of the target widget.
+    return: The target widget if found, otherwise None.
+    """
+
+    def _predicate(w):
+        return (
+            isinstance(w, widget_type)
+        )
+
+    return cast(T | None, find_widget(widget, _predicate))
 
 
 def find_widget_by_type_and_label(

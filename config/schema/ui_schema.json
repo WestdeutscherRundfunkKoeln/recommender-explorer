@@ -400,6 +400,9 @@
                 "$ref": "#/$defs/date_time_picker"
               },
               {
+                "$ref": "#/$defs/date_time_quick_select"
+              },
+              {
                 "$ref": "#/$defs/radio_box"
               },
               {
@@ -465,6 +468,9 @@
             "items": {
               "anyOf": [
                 {
+                  "$ref": "#/$defs/accordion"
+                },
+                {
                   "$ref": "#/$defs/text_field"
                 },
                 {
@@ -475,6 +481,9 @@
                 },
                 {
                   "$ref": "#/$defs/date_time_picker"
+                },
+                {
+                  "$ref": "#/$defs/date_time_quick_select"
                 },
                 {
                   "$ref": "#/$defs/slider"

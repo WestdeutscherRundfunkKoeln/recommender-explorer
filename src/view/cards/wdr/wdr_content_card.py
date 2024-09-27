@@ -17,15 +17,20 @@ class WDRContentCard:
 
     domain_mapping = {"wdr.de": "https://www1.wdr.de"}
 
-    def __init__(self, config, reco_explorer_app_instance:RecoExplorerApp=None):
+    def __init__(self, config, reco_explorer_app_instance: RecoExplorerApp = None):
         self.config = config
         self.reco_explorer_app_instance = reco_explorer_app_instance
 
-    def draw(self, content_dto: WDRContentItemDto, card, button:pn.widgets.Button or None = None):
+    def draw(
+        self,
+        content_dto: WDRContentItemDto,
+        card,
+        button: pn.widgets.Button or None = None,
+    ):
         base_card_objects = [
             pn.pane.Markdown(f"""
                        #### {content_dto.title}
-                       **Datentyp:** {self.type_icon.get(content_dto.type, content_dto.type)} 
+                       **Datentyp:** {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} 
                        **Datum:** {content_dto.availableFrom}
                        **Strukturpfad:** {content_dto.structurePath}
                        **External ID:** {content_dto.externalid}

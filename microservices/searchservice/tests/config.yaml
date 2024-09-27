@@ -1,0 +1,8 @@
+api_prefix: test
+deployment_env: test
+opensearch:
+  host: test
+  port: 443
+  user: test
+  pass: test
+  index: test
