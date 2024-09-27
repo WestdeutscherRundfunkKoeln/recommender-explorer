@@ -4,9 +4,8 @@ base_url_search: $BASE_URL_SEARCH
 base_url_ingest: $BASE_URL_INGEST
 base_url_embedding: $BASE_URL_EMBEDDING
 models:
-  - all-MiniLM-L6-v2_title_desc_nokeywords: sentence-transformers/all-MiniLM-L6-v2
-  - T-Systems-onsitegerman-roberta-sentence-transformer-v2_title_desc_nokeywords: T-Systems-onsite/german-roberta-sentence-transformer-v2
-  - sentence-transformersdistiluse-base-multilingual-cased-v1_title_desc_nokeywords: sentence-transformers/distiluse-base-multilingual-cased-v1
+  - jina-embeddings-v2-base-de-8192: sentence_transformers/jina-embeddings-v2-base-de-8192
+  - jina-embeddings-v2-base-de-128: sentence_transformers/jina-embeddings-v2-base-de-128
 bucket_name: $BUCKET_NAME
 bucket_path: $BUCKET_PATH
 service_account: $SERVICE_ACCOUNT

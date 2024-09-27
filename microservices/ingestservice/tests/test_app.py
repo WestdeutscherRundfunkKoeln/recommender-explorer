@@ -34,13 +34,18 @@ class MockBlob:
             raise GoogleAPICallError("Blob not found")
         return self.data
 
+    def upload_from_string(self, data: str):
+        self.data = data
+
 
 class MockBucket:
     def __init__(self, data: dict[str, Any]):
         self.data = {k: MockBlob(v, k) for k, v in data.items()}
 
     def blob(self, blob_name: str):
-        return self.data.get(blob_name, MockBlob({}, blob_name))
+        if blob_name not in self.data:
+            self.data[blob_name] = MockBlob({}, blob_name)
+        return self.data[blob_name]
 
     def list_blobs(self, *args, **kwargs):
         prefix = kwargs["match_glob"].split("/")[0]
@@ -53,15 +58,16 @@ class MockBucket:
 
 class MockStorageClient:
     def __init__(self, data: dict[str, str]):
-        self._bucket = MockBucket(data)
+        self._buckets = {"wdr-recommender-exporter-dev-import": MockBucket(data)}
         self.bucket_name = None
 
     def bucket(self, bucket_name: str):
-        self.bucket_name = bucket_name
-        return self._bucket
+        if bucket_name not in self._buckets:
+            self._buckets[bucket_name] = MockBucket({})
+        return self._buckets[bucket_name]
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(autouse=True)
 def overwrite_storage_client():
     data = {
         "prod/valid.json": json.dumps(
@@ -88,8 +94,9 @@ def overwrite_storage_client():
         ),
     }
 
-    app.dependency_overrides[get_storage_client] = lambda: MockStorageClient(data)
-    yield
+    mock_client = MockStorageClient(data)
+    app.dependency_overrides[get_storage_client] = lambda: mock_client
+    yield mock_client
     app.dependency_overrides.pop(get_storage_client)
 
 
@@ -126,7 +133,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
         },
     )
     httpx_mock.add_response(
-        url=config["base_url_search"] + "/document/test?fields=embedTextHash",
+        url=config["base_url_search"] + "/documents/test?fields=embedTextHash",
         method="GET",
         json={
             "took": 1,
@@ -178,7 +185,8 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
     request = requests[1]
     assert request.method == "GET"
     assert (
-        request.url == config["base_url_search"] + "/document/test?fields=embedTextHash"
+        request.url
+        == config["base_url_search"] + "/documents/test?fields=embedTextHash"
     )
     assert request.headers["x-api-key"] == "test-key"
 
@@ -192,7 +200,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
     # Request to the search service for upsert
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == config["base_url_search"] + "/create-single-document"
+    assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content
@@ -256,7 +264,7 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
         },
     )
     httpx_mock.add_response(
-        url=config["base_url_search"] + "/document/test?fields=embedTextHash",
+        url=config["base_url_search"] + "/documents/test?fields=embedTextHash",
         method="GET",
         json={
             "took": 1,
@@ -311,7 +319,8 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
     request = requests[1]
     assert request.method == "GET"
     assert (
-        request.url == config["base_url_search"] + "/document/test?fields=embedTextHash"
+        request.url
+        == config["base_url_search"] + "/documents/test?fields=embedTextHash"
     )
     assert request.headers["x-api-key"] == "test-key"
 
@@ -325,7 +334,7 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
     # Request to the search service for upsert
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == config["base_url_search"] + "/create-single-document"
+    assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content
@@ -389,7 +398,7 @@ def test_upsert_event__with_available_correct_document__matching_hash(
         },
     )
     httpx_mock.add_response(
-        url=config["base_url_search"] + "/document/test?fields=embedTextHash",
+        url=config["base_url_search"] + "/documents/test?fields=embedTextHash",
         method="GET",
         json={
             "took": 1,
@@ -444,14 +453,15 @@ def test_upsert_event__with_available_correct_document__matching_hash(
     request = requests[1]
     assert request.method == "GET"
     assert (
-        request.url == config["base_url_search"] + "/document/test?fields=embedTextHash"
+        request.url
+        == config["base_url_search"] + "/documents/test?fields=embedTextHash"
     )
     assert request.headers["x-api-key"] == "test-key"
 
     # Request to the search service for upsert
     request = requests[0]
     assert request.method == "POST"
-    assert request.url == config["base_url_search"] + "/create-single-document"
+    assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content
@@ -498,7 +508,11 @@ def test_upsert_event__with_available_correct_document__matching_hash(
     )
 
 
-def test_upsert_event_no_document_found(test_client: TestClient, httpx_mock: HTTPXMock):
+def test_upsert_event_no_document_found(
+    test_client: TestClient,
+    httpx_mock: HTTPXMock,
+    overwrite_storage_client: MockStorageClient,
+):
     response = test_client.post(
         "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
@@ -523,12 +537,26 @@ def test_upsert_event_no_document_found(test_client: TestClient, httpx_mock: HTT
         },
     )
 
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Blob not found"}
+    assert response.status_code == 200
+    assert response.json() == {"detail": "400: Blob not found"}
     assert len(httpx_mock.get_requests()) == 0
 
+    bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
+    blob = next((blob for blob in bucket_data if blob.startswith("20")))
+    assert blob is not None
+    uploaded_data = json.loads(bucket_data[blob].data)
+    assert uploaded_data["name"] == "prod/nonexistent.json"
+    assert uploaded_data["bucket"] == "wdr-recommender-exporter-dev-import"
+    assert uploaded_data["event_type"] == "OBJECT_FINALIZE"
+    assert uploaded_data["exception"] == "400: Blob not found"
+    assert uploaded_data["url"] == "http://testserver/events"
 
-def test_upsert_event_invalid_document(test_client: TestClient, httpx_mock: HTTPXMock):
+
+def test_upsert_event_invalid_document(
+    test_client: TestClient,
+    httpx_mock: HTTPXMock,
+    overwrite_storage_client: MockStorageClient,
+):
     response = test_client.post(
         "/events",
         headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
@@ -553,8 +581,20 @@ def test_upsert_event_invalid_document(test_client: TestClient, httpx_mock: HTTP
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 200
     assert len(httpx_mock.get_requests()) == 0
+
+    bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
+    blob = next((blob for blob in bucket_data if blob.startswith("20")))
+    uploaded_data = json.loads(bucket_data[blob].data)
+    assert uploaded_data["name"] == "prod/invalid.json"
+    assert uploaded_data["bucket"] == "wdr-recommender-exporter-dev-import"
+    assert uploaded_data["event_type"] == "OBJECT_FINALIZE"
+    assert (
+        uploaded_data["exception"]
+        == "10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
+    )
+    assert uploaded_data["url"] == "http://testserver/events"
 
 
 def test_delete_event_with_available_correct_document(
@@ -604,7 +644,7 @@ def test_delete_event_with_available_correct_document(
     # Request to the search service
     request = requests[0]
     assert request.method == "DELETE"
-    assert request.url == config["base_url_search"] + "/delete-data?document_id=valid"
+    assert request.url == config["base_url_search"] + "/documents/valid"
     assert request.headers["x-api-key"] == "test-key"
 
 
@@ -615,7 +655,7 @@ def test_bulk_ingest__with_validation_error(
         url=config["base_url_embedding"] + "/embedding", json={"model": [1, 2]}
     )
     httpx_mock.add_response(
-        url=config["base_url_search"] + "/create-multiple-documents",
+        url=config["base_url_search"] + "/documents",
         json={"status": "ok"},
         status_code=200,
     )
@@ -623,7 +663,7 @@ def test_bulk_ingest__with_validation_error(
     response = test_client.post(
         "/ingest-multiple-items",
         json={
-            "bucket": "test",
+            "bucket": "wdr-recommender-exporter-dev-import",
             "prefix": "prod/",
         },
     )
@@ -643,7 +683,7 @@ def test_bulk_ingest__with_validation_error(
 
     request = requests[1]
     assert request.method == "POST"
-    assert request.url == config["base_url_search"] + "/create-multiple-documents"
+    assert request.url == config["base_url_search"] + "/documents"
     assert request.headers["x-api-key"] == "test-key"
     assert (
         request.content
@@ -699,7 +739,7 @@ def test_bulk_ingest__with_validation_error(
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
     assert task["errors"] == [
-        "Error during preprocessing of file prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.8/v/string_type"
+        "Error during preprocessing of file prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
     ]
 
 

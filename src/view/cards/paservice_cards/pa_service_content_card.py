@@ -22,7 +22,7 @@ class PaServiceContentCard:
         base_card_objects = [
             pn.pane.Markdown(f"""
                        #### {content_dto.title}
-                       **Datentyp:** {self.type_icon.get(content_dto.contentType, content_dto.contentType)} 
+                       **Datentyp:** {content_dto.contentType.title()} {self.type_icon.get(content_dto.contentType, "")} 
                        **Datum:** {content_dto.availableFrom}
                        **Strukturpfad:** {content_dto.structureNodePath}
                        **External ID:** [{content_dto.externalId}]({self.config["reco_explorer_url_base"]}?externalId={content_dto.externalId}) 

@@ -1,4 +1,6 @@
 import asyncio
+from datetime import datetime
+import json
 import logging
 import os
 import uuid
@@ -7,12 +9,14 @@ from hashlib import sha256
 from typing import Annotated
 
 from envyaml import EnvYAML
-from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header, Request
 from fastapi.exceptions import HTTPException
 from google.cloud import storage
+from google.cloud.exceptions import GoogleCloudError
 from pydantic import ValidationError
 from src.bulk import bulk_ingest
 from src.clients import SearchServiceClient
+from src.maintenance import reembedding_background_task, task_cleaner
 from src.models import (
     FullLoadRequest,
     FullLoadResponse,
@@ -34,6 +38,18 @@ EVENT_TYPE_DELETE = "OBJECT_DELETE"
 
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
+TASK_CLEANER_INTERVAL_SECONDS = float(
+    os.environ.get(
+        "TASK_CLEANER_INTERVAL_SECONDS",
+        60 * 60 * 24,  # 24 hours
+    )
+)
+REEMBED_INTERVAL_SECONDS = float(
+    os.environ.get(
+        "REEMBED_INTERVAL_SECONDS",
+        60 * 60,  # 1 hour
+    )
+)
 
 config = EnvYAML(CONFIG_PATH)
 API_PREFIX = config.get("API_PREFIX", "")
@@ -43,15 +59,23 @@ HASH_FIELD = "embedTextHash"
 data_preprocessor = DataPreprocessor(config)
 search_service_client = SearchServiceClient.from_config(config)
 
+maintenance_tasks = set()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async def task_cleaner():
-        while True:
-            TaskStatus.clear()
-            await asyncio.sleep(5 * 60)
-
-    asyncio.create_task(task_cleaner())
+    maintenance_tasks.add(
+        asyncio.create_task(task_cleaner(TASK_CLEANER_INTERVAL_SECONDS))
+    )
+    maintenance_tasks.add(
+        asyncio.create_task(
+            reembedding_background_task(
+                interval_seconds=REEMBED_INTERVAL_SECONDS,
+                search_service_client=search_service_client,
+                config=config,
+            )
+        )
+    )
     yield
     search_service_client.close()
 
@@ -69,33 +93,49 @@ def ingest_item(
     storage: Annotated[storage.Client, Depends(get_storage_client)],
     event: StorageChangeEvent,
     event_type: Annotated[str, Header(alias="eventType")],
+    request: Request,
 ):
-    if event_type == EVENT_TYPE_DELETE:
-        return search_service_client.delete(event.blob_id)
-
-    document = download_document(storage, event)
     try:
-        document = data_preprocessor.map_data(document)
-    except ValidationError as exc:
-        logger.error("Validation error: %s", str(exc))
-        raise HTTPException(status_code=422, detail=str(exc))
+        if event_type == EVENT_TYPE_DELETE:
+            return search_service_client.delete(event.blob_id)
 
-    upsert_response = search_service_client.create_single_document(
-        document.model_dump()
-    )
+        document = download_document(storage, event)
+        try:
+            document = data_preprocessor.map_data(document)
+        except ValidationError as exc:
+            logger.error("Validation error: %s", str(exc))
+            raise
 
-    if not document.embedText:
-        return upsert_response
+        upsert_response = search_service_client.create_single_document(
+            document.id, document.model_dump()
+        )
 
-    embed_hash_in_oss = search_service_client.get(document.id, [HASH_FIELD]).get(
-        HASH_FIELD
-    )
-    embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
+        if not document.embedText:
+            return upsert_response
 
-    if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):
-        data_preprocessor.add_embeddings(document)
+        embed_hash_in_oss = search_service_client.get(document.id, [HASH_FIELD]).get(
+            HASH_FIELD
+        )
+        embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
 
-    return upsert_response  # TODO: check for meaningful return object. kept for backward compatibility?
+        if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):
+            data_preprocessor.add_embeddings(document)
+
+        return upsert_response  # TODO: check for meaningful return object. kept for backward compatibility?
+    except Exception as e:
+        ts = datetime.now().isoformat()
+        data = event.model_dump()
+        data["event_type"] = event_type
+        data["timestamp"] = ts
+        data["exception"] = str(e)
+        data["url"] = str(request.url)
+        try:
+            storage.bucket(config["dead_letter_bucket"]).blob(
+                f"{ts}.json"
+            ).upload_from_string(json.dumps(data))
+        except GoogleCloudError:
+            logger.error("Error during upload of log file", exc_info=True)
+        raise HTTPException(status_code=200, detail=str(e))
 
 
 @router.post("/ingest-multiple-items", status_code=202)
@@ -131,5 +171,5 @@ def get_tasks() -> TasksResponse:
     return TasksResponse(tasks=tasks.values())
 
 
-app = FastAPI(title="Ingest Service")
+app = FastAPI(title="Ingest Service", lifespan=lifespan)
 app.include_router(router, prefix=ROUTER_PREFIX)
