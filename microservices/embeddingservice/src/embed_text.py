@@ -69,8 +69,12 @@ class EmbedText:
                             local_path=local_path,
                         )
                 load_path = local_path if os.path.exists(local_path) else model_path
+
                 self.models[model_name] = SentenceTransformer(
-                    load_path, device="cpu", cache_folder=config["local_model_path"]
+                    load_path,
+                    device="cpu",
+                    cache_folder=config["local_model_path"],
+                    trust_remote_code=True,
                 )
 
     def embed_text(self, embed_text: str, models_to_use: list[str] | None):
