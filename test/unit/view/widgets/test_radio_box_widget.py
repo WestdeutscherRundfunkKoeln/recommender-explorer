@@ -6,9 +6,8 @@ from test.unit.view.widgets.test_text_field_widget import create_text_field_widg
 from test.unit.view.widgets.test_date_time_picker_widget import create_date_time_picker_widget
 from test.unit.view.widgets.test_text_area_input_widget import create_text_area_input_widget
 
-from src.view.widgets.radio_box_widget import (
+from view.widgets.radio_box_widget import (
     RadioBoxWidget,
-    WidgetGroupWrapper,
 )
 
 from test.unit.view.view_test_utils import (
@@ -49,52 +48,25 @@ RADIO_BOX_CONFIG = {
 }
 
 
-def create_radio_box_widget_for_test(
-        config: dict,
-        create_text_field_widget,
-        create_date_time_picker_widget,
-        create_text_area_input_widget
-) -> RadioBoxWidget:
-    def mock_build_common_ui_widget_dispatcher(widget_type, widget_config):
-        if widget_type == "text_field":
-            return create_text_field_widget(widget_config)
-        elif widget_type == 'date_time_picker':
-            return create_date_time_picker_widget(widget_config)
-        elif widget_type == 'text_area_input':
-            return create_text_area_input_widget(widget_config)
-
-    reco_explorer_app_instance = MagicMock()
-    reco_explorer_app_instance.build_common_ui_widget_dispatcher.side_effect = mock_build_common_ui_widget_dispatcher
-
-    controller_instance = MagicMock()
-
-    widget = RadioBoxWidget(reco_explorer_app_instance, controller_instance)
-    return widget.create(config)
-
 
 def test_radio_box_widget_create_method(
         create_text_field_widget,
         create_date_time_picker_widget,
         create_text_area_input_widget,
-):
-    radio_box_widget = create_radio_box_widget_for_test(
-        RADIO_BOX_CONFIG,
-        create_text_field_widget,
-        create_date_time_picker_widget,
-        create_text_area_input_widget
-    )
+        radio_box_widget_fixture):
+
+    radio_box_widget_to_test = radio_box_widget_fixture(RADIO_BOX_CONFIG)
 
     # validate (custom) type
-    _validate_widget_type(radio_box_widget, RadioBoxWidget)
+    _validate_widget_type(radio_box_widget_to_test, RadioBoxWidget)
 
     # validate inner types
-    assert _get_count_of_a_specific_widget(radio_box_widget, pn.widgets.RadioBoxGroup) == 1
+    assert _get_count_of_a_specific_widget(radio_box_widget_to_test, pn.widgets.RadioBoxGroup) == 1
     # assert _get_count_of_a_specific_widget(radio_box_widget, WidgetGroupWrapper) == len(RADIO_BOX_CONFIG["options"])
 
-    radio_box_group = radio_box_widget[0]
+    radio_box_group = radio_box_widget_to_test[0]
     # validate wrapper, start at 1: 0 is radio_box_group
-    for i in range(1, len(radio_box_widget)):
-        wrapper = radio_box_widget[i]
+    for wrapper in radio_box_widget_to_test[1:]:
 
         # validate visibility and widget inside wrapper for option
         if wrapper.option_of_widget_group == "External ID":
@@ -127,8 +99,7 @@ def test_radio_box_widget_create_method(
 
     # select different option and validate resulting visibilities
     radio_box_group.value = "Datum"
-    for i in range(1, len(radio_box_widget)):
-        wrapper = radio_box_widget[i]
+    for wrapper in radio_box_widget_to_test[1:]:
         wrapper_contents = wrapper[0]
         if wrapper.option_of_widget_group == "Datum":
             assert _visible_attribute_of(wrapper_contents) is True

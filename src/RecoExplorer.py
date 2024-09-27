@@ -16,7 +16,7 @@ from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.ERROR)
 
 
 def getExplorerInstance(
