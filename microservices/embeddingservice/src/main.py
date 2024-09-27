@@ -1,8 +1,12 @@
+import logging
 from fastapi import FastAPI, APIRouter
 from src.embed_text import EmbedText
 from dto.embed_data import AddEmbeddingToDocRequest, EmbeddingRequest
 from envyaml import EnvYAML
 import os
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 NAMESPACE = "embedding"
 
@@ -32,6 +36,7 @@ def get_embedding(data: EmbeddingRequest):
 
 @router.post("/add-embedding-to-doc")
 def add_embedding_to_document(data: AddEmbeddingToDocRequest):
+    logger.info("Adding embedding to document %s", data.id)
     result = text_embedder.embed_text(data.embedText, data.models)
     text_embedder.add_embedding_to_document(data.id, result)
     return result

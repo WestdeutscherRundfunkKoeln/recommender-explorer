@@ -83,6 +83,7 @@ class EmbedText:
 
         for model in models_to_use:
             if model in self.models:
+                logger.info("Embedding text with model %s", model)
                 response[model] = cast(
                     ndarray, self.models[model].encode(embed_text)
                 ).tolist()
