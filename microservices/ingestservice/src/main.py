@@ -41,7 +41,7 @@ STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
 TASK_CLEANER_INTERVAL_SECONDS = float(
     os.environ.get(
         "TASK_CLEANER_INTERVAL_SECONDS",
-        60 * 60 * 24,  # 24 hours
+        60 * 60 * 24,  # 1 day
     )
 )
 REEMBED_INTERVAL_SECONDS = float(

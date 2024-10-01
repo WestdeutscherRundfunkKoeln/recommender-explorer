@@ -24,8 +24,7 @@ router = APIRouter()
 
 @router.get("/health-check")
 def health_check():
-    # TODO: Add a more sensful check for service health!
-    # For instance check, if embedder is working
+    # TODO: Add a more sensful check for service health! For instance check, if embedder is working
     return {"status": "OK"}
 
 
