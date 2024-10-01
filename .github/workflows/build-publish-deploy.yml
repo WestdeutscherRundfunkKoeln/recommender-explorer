@@ -19,7 +19,7 @@ jobs:
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "STAGE=prod" >> $GITHUB_ENV
           else
-            echo "STAGE=dev" >> $GITHUB_ENV
+            echo "STAGE=dev-all" >> $GITHUB_ENV
           fi
   
       - name: Log in to GitHub Container Registry
