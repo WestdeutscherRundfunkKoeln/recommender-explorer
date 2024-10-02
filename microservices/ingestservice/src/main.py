@@ -117,6 +117,7 @@ def ingest_item(
         data["timestamp"] = ts
         data["exception"] = str(e)
         data["url"] = str(request.url)
+        logger.error("Error during event processing: %s", data, exc_info=True)
         try:
             storage.bucket(config["dead_letter_bucket"]).blob(
                 f"{ts}.json"

@@ -31,7 +31,7 @@ class DataPreprocessor:
                     "id": mapped_data.id,
                     "embedText": mapped_data.embedText,
                 },
-                timeout=0.25,
+                timeout=20.0,
                 headers={"x-api-key": self.api_key},
             )
         except httpx.ReadTimeout:

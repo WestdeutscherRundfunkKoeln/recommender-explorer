@@ -26,7 +26,9 @@ async def embed_partially_created_records(
     search_service_client: SearchServiceClient, config: EnvYAML
 ):
     async with httpx.AsyncClient(
-        base_url=config["base_url_embedding"], headers={"x-api-key": config["api_key"]}
+        base_url=config["base_url_embedding"],
+        headers={"x-api-key": config["api_key"]},
+        timeout=20.0,
     ) as embedding_service_client:
         models = await get_models_info(embedding_service_client)
 
@@ -45,14 +47,19 @@ async def embed_partially_created_record(
         model for model in models if (model not in record) or (not record[model])
     ]
 
-    await client.post(
-        "/add-embedding-to-doc",
-        json={
-            "id": record["id"],
-            "embedText": record["embedText"],
-            "models": models_for_embedding,
-        },
-    )
+    try:
+        await client.post(
+            "/add-embedding-to-doc",
+            json={
+                "id": record["id"],
+                "embedText": record["embedText"],
+                "models": models_for_embedding,
+            },
+        )
+    except httpx.HTTPError:
+        logger.info(
+            "error while running reembedding of record %s", record["id"], exc_info=True
+        )
 
 
 async def get_models_info(client: httpx.AsyncClient) -> list[str]:
