@@ -1,4 +1,4 @@
-api_prefix: test
+api_prefix: ""
 deployment_env: test
 opensearch:
   host: test

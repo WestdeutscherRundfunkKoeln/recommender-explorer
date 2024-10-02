@@ -26,7 +26,7 @@ from src.models import (
     TasksResponse,
 )
 from src.preprocess_data import DataPreprocessor
-from src.storage import download_document, get_storage_client
+from src.storage import download_document, StorageClientFactory
 from src.task_status import TaskStatus
 
 logging.basicConfig(level=logging.INFO)
@@ -37,25 +37,13 @@ NAMESPACE = "ingest"
 EVENT_TYPE_DELETE = "OBJECT_DELETE"
 
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
-STORAGE_SERVICE_ACCOUNT = os.environ.get("STORAGE_SERVICE_ACCOUNT", default="")
-TASK_CLEANER_INTERVAL_SECONDS = float(
-    os.environ.get(
-        "TASK_CLEANER_INTERVAL_SECONDS",
-        60 * 60 * 24,  # 1 day
-    )
-)
-REEMBED_INTERVAL_SECONDS = float(
-    os.environ.get(
-        "REEMBED_INTERVAL_SECONDS",
-        60 * 60,  # 1 hour
-    )
-)
 
 config = EnvYAML(CONFIG_PATH)
-API_PREFIX = config.get("API_PREFIX", "")
+API_PREFIX = config.get("api_prefix", "")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 HASH_FIELD = "embedTextHash"
 
+storage_client_factory = StorageClientFactory.from_config(config)
 data_preprocessor = DataPreprocessor(config)
 search_service_client = SearchServiceClient.from_config(config)
 
@@ -65,12 +53,12 @@ maintenance_tasks = set()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     maintenance_tasks.add(
-        asyncio.create_task(task_cleaner(TASK_CLEANER_INTERVAL_SECONDS))
+        asyncio.create_task(task_cleaner(config["task_cleaner_interval_seconds"]))
     )
     maintenance_tasks.add(
         asyncio.create_task(
             reembedding_background_task(
-                interval_seconds=REEMBED_INTERVAL_SECONDS,
+                interval_seconds=config["reembed_interval_seconds"],
                 search_service_client=search_service_client,
                 config=config,
             )
@@ -90,7 +78,7 @@ def health_check():
 
 @router.post("/events", response_model=OpenSearchResponse)
 def ingest_item(
-    storage: Annotated[storage.Client, Depends(get_storage_client)],
+    storage: Annotated[storage.Client, Depends(storage_client_factory)],
     event: StorageChangeEvent,
     event_type: Annotated[str, Header(alias="eventType")],
     request: Request,
@@ -141,7 +129,7 @@ def ingest_item(
 @router.post("/ingest-multiple-items", status_code=202)
 def ingest_multiple_items(
     body: FullLoadRequest,
-    storage: Annotated[storage.Client, Depends(get_storage_client)],
+    storage: Annotated[storage.Client, Depends(storage_client_factory)],
     tasks: BackgroundTasks,
 ) -> FullLoadResponse:
     task_id = str(uuid.uuid4())
