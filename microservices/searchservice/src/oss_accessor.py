@@ -83,7 +83,7 @@ class OssAccessor:
 
     def doc_generator(
         self, jsonlst: dict
-    ) -> Iterator[dict[str, Any]]:  # TODO: review this
+    ) -> Iterator[dict[str, Any]]:  # TODO: review this later
         for item in jsonlst.values():
             yield {
                 "_op_type": "update",
