@@ -9,11 +9,11 @@ from src.models import CreateDocumentRequest
 NAMESPACE = "search"
 
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
-API_PREFIX = os.environ.get("API_PREFIX", default="")
-ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 
 config = EnvYAML(CONFIG_PATH)
 oss_doc_generator = OssAccessor.from_config(config)
+API_PREFIX = config.get("api_prefix", default="")
+ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
 
 router = APIRouter()
 
