@@ -6,21 +6,35 @@ on:
         required: true
         type: string
         description: Name of the service
+      stages_for_main:
+        required: false
+        type: string
+        description: 'Stage for deployment when triggered by main branch (Default: [prod-wdr, prod-atmt])'
+      stages_for_dev:
+        required: false
+        type: string
+        description: 'Stage for deployment when triggered by dev branch (Default: [dev-all])'
 
 jobs:
   build_publish_deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stage: ${{ 
+          fromJson(
+            github.ref == 'refs/heads/main' && 
+            (inputs.stages_for_main || '["prod-wdr", "prod-atmt"]') || 
+            github.ref == 'refs/heads/dev' && 
+            (inputs.stages_for_dev || '["dev-all"]')
+          )
+        }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-  
       - name: Set stage environment variable
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "STAGE=prod" >> $GITHUB_ENV
-          else
-            echo "STAGE=dev-all" >> $GITHUB_ENV
-          fi
+          echo "STAGE=${{ matrix.stage }}" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v4
   
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v1
