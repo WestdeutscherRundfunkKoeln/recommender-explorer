@@ -31,6 +31,7 @@ class StorageClientFactory:
     def __call__(self) -> storage.Client:
         if not self.storage_service_account:
             os.environ.setdefault("STORAGE_EMULATOR_HOST", f"{self.gcs_url}:4443")
+            logger.info("Using storage emulator")
             return storage.Client(project="test", credentials=AnonymousCredentials())
 
         credentials = service_account.Credentials.from_service_account_info(

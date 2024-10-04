@@ -47,6 +47,5 @@ class TaskStatus:
     def clear(cls) -> None:
         now = datetime.now(tz=timezone.utc)
         for task in list(cls._tasks.values()):
-            print(task.created_at, now)
             if (now - task.created_at) > timedelta(seconds=cls._lifetime_seconds):
                 del cls._tasks[task.id]

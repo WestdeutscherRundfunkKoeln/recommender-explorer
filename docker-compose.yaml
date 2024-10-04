@@ -138,8 +138,6 @@ services:
       - opensearch-net
   fake-gcs-server:
     container_name: fake-gcs-server
-    profiles:
-      - mock_gcs
     image: fsouza/fake-gcs-server
     entrypoint: ["/bin/fake-gcs-server", "-data", "/data", "-scheme", "http", "-external-url", "http://fake-gcs-server:4443"]
     ports:
