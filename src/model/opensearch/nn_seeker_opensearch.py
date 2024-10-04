@@ -127,7 +127,7 @@ class NnSeekerOpenSearch(NnSeeker):
         response = self.client.search(body=query, index=self.target_idx_name)
         hits = response["hits"]["hits"]
         nn_dists: list[float] = [(hit["_score"] - 1) for hit in hits]
-        ids: list[str] = [hit["_source"]["externalid"] for hit in hits]
+        ids: list[str] = [hit["_id"] for hit in hits]
         return ids, nn_dists
 
     def __compose_exact_nn_by_embedding_query(
@@ -135,7 +135,7 @@ class NnSeekerOpenSearch(NnSeeker):
     ) -> dict[str, Any]:
         query = {
             "size": k,
-            "_source": {"include": "externalid"},
+            "_source": False,
             "query": {
                 "script_score": {
                     "query": {},
