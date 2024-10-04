@@ -1,219 +1,117 @@
+import os
+from time import sleep
+
 import pytest
-from opensearchpy import OpenSearch, RequestError
-from src.oss_accessor import OssAccessor
 from fastapi.testclient import TestClient
+from opensearchpy import OpenSearch
+from src.oss_accessor import OssAccessor
+from testcontainers.opensearch import OpenSearchContainer
 
 
-@pytest.fixture
-def get_app(monkeypatch):
-    monkeypatch.setenv("CONFIG_FILE", "tests/config.yaml")
-    from src.main import app
-
-    return app
-
-
-@pytest.fixture
-def test_client(get_app):
-    return TestClient(get_app)
+@pytest.fixture(scope="module", autouse=True)
+def oss_container():
+    os.environ["CONFIG_FILE"] = "config/config.yaml"
+    os.environ["DEPLOYMENT_ENVIRONMENT"] = "test"
+    with OpenSearchContainer(security_enabled=True) as opensearch:
+        yield opensearch
 
 
-@pytest.fixture
-def mock_oss(mocker):
-    oss = mocker.Mock(spec=OpenSearch)
-
-    def _update(*a, **kw):
-        return {
-            "_index": kw["index"],
-            "_id": kw["id"],
-            "_version": 3,
-            "result": "updated",
-            "_shards": {"total": 2, "successful": 2, "failed": 0},
-            "_seq_no": 4,
-            "_primary_term": 17,
-        }
-
-    oss.update.side_effect = _update
-
-    def _delete(*a, **kw):
-        return {
-            "_index": kw["index"],
-            "_id": kw["id"],
-            "_version": 2,
-            "result": "deleted",
-            "_shards": {"total": 2, "successful": 2, "failed": 0},
-            "_seq_no": 1,
-            "_primary_term": 15,
-        }
-
-    oss.delete.side_effect = _delete
-    oss.bulk.return_value = {
-        "took": 11,
-        "errors": True,
-        "items": [
-            {
-                "index": {
-                    "_index": "test",
-                    "_id": "test1",
-                    "_version": 1,
-                    "result": "created",
-                    "_shards": {"total": 2, "successful": 1, "failed": 0},
-                    "_seq_no": 1,
-                    "_primary_term": 1,
-                    "status": 201,
-                }
-            },
-            {
-                "index": {
-                    "_index": "test",
-                    "_id": "test2",
-                    "_version": 1,
-                    "result": "created",
-                    "_shards": {"total": 2, "successful": 1, "failed": 0},
-                    "_seq_no": 1,
-                    "_primary_term": 1,
-                    "status": 201,
-                }
-            },
-        ],
-    }
-
-    def _search(*a, **kw):
-        if kw["body"]["query"].get("bool"):
-            if kw["body"]["query"]["bool"]["must_not"][0]["exists"]["field"] == [
-                "test"
-            ]:
-                raise RequestError(400, "test", "test")
-            return {
-                "took": 1,
-                "timed_out": False,
-                "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-                "hits": {
-                    "total": {"value": 1, "relation": "eq"},
-                    "max_score": 1,
-                    "hits": [
-                        {
-                            "_index": kw["index"],
-                            "_id": "no_embedding",
-                            "_score": 0,
-                            "_source": {
-                                "id": "no_embedding",
-                                "test_field": "test_value",
-                            },
-                        }
-                    ],
-                },
-            }
-
-        data = {
-            "id": kw["body"]["query"]["ids"]["values"][0],
-            "embedTextHash": "IAmAHash",
-            "test_field": "test_value",
-        }
-
-        if kw["body"]["_source"]["includes"]:
-            data = {
-                k: v for k, v in data.items() if k in kw["body"]["_source"]["includes"]
-            }
-
-        return {
-            "took": 1,
-            "timed_out": False,
-            "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-            "hits": {
-                "total": {"value": 1, "relation": "eq"},
-                "max_score": 1,
-                "hits": [
-                    {
-                        "_index": kw["index"],
-                        "_id": kw["body"]["query"]["ids"]["values"][0],
-                        "_score": 1,
-                        "_source": data,
-                    }
-                ],
-            },
-        }
-
-    oss.search.side_effect = _search
-
-    import json
-
-    transport = mocker.Mock()
-    transport.serializer = json
-    oss.transport = transport
-    yield oss
+@pytest.fixture(scope="module", autouse=True)
+def oss_index(oss_container: OpenSearchContainer):
+    config = oss_container.get_config()
+    os.environ["OPENSEARCH_HOST"] = config["host"]
+    os.environ["OPENSEARCH_PORT"] = config["port"]
+    os.environ["OPENSEARCH_USER"] = config["username"]
+    os.environ["OPENSEARCH_PASS"] = config["password"]
+    index = "test"
+    os.environ["OPENSEARCH_INDEX"] = index
+    return index
 
 
-@pytest.fixture
-def mock_oss_accessor(mock_oss):
-    return OssAccessor("test", mock_oss)
+@pytest.fixture(scope="module", autouse=True)
+def oss_client(oss_container: OpenSearchContainer, oss_index: str):
+    client = oss_container.get_client()
+    client.indices.create(index=oss_index)
+    return client
 
 
 @pytest.fixture(autouse=True)
-def replace_oss_accessor(get_app, mock_oss_accessor):
-    from src.main import get_oss_accessor
+def replace_oss_accessor(oss_client: OpenSearch, oss_index: str):
+    from src.main import app, get_oss_accessor
 
-    get_app.dependency_overrides[get_oss_accessor] = lambda: mock_oss_accessor
+    def get_test_oss_accessor():
+        return OssAccessor(oss_index, oss_client)
+
+    app.dependency_overrides[get_oss_accessor] = get_test_oss_accessor
     yield
-    get_app.dependency_overrides.pop(get_oss_accessor)
+    app.dependency_overrides.pop(get_oss_accessor)
 
 
-def test_health_check(test_client):
+@pytest.fixture(autouse=True)
+def reset_index(oss_client: OpenSearch, oss_index: str):
+    oss_client.indices.delete(index=oss_index)
+    oss_client.indices.create(index=oss_index)
+
+
+@pytest.fixture
+def test_client(oss_client: OpenSearch):
+    from src.main import app
+
+    return TestClient(app)
+
+
+def test_health_check(test_client: TestClient):
     response = test_client.get("/health-check")
     assert response.status_code == 200
     assert response.json() == {"status": "OK"}
 
 
-def test_create_single_document__valid_request(test_client, mock_oss):
-    response = test_client.post("/documents/test", json={"id": "test", "text": "test"})
+def test_create_single_document__valid_request(test_client: TestClient):
+    document = {"text": "test"}
+    response = test_client.post(
+        "/documents/test",
+        json=document,
+    )
     assert response.status_code == 200
 
-    assert mock_oss.update.call_count == 1
-    assert mock_oss.update.call_args[1] == {
-        "index": "test",
-        "body": {"doc": {"id": "test", "text": "test"}, "doc_as_upsert": True},
-        "id": "test",
-        "refresh": True,
-    }
-
-    assert response.json() == {
-        "_index": "test",
-        "_id": "test",
-        "_version": 3,
-        "result": "updated",
-        "_shards": {"total": 2, "successful": 2, "failed": 0},
-        "_seq_no": 4,
-        "_primary_term": 17,
-    }
+    response = test_client.get("/documents/test")
+    assert response.status_code == 200
+    assert response.json()["_source"] == document
 
 
-def test_create_single_document__malformed_request(test_client):
-    response = test_client.post("/documents/test", json={"text": "test"})
+def test_create_single_document__malformed_request(test_client: TestClient):
+    response = test_client.post("/documents/test", json="test")
     assert response.status_code == 422
     assert response.json() == {
         "detail": [
             {
-                "input": {"text": "test"},
-                "loc": ["body", "id"],
-                "msg": "Field required",
-                "type": "missing",
-            }
+                "input": "test",
+                "loc": ["body"],
+                "msg": "Input should be a valid dictionary",
+                "type": "dict_type",
+            },
         ]
     }
 
 
-def test_create_multiple_documents__valid_request(test_client, mock_oss, mocker):
+def test_create_multiple_documents__valid_request(test_client: TestClient):
+    document1 = {"id": "test1", "externalid": "external_test1"}
+    document2 = {"id": "test2", "externalid": "external_test2"}
     response = test_client.post(
         "/documents",
-        json={"test1": {"id": "test1"}, "test2": {"id": "test2"}},
+        json={"test1": document1, "test2": document2},
     )
     assert response.status_code == 200
-
-    assert mock_oss.bulk.call_count == 1
-    assert mock_oss.bulk.call_args == mocker.call(
-        '{"update": {"_id": "test1", "_index": "test"}}\n{"doc": {"id": "test1"}, "doc_as_upsert": true}\n{"update": {"_id": "test2", "_index": "test"}}\n{"doc": {"id": "test2"}, "doc_as_upsert": true}\n',
-        index="test",
-    )
     assert response.json() is None
+
+    sleep(1)  # wait for data to be available
+    response = test_client.get("/documents/test1")
+    assert response.status_code == 200
+    assert response.json()["_source"] == document1
+
+    response = test_client.get("/documents/test2")
+    assert response.status_code == 200
+    assert response.json()["_source"] == document2
 
 
 def test_create_multiple_documents__malformed_request(test_client):
@@ -224,99 +122,61 @@ def test_create_multiple_documents__malformed_request(test_client):
             {
                 "input": "test",
                 "loc": ["body", "id"],
-                "msg": "Input should be a valid dictionary or object to extract fields from",
-                "type": "model_attributes_type",
+                "msg": "Input should be a valid dictionary",
+                "type": "dict_type",
             }
         ]
     }
 
 
-def test_delete_document__valid_request(test_client, mock_oss):
-    response = test_client.delete("/documents/test")
+def test_delete_document__valid_request(
+    test_client: TestClient, oss_client: OpenSearch, oss_index: str
+):
+    oss_client.index(oss_index, {"id": "to_be_deleted"}, "to_be_deleted")
+
+    response = test_client.delete("/documents/to_be_deleted")
     assert response.status_code == 200
 
-    assert mock_oss.delete.call_count == 1
-    assert mock_oss.delete.call_args[1] == {
-        "index": "test",
-        "id": "test",
-    }
+    response = test_client.get("/documents/to_be_deleted")
 
-    assert response.json() == {
-        "_index": "test",
-        "_id": "test",
-        "_version": 2,
-        "result": "deleted",
-        "_shards": {"total": 2, "successful": 2, "failed": 0},
-        "_seq_no": 1,
-        "_primary_term": 15,
-    }
+    assert response.status_code == 404
 
 
-def test_get_document__valid_request_with_no_fields(test_client, mock_oss):
+def test_get_document__valid_request_with_no_fields(
+    test_client: TestClient, oss_client: OpenSearch, oss_index: str
+):
+    document = {"id": "test", "test_field": "test_value"}
+    oss_client.index(oss_index, document, "test", params={"refresh": "true"})
+
     response = test_client.get("/documents/test")
     assert response.status_code == 200
-    assert mock_oss.search.call_count == 1
-    assert mock_oss.search.call_args[1] == {
-        "index": "test",
-        "body": {"query": {"ids": {"values": ["test"]}}, "_source": {"includes": []}},
-    }
-    assert response.json() == {
-        "took": 1,
-        "timed_out": False,
-        "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-        "hits": {
-            "total": {"value": 1, "relation": "eq"},
-            "max_score": 1,
-            "hits": [
-                {
-                    "_index": "test",
-                    "_id": "test",
-                    "_score": 1,
-                    "_source": {
-                        "id": "test",
-                        "embedTextHash": "IAmAHash",
-                        "test_field": "test_value",
-                    },
-                }
-            ],
-        },
-    }
+    assert response.json()["_source"] == document
 
 
-def test_get_document__valid_request_with_fields(test_client, mock_oss):
+def test_get_document__valid_request_with_fields(
+    test_client: TestClient, oss_client: OpenSearch, oss_index: str
+):
+    oss_client.index(
+        oss_index,
+        {"id": "test", "test_field": "test_value", "embedTextHash": "hash"},
+        "test",
+        params={"refresh": "true"},
+    )
+
     response = test_client.get("/documents/test?fields=embedTextHash%2Cid")
     assert response.status_code == 200
-    assert mock_oss.search.call_count == 1
-    assert mock_oss.search.call_args[1] == {
-        "index": "test",
-        "body": {
-            "query": {"ids": {"values": ["test"]}},
-            "_source": {"includes": ["embedTextHash", "id"]},
-        },
-    }
-    assert response.json() == {
-        "took": 1,
-        "timed_out": False,
-        "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-        "hits": {
-            "total": {"value": 1, "relation": "eq"},
-            "max_score": 1,
-            "hits": [
-                {
-                    "_index": "test",
-                    "_id": "test",
-                    "_score": 1,
-                    "_source": {
-                        "id": "test",
-                        "embedTextHash": "IAmAHash",
-                    },
-                }
-            ],
-        },
+    assert response.json()["_source"] == {
+        "id": "test",
+        "embedTextHash": "hash",
     }
 
 
-def test_documents_no_embedding__valid_request(test_client, mock_oss):
+def test_query__valid_request(test_client: TestClient):
+    response = test_client.post(
+        "/documents/no_test_field", json={"id": "no_test_field"}
+    )
+    assert response.status_code == 200
+
     response = test_client.post(
         "query",
         json={
@@ -324,52 +184,18 @@ def test_documents_no_embedding__valid_request(test_client, mock_oss):
             "query": {"bool": {"must_not": [{"exists": {"field": "test"}}]}},
         },
     )
-    assert response.status_code == 200
-    assert mock_oss.search.call_count == 1
-    assert mock_oss.search.call_args[1] == {
-        "index": "test",
-        "body": {
-            "_source": {"includes": ["id"]},
-            "query": {"bool": {"must_not": [{"exists": {"field": "test"}}]}},
-        },
-    }
-    assert response.json() == {
-        "took": 1,
-        "timed_out": False,
-        "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-        "hits": {
-            "total": {"value": 1, "relation": "eq"},
-            "max_score": 1,
-            "hits": [
-                {
-                    "_index": "test",
-                    "_id": "no_embedding",
-                    "_score": 0,
-                    "_source": {
-                        "id": "no_embedding",
-                        "test_field": "test_value",
-                    },
-                }
-            ],
-        },
+    assert response.json()["hits"]["total"]["value"] == 1
+    assert response.json()["hits"]["hits"][0]["_source"] == {
+        "id": "no_test_field",
     }
 
 
-def test_documents_no_embedding__invalid_request(test_client, mock_oss):
+def test_documents_no_embedding__invalid_request(test_client: TestClient):
     response = test_client.post(
         "query",
         json={
             "_source": {"includes": ["id"]},
-            "query": {"bool": {"must_not": [{"exists": {"field": ["test"]}}]}},
+            "query": {"bool": {"must_not": [{"exists": {"wrong": ["test"]}}]}},
         },
     )
     assert response.status_code == 400
-    assert mock_oss.search.call_count == 1
-    assert mock_oss.search.call_args[1] == {
-        "index": "test",
-        "body": {
-            "_source": {"includes": ["id"]},
-            "query": {"bool": {"must_not": [{"exists": {"field": ["test"]}}]}},
-        },
-    }
-    assert response.json() == {"detail": "Invalid query: test"}

@@ -44,10 +44,8 @@ class EmbedText:
         self.config = config
         self.models = {}
         bucket = None
-        if "service_account" in self.config:
-            credentials = service_account.Credentials.from_service_account_info(
-                self.config["service_account"]
-            )
+        if sa := self.config.get("service_account"):
+            credentials = service_account.Credentials.from_service_account_info(sa)
             client = storage.Client(credentials=credentials)
             bucket = client.bucket(self.config["bucket_name"])
         for model in self.config["models"]:
@@ -100,7 +98,6 @@ class EmbedText:
         return response
 
     def add_embedding_to_document(self, id, embedding):
-        embedding["id"] = id
         # Send request to search service to add embedding to index
         httpx.post(
             url=f"{self.config.get('base_url_search')}/documents/{id}",

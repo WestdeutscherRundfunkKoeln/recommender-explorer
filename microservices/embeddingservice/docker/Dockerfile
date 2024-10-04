@@ -1,7 +1,10 @@
 FROM python:3.10-slim
 
-COPY requirements.txt requirements.txt
 
+Run apt-get update && apt-get install -y \
+    curl
+
+COPY requirements.txt requirements.txt
 RUN python -m pip install wheel &&\
     python -m pip install --no-cache-dir --upgrade -r requirements.txt
 

@@ -28,7 +28,7 @@ class DataPreprocessor:
             httpx.post(
                 f"{self.base_url_embedding}/add-embedding-to-doc",
                 json={
-                    "id": mapped_data.id,
+                    "id": mapped_data.externalid,
                     "embedText": mapped_data.embedText,
                 },
                 timeout=0.25,

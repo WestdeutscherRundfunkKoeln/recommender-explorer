@@ -41,6 +41,7 @@ async def embed_partially_created_records(
 async def embed_partially_created_record(
     client: httpx.AsyncClient, models: list[str], record: dict[str, Any]
 ):
+    id, record = record
     models_for_embedding = [
         model for model in models if (model not in record) or (not record[model])
     ]
@@ -48,7 +49,7 @@ async def embed_partially_created_record(
     await client.post(
         "/add-embedding-to-doc",
         json={
-            "id": record["id"],
+            "id": id,
             "embedText": record["embedText"],
             "models": models_for_embedding,
         },
@@ -68,14 +69,14 @@ async def get_models_info(client: httpx.AsyncClient) -> list[str]:
 
 async def get_partially_created_records(
     search_service_client: SearchServiceClient, models: list[str]
-) -> list[dict[str, Any]]:
+) -> list[tuple[str, dict[str, Any]]]:
     response = await asyncio.to_thread(search_service_client.query, build_query(models))
 
     hits = response.get("hits", {}).get("hits", [])
     if not hits:
         raise Exception("No partially created records found.")
 
-    return [hit["_source"] for hit in hits]
+    return [(hit["_id"], hit["_source"]) for hit in hits]
 
 
 def build_query(models: list[str]) -> dict:

@@ -73,7 +73,7 @@ def upsert_batch(
         )
         if mapped_data is None:
             continue
-        item_dict[mapped_data["id"]] = mapped_data
+        item_dict[mapped_data["externalid"]] = mapped_data
 
     task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
     search_service_client.create_multiple_documents(item_dict)

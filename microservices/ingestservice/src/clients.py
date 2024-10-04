@@ -25,7 +25,10 @@ class SearchServiceClient:
         return response.json()
 
     def create_single_document(self, id: str, document: dict):
-        response = self.client.post(f"/documents/{id}", json=document)
+        response = self.client.post(
+            f"/documents/{id}",
+            json=document,
+        )
         _raise_for_status(response)
         return response.json()
 
@@ -40,7 +43,7 @@ class SearchServiceClient:
             params={"fields": ",".join(fields) if fields else None},
         )
         _raise_for_status(response)
-        return response.json()["hits"]["hits"][0]["_source"]
+        return response.json()["_source"]
 
     def query(self, query: dict):
         response = self.client.post("/query", json=query)
