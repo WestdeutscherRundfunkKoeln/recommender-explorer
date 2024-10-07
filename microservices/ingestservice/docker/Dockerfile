@@ -1,13 +1,15 @@
 FROM python:3.10-slim
 
-COPY requirements.txt requirements.txt
 RUN apt-get update && apt-get install -y \
     bison \
     flex \
     libtool \
     make \
     automake \
-    autoconf
+    autoconf \
+    curl
+
+COPY requirements.txt requirements.txt
 
 RUN python -m pip install wheel && \
     python -m pip install --no-cache-dir --upgrade -r requirements.txt

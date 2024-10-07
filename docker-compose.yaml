@@ -6,8 +6,7 @@ services:
     environment:
       - cluster.name=opensearch-cluster # Name the cluster
       - node.name=opensearch-node1 # Name the node that will run in this container
-      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
-      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2 # Nodes eligibile to serve as cluster manager
+      - discovery.type=single-node
       - bootstrap.memory_lock=true # Disable JVM heap memory swapping
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m # Set min and max JVM heap sizes to at least 50% of system RAM
       - DISABLE_INSTALL_DEMO_CONFIG=true # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
@@ -19,37 +18,14 @@ services:
       nofile:
         soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
         hard: 65536
-    volumes:
-      - opensearch-data1:/usr/share/opensearch/data # Creates volume called opensearch-data1 and mounts it to the container
     ports:
       - 9200:9200 # REST API
       - 9600:9600 # Performance Analyzer
     networks:
       - opensearch-net # All of the containers will join the same Docker bridge network
-  opensearch-node2:
-    image: opensearchproject/opensearch:latest
-    container_name: opensearch-node2
-    environment:
-      - cluster.name=opensearch-cluster # Name the cluster
-      - node.name=opensearch-node2 # Name the node that will run in this container
-      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
-      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2 # Nodes eligibile to serve as cluster manager
-      - bootstrap.memory_lock=true # Disable JVM heap memory swapping
-      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m # Set min and max JVM heap sizes to at least 50% of system RAM
-      - DISABLE_INSTALL_DEMO_CONFIG=true # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch
-      - DISABLE_SECURITY_PLUGIN=true # Disables Security plugin
-    ulimits:
-      memlock:
-        soft: -1 # Set memlock to unlimited (no soft or hard limit)
-        hard: -1
-      nofile:
-        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
-        hard: 65536
-    volumes:
-      - opensearch-data2:/usr/share/opensearch/data # Creates volume called opensearch-data2 and mounts it to the container
-    networks:
-      - opensearch-net # All of the containers will join the same Docker bridge network
   opensearch-dashboards:
+    profiles:
+      - dashboard
     image: opensearchproject/opensearch-dashboards:latest
     container_name: opensearch-dashboards
     ports:
@@ -57,7 +33,7 @@ services:
     expose:
       - "5601" # Expose port 5601 for web access to OpenSearch Dashboards
     environment:
-      - OPENSEARCH_HOSTS=["http://opensearch-node1:9200","http://opensearch-node2:9200"]
+      - OPENSEARCH_HOSTS=["http://opensearch-node1:9200"]
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true # disables security dashboards plugin in OpenSearch Dashboards
     networks:
       - opensearch-net
@@ -83,8 +59,9 @@ services:
       - OPENSEARCH_PASS=admin
       - OPENSEARCH_INDEX=test_index
       - MAPPING_DEFINITION='{"id":.sophoraId,"externalid":.externalId,"uuid":.uuid,"type":.type,"title":.title,"description":.["description"],"longDescription":.["longDescription"],"embedText":(.title+""+.longDescription),"availableFrom":.availableFrom,"availableTo":.availableTo,"firstPublicationDate":.firstPublicationDate,"keywords":.keywords,"language":.language,"duration":.durationSeconds,"thematicCategories":.thematicCategories,"genreCategory":.genreCategory,"subgenreCategories":.subgenreCategories,"filterCategory":.filterCategory,"structurePath":.structurePath,"site":.site,"domain":.domain,"teaserimage":.teaserImage.url,"fskAgeRating":.fskAgeRating,"contentRatings":.contentRatings,"geoAvailability":.geoAvailability,"all-MiniLM-L6-v2_title_desc_nokeywords":.["all-MiniLM-L6-v2_title_desc_nokeywords"],"sophoraid":.sophoraId}'
-      - STORAGE_SERVICE_ACCOUNT
-      - REEMBED_INTERVAL_SECONDS=60
+      - STORAGE_SERVICE_ACCOUNT=
+      - REEMBED_INTERVAL_SECONDS=10
+      - GCS_URL=http://fake-gcs-server
     networks:
       - opensearch-net
   search-service:
@@ -116,6 +93,9 @@ services:
       context: ./microservices/embeddingservice
       dockerfile: ./docker/Dockerfile
     container_name: embedding-service
+    healthcheck:
+      test: curl -f http://embedding-service/health-check || exit 1
+      start_period: 2m
     ports:
       - 1338:80
     expose:
@@ -129,12 +109,16 @@ services:
       - DEPLOYMENT_ENVIRONMENT=DEV
       - BUCKET_NAME=zdf-d01-g-pa-dp-wdr-0-ml-models
       - BUCKET_PATH=sentence_transformers
-      - LOCAL_MODEL_PATH=temp
+      - LOCAL_MODEL_PATH=/models
       - SERVICE_ACCOUNT
     networks:
       - opensearch-net
+    volumes:
+      - models-volume:/models
   reco-explorer-ui:
     image: reco-explorer-ui
+    profiles:
+      - ui
     build: .
     container_name: reco-explorer-ui
     command: panel serve RecoExplorer.py --address 0.0.0.0 --port 80 --allow-websocket-origin="*" --log-level info --args config=config/config_mediathek.yaml
@@ -152,8 +136,19 @@ services:
       - OPENSEARCH_USE_SSL=true
     networks:
       - opensearch-net
-volumes:
-  opensearch-data1:
-  opensearch-data2:
+  fake-gcs-server:
+    container_name: fake-gcs-server
+    profiles:
+      - mock_gcs
+    image: fsouza/fake-gcs-server
+    entrypoint: ["/bin/fake-gcs-server", "-data", "/data", "-scheme", "http", "-external-url", "http://fake-gcs-server:4443"]
+    ports:
+      - 4443:4443
+    networks:
+      - opensearch-net
+    volumes:
+      - ./test/testdata:/data
 networks:
   opensearch-net:
+volumes:
+  models-volume:

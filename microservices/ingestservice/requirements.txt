@@ -10,3 +10,4 @@ pytest-httpx==0.30.0
 pytest-mock==3.14.0
 python-dotenv==1.0.1
 uvicorn==0.30.6
+pydantic==2.9.2

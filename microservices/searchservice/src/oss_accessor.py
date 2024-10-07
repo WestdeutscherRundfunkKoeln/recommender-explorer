@@ -1,16 +1,20 @@
+import json
+import logging
+from typing import Any, Iterator
+
+import sys
+if sys.version_info.major==3 and sys.version_info.minor < 11: # if python version is lower than 3.11
+    from typing_extensions import Self
+else:
+    from typing import Self
+
 from fastapi import HTTPException
 from opensearchpy import (
     OpenSearch,
+    RequestError,
     RequestsHttpConnection,
     helpers,
-    NotFoundError,
-    RequestError,
 )
-from typing import Any, Iterator, Self
-import logging
-import json
-
-from src.models import CreateDocumentRequest
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -43,12 +47,11 @@ class OssAccessor:
 
         return cls(index, client)
 
-    def create_oss_doc(self, id: str, data: CreateDocumentRequest):
+    def create_oss_doc(self, id: str, data: dict[str, Any]):
         # add document to index
-        print(data, type(data))
         response = self.oss_client.update(
             index=self.target_idx_name,
-            body={"doc": data.model_dump(), "doc_as_upsert": True},
+            body={"doc": data, "doc_as_upsert": True},
             id=id,
             refresh=True,
         )
@@ -58,21 +61,9 @@ class OssAccessor:
         return response
 
     def delete_oss_doc(self, id: str):
-        try:
-            response = self.oss_client.delete(index=self.target_idx_name, id=id)
-        except NotFoundError:
-            response = {
-                "_index": self.target_idx_name,
-                "_id": id,
-                "_version": 0,
-                "result": "id not found",
-                "_shards": {"total": 0, "successful": 0, "failed": 0},
-                "_seq_no": 0,
-                "_primary_term": 0,
-            }
-        return response
+        return self.oss_client.delete(index=self.target_idx_name, id=id)
 
-    def bulk_ingest(self, jsonlst: dict) -> None:
+    def bulk_ingest(self, jsonlst: dict[str, dict]) -> None:
         for success, info in helpers.parallel_bulk(
             client=self.oss_client,
             index=self.target_idx_name,
@@ -82,23 +73,21 @@ class OssAccessor:
                 print("A document failed:", info)
 
     def doc_generator(
-        self, jsonlst: dict
-    ) -> Iterator[dict[str, Any]]:  # TODO: review this later
-        for item in jsonlst.values():
+        self, jsonlst: dict[str, dict]
+    ) -> Iterator[dict[str, Any]]:  # TODO: review this
+        for id, item in jsonlst.items():
             yield {
                 "_op_type": "update",
                 "_index": self.target_idx_name,
-                "_id": item.id,
-                "_source": {"doc": item.model_dump(), "doc_as_upsert": True},
+                "_id": id,
+                "_source": {"doc": item, "doc_as_upsert": True},
             }
 
     def get_oss_doc(self, id: str, fields: list[str]) -> dict:
-        return self.oss_client.search(
+        return self.oss_client.get(
             index=self.target_idx_name,
-            body={
-                "query": {"ids": {"values": [id]}},
-                "_source": {"includes": fields},
-            },
+            id=id,
+            params={"_source_includes": ",".join(fields)},
         )
 
     def get_oss_docs(self, query: dict[str, str]) -> dict:

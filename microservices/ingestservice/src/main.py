@@ -95,15 +95,15 @@ def ingest_item(
             raise
 
         upsert_response = search_service_client.create_single_document(
-            document.id, document.model_dump()
+            document.externalid, document.model_dump()
         )
 
         if not document.embedText:
             return upsert_response
 
-        embed_hash_in_oss = search_service_client.get(document.id, [HASH_FIELD]).get(
-            HASH_FIELD
-        )
+        embed_hash_in_oss = search_service_client.get(
+            document.externalid, [HASH_FIELD]
+        ).get(HASH_FIELD)
         embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
 
         if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):

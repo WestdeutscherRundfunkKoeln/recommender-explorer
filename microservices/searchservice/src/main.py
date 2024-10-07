@@ -2,9 +2,10 @@ import os
 from typing import Annotated, Any
 
 from envyaml import EnvYAML
-from fastapi import APIRouter, FastAPI, Depends, Query
+from fastapi import APIRouter, Depends, FastAPI, Query, Request
+from fastapi.responses import JSONResponse
+from opensearchpy.exceptions import TransportError
 from src.oss_accessor import OssAccessor
-from src.models import CreateDocumentRequest
 
 NAMESPACE = "search"
 
@@ -30,20 +31,17 @@ def health_check():
 @router.post("/documents/{document_id}")
 def create_document(
     document_id: str,
-    data: CreateDocumentRequest,
+    data: dict[str, Any],
     oss_accessor: OssAccessor = Depends(get_oss_accessor),
 ):
-    # Add data to index
-    print(data, type(data))
     return oss_accessor.create_oss_doc(document_id, data)
 
 
 @router.post("/documents")
 def bulk_create_document(
-    data: dict[str, CreateDocumentRequest],
+    data: dict[str, dict],
     oss_accessor: OssAccessor = Depends(get_oss_accessor),
 ):
-    # add data to index
     return oss_accessor.bulk_ingest(data)
 
 
@@ -76,3 +74,11 @@ def get_document_with_query(
 
 app = FastAPI(title="Search Service")
 app.include_router(router, prefix=ROUTER_PREFIX)
+
+
+@app.exception_handler(TransportError)
+async def opensearch_transport_error_handler(request: Request, exc: TransportError):
+    return JSONResponse(
+        status_code=exc.status_code if isinstance(exc.status_code, int) else 500,
+        content={"error": exc.error, "info": exc.info},
+    )

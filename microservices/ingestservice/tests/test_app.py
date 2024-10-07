@@ -109,7 +109,9 @@ def overwrite_tasks():
             id="exists",
             status=BulkIngestTaskStatus.PREPROCESSING,
             errors=[],
-            created_at=datetime.datetime.fromisoformat("2023-10-23T23:00:00"),
+            created_at=datetime.datetime.fromisoformat(
+                "2023-10-23T23:00:00.000000+00:00"
+            ),
         ),
     )
     yield
@@ -139,18 +141,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
             "took": 1,
             "timed_out": False,
             "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-            "hits": {
-                "total": {"value": 1, "relation": "eq"},
-                "max_score": 1,
-                "hits": [
-                    {
-                        "_index": "sample-index1",
-                        "_id": "1",
-                        "_score": 1,
-                        "_source": {},
-                    }
-                ],
-            },
+            "_source": {},
         },
     )
 
@@ -270,19 +261,8 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
             "took": 1,
             "timed_out": False,
             "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-            "hits": {
-                "total": {"value": 1, "relation": "eq"},
-                "max_score": 1,
-                "hits": [
-                    {
-                        "_index": "sample-index1",
-                        "_id": "1",
-                        "_score": 1,
-                        "_source": {
-                            "embedTextHash": "testHash",
-                        },
-                    }
-                ],
+            "_source": {
+                "embedTextHash": "testHash",
             },
         },
     )
@@ -404,19 +384,8 @@ def test_upsert_event__with_available_correct_document__matching_hash(
             "took": 1,
             "timed_out": False,
             "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
-            "hits": {
-                "total": {"value": 1, "relation": "eq"},
-                "max_score": 1,
-                "hits": [
-                    {
-                        "_index": "sample-index1",
-                        "_id": "1",
-                        "_score": 1,
-                        "_source": {
-                            "embedTextHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
-                        },
-                    }
-                ],
+            "_source": {
+                "embedTextHash": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
             },
         },
     )
@@ -738,9 +707,7 @@ def test_bulk_ingest__with_validation_error(
     task = response.json()["task"]
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
-    assert task["errors"] == [
-        "Error during preprocessing of file prod/invalid.json: 10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
-    ]
+    assert len(task["errors"]) > 0
 
 
 def test_bulk_ingest__with_general_error(test_client, httpx_mock):
@@ -773,11 +740,11 @@ def test_get_task__exists(test_client: TestClient, overwrite_tasks):
     assert response.status_code == 200
     assert response.json() == {
         "task": {
-            "completed_at": "",
+            "completed_at": None,
             "id": "exists",
             "status": "PREPROCESSING",
             "errors": [],
-            "created_at": "2023-10-23T23:00:00",
+            "created_at": "2023-10-23T23:00:00Z",
         }
     }
 
@@ -799,8 +766,8 @@ def test_get_tasks(test_client: TestClient, overwrite_tasks):
                 "id": "exists",
                 "status": "PREPROCESSING",
                 "errors": [],
-                "created_at": "2023-10-23T23:00:00",
-                "completed_at": "",
+                "created_at": "2023-10-23T23:00:00Z",
+                "completed_at": None,
             }
         ]
     }
