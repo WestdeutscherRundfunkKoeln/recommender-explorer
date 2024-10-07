@@ -43,6 +43,9 @@
                       "$ref": "#/$defs/date_time_picker"
                     },
                     {
+                      "$ref": "#/$defs/date_time_quick_select"
+                    },
+                    {
                       "$ref": "#/$defs/multi_select"
                     },
                     {
@@ -107,6 +110,10 @@
         "component_group": {
           "type": "string",
           "description": "Name of the component group the text field gets assigned to."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Tooltip of the slider."
         }
       },
       "required": [
@@ -213,6 +220,38 @@
         "accessor_function"
       ]
     },
+    "date_time_quick_select": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "date_time_quick_select"
+        },
+        "label": {
+          "type": "string",
+          "description": "Label of the quick select button."
+        },
+        "start_picker_label": {
+          "type": "string",
+          "description": "Label of the Start Date Time Picker."
+        },
+        "end_picker_label": {
+          "type": "string",
+          "description": "Label of the End Date Time Picker."
+        },
+        "start_delta_days": {
+          "type": "integer",
+          "description": "Number of date past today as start date"
+        },
+        "end_delta_days": {
+          "type": "integer",
+          "description": "Number of date past today as:end date"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
     "multi_select": {
       "type": "object",
       "properties": {
@@ -281,6 +320,10 @@
         "option_default": {
           "type": "string",
           "description": "Key of the default option."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Tooltip of the multi_select."
         }
       },
       "required": [
@@ -339,10 +382,6 @@
           "type": "integer",
           "description": "which accordion should be open by default."
         },
-        "toggle": {
-          "type": "boolean",
-          "description": "If true, multiple accordions can be opened at the same time."
-        },
         "content": {
           "type": "array",
           "description": "Array of objects which can be shown in the accordion.",
@@ -361,10 +400,45 @@
                 "$ref": "#/$defs/date_time_picker"
               },
               {
+                "$ref": "#/$defs/date_time_quick_select"
+              },
+              {
                 "$ref": "#/$defs/radio_box"
               },
               {
                 "$ref": "#/$defs/slider"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ]
+    },
+    "accordion_with_cards": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "accordion_with_cards"
+        },
+        "active": {
+          "type": "integer",
+          "description": "which accordion card should be open by default."
+        },
+        "toggle": {
+          "type": "boolean",
+          "description": "If false, multiple accordions can be opened at the same time."
+        },
+        "content": {
+          "type": "array",
+          "description": "Array of accordion cards.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/accordion"
               }
             ]
           }
@@ -394,6 +468,9 @@
             "items": {
               "anyOf": [
                 {
+                  "$ref": "#/$defs/accordion"
+                },
+                {
                   "$ref": "#/$defs/text_field"
                 },
                 {
@@ -404,6 +481,9 @@
                 },
                 {
                   "$ref": "#/$defs/date_time_picker"
+                },
+                {
+                  "$ref": "#/$defs/date_time_quick_select"
                 },
                 {
                   "$ref": "#/$defs/slider"
@@ -452,6 +532,10 @@
         "component_group": {
           "type": "string",
           "description": "component_group the slider gets assigned to."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Tooltip of the slider."
         }
       },
       "required": [

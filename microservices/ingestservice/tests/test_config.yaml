@@ -1,7 +1,9 @@
-mapping_definition: '{ "id": .id, "externalid": .externalid, "uuid": .uuid, "title": .title, "description": .description, "longDescription": .longDescription, "availableFrom": .availableFrom, "availableTo": .availableTo, "duration": .durationSeconds, "embedText": .embedText, "embedTextHash": .embedTextHash, "thematicCategories": .thematicCategories, "thematicCategoriesIds": .thematicCategoriesIds, "thematicCategoriesTitle": .thematicCategoriesTitle, "genreCategory": .genreCategory, "genreCategoryId": .genreCategoryId, "subgenreCategories": .subgenreCategories, "subgenreCategoriesIds": .subgenreCategoriesIds, "subgenreCategoriesTitle": .subgenreCategoriesTitle, "teaserimage": .teaserimage, "geoAvailability": .geoAvailability }'
-api_prefix: test_prefix
+mapping_definition: '{ "id": .id, "externalid": .externalid, "uuid": .uuid, "title": .title, "description": .description, "longDescription": .longDescription, "availableFrom": .availableFrom, "availableTo": .availableTo, "duration": .durationSeconds, "embedText": .embedText, "thematicCategories": .thematicCategories, "thematicCategoriesIds": .thematicCategoriesIds, "thematicCategoriesTitle": .thematicCategoriesTitle, "genreCategory": .genreCategory, "genreCategoryId": .genreCategoryId, "subgenreCategories": .subgenreCategories, "subgenreCategoriesIds": .subgenreCategoriesIds, "subgenreCategoriesTitle": .subgenreCategoriesTitle, "teaserimage": .teaserimage, "geoAvailability": .geoAvailability }'
+api_prefix: ""
 api_key: test-key
 base_url_search: https://test.io/search
 base_url_embedding: https://test.io/embed
-
+dead_letter_bucket: test_dead_letter_bucket
+storage_service_account: "{}"
+gcs_url: "test"
 

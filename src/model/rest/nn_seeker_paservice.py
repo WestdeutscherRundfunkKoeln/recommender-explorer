@@ -1,8 +1,10 @@
 import logging
 import constants
 
+from typing import Any
 from model.rest.nn_seeker_rest import NnSeekerRest
 from dto.item import ItemDto
+from dto.user_item import UserItemDto
 from util.dto_utils import get_primary_idents
 from exceptions.item_not_found_error import UnknownItemError
 from exceptions.user_not_found_error import UnknownUserError
@@ -31,15 +33,20 @@ class NnSeekerPaService(NnSeekerRest):
             model_props['auth_header']: model_props['auth_header_value']
         }
 
+
+        ## static args
         params = {
             "configuration": self.__configuration_c2c,
-            "similarityType": model_props['param_similarity_type'],
             "assetId": content_id,
             "limit": self.__max_num_neighbours
         }
 
-        if "param_model_type" in model_props:
-            params["modelType"] = model_props["param_model_type"]
+        ## any other args are taken verbatim from config
+        for prop in model_props:
+            prop_short = prop.removeprefix('param_')
+            if prop not in params:
+                params[prop_short] = model_props[prop]
+
 
         status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
 
@@ -64,7 +71,7 @@ class NnSeekerPaService(NnSeekerRest):
 
         return recomm_content_ids, nn_dists, oss_field
 
-    def get_recos_user(self, user, n_recos):
+    def get_recos_user(self, user: UserItemDto, n_recos:int, nn_filter: dict[str, Any] = False) -> tuple[list, list, str]:
         primary_ident, oss_field = get_primary_idents(self.__config)
         model_props = self.__model_config['properties']
 
@@ -77,13 +84,22 @@ class NnSeekerPaService(NnSeekerRest):
             "configuration": self.__configuration_u2c,
             "explain": True,
             "userId": user_id,
-            "assetReturnType": model_props["param_asset_type"]
         }
 
-        if "param_model_type" in model_props:
-            params["modelType"] = model_props["param_model_type"]
+        ## any other args are taken verbatim from config
+        for prop in model_props:
+            prop_short = prop.removeprefix('param_')
+            if prop not in params:
+                params[prop_short] = model_props[prop]
 
-        status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, params)
+
+        selected_params = {}
+        if nn_filter and "editorialCategories" in nn_filter and len(nn_filter["editorialCategories"]) > 0:
+            selected_params["includedCategories"] = ",".join(nn_filter["editorialCategories"])
+
+        all_params = {**params, **selected_params}
+
+        status, pa_recos = super().post_2_endpoint(self.__model_config['endpoint'], headers, all_params)
 
         recomm_content_ids = []
         nn_dists = []

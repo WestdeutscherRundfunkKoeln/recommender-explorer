@@ -4,5 +4,10 @@ base_url_search: $BASE_URL_SEARCH
 base_url_ingest: $BASE_URL_INGEST
 base_url_embedding: $BASE_URL_EMBEDDING
 mapping_definition: $MAPPING_DEFINITION
+dead_letter_bucket: wdr-recommender-exporter-dead-letter
+storage_service_account: $STORAGE_SERVICE_ACCOUNT
+task_cleaner_interval_seconds: $TASK_CLEANER_INTERVAL_SECONDS|86400
+reembed_interval_seconds: $REEMBED_INTERVAL_SECONDS|3600
+gcs_url: $GCS_URL|dummy
 models:
   - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2

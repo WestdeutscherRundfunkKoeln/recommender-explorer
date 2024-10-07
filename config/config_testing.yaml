@@ -1,0 +1,33 @@
+display_name: WDR (intern)
+databackend:
+    type: opensearch
+
+opensearch:
+    host: 0.0.0.0
+    port: 9200
+    user: admin
+    pass: admin
+    index: test_index
+    use_ssl: false
+    field_mapping:
+        "created": "availableFrom"
+        "crid": "externalid"
+    primary_field: "externalId"
+
+ingest:
+    api_key: test
+    base_url_embedding: 0.0.0.0:1338
+
+c2c_config:
+    c2c_models:
+        Jina-A:
+            display_name: 'Jina-A'
+            handler: 'NnSeekerOpenSearch@model.opensearch.nn_seeker_opensearch'
+            endpoint: 'opensearch://jina-embeddings-v2-base-de-8192'
+            start_color: '#BB6859' # dark red
+            reco_color: '#F78D7D' # light red
+            content_type: 'WDRContentItemDto'
+            default: True
+
+
+ui_config: wdr_ui_config.yaml

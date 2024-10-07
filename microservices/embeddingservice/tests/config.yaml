@@ -1,0 +1,11 @@
+api_prefix: ""
+api_key: test_key
+base_url_search: https://test.io/search
+base_url_ingest: https://test.io/ingest
+base_url_embedding: https://test.io/embedding
+models:
+  - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2
+  - distiluse-base-multilingual-cased-v1: sentence-transformers/distiluse-base-multilingual-cased-v1
+local_model_path: test_dl
+bucket_path: sentence_transformers
+

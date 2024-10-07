@@ -1,19 +1,14 @@
-FROM python:3.10
+FROM python:3.11-slim
+
+Run apt-get update && apt-get install -y \
+    curl
 
 COPY requirements.txt requirements.txt
-RUN apt-get update && apt-get install -y \
-    bison \
-    flex \
-    libtool \
-    make \
-    automake \
-    autoconf
 
-RUN pip install wheel \
-    pip install --no-cache-dir --upgrade -r requirements.txt
+RUN python -m pip install wheel && \
+    python -m pip install --no-cache-dir --upgrade -r requirements.txt
 
-COPY src/main.py src/main.py
-COPY src/oss_accessor.py src/oss_accessor.py
+COPY src src
 
 COPY config/config.yaml config.yaml
 

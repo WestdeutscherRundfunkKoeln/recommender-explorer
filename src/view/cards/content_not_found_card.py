@@ -4,7 +4,7 @@ from dto.user_item import UserItemDto
 
 class NotFoundCard():
 
-    def __init__(self, config):
+    def __init__(self, config, *kwargs):
         self.config = config
 
     def draw(self, user_dto: UserItemDto, nr, model, model_config, modal_func):

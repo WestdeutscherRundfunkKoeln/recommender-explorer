@@ -54,6 +54,7 @@ class NnSeekerOpenSearch(NnSeeker):
 
     @classmethod
     def from_config(cls, config):
+        use_ssl = config.get("opensearch.use_ssl", True)
         return cls(
             client=OpenSearch(
                 hosts=[
@@ -63,8 +64,8 @@ class NnSeekerOpenSearch(NnSeeker):
                     }
                 ],
                 http_auth=(config["opensearch.user"], config["opensearch.pass"]),
-                use_ssl=True,
-                verify_certs=True,
+                use_ssl=use_ssl,
+                verify_certs=use_ssl,
                 connection_class=RequestsHttpConnection,
             ),
             target_idx_name=config["opensearch.index"],
@@ -102,7 +103,8 @@ class NnSeekerOpenSearch(NnSeeker):
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(
             embedding, k, reco_filter
         )
-        return recomm_content_ids, nn_dists
+
+        return recomm_content_ids, nn_dists, "id"
 
     def get_max_num_neighbours(self, content_id):
         return self.__max_num_neighbours
@@ -125,7 +127,7 @@ class NnSeekerOpenSearch(NnSeeker):
         response = self.client.search(body=query, index=self.target_idx_name)
         hits = response["hits"]["hits"]
         nn_dists: list[float] = [(hit["_score"] - 1) for hit in hits]
-        ids: list[str] = [hit["_source"]["id"] for hit in hits]
+        ids: list[str] = [hit["_id"] for hit in hits]
         return ids, nn_dists
 
     def __compose_exact_nn_by_embedding_query(
@@ -133,7 +135,7 @@ class NnSeekerOpenSearch(NnSeeker):
     ) -> dict[str, Any]:
         query = {
             "size": k,
-            "_source": {"include": "id"},
+            "_source": False,
             "query": {
                 "script_score": {
                     "query": {},
@@ -169,7 +171,7 @@ class NnSeekerOpenSearch(NnSeeker):
             query["track_scores"] = True
 
         if filter_criteria.get("score"):
-            query["min_score"] = reco_filter["score"] + 1
+            query["min_score"] = filter_criteria["score"] + 1
 
         return query
 
@@ -222,9 +224,17 @@ class NnSeekerOpenSearch(NnSeeker):
         bool_terms = collections.defaultdict(list)
         script_term = collections.defaultdict(dict)
 
+        self.LIST_FILTER_TERMS = {
+            "structurePath": self._prepare_query_term_list_condition_statement,
+            "type": self._prepare_query_term_list_condition_statement,
+            "keywords": self._prepare_query_term_list_condition_statement,
+        }
+
         for label, value in reco_filter.items():
             if not value:
                 continue
+
+            values_list = value
 
             if isinstance(value, list):
                 value = value[0]
@@ -253,6 +263,10 @@ class NnSeekerOpenSearch(NnSeeker):
                                 f"{actor}.keyword": value.replace(" ", "").split(",")
                             }
                         }
+                    )
+                case captured_action if captured_action in self.LIST_FILTER_TERMS:
+                    self.LIST_FILTER_TERMS[captured_action](
+                        values_list, captured_action, bool_terms
                     )
                 case _:
                     logger.warning(
@@ -330,6 +344,11 @@ class NnSeekerOpenSearch(NnSeeker):
 
     def _prepare_query_bool_script_statement(self, value):
         return {"script": {"script": {"source": f"doc['{value}.keyword'].length > 0"}}}
+
+    def _prepare_query_term_list_condition_statement(
+        self, values_list, term, bool_terms
+    ):
+        bool_terms["must"].append({"terms": {term + ".keyword": values_list}})
 
     # TODO: this should probably happen somewhere in the controller
     def get_genres_and_subgenres_from_upper_category(

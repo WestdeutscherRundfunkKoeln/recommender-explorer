@@ -25,6 +25,10 @@ from util.dto_utils import (
 from dto.user_item import UserItemDto
 from dto.item import ItemDto
 from envyaml import EnvYAML
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
 
@@ -141,12 +145,12 @@ class RecommendationController:
     #
     # TODO - refactor this into a factory class or similar
     #
-    def get_item_viewer(self, item_dto: ItemDto):
+    def get_item_viewer(self, item_dto: ItemDto, app_explorer_instance: "RecoExplorerApp" or None = None):
         matches = re.search("^(.*)@(.*)$", item_dto.viewer)
         viewer_name, viewer_dir = matches.group(1), matches.group(2)
         module = importlib.import_module(viewer_dir)
         class_ = getattr(module, viewer_name)
-        return class_(self.config)
+        return class_(self.config, app_explorer_instance)
 
     def set_model_and_strategy(self, model_info):
         """Sets an active model and a strategy in the controller for search
@@ -452,16 +456,33 @@ class RecommendationController:
         :return:
         """
         reco_filter = self._get_current_filter_state("reco_filter")
-        kidxs, nn_dists = self.reco_accessor.get_k_NN(
+        logger.warning("calling " + str(self.reco_accessor))
+
+        kidxs, nn_dists, oss_field = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
-        kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
+
+        if oss_field != 'id':
+            ident, db_ident = get_primary_idents(self.config)
+            kidxs_prim = []
+            try:
+                for kidx in kidxs:
+                    kidxs_prim.append(
+                        self.item_accessor.get_primary_key_by_field(kidx, db_ident)
+                    )
+            except EmptySearchError as e:
+                    logger.warning(str(e))
+            kidxs = kidxs_prim
+        else:
+            kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
+
         item_dto = dto_from_model(
             model=model,
             position=constants.ITEM_POSITION_RECO,
             item_type=constants.ITEM_TYPE_CONTENT,
             provenance=constants.ITEM_PROVENANCE_C2C,
         )
+
         return (
             self.item_accessor.get_items_by_ids(
                 item_dto, kidxs[: self.num_NN], constants.MODEL_TYPE_C2C
@@ -470,9 +491,14 @@ class RecommendationController:
         )
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
+
+        reco_filter = self._get_current_filter_state("reco_filter_u2c")
+
+
         kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
-            start_item, (self.num_NN + 1)
+            start_item, (self.num_NN + 1), reco_filter
         )
+
         ident, db_ident = get_primary_idents(self.config)
         kidxs_prim = []
         try:
@@ -585,6 +611,10 @@ class RecommendationController:
     def _check_category(self, genre_field):
         if genre_field.value not in self.get_item_defaults("genreCategory"):
             raise ValueError("Unknown category [" + genre_field.value + "]")
+
+    def _check_editorial_category(self, editorial_categ):
+        if editorial_categ.value not in self.get_item_defaults("editorialCategories"):
+            raise ValueError("Unknown editorial category [" + editorial_categ.value + "]")
 
     #
     def _get_active_start_components(self) -> list:

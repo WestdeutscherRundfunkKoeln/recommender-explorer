@@ -24,6 +24,10 @@ class StorageChangeEvent(BaseModel):
     name: str
     bucket: str
 
+    @property
+    def blob_id(self):
+        return self.name.split("/")[-1].split(".")[0]
+
 
 class FullLoadRequest(BaseModel):
     bucket: str
@@ -45,8 +49,8 @@ class BulkIngestTask(BaseModel):
     id: str
     status: BulkIngestTaskStatus
     errors: list[str]
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    completed_at: str = ""
+    created_at: datetime.datetime
+    completed_at: datetime.datetime | None = None
 
 
 class SingleTaskResponse(BaseModel):

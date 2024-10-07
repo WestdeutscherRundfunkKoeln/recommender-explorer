@@ -15,6 +15,7 @@ TEXT_INPUT_ACCESSOR_KEY = "accessor_function"
 TEXT_INPUT_HAS_PAGING_KEY = ""
 TEXT_INPUT_URL_PARAMETER_KEY = "url_parameter"
 TEXT_INPUT_COMPONENT_GROUP_KEY = "component_group"
+TEXT_INPUT_TOOLTIP_KEY = "tooltip"
 
 # Multi Select
 MULTI_SELECT_LABEL_KEY = "label"
@@ -33,6 +34,7 @@ MULTI_SELECT_DEFAULT_OPTION_KEY = "default"
 MULTI_SELECT_ACTION_OPTION_KEY = "action_option"
 MULTI_SELECT_ACTION_OPTION_VALUE_KEY = "option_value"
 MULTI_SELECT_ACTION_TARGET_WIDGET_KEY = "target_widget"
+MULTI_SELECT_TOOLTIP_KEY = "tooltip"
 
 # Reset Button
 RESET_BUTTON_LABEL = "Auswahl zurücksetzen"
@@ -43,11 +45,14 @@ RESET_IDENTIFIER_UPPER_ITEM_FILTER = "upper_item_filter"
 RESET_IDENTIFIER_RECO_FILTER = "reco_filter"
 RESET_IDENTIFIER_UPPER_RECO_FILTER = "upper_reco_filter"
 
+# Accordion Cards
+ACCORDION_CARD_TOGGLE_KEY = "toggle"
+ACCORDION_CARD_ACTIVE_KEY = "active"
+
 # Accordion
 ACCORDION_CONTENT_KEY = "content"
 ACCORDION_LABEL_KEY = "label"
 ACCORDION_ACTIVE_KEY = "active"
-ACCORDION_TOGGLE_KEY = "toggle"
 ACCORDION_RESET_BUTTON_KEY = "accordion-reset-button"
 ACCORDION_MAX_WIDTH = 323
 
@@ -63,6 +68,12 @@ DATE_TIME_PICKER_VALIDATOR_KEY = "validator"
 DATE_TIME_PICKER_LABEL_KEY = "label"
 DATE_TIME_PICKER_ACCESSOR_KEY = "accessor_function"
 DATE_TIME_PICKER_HAS_PAGING_KEY = "hasPaging"
+
+DATE_TIME_QUICK_SELECT_LABEL_KEY = "label"
+DATE_TIME_QUICK_SELECT_START_PICKER_LABEL_KEY = "start_picker_label"
+DATE_TIME_QUICK_SELECT_END_PICKER_LABEL_KEY = "end_picker_label"
+DATE_TIME_QUICK_SELECT_START_DELTA_DAYS = "start_delta_days"
+DATE_TIME_QUICK_SELECT_END_DELTA_DAYS = "end_delta_days"
 
 # Text Area Input
 TEXT_AREA_INPUT_LABEL_KEY = "label"
@@ -85,6 +96,7 @@ SLIDER_START_KEY = "start"
 SLIDER_END_KEY = "end"
 SLIDER_STEP_KEY = "step"
 SLIDER_COMPONENT_GROUP_KEY = "component_group"
+SLIDER_TOOLTIP_KEY = "tooltip"
 
 # Block
 BLOCKS_CONFIG_KEY = "blocks"
@@ -99,9 +111,11 @@ TEXT_INPUT_TYPE_VALUE = "text_field"
 MULTI_SELECT_TYPE_VALUE = "multi_select"
 ACCORDION_TYPE_VALUE = "accordion"
 DATE_TIME_PICKER_TYPE_VALUE = "date_time_picker"
+DATE_TIME_QUICK_SELECT_TYPE_VALUE = "date_time_quick_select"
 RADIO_BOX_TYPE_VALUE = "radio_box"
 TEXT_AREA_INPUT_TYPE_VALUE = "text_area_input"
 ACCORDION_RESET_BUTTON_TYPE_VALUE = "accordion-reset-button"
+ACCORDION_WITH_CARDS_TYPE_VALUE = "accordion_with_cards"
 
 
 # Fallbacks (if no key and value was given in the config yaml)
@@ -117,3 +131,9 @@ FALLBACK_BLOCK_LABEL_VALUE = "Default Block Headline"
 FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE = "Default Text Area Input"
 
 UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
+
+TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
+FILTER_WIDTH = 250
+
+# Content Cards
+INSERT_ID_BUTTON_LABEL = "Als Start Item übernehmen"
