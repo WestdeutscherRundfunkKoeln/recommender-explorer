@@ -109,7 +109,7 @@ def ingest_item(
         if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):
             data_preprocessor.add_embeddings(document)
 
-        return upsert_response  # TODO: check for meaningful return object. kept for backward compatibility?
+        return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
     except Exception as e:
         ts = datetime.now().isoformat()
         data = event.model_dump()

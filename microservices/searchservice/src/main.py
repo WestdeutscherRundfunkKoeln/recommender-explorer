@@ -70,7 +70,7 @@ def get_document_with_query(
     return oss_accessor.get_oss_docs(query)
 
 
-# TODO: search query for nearest neighbors
+# TODO: search query for the nearest neighbors
 
 app = FastAPI(title="Search Service")
 app.include_router(router, prefix=ROUTER_PREFIX)
