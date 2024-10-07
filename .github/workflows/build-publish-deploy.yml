@@ -26,8 +26,8 @@ jobs:
             (inputs.stages_for_main || '["prod-wdr", "prod-atmt"]') || 
             github.ref == 'refs/heads/dev' && 
             (inputs.stages_for_dev || '["dev-all"]')
-          )
-        }}
+          ) 
+          }}
     steps:
       - name: Set stage environment variable
         run: |
