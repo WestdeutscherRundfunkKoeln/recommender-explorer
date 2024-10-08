@@ -25,7 +25,7 @@ def test_client():
 
 
 class MockBlob:
-    def __init__(self, data: dict[str, str], name: str):
+    def __init__(self, data: str, name: str):
         self.data = data
         self.name = name
 
@@ -44,7 +44,7 @@ class MockBucket:
 
     def blob(self, blob_name: str):
         if blob_name not in self.data:
-            self.data[blob_name] = MockBlob({}, blob_name)
+            self.data[blob_name] = MockBlob("", blob_name)
         return self.data[blob_name]
 
     def list_blobs(self, *args, **kwargs):
@@ -58,8 +58,9 @@ class MockBucket:
 
 class MockStorageClient:
     def __init__(self, data: dict[str, str]):
-        self._buckets = {"wdr-recommender-exporter-dev-import": MockBucket(data)}
-        self.bucket_name = None
+        self._buckets = {
+            "wdr-recommender-exporter-dev-import": MockBucket(data),
+        }
 
     def bucket(self, bucket_name: str):
         if bucket_name not in self._buckets:
@@ -707,7 +708,9 @@ def test_bulk_ingest__with_validation_error(
     task = response.json()["task"]
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
-    assert len(task["errors"]) > 0
+    assert len(task["errors"]) == 1
+    assert task["completed_items"] == 1
+    assert task["failed_items"] == 1
 
 
 def test_bulk_ingest__with_general_error(test_client, httpx_mock):
@@ -732,6 +735,8 @@ def test_bulk_ingest__with_general_error(test_client, httpx_mock):
     assert task["id"] == task_id
     assert task["status"] == "FAILED"
     assert task["errors"] == ["Test error"]
+    assert task["completed_items"] == 0
+    assert task["failed_items"] == 0
 
 
 def test_get_task__exists(test_client: TestClient, overwrite_tasks):
@@ -745,6 +750,8 @@ def test_get_task__exists(test_client: TestClient, overwrite_tasks):
             "status": "PREPROCESSING",
             "errors": [],
             "created_at": "2023-10-23T23:00:00Z",
+            "completed_items": 0,
+            "failed_items": 0,
         }
     }
 
@@ -768,6 +775,8 @@ def test_get_tasks(test_client: TestClient, overwrite_tasks):
                 "errors": [],
                 "created_at": "2023-10-23T23:00:00Z",
                 "completed_at": None,
+                "completed_items": 0,
+                "failed_items": 0,
             }
         ]
     }
