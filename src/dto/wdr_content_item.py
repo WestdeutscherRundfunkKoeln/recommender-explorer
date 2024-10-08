@@ -53,11 +53,12 @@ class WDRContentItemDto(ItemDto):
             case constants.ITEM_POSITION_START:
                 if not self.externalid:
                     self._viewer = (
-                        "WDRContentStartCard@view.cards.wdr.wdr_content_draft_card"
+                        "WDRContentDraftCard@view.cards.wdr.wdr_content_draft_card"
                     )
-                self._viewer = (
-                    "WDRContentStartCard@view.cards.wdr.wdr_content_start_card"
-                )
+                else:
+                    self._viewer = (
+                        "WDRContentStartCard@view.cards.wdr.wdr_content_start_card"
+                    )
             case constants.ITEM_POSITION_RECO:
                 self._viewer = "WDRContentRecoCard@view.cards.wdr.wdr_content_reco_card"
             case _:
