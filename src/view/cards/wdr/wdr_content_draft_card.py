@@ -1,21 +1,15 @@
 import logging
-from typing import cast
+from datetime import datetime, timezone
 
 import panel as pn
 from dto.wdr_content_item import WDRContentItemDto
 from view.RecoExplorerApp import RecoExplorerApp
-
 
 logger = logging.getLogger(__name__)
 
 
 class WDRContentDraftCard:
     CARD_HEIGHT = 600
-    type_icon = {
-        "beitrag": "📰",
-        "audio": "🔊",
-        "video": "🎥",
-    }
 
     def __init__(
         self, config, reco_explorer_app_instance: RecoExplorerApp | None = None
@@ -85,19 +79,14 @@ class WDRContentDraftCard:
             teaserimage,
             pn.pane.Markdown(f""" ### Modell: {model} """),
             pn.pane.Markdown(f"""
-                   #### {content_dto.title}
-                   **Datentyp:** {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} 
-                   **Datum:** {content_dto.availableFrom}
-                   **Strukturpfad:** {content_dto.structurePath}
-                   **External ID:** {content_dto.externalid}
-                   **Themen:** {', '.join(set(content_dto.thematicCategories))}
-                   **Keywords:** {', '.join(set(content_dto.keywords))}
-                   **Sophora ID:** [{content_dto.sophoraid}](https://{content_dto.domain}{content_dto.structurePath}/{content_dto.sophoraid}.html)
+                   #### DRAFT
+                   **Datentyp:** Beitrag 📰 
+                   **Datum:** {datetime.now(tz=timezone.utc)}
             """),
             pn.pane.Markdown(f"""
             ***
-            ##### {content_dto.title}
-            {" ".join(content_dto.longDescription.split(" ")[:500])}...
+            ##### DRAFT
+            {" ".join(content_dto.description.split(" ")[:500]).strip()}...
             """),
         ]
 
