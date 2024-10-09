@@ -196,9 +196,7 @@ class RecoExplorerApp:
 
         self.genres.options = self.controller.get_item_defaults("genreCategory")
         self.genres.param.watch(self.toggle_start_components, "visible")
-        self.genres.param.watch(
-            self.trigger_item_filter_choice, "value", onlychanged=True
-        )
+        self.genres.param.watch(self.trigger_filter_choice, "value", onlychanged=True)
         self.controller.register("item_filter", self.genres)
 
         self.genre_start_col = pn.Column(
@@ -255,7 +253,7 @@ class RecoExplorerApp:
         self.subgenres.options = self.controller.get_item_defaults("subgenreCategories")
         self.subgenres.param.watch(self.toggle_start_components, "visible")
         self.subgenres.param.watch(
-            self.trigger_item_filter_choice, "value", onlychanged=True
+            self.trigger_filter_choice, "value", onlychanged=True
         )
         self.controller.register("item_filter", self.subgenres)
 
@@ -272,9 +270,7 @@ class RecoExplorerApp:
 
         self.themes.options = self.controller.get_item_defaults("thematicCategories")
         self.themes.param.watch(self.toggle_start_components, "visible")
-        self.themes.param.watch(
-            self.trigger_item_filter_choice, "value", onlychanged=True
-        )
+        self.themes.param.watch(self.trigger_filter_choice, "value", onlychanged=True)
         self.controller.register("item_filter", self.themes)
 
         # show selector
@@ -286,9 +282,7 @@ class RecoExplorerApp:
 
         self.shows.options = self.controller.get_item_defaults("showTitle")
         self.shows.param.watch(self.toggle_start_components, "visible")
-        self.shows.param.watch(
-            self.trigger_item_filter_choice, "value", onlychanged=True
-        )
+        self.shows.param.watch(self.trigger_filter_choice, "value", onlychanged=True)
         self.controller.register("item_filter", self.shows)
 
         # reset button
@@ -888,13 +882,13 @@ class RecoExplorerApp:
             "genreCategory"
         )
         user_filter_watcher = self.user_filter_choice.param.watch(
-            self.trigger_user_filter_choice, "value", onlychanged=True
+            self.trigger_filter_choice, "value", onlychanged=True
         )
         self.controller.register(
             "user_choice",
             self.user_filter_choice,
             user_filter_watcher,
-            self.trigger_user_filter_choice,
+            self.trigger_filter_choice,
         )
 
     def define_model_selections(self):
@@ -950,11 +944,6 @@ class RecoExplorerApp:
         self.toggle_visibility(event)
         await self.get_items_with_parameters()
 
-    async def trigger_start_filter_choice(self, event):
-        logger.info(event)
-        self.toggle_visibility(event)
-        await self.get_items_with_parameters()
-
     async def trigger_item_pagination(self, event):
         logger.info(event)
         if event.obj.name == self.RIGHT_ARROW:
@@ -964,14 +953,13 @@ class RecoExplorerApp:
         await self.get_items_with_parameters()
         self.disablePageButtons()
 
-    async def trigger_item_filter_choice(self, event):
+    async def trigger_filter_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
         await self.get_items_with_parameters()
 
     async def trigger_model_choice(self, event):
-        logger.info(event)
         if self.model_choice.active[0] == 0:
             self.controller.reset_component(
                 "model_choice", constants.MODEL_CONFIG_U2C, []
@@ -980,27 +968,7 @@ class RecoExplorerApp:
             self.controller.reset_component(
                 "model_choice", constants.MODEL_CONFIG_C2C, []
             )
-        self.controller.reset_page_number()
-        self.disablePageButtons()
-        await self.get_items_with_parameters()
-
-    async def trigger_model_choice_new(self, event):
-        logger.info(event)
-        self.controller.reset_page_number()
-        self.disablePageButtons()
-        await self.get_items_with_parameters()
-
-    async def trigger_user_cluster_choice(self, event):
-        logger.info(event)
-        self.controller.reset_page_number()
-        self.disablePageButtons()
-        await self.get_items_with_parameters()
-
-    async def trigger_user_filter_choice(self, event):
-        logger.info(event)
-        self.controller.reset_page_number()
-        self.disablePageButtons()
-        await self.get_items_with_parameters()
+        await self.trigger_filter_choice(event)
 
     async def trigger_item_selection(self, event):
         # if the "new" parameter of the event contains a string, load that string
@@ -1016,10 +984,10 @@ class RecoExplorerApp:
 
     def trigger_item_reset(self, event):
         logger.info(event)
-        self.controller.reset_defaults(event.obj.params["resets"])
-        self.controller.reset_page_number()
         self.item_grid.objects = {}
         self.floating_elements.objects = []
+        self.controller.reset_defaults(event.obj.params["resets"])
+        self.controller.reset_page_number()
         self.draw_pagination()
 
     async def trigger_reco_reset(self, event):
@@ -1029,13 +997,8 @@ class RecoExplorerApp:
         await self.get_items_with_parameters()
 
     def trigger_model_reset(self, event):
-        logger.info(event)
         self.model_choice.active = [0]
-        self.controller.reset_defaults(event.obj.params["resets"])
-        self.controller.reset_page_number()
-        self.item_grid.objects = {}
-        self.floating_elements.objects = []
-        self.draw_pagination()
+        self.trigger_item_reset(event)
 
     def trigger_modal(self, event):
         logger.info(event)
@@ -1209,15 +1172,10 @@ class RecoExplorerApp:
             self.inhaltSelect.value = []
 
     def disablePageButtons(self):
-        if self.controller.get_page_number() == 1:
-            self.previousPage.disabled = True
-        else:
-            self.previousPage.disabled = False
-
-        if self.controller.get_page_number() == self.controller.get_num_pages():
-            self.nextPage.disabled = True
-        else:
-            self.nextPage.disabled = False
+        self.previousPage.disabled = self.controller.get_page_number() == 1
+        self.nextPage.disabled = (
+            self.controller.get_page_number() == self.controller.get_num_pages()
+        )
 
     # assembly & rendering
 
