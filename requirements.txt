@@ -5,5 +5,6 @@ pandas
 panel
 pytest
 pytest-mock
+pytest-httpx
 httpx
 jsonschema
