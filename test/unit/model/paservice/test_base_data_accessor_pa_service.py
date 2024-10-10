@@ -2,7 +2,7 @@ import json
 
 import pytest
 from pytest_httpx import HTTPXMock
-from src.dto.pa_service_content_item import PaServiceContentItemDto
+from src.dto.wdr_content_item import WDRContentItemDto
 from src.model.paservice.base_data_accessor_pa_service import BaseDataAccessorPaService
 
 
@@ -30,7 +30,7 @@ def test_get_item_by_external_id__valid_request(httpx_mock: HTTPXMock):
     )
 
     res = pa_service.get_item_by_external_id(
-        PaServiceContentItemDto("0", "start", ""),
+        WDRContentItemDto("0", "start", ""),
         "test",
         filter={
             "relativerangefilter_duration": 100,
@@ -40,12 +40,15 @@ def test_get_item_by_external_id__valid_request(httpx_mock: HTTPXMock):
         },
     )
 
+    start_item = WDRContentItemDto("start", "start", "")
+    start_item.score = 1.0
+    reco_item1 = WDRContentItemDto("reco", "start", "")
+    reco_item1.score = 0.1
+    reco_item2 = WDRContentItemDto("reco", "start", "")
+    reco_item2.score = 0.2
+
     assert res == (
-        [
-            PaServiceContentItemDto("start", "start", "", score=1.0),
-            PaServiceContentItemDto("reco", "start", "", score=0.1),
-            PaServiceContentItemDto("reco", "start", "", score=0.2),
-        ],
+        [start_item, reco_item1, reco_item2],
         3,
     )
     assert httpx_mock.get_requests()[0].url == "https://test.io/wdrRecommendation"
@@ -82,7 +85,7 @@ def test_get_item_by_external_id__incorrect_weighting(httpx_mock: HTTPXMock):
 
     with pytest.raises(Exception):
         pa_service.get_item_by_external_id(
-            PaServiceContentItemDto("0", "start", ""),
+            WDRContentItemDto("0", "start", ""),
             "test",
             filter={
                 "relativerangefilter_duration": 100,
