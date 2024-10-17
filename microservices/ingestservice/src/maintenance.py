@@ -46,6 +46,7 @@ async def embed_partially_created_record(
         model for model in models if (model not in record) or (not record[model])
     ]
 
+    ### Tobias - check the success of this operation
     await client.post(
         "/add-embedding-to-doc",
         json={

@@ -98,7 +98,7 @@ def ingest_item(
             document.externalid, document.model_dump()
         )
 
-        if not document.embedText:
+        if not document.embedText:  ### Tobias - why do we return when there is *no* embedText? Shouldnt this be the other way around?
             return upsert_response
 
         embed_hash_in_oss = search_service_client.get(

@@ -36,6 +36,8 @@ def add_embedding_to_document(data: AddEmbeddingToDocRequest):
     logger.info("Adding embedding to document %s", data.id)
     result = text_embedder.embed_text(data.embedText, data.models)
     text_embedder.add_embedding_to_document(data.id, result)
+    ### Tobias - the result of the embedding operation is returned,
+    ### but the success/failure of the search call is never tracked/caught
     return result
 
 

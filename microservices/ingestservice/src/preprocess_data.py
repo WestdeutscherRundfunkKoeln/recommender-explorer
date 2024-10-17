@@ -31,8 +31,10 @@ class DataPreprocessor:
                     "id": mapped_data.externalid,
                     "embedText": mapped_data.embedText,
                 },
-                timeout=0.25,
+                timeout=0.25, #### TOBIAS: Reason for timeout in single ingests?
                 headers={"x-api-key": self.api_key},
             )
         except httpx.ReadTimeout:
+            logger.info("Embedding Call of item [" + str(mapped_data.externalid) + "] timed out")
+            ### Tobias - we basically do nothing? this will occur!
             pass
