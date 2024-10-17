@@ -112,6 +112,7 @@ class EmbedText:
         ### this is called asynchronously in re-embed tasks, but makes a synch call to search
 
         # Send request to search service to add embedding to index
+        logger.info("Calling search service to add embedding with id [" + str(id) + "] to document")
         httpx.post(
             url=f"{self.config.get('base_url_search')}/documents/{id}",
             json=embedding,

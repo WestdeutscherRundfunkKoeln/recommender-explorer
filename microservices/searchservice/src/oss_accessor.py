@@ -59,7 +59,7 @@ class OssAccessor:
             refresh=True,
         )
 
-        logger.info("Response: " + json.dumps(response, indent=4, default=str))
+        logger.info("Response os OSS update: " + json.dumps(response, indent=4, default=str))
 
         return response
 

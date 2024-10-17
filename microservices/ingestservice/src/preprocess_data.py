@@ -36,5 +36,6 @@ class DataPreprocessor:
             )
         except httpx.ReadTimeout:
             logger.info("Embedding Call of item [" + str(mapped_data.externalid) + "] timed out")
-            ### Tobias - we basically do nothing? this will occur!
+            ### Tobias - this times out all of the time - but the embedding is still written because
+            ### we discard the timeout
             pass
