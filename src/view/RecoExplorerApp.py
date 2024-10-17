@@ -295,6 +295,22 @@ class RecoExplorerApp:
 
         self.item_resetter.on_click(self.trigger_item_reset)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def define_start_item_selections(self):
         # startvideo selector
         self.startvid = pn.widgets.RadioBoxGroup(
@@ -414,6 +430,17 @@ class RecoExplorerApp:
             self.startdate,
             self.enddate,
         )
+
+
+
+
+
+
+
+
+
+
+
 
     # Filtering block u2c
     def define_reco_filtering_selection_u2c(self):
@@ -1278,8 +1305,8 @@ class RecoExplorerApp:
             widget of common ui widget type, built based on given config
         """
         widget = self.widgets.get(common_ui_widget_type)
-        if not widget:
-            return None
+        ##if not widget:
+            ##return None
         return widget.create(common_ui_widget_config)
 
     def build_widgets(self, widgets_config):

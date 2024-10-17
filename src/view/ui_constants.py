@@ -82,6 +82,18 @@ TEXT_AREA_INPUT_ACCESSOR_KEY = "accessor_function"
 TEXT_AREA_INPUT_VALIDATOR_KEY = "validator_function"
 TEXT_AREA_INPUT_URL_PARAMETER_KEY = "url_parameter"
 
+
+
+
+TEXT_AREA_ROWS_NUM = "rows"
+TEXT_AREA_MAX_ROWS_NUM = "max_rows"
+AUTO_GROW = "auto_grow"
+VISIBLE = "visible"
+
+
+
+
+
 # Accordion Reset Button
 ACCORDION_RESET_LABEL_KEY = "label"
 ACCORDION_RESET_BUTTON_STYLE_KEY = "button-style"
@@ -133,7 +145,7 @@ FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE = "Default Text Area Input"
 UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
 
 TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
-FILTER_WIDTH = 250
+FILTER_WIDTH = 300
 
 # Content Cards
 INSERT_ID_BUTTON_LABEL = "Als Start Item übernehmen"
