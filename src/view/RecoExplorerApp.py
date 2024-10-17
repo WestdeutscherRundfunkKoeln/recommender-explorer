@@ -1313,9 +1313,8 @@ class RecoExplorerApp:
             widget of common ui widget type, built based on given config
         """
         if common_ui_widget_type == ui_constants.RADIO_BOX_TYPE_VALUE:
-            return self.widgets[ui_constants.RADIO_BOX_TYPE_VALUE].create(
-                common_ui_widget_config
-            )
+            radio_box_widget = RadioBoxWidget(self, self.controller)
+            return radio_box_widget.create(common_ui_widget_config)
         else:
             widget = self.widgets.get(common_ui_widget_type)
             if not widget:
