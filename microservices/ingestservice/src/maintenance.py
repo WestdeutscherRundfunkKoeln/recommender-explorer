@@ -91,6 +91,7 @@ async def get_partially_created_records(
     if not hits:
         raise Exception("No partially created records found.")
 
+    logger.info("Re-embedding task found %s partially created records", len(hits))
     return [(hit["_id"], hit["_source"]) for hit in hits]
 
 
@@ -106,7 +107,7 @@ def build_query(models: list[str]) -> dict:
             }
         },
     }
-    logger.debug("Maintenance query: %s", query)
+    logger.info("Re-embedding Maintenance query: %s", query)
     return query
 
 
