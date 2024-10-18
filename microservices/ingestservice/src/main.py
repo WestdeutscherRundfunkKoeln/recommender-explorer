@@ -164,8 +164,9 @@ def get_tasks() -> TasksResponse:
 
 
 def _log_exception_traceback(document, e, exception_traceback):
-    if document:
-        logger.info(f"Exception when ingesting item {document.externalid}: {str(e)}\nTraceback: {exception_traceback}")
+    document_id = getattr(document, 'externalid', None)
+    if document_id:
+        logger.info(f"Exception when ingesting item {document_id}: {str(e)}\nTraceback: {exception_traceback}")
     else:
         logger.info(f"Exception when ingesting item: {str(e)}\nTraceback: {exception_traceback}")
 
