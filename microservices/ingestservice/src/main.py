@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 from datetime import datetime
 import json
 import logging
@@ -83,6 +84,7 @@ def ingest_item(
     event_type: Annotated[str, Header(alias="eventType")],
     request: Request,
 ):
+    document = None
     try:
         if event_type == EVENT_TYPE_DELETE:
             return search_service_client.delete(event.blob_id)
@@ -111,6 +113,8 @@ def ingest_item(
 
         return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
     except Exception as e:
+        exception_traceback = traceback.format_exc()
+        _log_exception_traceback(document, e, exception_traceback)
         ts = datetime.now().isoformat()
         data = event.model_dump()
         data["event_type"] = event_type
@@ -157,6 +161,14 @@ def get_task(task_id: str) -> SingleTaskResponse:
 def get_tasks() -> TasksResponse:
     tasks = TaskStatus.get_tasks()
     return TasksResponse(tasks=tasks.values())
+
+
+def _log_exception_traceback(document, e, exception_traceback):
+    document_id = getattr(document, 'externalid', None)
+    if document_id:
+        logger.info(f"Exception when ingesting item {document_id}: {str(e)}\nTraceback: {exception_traceback}")
+    else:
+        logger.info(f"Exception when ingesting item: {str(e)}\nTraceback: {exception_traceback}")
 
 
 app = FastAPI(title="Ingest Service", lifespan=lifespan)
