@@ -46,15 +46,28 @@ async def embed_partially_created_record(
         model for model in models if (model not in record) or (not record[model])
     ]
 
-    ### Tobias - check the success of this operation
-    await client.post(
-        "/add-embedding-to-doc",
-        json={
-            "id": id,
-            "embedText": record["embedText"],
-            "models": models_for_embedding,
-        },
-    )
+    ### Tobias - try fire and forget approach here
+    #await client.post(
+    #    "/add-embedding-to-doc",
+    #    json={
+    #        "id": id,
+    #        "embedText": record["embedText"],
+    #        "models": models_for_embedding,
+    #    },
+    #)
+    try:
+        client.post(
+            "/add-embedding-to-doc",
+            timeout=0.25,
+            json={
+                "id": id,
+                "embedText": record["embedText"],
+                "models": models_for_embedding,
+            },
+        )
+    except httpx.ReadTimeout:
+        logger.info("Re-Embed Call of item [" + str(id) + "] timed out")
+        pass
 
 
 async def get_models_info(client: httpx.AsyncClient) -> list[str]:
