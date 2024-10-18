@@ -56,7 +56,8 @@ async def embed_partially_created_record(
     #    },
     #)
     try:
-        client.post(
+        logger.info("Calling embedding service to re-embed doc with id [" + str(id) + "]")
+        await client.post(
             "/add-embedding-to-doc",
             timeout=0.25,
             json={
