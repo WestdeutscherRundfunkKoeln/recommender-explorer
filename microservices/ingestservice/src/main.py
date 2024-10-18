@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 from datetime import datetime
 import json
 import logging
@@ -111,6 +112,8 @@ def ingest_item(
 
         return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
     except Exception as e:
+        exception_traceback = traceback.format_exc()
+        logger.error(f"Exception when ingesting item: {str(e)}\nTraceback: {exception_traceback}")
         ts = datetime.now().isoformat()
         data = event.model_dump()
         data["event_type"] = event_type
