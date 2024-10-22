@@ -137,10 +137,8 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             column = new_col
         return self._get_item_by_column_value(item=item, column=column, value=crid)
 
-    def get_item_by_sophora_id(self, item: ItemDto, sophora_id: str, filter=None):
-        return self._get_item_by_column_value(
-            item=item, column="sophoraid", value=sophora_id
-        )
+    def get_item_by_cms_id(self, item: ItemDto, cms_id: str, filter=None):
+        return self._get_item_by_column_value(item=item, column="cmsId", value=cms_id)
 
     def get_item_by_text(self, item: ItemDto, text, filter={}):
         item_dtos = []
