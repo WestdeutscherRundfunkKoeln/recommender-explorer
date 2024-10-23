@@ -139,7 +139,7 @@ class NnSeekerOpenSearch(NnSeeker):
                             "field": self.embedding_field_name,
                             "query_value": embedding,
                             "space_type": "cosinesimil",
-                            "ignore_unmapped": True
+                            "ignore_unmapped": True,
                         },
                     },
                 }
