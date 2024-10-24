@@ -29,22 +29,18 @@ def bulk_ingest(
     logger.info("Starting bulk ingest")
     task_status = TaskStatus.spawn(id=task_id)
     try:
-        batch_start = 1
-        batch_end = 0
         blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
         blobs_iter = iter(blobs)
         # iterator is consumed slice by slice
         while batch := list(itertools.islice(blobs_iter, CHUNKSIZE)):
-            batch_end = upsert_batch(
+            upsert_batch(
                 batch=batch,
                 task_status=task_status,
-                element_counter=batch_start,
                 data_preprocessor=data_preprocessor,
                 search_service_client=search_service_client,
                 config=config,
             )
-            logger.info("Uploaded items %s to %s", batch_start, batch_end)
-            batch_start = batch_end + 1
+            logger.info("Uploaded %s items", len(batch))
 
         task_status.set_status(BulkIngestTaskStatus.COMPLETED)
     except Exception as e:
@@ -56,15 +52,13 @@ def bulk_ingest(
 def upsert_batch(
     batch: list[Blob],
     task_status: TaskStatus,
-    element_counter: int,
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
     config: EnvYAML,
-) -> int:
+) -> None:
     task_status.set_status(BulkIngestTaskStatus.PREPROCESSING)
     item_dict = {}
     for blob in batch:
-        element_counter += 1
         mapped_data = read_data_and_embed(
             task_status=task_status,
             blob=blob,
@@ -77,7 +71,8 @@ def upsert_batch(
 
     task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
     search_service_client.create_multiple_documents(item_dict)
-    return element_counter
+    task_status.increment_completed(len(item_dict))
+    task_status.increment_failed(len(batch) - len(item_dict))
 
 
 def read_data_and_embed(
