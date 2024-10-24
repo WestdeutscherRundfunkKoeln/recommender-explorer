@@ -96,16 +96,25 @@ def ingest_item(
             logger.error("Validation error: %s", str(exc))
             raise
 
-        embed_hash_in_oss = search_service_client.get(
-            document.externalid, [HASH_FIELD]
-        ).get(HASH_FIELD)
+        # Check for EmbedHash in OSS
+        try:
+            embed_hash_in_oss = search_service_client.get(
+                document.externalid, [HASH_FIELD]
+            ).get(HASH_FIELD)
+        except Exception as exc:
+            embed_hash_in_oss = None
+            logger.error("Unexpected error fetching EmbedHash: %s", str(exc))
+
+        # Get EmbedHash of the document
         embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
 
+        # Compare EmbedHashes and set needs_reembedding flag
         if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):
             document.needs_reembedding = True
         else:
             document.needs_reembedding = False
 
+        # Send document to search service
         upsert_response = search_service_client.create_single_document(
             document.externalid, document.model_dump()
         )
