@@ -96,20 +96,19 @@ def ingest_item(
             logger.error("Validation error: %s", str(exc))
             raise
 
-        upsert_response = search_service_client.create_single_document(
-            document.externalid, document.model_dump()
-        )
-
-        if not document.embedText:  ### Tobias - why do we return when there is *no* embedText? Shouldnt this be the other way around?
-            return upsert_response
-
         embed_hash_in_oss = search_service_client.get(
             document.externalid, [HASH_FIELD]
         ).get(HASH_FIELD)
         embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
 
         if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):
-            data_preprocessor.add_embeddings(document)
+            document.needs_reembedding = True
+        else:
+            document.needs_reembedding = False
+
+        upsert_response = search_service_client.create_single_document(
+            document.externalid, document.model_dump()
+        )
 
         return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
     except Exception as e:
@@ -164,11 +163,15 @@ def get_tasks() -> TasksResponse:
 
 
 def _log_exception_traceback(document, e, exception_traceback):
-    document_id = getattr(document, 'externalid', None)
+    document_id = getattr(document, "externalid", None)
     if document_id:
-        logger.info(f"Exception when ingesting item {document_id}: {str(e)}\nTraceback: {exception_traceback}")
+        logger.info(
+            f"Exception when ingesting item {document_id}: {str(e)}\nTraceback: {exception_traceback}"
+        )
     else:
-        logger.info(f"Exception when ingesting item: {str(e)}\nTraceback: {exception_traceback}")
+        logger.info(
+            f"Exception when ingesting item: {str(e)}\nTraceback: {exception_traceback}"
+        )
 
 
 app = FastAPI(title="Ingest Service", lifespan=lifespan)
