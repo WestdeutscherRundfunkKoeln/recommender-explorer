@@ -46,15 +46,6 @@ async def embed_partially_created_record(
         model for model in models if (model not in record) or (not record[model])
     ]
 
-    ### Tobias - try fire and forget approach here
-    # await client.post(
-    #    "/add-embedding-to-doc",
-    #    json={
-    #        "id": id,
-    #        "embedText": record["embedText"],
-    #        "models": models_for_embedding,
-    #    },
-    # )
     try:
         logger.info(
             "Calling embedding service to re-embed doc with id [" + str(id) + "]"
@@ -69,7 +60,7 @@ async def embed_partially_created_record(
             },
         )
     except httpx.ReadTimeout:
-        logger.info("Re-Embed Call of item [" + str(id) + "] timed out")
+        logger.debug("Re-Embed Call of item [" + str(id) + "] timed out")
         pass
 
 

@@ -96,7 +96,7 @@ class EmbedText:
                     end_encode - start_encode
                 ).total_seconds() * 1000
                 logger.info(f"Embedding took {call_duration_encode} ms -> succesfull")
-                continue  ### Tobias - what does the continue statement do here?
+                continue
             response[model] = "unknown model!"
             logger.warning("The model '%s' is not known in service config!", model)
 
@@ -105,9 +105,6 @@ class EmbedText:
         return response
 
     def add_embedding_to_document(self, id, embedding):
-        ### Tobias: we basically know nothing.
-        ### this is called asynchronously in re-embed tasks, but makes a synch call to search
-
         embedding["needs_reembedding"] = False
 
         # Send request to search service to add embedding to index
