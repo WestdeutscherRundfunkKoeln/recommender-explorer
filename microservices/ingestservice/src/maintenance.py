@@ -91,7 +91,7 @@ async def get_partially_created_records(
 
     hits = response.get("hits", {}).get("hits", [])
     if not hits:
-        raise Exception("No partially created records found.")
+        logger.info("No partially created records found.")
 
     logger.info("Re-embedding task found %s partially created records", len(hits))
     return [(hit["_id"], hit["_source"]) for hit in hits]
