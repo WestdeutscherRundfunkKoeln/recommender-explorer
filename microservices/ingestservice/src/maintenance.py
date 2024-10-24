@@ -47,16 +47,18 @@ async def embed_partially_created_record(
     ]
 
     ### Tobias - try fire and forget approach here
-    #await client.post(
+    # await client.post(
     #    "/add-embedding-to-doc",
     #    json={
     #        "id": id,
     #        "embedText": record["embedText"],
     #        "models": models_for_embedding,
     #    },
-    #)
+    # )
     try:
-        logger.info("Calling embedding service to re-embed doc with id [" + str(id) + "]")
+        logger.info(
+            "Calling embedding service to re-embed doc with id [" + str(id) + "]"
+        )
         await client.post(
             "/add-embedding-to-doc",
             timeout=0.25,
@@ -98,15 +100,19 @@ async def get_partially_created_records(
 def build_query(models: list[str]) -> dict:
     query = {
         "_source": {"includes": ["id", "embedText", *models]},
+        "size": 5,  # Limit the result to 5 hits
         "query": {
             "bool": {
                 "should": [
                     {"bool": {"must_not": [{"exists": {"field": model}}]}}
                     for model in models
                 ]
+                + [{"term": {"needs_reembedding": True}}],
+                "minimum_should_match": 1,  # Ensures at least one of the conditions is met
             }
         },
     }
+
     logger.info("Re-embedding Maintenance query: %s", query)
     return query
 
