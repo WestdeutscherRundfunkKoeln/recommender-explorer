@@ -112,6 +112,10 @@ SLIDER_TOOLTIP_KEY = "tooltip"
 
 # Block
 BLOCKS_CONFIG_KEY = "blocks"
+
+BLOCKS_CONFIG_LINKTO = "linkto"
+UI_ACC = "ui_acc"
+
 BLOCK_LABEL_LIST_KEY = "label"
 BLOCK_WIDGETS_LIST_KEY = "widgets"
 BLOCK_CONFIG_LABEL_KEY = "label"

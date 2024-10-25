@@ -1,7 +1,9 @@
 import asyncio
 import logging
 import traceback
+from logging import setLogRecordFactory
 from typing import Any
+
 
 import constants
 import panel as pn
@@ -9,6 +11,7 @@ from controller.reco_controller import RecommendationController
 from exceptions.date_validation_error import DateValidationError
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
+from util.ui_utils import retrieve_default_model_accordion
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
     get_client_options,
@@ -145,6 +148,7 @@ class RecoExplorerApp:
     def define_item_pagination(self):
         self.pagination = pn.Row()
         self.floating_elements = pn.Row(height=0, width=0)
+
 
     def define_start_item_filtering(self):
         # genre selector
@@ -304,21 +308,6 @@ class RecoExplorerApp:
         self.item_resetter.on_click(self.trigger_item_reset)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def define_start_item_selections(self):
         # startvideo selector
         self.startvid = pn.widgets.RadioBoxGroup(
@@ -438,16 +427,6 @@ class RecoExplorerApp:
             self.startdate,
             self.enddate,
         )
-
-
-
-
-
-
-
-
-
-
 
 
     # Filtering block u2c
@@ -971,6 +950,9 @@ class RecoExplorerApp:
 
         self.model_resetter.on_click(self.trigger_model_reset)
 
+
+
+
     # event handling
     async def trigger_reco_filter_choice(self, event):
         logger.info(event)
@@ -1166,6 +1148,13 @@ class RecoExplorerApp:
             self.text_input.visible = True
         # shorten this, either combine last two elifs or with dict of widget groups
 
+
+
+
+
+
+
+
     def toggle_model_choice(self, event):
         logger.info(event)
         active_block = event.obj.active[0]
@@ -1176,12 +1165,31 @@ class RecoExplorerApp:
             self.put_navigational_block(3, self.filter_block[1])
         self.assemble_navigation_elements()
 
+
+
+
+
+
+
+
+
+
     def toggle_client_choice(self, event):
         logger.info(event)
         self.client = event.obj.value
         pn.state.location.update_query(client=self.client)
         # await this call?
         pn.state.location.reload = True
+
+
+
+
+
+
+
+
+
+
 
     def toggle_user_choice(self, event):
         active_component = event.obj.objects[event.obj.active[0]]
@@ -1190,6 +1198,14 @@ class RecoExplorerApp:
                 component.params["active"] = False
             else:
                 component.params["active"] = True
+
+
+
+
+
+
+
+
 
     def toggle_genre_selection_by_upper_genre(self, event):
         logger.info(event)
@@ -1321,16 +1337,26 @@ class RecoExplorerApp:
                 return None
             return widget.create(common_ui_widget_config)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def build_widgets(self, widgets_config):
-        """
-        Creates a list of ui widgets based on the given config. Every widget has  a type and based on that, it gets built
-
-        Args:
-            widgets_config (config): configs of ui widgets
-
-        Returns:
-            widgets_list (list): list of ui widgets
-        """
         widgets_list = []
         if widgets_config is not None:
             for widget_config in widgets_config:
@@ -1340,34 +1366,44 @@ class RecoExplorerApp:
                 )
                 if component_from_dispatcher is not None:
                     widgets_list.append(component_from_dispatcher)
+
                 elif ui_constants.ACCORDION_TYPE_VALUE == component_type:
-                    widgets_list.append(
-                        self.widgets[ui_constants.ACCORDION_TYPE_VALUE].create(
-                            widget_config
-                        )
-                    )
-                    if widget_config.get(ui_constants.ACCORDION_RESET_BUTTON_KEY):
-                        widgets_list.append(
-                            (
-                                self.widgets[
-                                    ui_constants.ACCORDION_TYPE_VALUE
-                                ].create_accordion_reset_buttons(widget_config)
-                            )
-                        )
-                elif "radio_box" == component_type:
-                    widgets_list.append(
-                        self.widgets[ui_constants.RADIO_BOX_TYPE_VALUE].create(
-                            widget_config
-                        )
-                    )
-                else:
-                    logger.error("Unknown UI Config Type: " + component_type)
+                    accordion_widget = self.widgets[ui_constants.ACCORDION_TYPE_VALUE].create(widget_config)
+                    widgets_list.append(accordion_widget)
+
+            if widget_config.get(ui_constants.ACCORDION_RESET_BUTTON_KEY):
+                widgets_list.append(
+                    self.widgets[ui_constants.ACCORDION_TYPE_VALUE].create_accordion_reset_buttons(
+                        widget_config)
+                )
+
+            elif "radio_box" == component_type:
+                widgets_list.append(
+                    self.widgets[ui_constants.RADIO_BOX_TYPE_VALUE].create(widget_config)
+                )
+
+            else:
+                logger.error("Unknown UI Config Type: " + component_type)
+
         else:
-            logger.error(
-                "No UI Widgets are defined in Config File, or key name is wrong"
-            )
+            logger.error("No UI Widgets are defined in Config File, or key name is wrong")
+
 
         return widgets_list
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def build_blocks(self):
         """
@@ -1378,16 +1414,20 @@ class RecoExplorerApp:
         """
         block_list = []
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
+
         for block_config in blocks_config:
+
             list_of_widgets_in_block = self.build_widgets(
                 block_config.get(ui_constants.BLOCK_CONFIG_WIDGETS_KEY)
             )
+
             if block_config.get("show_reset_button", True):
                 list_of_widgets_in_block.append(
                     ResetButtonWidget(self, self.controller).create(
                         list_of_widgets_in_block
                     )
                 )
+
             block = {
                 ui_constants.BLOCK_LABEL_LIST_KEY: block_config.get(
                     ui_constants.BLOCK_CONFIG_LABEL_KEY,
@@ -1398,6 +1438,35 @@ class RecoExplorerApp:
             block_list.append(block)
         return block_list
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def append_block_to_navigation(self, block):
         """
         Adds ui block with label (headline) which contains all ui widgets from config yaml to config_based_nav_controls list
@@ -1406,37 +1475,132 @@ class RecoExplorerApp:
         Args:
             block (block): a ui block which is configured in config yaml and contains widgets
         """
+
+
         self.config_based_nav_controls.append(
             "### " + block.get(ui_constants.BLOCK_LABEL_LIST_KEY)
         )
         for block_component in block.get(ui_constants.BLOCK_WIDGETS_LIST_KEY):
             self.config_based_nav_controls.append(block_component)
 
+    block_list2 = []
+
+    def build_UI(self):
+        # clear the nav controls
+        self.config_based_nav_controls.clear()
+
+        # Client
+        client_choice = pn.widgets.RadioButtonGroup(
+            name="",
+            options=get_client_options(self.config_full_paths),
+            value=self.client,
+        )
+
+        if self.client_choice_visibility:
+            client_choice.param.watch(
+                self.toggle_client_choice, "value", onlychanged=True
+            )
+            self.config_based_nav_controls.append(client_choice)
+
+    def add_blocks_to_navigation(self,ActiveAccordion:str=""):
+        blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
+        global block_list2
+
+        # decide if this function was called by an accordion_with_cards widget or by the assembly function
+        if ActiveAccordion == "":
+            blocks = self.build_blocks()
+            block_list2 = blocks
+            #default_accordion = self.config["ui_config"].get(ui_constants.ACCORDION_CARD_ACTIVE_KEY)
+            choosen_accordion = "0"
+            #choosen_accordion = retrieve_default_model_accordion(self.config["ui_config"])
+            print("the choosen accordion is --------------")
+            print(choosen_accordion)
+
+        if ActiveAccordion != "":
+            choosen_accordion = ActiveAccordion
+            print("the choosen accordion is --------------")
+            print(choosen_accordion)
+            self.build_UI() #reset the nav bar before doing modifications
+
+        # Create a dictionary to group blocks by their linkto value
+        grouped_blocks = {}
+        no_linkto_blocks = []  # To store blocks without 'linkto'
+
+
+        # Iterate through the blocks_config configurations
+        for block_config in blocks_config:
+            # Get the 'linkto' value if it exists
+            linkto_value = block_config.get(ui_constants.BLOCKS_CONFIG_LINKTO)
+
+            # Print the values for verification
+            print(f"Processing block: {block_config['label']}, linkto: {linkto_value}")
+
+            # Check if the block has a 'linkto' value
+            if linkto_value:
+                if linkto_value not in grouped_blocks:
+                    grouped_blocks[linkto_value] = []
+
+                # Find the corresponding block from the blocks list
+                corresponding_blocks = [
+                    block for block in block_list2 if block.get('label') == block_config['label']
+                ]
+                # Append the corresponding blocks to the group
+                grouped_blocks[linkto_value].extend(corresponding_blocks)
+            else:
+                # If no 'linkto' is found, store the block in no_linkto_blocks
+                corresponding_blocks = [
+                    block for block in block_list2 if block.get('label') == block_config['label']
+                ]
+                no_linkto_blocks.extend(corresponding_blocks)
+
+        # Initialize the first group blocks to an empty list
+        first_group_blocks = []
+
+        if grouped_blocks:
+            choosen_blocks = grouped_blocks.get(choosen_accordion, [])
+            all_blocks_to_add = no_linkto_blocks + choosen_blocks
+
+        else:
+            all_blocks_to_add = no_linkto_blocks
+
+
+        # Append blocks to the navigation in the original order
+        for index, block in enumerate(block_list2):
+            # Check if the block is either in the no_linkto_blocks or the first_group_blocks
+            if block in all_blocks_to_add:
+                self.append_block_to_navigation(block)
+                # Append a divider if it's not the last block
+                if index + 1 != len(block_list2):
+                    self.config_based_nav_controls.append(pn.layout.Divider())
+
+
+
+
+
     def assemble_components(self):
         accordion_max_width = ui_constants.ACCORDION_MAX_WIDTH
         if ui_constants.UI_CONFIG_BLOCKS in self.config:
-            blocks = self.build_blocks()
-            logger.debug("found blocks %s", blocks)
-            block_counts = len(blocks)
+            # build client choice
+            self.build_UI()
 
-            # Client
-            client_choice = pn.widgets.RadioButtonGroup(
-                name="",
-                options=get_client_options(self.config_full_paths),
-                value=self.client,
-            )
+            # check if particular blocks belong to another ones and then populate the navigation
+            self.add_blocks_to_navigation()
 
-            if self.client_choice_visibility:
-                client_choice.param.watch(
-                    self.toggle_client_choice, "value", onlychanged=True
-                )
-                self.config_based_nav_controls.append(client_choice)
 
-            for index, block in enumerate(blocks):
-                self.append_block_to_navigation(block)
-                # append a divider if its not the last block
-                if index + 1 != block_counts:
-                    self.config_based_nav_controls.append(pn.layout.Divider())
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ## this part builds the ARD version or the no config file case and it does not call the build_blocks function
 
         else:
             # Client
@@ -1454,6 +1618,16 @@ class RecoExplorerApp:
                     self.toggle_client_choice, "value", onlychanged=True
                 )
 
+
+
+
+
+
+
+
+
+
+
             # Models
             if (
                 constants.MODEL_CONFIG_U2C in self.config
@@ -1465,6 +1639,9 @@ class RecoExplorerApp:
             else:
                 self.model_choice = pn.Accordion(("Content-2-Content", self.c2c_choice))
 
+
+
+
             self.model_choice.active = [0]
             self.model_choice.toggle = True
             self.model_choice.max_width = accordion_max_width
@@ -1472,9 +1649,20 @@ class RecoExplorerApp:
             self.put_navigational_block(
                 1, ["### Modelle wählen", self.model_choice, self.model_resetter]
             )
+
             self.model_choice.param.watch(
                 self.toggle_model_choice, "active", onlychanged=True
             )
+
+
+
+
+
+
+
+
+
+
 
             # Item source
             self.item_source = pn.Accordion(
@@ -1496,6 +1684,11 @@ class RecoExplorerApp:
                 self.toggle_user_choice, "active", onlychanged=True
             )
 
+
+
+
+
+
             self.source_block = {}
             self.source_block[0] = [
                 "### Start-Video bestimmen",
@@ -1509,6 +1702,19 @@ class RecoExplorerApp:
             ]
 
             self.put_navigational_block(2, self.source_block[0])
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             # Postprocessing and Filtering
             self.reco_items = pn.Accordion(
@@ -1577,6 +1783,10 @@ class RecoExplorerApp:
         )
         self.nextPage.on_click(self.trigger_item_pagination)
         self.pagination.append(self.nextPage)
+
+
+
+
 
     def get_version_information_and_append_to_sidebar(self, sidebar):
         """

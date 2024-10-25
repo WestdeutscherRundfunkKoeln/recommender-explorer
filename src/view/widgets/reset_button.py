@@ -2,6 +2,7 @@ import panel as pn
 from view.widgets.widget import UIWidget
 from view.util.view_utils import collect_leaf_widgets
 
+
 from .. import ui_constants as c
 
 
@@ -14,8 +15,11 @@ class ResetButtonWidget(UIWidget):
         )
 
     def create(self, block) -> pn.widgets.Button:
+
         reset_button_widget = pn.widgets.Button(
-            name=c.RESET_BUTTON_LABEL, button_type="primary", margin=10
+            name=c.RESET_BUTTON_LABEL,
+            margin=10,
+            button_type='primary',
         )
 
         widgets_to_reset = self.get_widgets_to_reset(block)

@@ -18,7 +18,20 @@ class AccordionWidget(UIWidget):
         Returns:
             accordion_widget (widget): final widget built from given config
         """
+
         accordion_widget = pn.Accordion()
+
+        ISUI = config.get(c.UI_ACC, "")
+
+        if ISUI:
+            label = config.get(c.ACCORDION_LABEL_KEY, "")
+            print(f"Accordion with label '{label}' will have a watcher")
+
+            #accordion_widget.active = [0]  # Example: make the first panel active
+
+            # Watch for changes to the active state
+            accordion_widget.param.watch(self.on_accordion_change2, 'active', onlychanged=True)
+
         accordion_content = self.create_accordion_content(
             config.get(c.ACCORDION_CONTENT_KEY, "")
         )
@@ -56,6 +69,7 @@ class AccordionWidget(UIWidget):
         Returns:
             accordion_content (list): list of common ui widgets as contents for a accordion widget
         """
+
         accordion_content = []
         if accordion_contents_config:
             for accordion_content_config in accordion_contents_config:
@@ -121,8 +135,8 @@ class AccordionWidget(UIWidget):
                 widget
             )
             if (
-                multi_select_widget is not None
-                and multi_select_widget.name == target_widget_label
+                    multi_select_widget is not None
+                    and multi_select_widget.name == target_widget_label
             ):
                 return widget
         return None
@@ -136,13 +150,18 @@ class AccordionWidget(UIWidget):
         :return: The multi-select widget if it matches the conditions, otherwise None.
         """
         if (
-            isinstance(widget, pn.Row)
-            and len(widget) == 2
-            and isinstance(widget[0], panel.widgets.select.MultiSelect)
+                isinstance(widget, pn.Row)
+                and len(widget) == 2
+                and isinstance(widget[0], panel.widgets.select.MultiSelect)
         ):
             return widget[0]
         else:
             return None
+
+    def on_accordion_change2(self, event):
+        # You can access the new value with event.new and the old value with event.old
+        print("Accordion state changed!")
+        print(f"New active state: {event.new}, Old active state: {event.old}")
 
 
 class AccordionWidgetWithCards(AccordionWidget):
@@ -156,6 +175,7 @@ class AccordionWidgetWithCards(AccordionWidget):
 
         :return: An instance of pn.Accordion with configured content and options.
         """
+
         accordion_contents = self.create_accordion_content(
             config.get(c.ACCORDION_CONTENT_KEY, "")
         )
@@ -168,11 +188,23 @@ class AccordionWidgetWithCards(AccordionWidget):
         accordion_cards_tuples = [
             (content.hidden_label, content[0]) for content in accordion_contents
         ]
+
         accordion_widget_with_cards = pn.Accordion(*accordion_cards_tuples)
 
-        active_list = self.get_config_value(config, c.ACCORDION_CARD_ACTIVE_KEY, int)
-        if active_list:
-            accordion_widget_with_cards.active = list(map(int, str(active_list)))
+        ISUI = config.get(c.UI_ACC)
+
+        if ISUI:
+            print("An Accordion Card will have a watcher")
+            active_list = config.get(c.ACCORDION_CARD_ACTIVE_KEY)
+            if active_list is not None:
+                accordion_widget_with_cards.active = [active_list]
+
+            # Watch for changes to the active state
+            accordion_widget_with_cards.param.watch(self.on_accordion_card_change, 'active', onlychanged=True)
+
+        #active_list = self.get_config_value(config, c.ACCORDION_CARD_ACTIVE_KEY, int)
+        #if active_list:
+            #accordion_widget_with_cards.active = list(map(int, str(active_list)))
 
         accordion_widget_with_cards.toggle = self.get_config_value(
             config, c.ACCORDION_CARD_TOGGLE_KEY, bool
@@ -202,3 +234,15 @@ class AccordionWidgetWithCards(AccordionWidget):
             return False
         else:
             return None
+
+    def on_accordion_card_change(self, event):
+        # You can access the new value with event.new and the old value with event.old
+        print(f"Accordion With Cards has changed!")
+        print(f"New active state: {event.new}, Old active state: {event.old}")
+        # Convert to string and remove brackets
+        T = str(event.new).strip("[]")  # Convert event.new to a string and remove brackets
+        T = T.replace(" ", "")
+        #self.accordion_widget_with_cards.active = [int(T)]  # Set the new active state
+        self.reco_explorer_app_instance.add_blocks_to_navigation(T)
+
+
