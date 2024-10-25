@@ -46,6 +46,7 @@ def get_models():
     return list(text_embedder.models.keys())
 
 
+# main app
 app = FastAPI(title="Embedding Service")
 
 app.include_router(router, prefix=ROUTER_PREFIX)

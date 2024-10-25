@@ -182,6 +182,6 @@ def _log_exception_traceback(document, e, exception_traceback):
             f"Exception when ingesting item: {str(e)}\nTraceback: {exception_traceback}"
         )
 
-
+# main app
 app = FastAPI(title="Ingest Service", lifespan=lifespan)
 app.include_router(router, prefix=ROUTER_PREFIX)
