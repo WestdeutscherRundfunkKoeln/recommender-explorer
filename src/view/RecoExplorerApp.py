@@ -1483,6 +1483,7 @@ class RecoExplorerApp:
         for block_component in block.get(ui_constants.BLOCK_WIDGETS_LIST_KEY):
             self.config_based_nav_controls.append(block_component)
 
+    # stores the UI elements to avoid calling build_blocks() when the states changes
     block_list2 = []
 
     def build_UI(self):
@@ -1510,21 +1511,17 @@ class RecoExplorerApp:
         if ActiveAccordion == "":
             blocks = self.build_blocks()
             block_list2 = blocks
-            #default_accordion = self.config["ui_config"].get(ui_constants.ACCORDION_CARD_ACTIVE_KEY)
-            choosen_accordion = "0"
-            #choosen_accordion = retrieve_default_model_accordion(self.config["ui_config"])
-            print("the choosen accordion is --------------")
-            print(choosen_accordion)
+            choosen_accordion = retrieve_default_model_accordion(self.config["ui_config"])
 
+        # then it's an index sent by the accordion_widget class
         if ActiveAccordion != "":
             choosen_accordion = ActiveAccordion
-            print("the choosen accordion is --------------")
-            print(choosen_accordion)
             self.build_UI() #reset the nav bar before doing modifications
 
         # Create a dictionary to group blocks by their linkto value
         grouped_blocks = {}
-        no_linkto_blocks = []  # To store blocks without 'linkto'
+        # To store blocks without 'linkto'
+        no_linkto_blocks = []
 
 
         # Iterate through the blocks_config configurations
@@ -1553,8 +1550,6 @@ class RecoExplorerApp:
                 ]
                 no_linkto_blocks.extend(corresponding_blocks)
 
-        # Initialize the first group blocks to an empty list
-        first_group_blocks = []
 
         if grouped_blocks:
             choosen_blocks = grouped_blocks.get(choosen_accordion, [])

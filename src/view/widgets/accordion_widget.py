@@ -191,6 +191,7 @@ class AccordionWidgetWithCards(AccordionWidget):
 
         accordion_widget_with_cards = pn.Accordion(*accordion_cards_tuples)
 
+        # check if this accordion has a UI functionality, if so, assign a watcher to it
         ISUI = config.get(c.UI_ACC)
 
         if ISUI:
@@ -236,13 +237,11 @@ class AccordionWidgetWithCards(AccordionWidget):
             return None
 
     def on_accordion_card_change(self, event):
-        # You can access the new value with event.new and the old value with event.old
         print(f"Accordion With Cards has changed!")
         print(f"New active state: {event.new}, Old active state: {event.old}")
         # Convert to string and remove brackets
-        T = str(event.new).strip("[]")  # Convert event.new to a string and remove brackets
-        T = T.replace(" ", "")
-        #self.accordion_widget_with_cards.active = [int(T)]  # Set the new active state
-        self.reco_explorer_app_instance.add_blocks_to_navigation(T)
+        State = str(event.new).strip("[]")
+        State = State.replace(" ", "")
+        self.reco_explorer_app_instance.add_blocks_to_navigation(State)
 
 
