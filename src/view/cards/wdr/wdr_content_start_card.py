@@ -7,8 +7,6 @@ logger = logging.getLogger(__name__)
 
 class WDRContentStartCard(WDRContentCard):
 
-    CARD_HEIGHT = 600
-
     def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_viewer):
         stylesheet_image = """
                          .img_wrapper {
@@ -76,8 +74,8 @@ class WDRContentStartCard(WDRContentCard):
         card = pn.Card(
             styles={ 'background': self.config[model_config][content_dto.provenance][model]['start_color'], 'overflow': 'auto' },
             margin=5,
-            height=self.CARD_HEIGHT,
-            width=300,
+            height=self.card_height,
+            width=self.card_width,
             hide_header=True
         )
 

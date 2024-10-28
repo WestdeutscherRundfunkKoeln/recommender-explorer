@@ -78,7 +78,6 @@ class WDRContentRecoCard(WDRContentCard):
             pn.pane.Markdown(f""" ### Score: {str(round(content_dto.dist, 2))}"""),
         ]
 
-        # self.card_width coming from super card here, can be overwritten
         card = pn.Card(
             styles={
                 "background": self.config[model_config][content_dto.provenance][model][
