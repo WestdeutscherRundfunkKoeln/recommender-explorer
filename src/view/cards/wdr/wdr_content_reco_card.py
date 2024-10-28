@@ -13,8 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class WDRContentRecoCard(WDRContentCard):
-    CARD_HEIGHT = 600
-    IMAGE_HEIGHT = 200
 
     def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_func):
         stylesheet_image = """
@@ -80,6 +78,7 @@ class WDRContentRecoCard(WDRContentCard):
             pn.pane.Markdown(f""" ### Score: {str(round(content_dto.dist, 2))}"""),
         ]
 
+        # self.card_width coming from super card here, can be overwritten
         card = pn.Card(
             styles={
                 "background": self.config[model_config][content_dto.provenance][model][
@@ -88,7 +87,8 @@ class WDRContentRecoCard(WDRContentCard):
                 "overflow": "auto",
             },
             margin=5,
-            height=self.CARD_HEIGHT,
+            height=self.card_height,
+            width=self.card_width,
             hide_header=True,
         )
 

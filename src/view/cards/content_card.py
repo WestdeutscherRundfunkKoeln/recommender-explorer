@@ -8,10 +8,20 @@ from view.RecoExplorerApp import RecoExplorerApp
 logger = logging.getLogger(__name__)
 class ContentCard():
 
-    def __init__(self, config, reco_explorer_app_instance:RecoExplorerApp=None):
+    def __init__(
+            self,
+            config,
+            reco_explorer_app_instance:RecoExplorerApp = None,
+            height=None,
+            width=None,
+            image_height=None,
+    ):
         self.config = config
         self.reco_explorer_app_instance = reco_explorer_app_instance
         self.controller = RecommendationController(self.config)
+        self.card_height = height if height is not None else 600
+        self.card_width = width if width is not None else 300
+        self.card_image_height = image_height if width is not None else 75
 
     def draw(self, content_dto: ContentItemDto, card):
 

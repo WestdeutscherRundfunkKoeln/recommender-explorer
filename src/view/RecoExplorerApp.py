@@ -76,8 +76,8 @@ class RecoExplorerApp:
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
 
-        self.RIGHT_ARROW = "\u25b6"
-        self.LEFT_ARROW = "\u25c0"
+        self.RIGHT_ARROW = "\u25bc"
+        self.LEFT_ARROW = "\u25b2"
 
         # display mode
         self.display_mode = constants.DISPLAY_MODE_SINGLE
@@ -117,8 +117,8 @@ class RecoExplorerApp:
             self.define_reco_duration_filtering()
             self.define_score_threshold()
 
-        # a grid for start items/users and recos
-        self.item_grid = pn.GridSpec()
+        self.template = pn.template.BootstrapTemplate()
+        self.main_content = pn.Column()
 
         # init some of the component values
         self.set_c2c_model_definitions()
@@ -1009,7 +1009,7 @@ class RecoExplorerApp:
             await self.get_items_with_parameters()
             self.pagination[4] = self.controller.get_num_pages()
         else:
-            self.item_grid.objects = {}
+            self.main_content[:] = []
             self.floating_elements = []
         self.controller.reset_page_number()
         self.disablePageButtons()
@@ -1018,7 +1018,7 @@ class RecoExplorerApp:
         logger.info(event)
         self.controller.reset_defaults(event.obj.params["resets"])
         self.controller.reset_page_number()
-        self.item_grid.objects = {}
+        self.main_content[:] = []
         self.floating_elements.objects = []
         self.draw_pagination()
 
@@ -1033,7 +1033,7 @@ class RecoExplorerApp:
         self.model_choice.active = [0]
         self.controller.reset_defaults(event.obj.params["resets"])
         self.controller.reset_page_number()
-        self.item_grid.objects = {}
+        self.main_content[:] = []
         self.floating_elements.objects = []
         self.draw_pagination()
 
@@ -1222,7 +1222,7 @@ class RecoExplorerApp:
     # assembly & rendering
 
     def draw_pagination(self):
-        if not self.item_grid.objects:
+        if not self.main_content.objects:
             from_page = " - "
             to_page = " - "
         else:
@@ -1519,9 +1519,11 @@ class RecoExplorerApp:
             self.assemble_navigation_elements()
 
         # empty screen hinweis
-        self.item_grid[0, 0] = pn.pane.Alert(
-            "Wähle ein oder mehrere Modelle, sowie ein Start-Item oder -User",
-            alert_type="warning",
+        self.main_content.append(
+            pn.pane.Alert(
+                "Wähle ein oder mehrere Modelle, sowie ein Start-Item oder -User",
+                alert_type="warning",
+            )
         )
 
         # previous button
@@ -1573,31 +1575,43 @@ class RecoExplorerApp:
         """
         Calls the actual search function in controller to get results for query
         """
-        self.item_grid.objects = {}
+        self.main_content[:] = []
 
         try:
             models, items, config = await asyncio.to_thread(self.controller.get_items)
             for idx, row in enumerate(items):
+                start_card = None
+                reco_cards = []
                 for idz, item_dto in enumerate(row):
                     card = self.controller.get_item_viewer(item_dto, self)
                     if (
                         self.controller.get_display_mode()
                         == constants.DISPLAY_MODE_SINGLE
                     ):
-                        self.item_grid[idx, idz] = card.draw(
+                        displayed_card = card.draw(
                             item_dto, idz, models[0], config, self.trigger_modal
                         )
                     else:
-                        self.item_grid[idx, idz] = card.draw(
+                        displayed_card = card.draw(
                             item_dto, idz, models[idx], config, self.trigger_modal
                         )
-            self.draw_pagination()
+                    if idz == 0:
+                        start_card = displayed_card
+                    else:
+                        reco_cards.append(displayed_card)
+
+                if start_card is not None:
+                    reco_cards_row = pn.Row(*reco_cards, width=1230, scroll=True)
+                    layout_row = pn.Row(start_card, reco_cards_row)
+                    self.main_content.append(layout_row)
+                    self.draw_pagination()
+
         except (EmptySearchError, ModelValidationError) as e:
-            self.item_grid[0, 0] = pn.pane.Alert(str(e), alert_type="warning")
+            self.main_content.append(pn.pane.Alert(str(e), alert_type="warning"))
         except DateValidationError as e:
             logger.info(str(e))
         except Exception as e:
-            self.item_grid[0, 0] = pn.pane.Alert(str(e), alert_type="danger")
+            self.main_content.append(pn.pane.Alert(str(e), alert_type="danger"))
             logger.warning(traceback.print_exc())
         self.disablePageButtons()
 
@@ -1637,12 +1651,13 @@ class RecoExplorerApp:
         # finally add onload, check if url parameter are defined in config and link to widgets
         pn.state.onload(self.update_widgets_from_url_parameter)
 
-        # Create and return the BootstrapTemplate
-        return pn.template.BootstrapTemplate(
+        self.template = pn.template.BootstrapTemplate(
             site_url="./",
             title=title,
             logo=logo,
             sidebar=[sidebar],
-            main=[self.floating_elements, self.item_grid, self.pagination],
+            main=[self.floating_elements, self.main_content, self.pagination],
             header_background=header_background,
         )
+
+        return self.template
