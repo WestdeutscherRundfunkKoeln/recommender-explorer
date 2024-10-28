@@ -59,7 +59,7 @@ class RecommendationController:
         #
         # TODO - refactor this into model code
         #
-        self.num_NN = self.config['opensearch'].get('number_of_recommendations', 5)  # num start items to fetch from backend per call
+        self.num_NN = self.config.get('opensearch.number_of_recommendations', 5)  # num start items to fetch from backend per call
         self.num_items = 0  # num start items to fetch from backend per call
         self.num_items_single_view = 4
         self.num_items_multi_view = 4
