@@ -100,7 +100,7 @@ async def get_partially_created_records(
 def build_query(models: list[str]) -> dict:
     query = {
         "_source": {"includes": ["id", "embedText", *models]},
-        "size": 5,  # Limit the result to 5 hits
+        "size": 10,  # Limit the result to 10 hits
         "query": {
             "bool": {
                 "should": [
