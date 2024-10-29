@@ -37,7 +37,7 @@ async def embed_partially_created_records(
             response = await embed_partially_created_record(
                 embedding_service_client, models, record
             )
-            responses.add(response)
+            responses.append(response)
 
         for response in responses:
             if response.status_code != 200:
