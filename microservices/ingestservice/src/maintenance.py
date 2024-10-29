@@ -37,7 +37,7 @@ async def embed_partially_created_records(
             response = await embed_partially_created_record(
                 embedding_service_client, models, record
             )
-            responses.add(response)
+            responses.append(response)
 
         for response in responses:
             if response.status_code != 200:
@@ -58,7 +58,7 @@ async def embed_partially_created_record(
         logger.info(
             "Calling embedding service to re-embed doc with id [" + str(id) + "]"
         )
-        await client.post(
+        result = await client.post(
             "/add-embedding-to-doc",
             timeout=180,
             json={
@@ -67,6 +67,7 @@ async def embed_partially_created_record(
                 "models": models_for_embedding,
             },
         )
+        return result
     except httpx.ReadTimeout:
         logger.debug("Re-Embed Call of item [" + str(id) + "] timed out")
         pass
