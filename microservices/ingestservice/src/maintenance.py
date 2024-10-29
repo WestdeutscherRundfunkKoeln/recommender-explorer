@@ -32,11 +32,19 @@ async def embed_partially_created_records(
 
         records = await get_partially_created_records(search_service_client, models)
 
+        responses = []
         for record in records:
-            await embed_partially_created_record(
+            response = await embed_partially_created_record(
                 embedding_service_client, models, record
             )
+            responses.add(response)
 
+        for response in responses:
+            if response.status_code != 200:
+                logger.error(
+                    "Error during re-embedding task. Response: %s", response.text
+                )
+        logger.info("Re-embedding task is done")
 
 async def embed_partially_created_record(
     client: httpx.AsyncClient, models: list[str], record: dict[str, Any]
@@ -52,7 +60,7 @@ async def embed_partially_created_record(
         )
         await client.post(
             "/add-embedding-to-doc",
-            timeout=0.25,
+            timeout=180,
             json={
                 "id": id,
                 "embedText": record["embedText"],
