@@ -5,6 +5,7 @@ import pandas as pd
 import re
 import base64
 import constants
+from datetime import datetime
 
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from model.base_data_accessor import BaseDataAccessor
@@ -149,10 +150,9 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         return item_dtos, 1
 
     def get_items_by_date(
-        self, item: ItemDto, start_date, end_date, item_filter={}, offset=10, size=-1
+        self, item: ItemDto, start_date: datetime, end_date: datetime, item_filter={}, offset=10, size=-1
     ) -> tuple[pd.DataFrame, int]:
         # handle valid size range
-
         if size < 0 or size > self.max_items_per_fetch:
             size = self.max_items_per_fetch
 
@@ -164,10 +164,8 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             end_date = start_date
             start_date = xx
 
-        start_date_d = pd.to_datetime(start_date).strftime("%Y-%m-%d")
-        end_date_d = pd.to_datetime(end_date).strftime("%Y-%m-%d")
         query = self.__compose_date_range_query(
-            size, offset, [start_date_d, end_date_d], item_filter
+            size, offset, [start_date, end_date], item_filter
         )
         logger.info(f"query: {query}")
         response = self.client.search(body=query, index=self.target_idx_name)
