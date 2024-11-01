@@ -38,7 +38,7 @@ class WDRContentItemDto(ItemDto):
     showTitel: str = ''
     showType: str = ''
     site: str = ''
-    sophoraid: str = ''
+    cmsId: str = ''
     structurePath: str = ''
     teaserimage: str = ''
     thematicCategories: str = ''
