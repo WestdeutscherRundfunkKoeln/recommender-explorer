@@ -24,9 +24,7 @@ def mock_opensearch(mocker):
             "hits": {
                 "hits": [
                     {
-                        "_source": {
-                            "id": "test",
-                        },
+                        "_id": "test",
                         "_score": 0.5,
                     }
                 ]
@@ -63,7 +61,7 @@ def test_get_k_nn__by_id__no_filter(nn_seeker):
     assert nn_seeker.client.search.call_args_list[1].kwargs == {
         "body": {
             "size": 1,
-            "_source": {"include": "id"},
+            "_source": False,
             "query": {
                 "script_score": {
                     "query": {"match_all": {}},
@@ -74,6 +72,7 @@ def test_get_k_nn__by_id__no_filter(nn_seeker):
                             "field": "embedding_01",
                             "query_value": [1, 2],
                             "space_type": "cosinesimil",
+                            "ignore_unmapped": True,
                         },
                     },
                 }
@@ -110,7 +109,7 @@ def test_get_k_nn__by_id__neutral_element_filter_values(nn_seeker):
     assert nn_seeker.client.search.call_args_list[1].kwargs == {
         "body": {
             "size": 1,
-            "_source": {"include": "id"},
+            "_source": False,
             "query": {
                 "script_score": {
                     "query": {"match_all": {}},
@@ -121,6 +120,7 @@ def test_get_k_nn__by_id__neutral_element_filter_values(nn_seeker):
                             "field": "embedding_01",
                             "query_value": [1, 2],
                             "space_type": "cosinesimil",
+                            "ignore_unmapped": True,
                         },
                     },
                 }
@@ -168,7 +168,7 @@ def test_get_k_nn__by_id__multiple_filter(nn_seeker):
             "size": 1,
             "sort": [{"created": {"order": "test"}}],
             "track_scores": True,
-            "_source": {"include": "id"},
+            "_source": False,
             "query": {
                 "script_score": {
                     "query": {
@@ -229,6 +229,7 @@ def test_get_k_nn__by_id__multiple_filter(nn_seeker):
                             "field": "embedding_01",
                             "query_value": [1, 2],
                             "space_type": "cosinesimil",
+                            "ignore_unmapped": True,
                         },
                     },
                 }

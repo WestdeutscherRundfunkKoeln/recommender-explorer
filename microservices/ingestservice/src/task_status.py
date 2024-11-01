@@ -1,5 +1,5 @@
 from src.models import BulkIngestTask, BulkIngestTaskStatus
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 class TaskStatus:
@@ -14,16 +14,19 @@ class TaskStatus:
         task_status = cls(id)
         cls.put(
             id,
-            BulkIngestTask(id=id, status=BulkIngestTaskStatus.PREPROCESSING, errors=[]),
+            BulkIngestTask(
+                id=id,
+                status=BulkIngestTaskStatus.PREPROCESSING,
+                errors=[],
+                created_at=datetime.now(tz=timezone.utc),
+            ),
         )
         return task_status
 
     def set_status(self, status: BulkIngestTaskStatus) -> None:
         self._tasks[self.id].status = status
         if status == BulkIngestTaskStatus.COMPLETED:
-            self._tasks[self.id].completed_at = datetime.now().strftime(
-                "%Y-%m-%dT%H:%M:%S.%f"
-            )  # TODO: change to datetime, like created_at
+            self._tasks[self.id].completed_at = datetime.now(tz=timezone.utc)
 
     def add_error(self, error: str) -> None:
         self._tasks[self.id].errors.append(error)
@@ -42,7 +45,7 @@ class TaskStatus:
 
     @classmethod
     def clear(cls) -> None:
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         for task in list(cls._tasks.values()):
             if (now - task.created_at) > timedelta(seconds=cls._lifetime_seconds):
                 del cls._tasks[task.id]

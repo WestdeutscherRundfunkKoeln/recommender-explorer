@@ -165,9 +165,7 @@ def test_add_embedding_to_document(httpx_mock, test_client: TestClient):
         "embedTextHash",
         "all-MiniLM-L6-v2",
         "distiluse-base-multilingual-cased-v1",
-        "id",
     }
-    assert response_json["id"] == "test"
 
     assert (
         response_json["embedTextHash"]

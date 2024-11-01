@@ -5,14 +5,13 @@ import pandas as pd
 import re
 import base64
 import constants
-
-from dataclasses import dataclass, fields
-from opensearchpy import OpenSearch, RequestsHttpConnection
 from datetime import datetime
+
+from opensearchpy import OpenSearch, RequestsHttpConnection
 from model.base_data_accessor import BaseDataAccessor
 from exceptions.empty_search_error import EmptySearchError
 from dto.item import ItemDto
-from util.dto_utils import content_fields, update_from_props, get_primary_idents
+from util.dto_utils import update_from_props, get_primary_idents
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
                 + ".keyword] and value ["
                 + item_ident
                 + "]",
-                {}
+                {},
             )
         else:
             return response["hits"]["hits"][0]["_id"]
@@ -67,7 +66,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
     def get_items_by_ids(
         self, item: ItemDto, ids, provenance=constants.ITEM_PROVENANCE_C2C
     ):
-        if len(ids)>0:
+        if len(ids) > 0:
             docs = [
                 {
                     "_id": id,
@@ -88,14 +87,11 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             # logger.info(response)
             return self.__get_items_from_response(item, response, provenance)
         else:
-            response = {
-                "hits": {"hits": [], "total": {"value": len(ids)}}
-            }
+            response = {"hits": {"hits": [], "total": {"value": len(ids)}}}
             item_dtos = []
             total_items = 0
             # logger.info(response)
             return item_dtos, total_items
-
 
     def get_item_by_url(self, item: ItemDto, url, filter={}):
         last_string = re.search(r".*/([^/?]+)[?]*", url.strip()).group(1)
@@ -104,23 +100,25 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         crid = crid_bytes.decode("ascii")
         return self.get_item_by_crid(item, crid, filter)
 
-    def get_item_by_urn(self, item: ItemDto, urn, filter={}):
-        urn = urn.strip()
-        prim_id, prim_val = get_primary_idents(self.config)
-        oss_col = prim_val + ".keyword"
+    def _get_item_by_column_value(self, item: ItemDto, column: str, value: str):
+        oss_col = column + ".keyword"
         query = {
             "size": 10,  # duplicate crids max occur in data, return max 10
             "_source": {"exclude": "embedding"},
             "query": {
-                "match": {oss_col: urn},
+                "match": {oss_col: value},
             },
         }
-
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         return self.__get_items_from_response(item, response)
 
-    def get_item_by_crid(self, item: ItemDto, crid, filter={}):
+    def get_item_by_urn(self, item: ItemDto, urn, filter=None):
+        urn = urn.strip()
+        _, prim_val = get_primary_idents(self.config)
+        return self._get_item_by_column_value(item=item, column=prim_val, value=urn)
+
+    def get_item_by_crid(self, item: ItemDto, crid, filter=None):
         """Builds query to get items based on a crid
 
         Maps crid parameter to mapped value if given in configuration file.
@@ -138,21 +136,10 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             new_col = self.field_mapping[column]
             logger.info(f"mapping col {column} to {new_col}")
             column = new_col
+        return self._get_item_by_column_value(item=item, column=column, value=crid)
 
-        # term filter applies to keyword subcolumn
-        oss_col = column + ".keyword"
-
-        query = {
-            "size": 10,  # duplicate crids max occur in data, return max 10
-            "_source": {"exclude": "embedding"},
-            "query": {
-                "match": {oss_col: crid},
-            },
-        }
-
-        logger.info(query)
-        response = self.client.search(body=query, index=self.target_idx_name)
-        return self.__get_items_from_response(item, response)
+    def get_item_by_cms_id(self, item: ItemDto, cms_id: str, filter=None):
+        return self._get_item_by_column_value(item=item, column="cmsId", value=cms_id)
 
     def get_item_by_text(self, item: ItemDto, text, filter={}):
         item_dtos = []
@@ -163,10 +150,9 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         return item_dtos, 1
 
     def get_items_by_date(
-        self, item: ItemDto, start_date, end_date, item_filter={}, offset=10, size=-1
+        self, item: ItemDto, start_date: datetime, end_date: datetime, item_filter={}, offset=10, size=-1
     ) -> tuple[pd.DataFrame, int]:
         # handle valid size range
-
         if size < 0 or size > self.max_items_per_fetch:
             size = self.max_items_per_fetch
 
@@ -178,10 +164,8 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             end_date = start_date
             start_date = xx
 
-        start_date_d = pd.to_datetime(start_date).strftime("%Y-%m-%d")
-        end_date_d = pd.to_datetime(end_date).strftime("%Y-%m-%d")
         query = self.__compose_date_range_query(
-            size, offset, [start_date_d, end_date_d], item_filter
+            size, offset, [start_date, end_date], item_filter
         )
         logger.info(f"query: {query}")
         response = self.client.search(body=query, index=self.target_idx_name)

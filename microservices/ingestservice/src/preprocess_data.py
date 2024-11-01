@@ -28,11 +28,14 @@ class DataPreprocessor:
             httpx.post(
                 f"{self.base_url_embedding}/add-embedding-to-doc",
                 json={
-                    "id": mapped_data.id,
+                    "id": mapped_data.externalid,
                     "embedText": mapped_data.embedText,
                 },
-                timeout=0.25,
+                timeout=0.25, #### TOBIAS: Reason for timeout in single ingests?
                 headers={"x-api-key": self.api_key},
             )
         except httpx.ReadTimeout:
+            logger.info("Embedding Call of item [" + str(mapped_data.externalid) + "] timed out")
+            ### Tobias - this times out all of the time - but the embedding is still written because
+            ### we discard the timeout
             pass

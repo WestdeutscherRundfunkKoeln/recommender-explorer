@@ -1,8 +1,8 @@
-api_prefix: test
+api_prefix: ""
 deployment_env: test
 opensearch:
-  host: test
+  host: test_host
   port: 443
-  user: test
-  pass: test
+  user: test_user
+  pass: test_pass
   index: test

@@ -50,10 +50,18 @@ class RecoExplorerApp:
             ui_constants.DATE_TIME_PICKER_TYPE_VALUE: DateTimePickerWidget(
                 self, self.controller
             ),
-            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(self, self.controller),
-            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(self, self.controller),
-            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
-            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
+            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(
+                self, self.controller
+            ),
+            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(
+                self, self.controller
+            ),
+            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(
+                self, self.controller
+            ),
+            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(
+                self, self.controller
+            ),
             ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(
                 self, self.controller
             ),
@@ -1277,10 +1285,14 @@ class RecoExplorerApp:
         Returns:
             widget of common ui widget type, built based on given config
         """
-        widget = self.widgets.get(common_ui_widget_type)
-        if not widget:
-            return None
-        return widget.create(common_ui_widget_config)
+        if common_ui_widget_type == ui_constants.RADIO_BOX_TYPE_VALUE:
+            radio_box_widget = RadioBoxWidget(self, self.controller)
+            return radio_box_widget.create(common_ui_widget_config)
+        else:
+            widget = self.widgets.get(common_ui_widget_type)
+            if not widget:
+                return None
+            return widget.create(common_ui_widget_config)
 
     def build_widgets(self, widgets_config):
         """

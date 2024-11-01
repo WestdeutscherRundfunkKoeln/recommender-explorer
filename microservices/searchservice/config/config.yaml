@@ -1,7 +1,4 @@
-api_prefix: $API_PREFIX
-base_url_search: $BASE_URL_SEARCH
-base_url_ingest: $BASE_URL_INGEST
-base_url_embedding: $BASE_URL_EMBEDDING
+api_prefix: $API_PREFIX|""
 deployment_env: $DEPLOYMENT_ENVIRONMENT
 opensearch:
   host: $OPENSEARCH_HOST
@@ -9,5 +6,3 @@ opensearch:
   user: $OPENSEARCH_USER
   pass: $OPENSEARCH_PASS
   index: $OPENSEARCH_INDEX
-models:
-  - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2

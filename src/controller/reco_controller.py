@@ -14,6 +14,7 @@ from exceptions.date_validation_error import DateValidationError
 from exceptions.model_validation_error import ModelValidationError
 from exceptions.user_not_found_error import UnknownUserError
 from exceptions.item_not_found_error import UnknownItemError
+from exceptions.embedding_not_found_error import UnknownItemEmbeddingError
 from exceptions.empty_search_error import EmptySearchError
 from util.postprocessing import FilterPostproc
 from util.dto_utils import (
@@ -301,7 +302,7 @@ class RecommendationController:
                     item_row.append(reco_item)
 
                 all_items.append(item_row)
-            except (UnknownUserError, UnknownItemError) as e:
+            except (UnknownUserError, UnknownItemError, UnknownItemEmbeddingError) as e:
                 not_found_item = dto_from_classname(
                     class_name="NotFoundDto",
                     position=constants.ITEM_POSITION_START,

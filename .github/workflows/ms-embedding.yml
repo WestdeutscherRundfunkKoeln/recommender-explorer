@@ -9,7 +9,14 @@ on:
       - 'microservices/embeddingservice/**'
 
 jobs:
-  build_publish_deploy_ingest:
+#  run_unit_tests_embedding:
+#    uses: ./.github/workflows/run-unit-tests.yml
+#    with:
+#      service-name: embedding
+#      python-version: "3.11"
+#    secrets: inherit
+  build_publish_deploy_embedding:
+#    needs: run_unit_tests_embedding
     uses: ./.github/workflows/build-publish-deploy.yml
     with:
       service-name: embedding

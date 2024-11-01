@@ -1,0 +1,33 @@
+name: Run Unit Tests
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        required: true
+        type: string
+        description: Name of the service
+      python-version:
+        required: true
+        type: string
+        description: Python version
+
+jobs:
+  run_unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          cd microservices/${{ inputs.service-name }}service
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          cd microservices/${{ inputs.service-name }}service
+          python -m pytest tests
