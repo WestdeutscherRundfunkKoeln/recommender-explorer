@@ -43,7 +43,7 @@ class WDRContentCard:
                        **External ID:** {content_dto.externalid}
                        **Themen:** {', '.join(set(content_dto.thematicCategories))}
                        **Keywords:** {', '.join(set(content_dto.keywords))}
-                       **Sophora ID:** [{content_dto.sophoraid}](https://{content_dto.domain}{content_dto.structurePath}/{content_dto.sophoraid}.html)
+                       **Sophora ID:** [{content_dto.cmsId}](https://{content_dto.domain}{content_dto.structurePath}/{content_dto.cmsId}.html)
                 """),
             pn.pane.Markdown(f"""
             ***

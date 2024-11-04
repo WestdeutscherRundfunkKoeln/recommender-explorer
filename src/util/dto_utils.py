@@ -23,7 +23,7 @@ def update_from_props(item: ItemDto, database_props: dict, field_mapping: dict) 
         if database_props.get(mapped_key):
             item.__setattr__(prop, database_props[mapped_key])
         else:
-           logger.info('Could not find a value for mapped dto property [' + mapped_key + ']')
+           logger.debug('Could not find a value for mapped dto property [' + mapped_key + ']')
     return item
 
 def dto_from_classname(class_name: str, position: str, item_type: str, provenance: str) -> ItemDto:

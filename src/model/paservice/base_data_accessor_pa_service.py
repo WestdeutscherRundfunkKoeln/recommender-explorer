@@ -161,7 +161,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             new_item_dto = copy.copy(item_dto)
             item_hit = pa_service_hit["item"]
             new_item_dto = update_from_props(new_item_dto, item_hit, self.field_mapping)
-            new_item_dto.score = pa_service_hit.get("score", 0)
+            new_item_dto.dist = pa_service_hit.get("score", 0)
             new_item_dto._position = "start" if index == 0 else "reco"
             item_dtos.append(new_item_dto)
 
