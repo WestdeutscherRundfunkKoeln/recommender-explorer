@@ -9,14 +9,14 @@ on:
       - 'microservices/ingestservice/**'
 
 jobs:
-#  run_unit_tests_ingest:
-#    uses: ./.github/workflows/run-unit-tests.yml
-#    with:
-#      service-name: ingest
-#      python-version: "3.10"
-#    secrets: inherit
+  run_unit_tests_ingest:
+    uses: ./.github/workflows/run-unit-tests.yml
+    with:
+      service-name: ingest
+      python-version: "3.10"
+    secrets: inherit
   build_publish_deploy_ingest:
-#    needs: run_unit_tests_ingest
+    needs: run_unit_tests_ingest
     uses: ./.github/workflows/build-publish-deploy.yml
     with:
       service-name: ingest
