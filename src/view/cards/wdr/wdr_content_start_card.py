@@ -75,7 +75,6 @@ class WDRContentStartCard(WDRContentCard):
             styles={ 'background': self.config[model_config][content_dto.provenance][model]['start_color'], 'overflow': 'auto' },
             margin=5,
             height=self.card_height,
-            width=self.card_width,
             hide_header=True
         )
 

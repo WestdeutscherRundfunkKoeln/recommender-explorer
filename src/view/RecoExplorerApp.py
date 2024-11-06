@@ -76,8 +76,10 @@ class RecoExplorerApp:
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
 
-        self.RIGHT_ARROW = "\u25bc"
-        self.LEFT_ARROW = "\u25b2"
+        self.UP_ARROW = "\u25b2"
+        self.DOWN_ARROW = "\u25bc"
+        self.RIGHT_ARROW = "\u25B6"
+        self.LEFT_ARROW = "\u25C0"
 
         # display mode
         self.display_mode = constants.DISPLAY_MODE_SINGLE
@@ -119,6 +121,7 @@ class RecoExplorerApp:
 
         self.template = pn.template.BootstrapTemplate()
         self.main_content = pn.Column()
+        self.page_size = self.define_page_size()
 
         # init some of the component values
         self.set_c2c_model_definitions()
@@ -944,6 +947,17 @@ class RecoExplorerApp:
 
         self.model_resetter.on_click(self.trigger_model_reset)
 
+    def define_page_size(self):
+        page_size = self.get_ui_config_value(
+            ui_constants.UI_CONFIG_PAGE_SIZE_KEY,
+            ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE,
+        )
+        if isinstance(page_size, int):
+            return page_size
+        else:
+            logger.info(f"{page_size} is not a valid page size. Fallback to default: {ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE}")
+            return ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE
+
     # event handling
     async def trigger_reco_filter_choice(self, event):
         logger.info(event)
@@ -957,9 +971,9 @@ class RecoExplorerApp:
 
     async def trigger_item_pagination(self, event):
         logger.info(event)
-        if event.obj.name == self.RIGHT_ARROW:
+        if event.obj.name == self.DOWN_ARROW:
             self.controller.increase_page_number()
-        elif event.obj.name == self.LEFT_ARROW:
+        elif event.obj.name == self.UP_ARROW:
             self.controller.decrease_page_number()
         await self.get_items_with_parameters()
         self.disablePageButtons()
@@ -1528,7 +1542,7 @@ class RecoExplorerApp:
 
         # previous button
         self.previousPage = pn.widgets.Button(
-            name=self.LEFT_ARROW,
+            name=self.UP_ARROW,
             button_type="primary",
             margin=10,
             width=50,
@@ -1544,7 +1558,7 @@ class RecoExplorerApp:
 
         # next button
         self.nextPage = pn.widgets.Button(
-            name=self.RIGHT_ARROW,
+            name=self.DOWN_ARROW,
             button_type="primary",
             width=50,
             margin=10,
@@ -1601,10 +1615,9 @@ class RecoExplorerApp:
                         reco_cards.append(displayed_card)
 
                 if start_card is not None:
-                    reco_cards_row = pn.Row(*reco_cards, width=1230, scroll=True)
-                    layout_row = pn.Row(start_card, reco_cards_row)
-                    self.main_content.append(layout_row)
-                    self.draw_pagination()
+                    self.add_cards_row_and_navigation_buttons(start_card, reco_cards)
+
+                self.draw_pagination()
 
         except (EmptySearchError, ModelValidationError) as e:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="warning"))
@@ -1614,6 +1627,58 @@ class RecoExplorerApp:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="danger"))
             logger.warning(traceback.print_exc())
         self.disablePageButtons()
+
+    def add_cards_row_and_navigation_buttons(self, start_card, reco_cards):
+        prev_button = pn.widgets.Button(name=f"{self.LEFT_ARROW}", width=100)
+        next_button = pn.widgets.Button(name=f"{self.RIGHT_ARROW}", width=100)
+        row_with_buttons = pn.Row(
+            prev_button,
+            pn.Spacer(),
+            next_button,
+        )
+        cards_row = pn.Row(start_card, *reco_cards[:self.page_size])
+        layout_row = pn.Row(pn.Column(cards_row, row_with_buttons))
+        self.main_content.append(layout_row)
+
+        widgets = {
+            "cards_row": cards_row,
+            "start_card": start_card,
+            "reco_cards": reco_cards,
+            "page_size": self.page_size,
+            "prev_button": prev_button,
+            "next_button": next_button,
+        }
+
+        if self.page_size <= self.page_size:
+            prev_button.disabled = True
+
+        prev_button.on_click(self._update_prev)
+        prev_button.widgets = widgets
+
+        next_button.on_click(self._update_next)
+        next_button.widgets = widgets
+
+    def _update_next(self, event):
+        widgets = event.obj.widgets
+        if widgets['page_size'] < len(widgets['reco_cards']):
+            widgets['page_size'] += self.page_size
+            widgets['cards_row'].objects = [
+                widgets['start_card'],
+                *widgets['reco_cards'][widgets['page_size'] - self.page_size:widgets['page_size']]
+            ]
+        widgets['prev_button'].disabled = False
+        widgets['next_button'].disabled = (widgets['page_size'] + self.page_size) > len(widgets['reco_cards'])
+
+    def _update_prev(self, event):
+        widgets = event.obj.widgets
+        if widgets['page_size'] > self.page_size:
+            widgets['page_size'] -= self.page_size
+            widgets['cards_row'].objects = [
+                widgets['start_card'],
+                *widgets['reco_cards'][widgets['page_size'] - self.page_size:widgets['page_size']]
+            ]
+        widgets['next_button'].disabled = False
+        widgets['prev_button'].disabled = widgets['page_size'] <= self.page_size
 
     @staticmethod
     def render_404():

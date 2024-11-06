@@ -87,7 +87,6 @@ class WDRContentRecoCard(WDRContentCard):
             },
             margin=5,
             height=self.card_height,
-            width=self.card_width,
             hide_header=True,
         )
 
