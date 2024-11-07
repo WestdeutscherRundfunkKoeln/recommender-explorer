@@ -8,12 +8,12 @@ from envyaml import EnvYAML
 from google.cloud import storage
 from google.cloud.exceptions import NotFound
 from pydantic import ValidationError
+from src.log_handler import TaskLogHandler
 from src.clients import SearchServiceClient
 from src.models import BulkIngestTaskStatus
 from src.preprocess_data import DataPreprocessor
 from src.task_status import TaskStatus
 
-logger = logging.getLogger(__name__)
 CHUNKSIZE = 50
 HASH_FIELD = "embedTextHash"
 
@@ -26,8 +26,10 @@ def bulk_ingest(
     prefix: str,
     task_id: str,
 ):
+    logger = logging.getLogger(f"bulk_tast-{task_id}")
     logger.info("Starting bulk ingest")
     task_status = TaskStatus.spawn(id=task_id)
+    logger.addHandler(TaskLogHandler(task_status))
     try:
         blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
         blobs_iter = iter(blobs)
@@ -64,6 +66,7 @@ def upsert_batch(
             blob=blob,
             data_preprocessor=data_preprocessor,
             config=config,
+            logger=logger,
         )
         if mapped_data is None:
             continue
@@ -80,6 +83,7 @@ def read_data_and_embed(
     blob: Blob,
     data_preprocessor: DataPreprocessor,
     config: EnvYAML,
+    logger: logging.Logger,
 ) -> dict | None:
     def _log_err(error: Exception, message: str):
         logger.error(
