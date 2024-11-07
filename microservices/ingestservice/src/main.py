@@ -109,9 +109,7 @@ def ingest_item(
         embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
 
         # Compare EmbedHashes and set needs_reembedding flag
-        if (embed_hash_in_oss is None) or (embed_hash_in_oss != embed_hash):
-            document.needs_reembedding = True
-        else:
+        if embed_hash_in_oss == embed_hash:
             document.needs_reembedding = False
 
         # Send document to search service
@@ -181,6 +179,7 @@ def _log_exception_traceback(document, e, exception_traceback):
         logger.info(
             f"Exception when ingesting item: {str(e)}\nTraceback: {exception_traceback}"
         )
+
 
 # main app
 app = FastAPI(title="Ingest Service", lifespan=lifespan)
