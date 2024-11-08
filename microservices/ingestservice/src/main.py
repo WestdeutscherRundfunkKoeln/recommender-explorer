@@ -13,9 +13,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header, Reques
 from fastapi.exceptions import HTTPException
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
-from src.bulk import bulk_ingest
 from src.clients import SearchServiceClient
-from src.ingest import get_document_from_blob
+from src.ingest import bulk_ingest, get_document_from_blob
 from src.maintenance import reembedding_background_task, task_cleaner
 from src.models import (
     FullLoadRequest,
