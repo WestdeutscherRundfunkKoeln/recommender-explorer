@@ -23,7 +23,7 @@ class RecoExplorerItem(BaseModel, extra="allow"):
     subgenreCategoriesTitle: Optional[list] = []
     teaserimage: str
     geoAvailability: Optional[str] = ""
-    embedText: Optional[str] = ""
+    embedText: str
     episodeNumber: Optional[str] = ""
     hasAudioDescription: Optional[bool] = False
     hasDefaultVersion: Optional[bool] = False
