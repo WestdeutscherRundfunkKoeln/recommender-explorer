@@ -1,12 +1,11 @@
 import asyncio
-import traceback
-from datetime import datetime
 import json
 import logging
 import os
+import traceback
 import uuid
 from contextlib import asynccontextmanager
-from hashlib import sha256
+from datetime import datetime
 from typing import Annotated
 
 from envyaml import EnvYAML
@@ -14,9 +13,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header, Reques
 from fastapi.exceptions import HTTPException
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
-from pydantic import ValidationError
 from src.bulk import bulk_ingest
 from src.clients import SearchServiceClient
+from src.ingest import get_document_from_blob
 from src.maintenance import reembedding_background_task, task_cleaner
 from src.models import (
     FullLoadRequest,
@@ -27,7 +26,7 @@ from src.models import (
     TasksResponse,
 )
 from src.preprocess_data import DataPreprocessor
-from src.storage import download_document, StorageClientFactory
+from src.storage import StorageClientFactory
 from src.task_status import TaskStatus
 
 logging.basicConfig(level=logging.INFO)
@@ -42,7 +41,6 @@ CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 config = EnvYAML(CONFIG_PATH)
 API_PREFIX = config.get("api_prefix", "")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
-HASH_FIELD = "embedTextHash"
 
 storage_client_factory = StorageClientFactory.from_config(config)
 data_preprocessor = DataPreprocessor(config)
@@ -89,29 +87,10 @@ def ingest_item(
         if event_type == EVENT_TYPE_DELETE:
             return search_service_client.delete(event.blob_id)
 
-        document = download_document(storage, event)
-        try:
-            document = data_preprocessor.map_data(document)
-        except ValidationError as exc:
-            logger.error("Validation error: %s", str(exc))
-            raise
-
-        # Check for EmbedHash in OSS
-        try:
-            embed_hash_in_oss = search_service_client.get(
-                document.externalid, [HASH_FIELD]
-            ).get(HASH_FIELD)
-        except Exception as exc:
-            embed_hash_in_oss = None
-            logger.error("Unexpected error fetching EmbedHash: %s", str(exc))
-
-        # Get EmbedHash of the document
-        embed_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
-
-        # Compare EmbedHashes and set needs_reembedding flag
-        if embed_hash_in_oss == embed_hash:
-            document.needs_reembedding = False
-
+        blob = storage.bucket(event.bucket).blob(event.name)
+        document = get_document_from_blob(
+            blob, data_preprocessor, search_service_client
+        )
         # Send document to search service
         upsert_response = search_service_client.create_single_document(
             document.externalid, document.model_dump()
