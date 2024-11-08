@@ -3,18 +3,14 @@ import json
 import logging
 from hashlib import sha256
 
-import httpx
 from dto.recoexplorer_item import RecoExplorerItem
-from envyaml import EnvYAML
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
-from google.cloud.exceptions import NotFound
 from google.cloud.storage.blob import Blob
 from pydantic import ValidationError
-
 from src.clients import SearchServiceClient
 from src.log_handler import TaskLogHandler
-from src.models import BulkIngestTaskStatus
+from src.models import BulkIngestTaskStatus, StorageChangeEvent
 from src.preprocess_data import DataPreprocessor
 from src.task_status import TaskStatus
 
@@ -75,6 +71,33 @@ def get_document_from_blob(
         document.needs_reembedding = False
 
     return document
+
+
+def process_upsert_event(
+    event: StorageChangeEvent,
+    search_service_client: SearchServiceClient,
+    storage: storage.Client,
+    data_preprocessor: DataPreprocessor,
+):
+    document = None
+    try:
+        blob = storage.bucket(event.bucket).blob(event.name)
+        document = get_document_from_blob(
+            blob, data_preprocessor, search_service_client
+        )
+        upsert_response = search_service_client.create_single_document(
+            document.externalid, document.model_dump()
+        )
+
+        return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
+    except Exception:
+        if document:
+            logger.info(
+                "Exception when ingesting item %s:", document.externalid, exc_info=True
+            )
+        else:
+            logger.info("Exception when ingesting item", exc_info=True)
+        raise
 
 
 def bulk_ingest(

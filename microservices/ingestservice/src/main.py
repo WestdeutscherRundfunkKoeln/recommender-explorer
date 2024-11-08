@@ -13,7 +13,7 @@ from fastapi.exceptions import HTTPException
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
 from src.clients import SearchServiceClient
-from src.ingest import bulk_ingest, get_document_from_blob
+from src.ingest import bulk_ingest, get_document_from_blob, process_upsert_event
 from src.maintenance import reembedding_background_task, task_cleaner
 from src.models import (
     FullLoadRequest,
@@ -80,27 +80,17 @@ def ingest_item(
     event_type: Annotated[str, Header(alias="eventType")],
     request: Request,
 ):
-    document = None
     try:
         if event_type == EVENT_TYPE_DELETE:
             return search_service_client.delete(event.blob_id)
         else:
-            blob = storage.bucket(event.bucket).blob(event.name)
-            document = get_document_from_blob(
-                blob, data_preprocessor, search_service_client
+            return process_upsert_event(
+                event=event,
+                search_service_client=search_service_client,
+                storage=storage,
+                data_preprocessor=data_preprocessor,
             )
-            upsert_response = search_service_client.create_single_document(
-                document.externalid, document.model_dump()
-            )
-
-            return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
     except Exception as e:
-        if document:
-            logger.info(
-                "Exception when ingesting item %s:", document.externalid, exc_info=True
-            )
-        else:
-            logger.info("Exception when ingesting item", exc_info=True)
         ts = datetime.now().isoformat()
         data = event.model_dump()
         data["event_type"] = event_type
@@ -146,18 +136,6 @@ def get_task(task_id: str) -> SingleTaskResponse:
 def get_tasks() -> TasksResponse:
     tasks = TaskStatus.get_tasks()
     return TasksResponse(tasks=tasks.values())
-
-
-def _log_exception_traceback(document, e, exception_traceback):
-    document_id = getattr(document, "externalid", None)
-    if document_id:
-        logger.info(
-            f"Exception when ingesting item {document_id}: {str(e)}\nTraceback: {exception_traceback}"
-        )
-    else:
-        logger.info(
-            f"Exception when ingesting item: {str(e)}\nTraceback: {exception_traceback}"
-        )
 
 
 # main app
