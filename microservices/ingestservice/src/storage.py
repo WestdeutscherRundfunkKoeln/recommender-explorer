@@ -9,7 +9,6 @@ from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
 from google.oauth2 import service_account
 from google.auth.credentials import AnonymousCredentials
-from fastapi.exceptions import HTTPException
 from src.models import StorageChangeEvent
 
 logger = logging.getLogger(__name__)

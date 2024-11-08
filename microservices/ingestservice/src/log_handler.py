@@ -4,10 +4,15 @@ from src.task_status import TaskStatus
 
 
 class TaskLogHandler(logging.Handler):
-    def __init__(self, task: TaskStatus) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self._task = task
 
     def emit(self, record: logging.LogRecord) -> None:
-        if record.levelno == logging.ERROR:
-            self._task.add_error(self.format(record))
+        if record.levelno != logging.ERROR:
+            return
+
+        task: TaskStatus | None = getattr(record, "task", None)
+        if task is None:
+            return
+
+        task.add_error(self.format(record))
