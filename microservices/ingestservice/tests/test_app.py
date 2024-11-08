@@ -31,7 +31,9 @@ class MockBlob:
 
     def download_as_text(self):
         if not self.data:
-            raise GoogleAPICallError("Blob not found")
+            err = GoogleAPICallError("Blob not found")
+            err.code = 400
+            raise err
         return self.data
 
     def upload_from_string(self, data: str):
@@ -197,7 +199,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
         "longDescription": "test",
         "availableFrom": "2023-10-23T23:00:00+0200",
         "availableTo": "2023-10-23T23:00:00+0200",
-        "duration": None,
+        "duration": 200,
         "thematicCategories": [],
         "thematicCategoriesIds": None,
         "thematicCategoriesTitle": None,
@@ -310,7 +312,7 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
         "longDescription": "test",
         "availableFrom": "2023-10-23T23:00:00+0200",
         "availableTo": "2023-10-23T23:00:00+0200",
-        "duration": None,
+        "duration": 200,
         "thematicCategories": [],
         "thematicCategoriesIds": None,
         "thematicCategoriesTitle": None,
@@ -423,7 +425,7 @@ def test_upsert_event__with_available_correct_document__matching_hash(
         "longDescription": "test",
         "availableFrom": "2023-10-23T23:00:00+0200",
         "availableTo": "2023-10-23T23:00:00+0200",
-        "duration": None,
+        "duration": 200,
         "thematicCategories": [],
         "thematicCategoriesIds": None,
         "thematicCategoriesTitle": None,
@@ -486,7 +488,7 @@ def test_upsert_event_no_document_found(
     )
 
     assert response.status_code == 200
-    assert response.json() == {"detail": "400: Blob not found"}
+    assert response.json() == {"detail": "400 Blob not found"}
     assert len(httpx_mock.get_requests()) == 0
 
     bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
@@ -496,7 +498,7 @@ def test_upsert_event_no_document_found(
     assert uploaded_data["name"] == "prod/nonexistent.json"
     assert uploaded_data["bucket"] == "wdr-recommender-exporter-dev-import"
     assert uploaded_data["event_type"] == "OBJECT_FINALIZE"
-    assert uploaded_data["exception"] == "400: Blob not found"
+    assert uploaded_data["exception"] == "400 Blob not found"
     assert uploaded_data["url"] == "http://testserver/events"
 
 
@@ -540,7 +542,7 @@ def test_upsert_event_invalid_document(
     assert uploaded_data["event_type"] == "OBJECT_FINALIZE"
     assert (
         uploaded_data["exception"]
-        == "11 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ncmsId\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
+        == "12 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ncmsId\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nembedText\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
     )
     assert uploaded_data["url"] == "http://testserver/events"
 
@@ -643,7 +645,7 @@ def test_bulk_ingest__with_validation_error(
             "longDescription": "test",
             "availableFrom": "2023-10-23T23:00:00+0200",
             "availableTo": "2023-10-23T23:00:00+0200",
-            "duration": None,
+            "duration": 200,
             "thematicCategories": [],
             "thematicCategoriesIds": None,
             "thematicCategoriesTitle": None,
