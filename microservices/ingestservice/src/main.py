@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import os
-import traceback
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -85,20 +84,23 @@ def ingest_item(
     try:
         if event_type == EVENT_TYPE_DELETE:
             return search_service_client.delete(event.blob_id)
+        else:
+            blob = storage.bucket(event.bucket).blob(event.name)
+            document = get_document_from_blob(
+                blob, data_preprocessor, search_service_client
+            )
+            upsert_response = search_service_client.create_single_document(
+                document.externalid, document.model_dump()
+            )
 
-        blob = storage.bucket(event.bucket).blob(event.name)
-        document = get_document_from_blob(
-            blob, data_preprocessor, search_service_client
-        )
-        # Send document to search service
-        upsert_response = search_service_client.create_single_document(
-            document.externalid, document.model_dump()
-        )
-
-        return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
+            return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
     except Exception as e:
-        exception_traceback = traceback.format_exc()
-        _log_exception_traceback(document, e, exception_traceback)
+        if document:
+            logger.info(
+                "Exception when ingesting item %s:", document.externalid, exc_info=True
+            )
+        else:
+            logger.info("Exception when ingesting item", exc_info=True)
         ts = datetime.now().isoformat()
         data = event.model_dump()
         data["event_type"] = event_type
@@ -123,7 +125,6 @@ def ingest_multiple_items(
     task_id = str(uuid.uuid4())
     tasks.add_task(
         bulk_ingest,
-        config=config,
         bucket=storage.bucket(body.bucket),
         data_preprocessor=data_preprocessor,
         search_service_client=search_service_client,

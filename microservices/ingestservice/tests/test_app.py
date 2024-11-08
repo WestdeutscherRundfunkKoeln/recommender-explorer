@@ -602,12 +602,19 @@ def test_bulk_ingest__with_validation_error(
     test_client: TestClient, httpx_mock: HTTPXMock
 ):
     httpx_mock.add_response(
-        url=config["base_url_embedding"] + "/embedding", json={"model": [1, 2]}
-    )
-    httpx_mock.add_response(
         url=config["base_url_search"] + "/documents",
         json={"status": "ok"},
         status_code=200,
+    )
+    httpx_mock.add_response(
+        url=config["base_url_search"] + "/documents/test?fields=embedTextHash",
+        method="GET",
+        json={
+            "took": 1,
+            "timed_out": False,
+            "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
+            "_source": {},
+        },
     )
 
     response = test_client.post(
@@ -626,10 +633,12 @@ def test_bulk_ingest__with_validation_error(
 
     # Request to the search service
     request = requests[0]
-    assert request.method == "POST"
-    assert request.url == config["base_url_embedding"] + "/embedding"
+    assert request.method == "GET"
+    assert (
+        request.url
+        == config["base_url_search"] + "/documents/test?fields=embedTextHash"
+    )
     assert request.headers["x-api-key"] == "test-key"
-    assert request.content == json.dumps({"embedText": "test"}).encode()
 
     request = requests[1]
     assert request.method == "POST"
@@ -674,7 +683,6 @@ def test_bulk_ingest__with_validation_error(
             "showTitel": "",
             "showType": "",
             "uuid": None,
-            "model": [1, 2],
             "needs_reembedding": True,
         }
     }
@@ -688,6 +696,7 @@ def test_bulk_ingest__with_validation_error(
     assert len(task["errors"]) == 1
     assert task["completed_items"] == 1
     assert task["failed_items"] == 1
+    assert task["errors"][0].startswith("Validation error")
 
 
 def test_bulk_ingest__with_general_error(test_client, httpx_mock):

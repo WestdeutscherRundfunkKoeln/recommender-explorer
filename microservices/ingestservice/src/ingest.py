@@ -31,31 +31,42 @@ def get_document_from_blob(
     blob: Blob,
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
+    task_status: TaskStatus | None = None,
 ) -> RecoExplorerItem:
     try:
         document = blob.download_as_text()
     except GoogleAPICallError:
-        logger.error("Error downloading %s", blob.name, exc_info=True)
+        logger.error(
+            "Error downloading %s",
+            blob.name,
+            exc_info=True,
+            extra={"task": task_status},
+        )
         raise
 
     try:
         document = json.loads(document)
     except json.JSONDecodeError:
-        logger.error("File %s is not a valid json", blob.name, exc_info=True)
+        logger.error(
+            "File %s is not a valid json",
+            blob.name,
+            exc_info=True,
+            extra={"task": task_status},
+        )
         raise
 
     try:
         document = data_preprocessor.map_data(document)
     except ValidationError:
-        logger.error("Validation error", exc_info=True)
+        logger.error("Validation error", exc_info=True, extra={"task": task_status})
         raise
 
+    reference_hash = None
     try:
         reference_hash = search_service_client.get(
             document.externalid, [HASH_FIELD]
         ).get(HASH_FIELD)
-    except Exception:
-        reference_hash = None
+    except Exception:  # TODO: specify exception
         logger.error("Unexpected error fetching EmbedHash", exc_info=True)
 
     incoming_hash = sha256(document.embedText.encode("utf-8")).hexdigest()
@@ -67,7 +78,6 @@ def get_document_from_blob(
 
 
 def bulk_ingest(
-    config: EnvYAML,
     bucket: storage.Bucket,
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
@@ -89,7 +99,6 @@ def bulk_ingest(
                 element_counter=batch_start,
                 data_preprocessor=data_preprocessor,
                 search_service_client=search_service_client,
-                config=config,
             )
             logger.info("Uploaded items %s to %s", batch_start, batch_end)
             batch_start = batch_end + 1
@@ -107,79 +116,22 @@ def upsert_batch(
     element_counter: int,
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
-    config: EnvYAML,
 ) -> int:
     task_status.set_status(BulkIngestTaskStatus.PREPROCESSING)
     item_dict = {}
     for blob in batch:
         element_counter += 1
-        mapped_data = read_data_and_embed(
-            task_status=task_status,
-            blob=blob,
-            data_preprocessor=data_preprocessor,
-            config=config,
-        )
-        if mapped_data is None:
+        try:
+            document = get_document_from_blob(
+                blob=blob,
+                data_preprocessor=data_preprocessor,
+                task_status=task_status,
+                search_service_client=search_service_client,
+            )
+        except (GoogleAPICallError, ValidationError, json.JSONDecodeError):
             continue
-        item_dict[mapped_data["externalid"]] = mapped_data
+        item_dict[document.externalid] = document.model_dump()
 
     task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
     search_service_client.create_multiple_documents(item_dict)
     return element_counter
-
-
-def read_data_and_embed(
-    task_status: TaskStatus,
-    blob: Blob,
-    data_preprocessor: DataPreprocessor,
-    config: EnvYAML,
-) -> dict | None:
-    logger.info(f"Preprocessing {blob.name}")
-    try:
-        data = json.loads(
-            blob.download_as_text()
-        )  # TODO: add retry logic, see https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob#google_cloud_storage_blob_Blob_download_as_text
-    except NotFound:
-        logger.error(
-            "Could not find file %s",
-            blob.name,
-            exc_info=True,
-            extra={"task": task_status},
-        )
-        return
-
-    try:
-        mapped_data = data_preprocessor.map_data(data)
-    except ValidationError:
-        logger.error(
-            "Error during preprocessing of file %s",
-            blob.name,
-            exc_info=True,
-            extra={"task": task_status},
-        )
-        return
-
-    # Trigger embedding service to add embeddings to index
-    try:
-        embeddings = httpx.post(
-            f"{config.get('base_url_embedding', '')}/embedding",
-            json={
-                "embedText": mapped_data.embedText,
-            },
-            timeout=None,
-            headers={"x-api-key": config["api_key"]},
-        )
-    except httpx.TimeoutException:
-        logger.error(
-            "Error during embedding calculation for file %s",
-            blob.name,
-            exc_info=True,
-            extra={"task": task_status},
-        )
-        return
-
-    if embeddings.status_code != 200:
-        raise Exception(
-            f"Error during embedding in embedding service for item {blob.name}"
-        )
-    return {**mapped_data.model_dump(), **embeddings.json()}
