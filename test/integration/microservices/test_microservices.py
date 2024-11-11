@@ -146,6 +146,9 @@ def test_bulk_ingest(
         minutes=1
     )
 
+    # wait for maintainance to run
+    time.sleep(11)
+
     # check documents in opensearch
     ids = [f.removesuffix(".json") for f in files]
     for id in ids:
