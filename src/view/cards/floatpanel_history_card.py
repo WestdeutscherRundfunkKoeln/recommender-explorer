@@ -7,19 +7,17 @@ logger = logging.getLogger(__name__)
 
 
 class ContentHistoryCard(ContentCard):
-    CARD_HEIGHT = 470
-    IMAGE_HEIGHT = 75
 
     def draw(self, content_dto: ContentItemDto, nr, model):
         child_objects = [
-            pn.pane.HTML(f"""<img style="height: { self.IMAGE_HEIGHT }px; display: block; margin-left: auto; margin-right: auto; align:center" src={content_dto.teaserimage}></img>"""),
+            pn.pane.HTML(f"""<img style="height: { self.card_image_height }px; display: block; margin-left: auto; margin-right: auto; align:center" src={content_dto.teaserimage}></img>"""),
             pn.pane.Markdown(f""" ### Video {nr} """)
         ]
 
         card = pn.Card(
             styles={'background': 'lightgrey', 'overflow': 'auto'},
             margin=5,
-            height=self.CARD_HEIGHT,
+            height=self.card_height,
             hide_header=True
         )
 
