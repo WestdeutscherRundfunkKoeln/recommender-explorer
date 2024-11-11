@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import traceback
+import functools
 from typing import Any
 
 import constants
@@ -75,11 +76,6 @@ class RecoExplorerApp:
 
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
-
-        self.UP_ARROW = "\u25b2"
-        self.DOWN_ARROW = "\u25bc"
-        self.RIGHT_ARROW = "\u25B6"
-        self.LEFT_ARROW = "\u25C0"
 
         # display mode
         self.display_mode = constants.DISPLAY_MODE_SINGLE
@@ -971,9 +967,9 @@ class RecoExplorerApp:
 
     async def trigger_item_pagination(self, event):
         logger.info(event)
-        if event.obj.name == self.DOWN_ARROW:
+        if event.obj.name == ui_constants.DOWN_ARROW:
             self.controller.increase_page_number()
-        elif event.obj.name == self.UP_ARROW:
+        elif event.obj.name == ui_constants.UP_ARROW:
             self.controller.decrease_page_number()
         await self.get_items_with_parameters()
         self.disablePageButtons()
@@ -1542,7 +1538,7 @@ class RecoExplorerApp:
 
         # previous button
         self.previousPage = pn.widgets.Button(
-            name=self.UP_ARROW,
+            name=ui_constants.UP_ARROW,
             button_type="primary",
             margin=10,
             width=50,
@@ -1558,7 +1554,7 @@ class RecoExplorerApp:
 
         # next button
         self.nextPage = pn.widgets.Button(
-            name=self.DOWN_ARROW,
+            name=ui_constants.DOWN_ARROW,
             button_type="primary",
             width=50,
             margin=10,
@@ -1594,29 +1590,7 @@ class RecoExplorerApp:
         try:
             models, items, config = await asyncio.to_thread(self.controller.get_items)
             for idx, row in enumerate(items):
-                start_card = None
-                reco_cards = []
-                for idz, item_dto in enumerate(row):
-                    card = self.controller.get_item_viewer(item_dto, self)
-                    if (
-                        self.controller.get_display_mode()
-                        == constants.DISPLAY_MODE_SINGLE
-                    ):
-                        displayed_card = card.draw(
-                            item_dto, idz, models[0], config, self.trigger_modal
-                        )
-                    else:
-                        displayed_card = card.draw(
-                            item_dto, idz, models[idx], config, self.trigger_modal
-                        )
-                    if idz == 0:
-                        start_card = displayed_card
-                    else:
-                        reco_cards.append(displayed_card)
-
-                if start_card is not None:
-                    self.add_cards_row_and_navigation_buttons(start_card, reco_cards)
-
+                self.add_cards_row(models, config, idx, row)
                 self.draw_pagination()
 
         except (EmptySearchError, ModelValidationError) as e:
@@ -1628,19 +1602,51 @@ class RecoExplorerApp:
             logger.warning(traceback.print_exc())
         self.disablePageButtons()
 
-    def add_cards_row_and_navigation_buttons(self, start_card, reco_cards):
-        prev_button = pn.widgets.Button(name=f"{self.LEFT_ARROW}", width=100)
-        next_button = pn.widgets.Button(name=f"{self.RIGHT_ARROW}", width=100)
-        row_with_buttons = pn.Row(
+    def add_cards_row(self, models: list[any], config: str, idx: int, row: list[any]):
+        """
+
+        """
+        start_card = None
+        reco_cards = []
+        for idz, item_dto in enumerate(row):
+            card = self.controller.get_item_viewer(item_dto, self)
+            if (
+                    self.controller.get_display_mode()
+                    == constants.DISPLAY_MODE_SINGLE
+            ):
+                displayed_card = card.draw(
+                    item_dto, idz, models[0], config, self.trigger_modal
+                )
+            else:
+                displayed_card = card.draw(
+                    item_dto, idz, models[idx], config, self.trigger_modal
+                )
+            if idz == 0:
+                start_card = displayed_card
+            else:
+                reco_cards.append(displayed_card)
+
+        cards_row = pn.Row(start_card, *reco_cards[:self.page_size])
+        row_with_navigation_buttons = self.create_navigation_elements_for_cards_row(cards_row, start_card, reco_cards)
+        self.main_content.append(pn.Row(pn.Column(cards_row, row_with_navigation_buttons)))
+
+    def create_navigation_elements_for_cards_row(self, cards_row: pn.Row, start_card: pn.layout.card.Card, reco_cards: list) -> pn.Row:
+        """
+        :param cards_row: pn.Row, the parent row containing the card elements to navigate through
+        :param start_card: pn.layout.card.Card, the card element at the start
+        :param reco_cards: list, list of recommended card elements
+        :return: pn.Row, row with navigation buttons for navigating through the cards
+        """
+        prev_button = pn.widgets.Button(name=f"{ui_constants.LEFT_ARROW}", width=100)
+        prev_button.disabled = True
+        next_button = pn.widgets.Button(name=f"{ui_constants.RIGHT_ARROW}", width=100)
+        row_with_navigation_buttons = pn.Row(
             prev_button,
             pn.Spacer(),
             next_button,
         )
-        cards_row = pn.Row(start_card, *reco_cards[:self.page_size])
-        layout_row = pn.Row(pn.Column(cards_row, row_with_buttons))
-        self.main_content.append(layout_row)
 
-        widgets = {
+        widgets_in_row = {
             "cards_row": cards_row,
             "start_card": start_card,
             "reco_cards": reco_cards,
@@ -1649,17 +1655,21 @@ class RecoExplorerApp:
             "next_button": next_button,
         }
 
-        if self.page_size <= self.page_size:
-            prev_button.disabled = True
+        prev_button.on_click(functools.partial(self._update_prev, widgets=widgets_in_row))
+        next_button.on_click(functools.partial(self._update_next, widgets=widgets_in_row))
 
-        prev_button.on_click(self._update_prev)
-        prev_button.widgets = widgets
+        return row_with_navigation_buttons
 
-        next_button.on_click(self._update_next)
-        next_button.widgets = widgets
+    def _update_next(self, event, widgets: dict[any]):
+        """
+        :param event: Event that triggers the update
+        :param widgets: Dictionary containing widgets to be updated
+        :return: None
 
-    def _update_next(self, event):
-        widgets = event.obj.widgets
+        This method updates the next page of cards based on the current page size. If the page size is smaller than the length
+        of the cards list, it adjusts the page size and updates the cards to display the next set of cards. Finally, it toggles
+        the 'next_button' and 'prev_button' widgets based on the new page size.
+        """
         if widgets['page_size'] < len(widgets['reco_cards']):
             widgets['page_size'] += self.page_size
             widgets['cards_row'].objects = [
@@ -1669,8 +1679,16 @@ class RecoExplorerApp:
         widgets['prev_button'].disabled = False
         widgets['next_button'].disabled = (widgets['page_size'] + self.page_size) > len(widgets['reco_cards'])
 
-    def _update_prev(self, event):
-        widgets = event.obj.widgets
+    def _update_prev(self, event, widgets: dict[any]):
+        """
+        :param event: Event that triggers the update
+        :param widgets: Dictionary containing widgets to be updated
+        :return: None
+
+        This method updates the previous page of cards based on the current page size. If the page size is greater than the stored
+        page size, it adjusts the page size and updates the cards to display the previous set of cards. Finally, it toggles the
+        'next_button' and 'prev_button' widgets based on the new page size.
+        """
         if widgets['page_size'] > self.page_size:
             widgets['page_size'] -= self.page_size
             widgets['cards_row'].objects = [

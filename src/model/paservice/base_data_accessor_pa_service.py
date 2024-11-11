@@ -165,10 +165,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             new_item_dto._position = "start" if index == 0 else "reco"
             item_dtos.append(new_item_dto)
 
-        number_of_items_to_return = self.number_of_recommendations \
-            if self.number_of_recommendations <= 10 else len(item_dtos)
-
-        return item_dtos[:number_of_items_to_return + 1], total_items
+        return item_dtos[:self.number_of_recommendations + 1], total_items
 
 
 def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:

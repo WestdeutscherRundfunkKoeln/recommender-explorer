@@ -139,3 +139,9 @@ FILTER_WIDTH = 250
 
 # Content Cards
 INSERT_ID_BUTTON_LABEL = "Als Start Item übernehmen"
+
+# UI Elements
+UP_ARROW = "\u25b2"
+DOWN_ARROW = "\u25bc"
+RIGHT_ARROW = "\u25B6"
+LEFT_ARROW = "\u25C0"
