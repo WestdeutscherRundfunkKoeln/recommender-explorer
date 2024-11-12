@@ -70,6 +70,14 @@ def get_document_with_query(
     return oss_accessor.get_oss_docs(query)
 
 
+@router.post("/scan")
+def scan_documents(
+    query: dict[str, Any],
+    oss_accessor: OssAccessor = Depends(get_oss_accessor),
+):
+    return oss_accessor.scan_oss_docs(query)
+
+
 # TODO: search query for the nearest neighbors
 
 app = FastAPI(title="Search Service")

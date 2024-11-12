@@ -59,7 +59,9 @@ class OssAccessor:
             refresh=True,
         )
 
-        logger.info("Response os OSS update: " + json.dumps(response, indent=4, default=str))
+        logger.info(
+            "Response os OSS update: " + json.dumps(response, indent=4, default=str)
+        )
 
         return response
 
@@ -98,6 +100,16 @@ class OssAccessor:
     def get_oss_docs(self, query: dict[str, str]) -> dict:
         try:
             return self.oss_client.search(index=self.target_idx_name, body=query)
+        except RequestError as e:
+            raise HTTPException(
+                detail=f"Invalid query: {e.info}", status_code=400
+            ) from e
+
+    def scan_oss_docs(self, query: dict[str, str]) -> list[dict]:
+        try:
+            return list(
+                helpers.scan(self.oss_client, query=query, index=self.target_idx_name)
+            )
         except RequestError as e:
             raise HTTPException(
                 detail=f"Invalid query: {e.info}", status_code=400
