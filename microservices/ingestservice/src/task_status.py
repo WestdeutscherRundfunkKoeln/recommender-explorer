@@ -1,5 +1,6 @@
-from src.models import BulkIngestTask, BulkIngestTaskStatus
 from datetime import datetime, timedelta, timezone
+
+from src.models import BulkIngestTask, BulkIngestTaskStatus
 
 
 class TaskStatus:
@@ -30,6 +31,12 @@ class TaskStatus:
 
     def add_error(self, error: str) -> None:
         self._tasks[self.id].errors.append(error)
+
+    def increment_completed(self, value: int = 1) -> None:
+        self._tasks[self.id].completed_items += value
+
+    def increment_failed(self, value: int = 1) -> None:
+        self._tasks[self.id].failed_items += value
 
     @classmethod
     def get(cls, id: str) -> BulkIngestTask | None:
