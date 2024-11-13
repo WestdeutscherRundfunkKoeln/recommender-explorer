@@ -8,6 +8,9 @@ dead_letter_bucket: wdr-recommender-exporter-dead-letter
 storage_service_account: $STORAGE_SERVICE_ACCOUNT
 task_cleaner_interval_seconds: $TASK_CLEANER_INTERVAL_SECONDS|86400
 reembed_interval_seconds: $REEMBED_INTERVAL_SECONDS|60
+delta_load_interval_seconds: $DELTA_LOAD_INTERVAL_SECONDS|604800
 gcs_url: $GCS_URL|dummy
+bucket: $BUCKET
+bucket_prefix: $BUCKET_PREFIX
 models:
   - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2
