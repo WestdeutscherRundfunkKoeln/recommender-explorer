@@ -48,3 +48,8 @@ class SearchServiceClient:
         response = self.client.post("/query", json=query)
         response.raise_for_status()
         return response.json()
+
+    def scan(self, query: dict):
+        response = self.client.post("/scan", json=query)
+        response.raise_for_status()
+        return response.json()
