@@ -5,6 +5,7 @@ from pathlib import Path
 import httpx
 import pytest
 from envyaml import EnvYAML
+from opensearchpy import OpenSearch, RequestsHttpConnection
 
 
 @pytest.fixture(scope="module")
@@ -23,6 +24,21 @@ def ingest_service():
 def embedding_service():
     with httpx.Client(base_url="http://0.0.0.0:1338") as client:
         yield client
+
+
+@pytest.fixture(autouse=True)
+def reset_opensearch():
+    with OpenSearch(
+        hosts=[{"host": "0.0.0.0", "port": 9200}],
+        http_auth=("admin", "admin"),
+        use_ssl=False,
+        verify_certs=False,
+        connection_class=RequestsHttpConnection,
+        timeout=600,
+    ) as client:
+        client.indices.create(index="test_index")
+        yield
+        client.indices.delete(index="test_index")
 
 
 def models():
@@ -158,13 +174,29 @@ def test_bulk_ingest(
 
 def test_reembedding_maintenance(search_service: httpx.Client):
     id = "no_embedding"
-    resp = search_service.post("/documents/no_embedding", json={"embedText": "test"})
+    resp = search_service.post(f"/documents/{id}", json={"embedText": "test"})
     assert resp.is_success
 
-    resp = search_service.get("/documents/no_embedding")
+    resp = search_service.get(f"/documents/{id}")
     assert resp.is_success
 
     # wait for maintainance to run
     time.sleep(11)
-    resp = search_service.get("/documents/no_embedding")
+    resp = search_service.get(f"/documents/{id}")
     assert_document_is_in_opensearch(resp, id)
+
+
+def test_delta_load_maintenance(search_service: httpx.Client, files: list[str]):
+    ids = [f.removesuffix(".json") for f in files]
+    search_service.post(f"/documents/{ids[0]}", json={"test": "test"})
+
+    # wait for both maintainance tasks to run
+    time.sleep(30)
+    resp = search_service.get(f"/documents/{ids[0]}")
+    assert resp.is_success
+    payload = resp.json()
+    assert payload["_id"] == ids[0]
+    assert list(payload["_source"].keys()) == ["test"]
+
+    resp = search_service.get(f"/documents/{ids[1]}")
+    assert_document_is_in_opensearch(resp, ids[1])
