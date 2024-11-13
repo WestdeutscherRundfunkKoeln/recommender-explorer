@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-import json
 import time
 from pathlib import Path
 
@@ -85,7 +84,7 @@ def test_events(
     assert resp.json()["_id"] == id
 
     # wait until sync is done
-    time.sleep(1)
+    time.sleep(15)
 
     # The document is available in the opensearch with embeddings
     resp = search_service.get(f"/documents/{id}")
