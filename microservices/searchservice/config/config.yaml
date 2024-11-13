@@ -1,3 +1,4 @@
+api_prefix: $API_PREFIX|""
 deployment_env: $DEPLOYMENT_ENVIRONMENT
 opensearch:
   host: $OPENSEARCH_HOST

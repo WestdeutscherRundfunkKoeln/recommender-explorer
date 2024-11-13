@@ -6,6 +6,7 @@ from datetime import datetime
 class RecoExplorerItem(BaseModel, extra="allow"):
     externalid: str
     id: str
+    cmsId: str
     title: str
     description: str
     longDescription: str

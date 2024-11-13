@@ -7,6 +7,7 @@ from dto.item import ItemDto
 from envyaml import EnvYAML
 from model.nn_seeker import NnSeeker
 from opensearchpy import OpenSearch, RequestsHttpConnection
+from exceptions.embedding_not_found_error import UnknownItemEmbeddingError
 
 logger = logging.getLogger(__name__)
 
@@ -89,15 +90,7 @@ class NnSeekerOpenSearch(NnSeeker):
         if content_id:
             embedding = self.__get_vec_for_content_id(content_id)
         else:
-            text_to_embed = item.description
-            request_payload = {"embedText": text_to_embed}
-            response = httpx.post(
-                f"{self.base_url_embedding}/embedding",
-                json=request_payload,
-                timeout=None,
-                headers={"x-api-key": self.api_key},
-            ).json()
-            embedding = response[self.embedding_field_name]
+            embedding = self.__get_vec_for_text_from_endpoint(item)
 
         reco_filter = self._transpose_reco_filter_state(nn_filter, item)
         recomm_content_ids, nn_dists = self.__get_nn_by_embedding(
@@ -146,6 +139,7 @@ class NnSeekerOpenSearch(NnSeeker):
                             "field": self.embedding_field_name,
                             "query_value": embedding,
                             "space_type": "cosinesimil",
+                            "ignore_unmapped": True,
                         },
                     },
                 }
@@ -213,9 +207,30 @@ class NnSeekerOpenSearch(NnSeeker):
 
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
-        embedding = response["hits"]["hits"][0]["_source"][self.embedding_field_name]
+        first_hit_source = response.get("hits", {}).get("hits", [{}])[0].get("_source", {})
+        if self.embedding_field_name not in first_hit_source:
+            raise UnknownItemEmbeddingError(
+                'Item with primary id [' + content_id + '] does not have embedding for [' + self.embedding_field_name + ']', {}
+            )
 
-        return embedding
+        return first_hit_source.get(self.embedding_field_name)
+
+    def __get_vec_for_text_from_endpoint(self, item):
+        text_to_embed = item.description
+        request_payload = {"embedText": text_to_embed}
+        response = httpx.post(
+            f"{self.base_url_embedding}/embedding",
+            json=request_payload,
+            timeout=None,
+            headers={"x-api-key": self.api_key},
+        ).json()
+
+        if self.embedding_field_name not in response:
+            raise UnknownItemEmbeddingError(
+                'Text [' + text_to_embed + '] does not have embedding for [' + self.embedding_field_name + ']', {}
+            )
+
+        return response[self.embedding_field_name]
 
     def _transpose_reco_filter_state(
         self, reco_filter: dict[str, Any], start_item: ItemDto

@@ -3,7 +3,10 @@ import logging
 from typing import Any, Iterator
 
 import sys
-if sys.version_info.major==3 and sys.version_info.minor < 11: # if python version is lower than 3.11
+
+if (
+    sys.version_info.major == 3 and sys.version_info.minor < 11
+):  # if python version is lower than 3.11
     from typing_extensions import Self
 else:
     from typing import Self
@@ -56,7 +59,7 @@ class OssAccessor:
             refresh=True,
         )
 
-        logger.info("Response: " + json.dumps(response, indent=4, default=str))
+        logger.info("Response os OSS update: " + json.dumps(response, indent=4, default=str))
 
         return response
 
@@ -67,6 +70,8 @@ class OssAccessor:
         for success, info in helpers.parallel_bulk(
             client=self.oss_client,
             index=self.target_idx_name,
+            raise_on_error=False,
+            raise_on_exception=False,
             actions=self.doc_generator(jsonlst),
         ):
             if not success:

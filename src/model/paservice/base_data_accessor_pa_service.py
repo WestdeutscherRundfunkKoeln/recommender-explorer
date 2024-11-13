@@ -1,65 +1,93 @@
 import copy
-import json
 import logging
-import httpx
-import constants
+from typing import Any
 
-from model.base_data_accessor import BaseDataAccessor
+import httpx
+from dto.item import ItemDto
+from exceptions.config_error import ConfigError
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.endpoint_error import EndpointError
-from exceptions.config_error import ConfigError
-from dto.item import ItemDto
+from model.base_data_accessor import BaseDataAccessor
 from util.dto_utils import update_from_props
 
 logger = logging.getLogger(__name__)
 
 
+WEIGHTS = ("weight_audio", "weight_video", "weight_beitrag")
+
+
 class BaseDataAccessorPaService(BaseDataAccessor):
     def __init__(self, config):
         self.not_implemented_error_message = "This method is not implemented yet"
-        self.config = config
-        self.pa_service_config = self.config.get("pa_service", None)
+        self.pa_service_config = config.get("pa_service")
         if self.pa_service_config:
-            self.host = self.pa_service_config.get("host", None)
-            self.auth_header = self.pa_service_config.get("auth_header", None)
-            self.auth_header_value = self.pa_service_config.get(
-                "auth_header_value", None
-            )
-            self.http_proxy = self.pa_service_config.get("http_proxy", None)
-            self.https_proxy = self.pa_service_config.get("https_proxy", None)
-            self.endpoint = self.pa_service_config.get("endpoint", None)
-            self.field_mapping = self.pa_service_config.get("field_mapping", None)
+            self.host = self.pa_service_config.get("host")
+            self.auth_header = self.pa_service_config.get("auth_header")
+            self.auth_header_value = self.pa_service_config.get("auth_header_value")
+            self.http_proxy = self.pa_service_config.get("http_proxy")
+            self.https_proxy = self.pa_service_config.get("https_proxy")
+            self.endpoint = self.pa_service_config.get("endpoint")
+            self.field_mapping = self.pa_service_config.get("field_mapping")
+            self.number_of_recommendations = self.pa_service_config.get("number_of_recommendations", 10)
 
         if not self.pa_service_config:
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
-                "expect Configuration in Key: pa_service"
+                "expect Configuration in Key: pa_service",
+                {},
             )
         elif not self.host:
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
-                "expect Configuration in Key: pa_service.host"
+                "expect Configuration in Key: pa_service.host",
+                {},
             )
         elif not self.endpoint:
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
-                "expect Configuration in Key: pa_service.endpoint"
+                "expect Configuration in Key: pa_service.endpoint",
+                {},
             )
         elif not self.field_mapping:
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
-                "expect Configuration in Key: pa_service.field_mapping"
+                "expect Configuration in Key: pa_service.field_mapping",
+                {},
             )
         elif not self.auth_header:
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
-                "expect Configuration in Key: pa_service.auth_header"
+                "expect Configuration in Key: pa_service.auth_header",
+                {},
             )
         elif not self.auth_header_value:
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
-                "expect Configuration in Key: pa_service.auth_header_value"
+                "expect Configuration in Key: pa_service.auth_header_value",
+                {},
             )
+        elif not isinstance(self.number_of_recommendations, int):
+            raise ConfigError(
+                "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
+                "expect int value in Configuration in Key: pa_service.number_of_recommendations",
+                {},
+            )
+
+        headers = (
+            {
+                "Content-Type": "application/json",
+                "accept": "*/*",
+                self.auth_header: self.auth_header_value,
+            }
+            if self.auth_header and self.auth_header_value
+            else None
+        )
+        proxies = (
+            {"http://": self.http_proxy, "https://": self.https_proxy}
+            if self.http_proxy and self.https_proxy
+            else None
+        )
+        self.client = httpx.Client(proxies=proxies, headers=headers, base_url=self.host)
 
     def get_items_by_ids(self, ids):
         raise NotImplementedError(self.not_implemented_error_message)
@@ -91,68 +119,27 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :return: Start Item and Recommendations in the given Item DTO
         """
         try:
-            if self.host and self.endpoint:
-                url = self.host + "/" + self.endpoint
+            response = self.client.post(
+                self.endpoint, json=build_request(external_id, filter)
+            )
+            response.raise_for_status()
 
-                request_body = {"referenceId": external_id, "reco": "true"}
-                if "relativerangefilter_duration" in filter:
-                    request_body["maxDurationFactor"] = filter[
-                        "relativerangefilter_duration"
-                    ]
-                if "blacklist_externalid" in filter:
-                    request_body["excludedIds"] = (
-                        filter["blacklist_externalid"].replace(" ", "").split(",")
-                    )
-
-                request_params = {"url": url, "json": request_body}
-
-                headers = None
-                if self.auth_header and self.auth_header_value:
-                    headers = {
-                        "Content-Type": "application/json",
-                        "accept": "*/*",
-                        self.auth_header: self.auth_header_value,
-                    }
-
-                if headers:
-                    request_params["headers"] = headers
-
-                proxies = None
-                if self.http_proxy and self.https_proxy:
-                    proxies = {"http://": self.http_proxy, "https://": self.https_proxy}
-
-                if proxies:
-                    client = httpx.Client(proxies=proxies)
-                else:
-                    client = httpx.Client()
-
-                response = client.post(**request_params)
-
-                if response.status_code == 200:
-                    return self.__get_items_from_response(item, response.json())
-                else:
-                    logging.error("Request Error:", response.status_code, response.text)
-                    raise EndpointError(
-                        "Could not get result from Endpoint: "
-                        + url
-                        + "with request parameters: "
-                        + json.dumps(request_params, indent=4)
-                        + ". Status Code: "
-                        + response.status_code
-                    )
-        except Exception as e:
-            logging.error(e)
+            return self.__get_items_from_response(item, response.json())
+        except httpx.HTTPStatusError as e:
+            logging.error(e, exc_info=True)
             raise EndpointError(
-                "Couldn't get a valid response from endpoint ["
-                + self.host
-                + "/"
-                + self.endpoint
-                + "]",
-                {},
+                f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]: {e.response.read().decode()}",
+                {"exc": str(e)},
+            )
+        except Exception as e:
+            logging.error(e, exc_info=True)
+            raise EndpointError(
+                f"Couldn't get a valid response from endpoint [{self.host}/{self.endpoint}]: {str(e)}",
+                {"exc": str(e)},
             )
 
     def __get_items_from_response(
-        self, item_dto: ItemDto, response, provenance=constants.ITEM_PROVENANCE_C2C
+        self, item_dto: ItemDto, response: dict[str, Any]
     ) -> tuple[list, int]:
         """
         Gets the resulting items from the pa service response in json
@@ -174,10 +161,26 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             new_item_dto = copy.copy(item_dto)
             item_hit = pa_service_hit["item"]
             new_item_dto = update_from_props(new_item_dto, item_hit, self.field_mapping)
-            new_item_dto.__setattr__("dist", pa_service_hit.get("score", 0))
-            if index == 0:
-                new_item_dto.__setattr__("_position", "start")
-            else:
-                new_item_dto.__setattr__("_position", "reco")
+            new_item_dto.dist = pa_service_hit.get("score", 0)
+            new_item_dto._position = "start" if index == 0 else "reco"
             item_dtos.append(new_item_dto)
-        return item_dtos[:6], total_items
+
+        return item_dtos[:self.number_of_recommendations + 1], total_items
+
+
+def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
+    request_body: dict[str, Any] = {"referenceId": external_id, "reco": "true"}
+    if "relativerangefilter_duration" in filter:
+        request_body["maxDurationFactor"] = filter["relativerangefilter_duration"]
+    if "blacklist_externalid" in filter:
+        request_body["excludedIds"] = (
+            filter["blacklist_externalid"].replace(" ", "").split(",")
+        )
+    weights = [
+        {"type": w.removeprefix("weight_"), "weight": filter[w]}
+        for w in WEIGHTS
+        if w in filter and filter[w] > 0
+    ]
+    if weights:
+        request_body["weights"] = weights
+    return request_body

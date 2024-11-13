@@ -72,6 +72,7 @@ def test_get_k_nn__by_id__no_filter(nn_seeker):
                             "field": "embedding_01",
                             "query_value": [1, 2],
                             "space_type": "cosinesimil",
+                            "ignore_unmapped": True,
                         },
                     },
                 }
@@ -119,6 +120,7 @@ def test_get_k_nn__by_id__neutral_element_filter_values(nn_seeker):
                             "field": "embedding_01",
                             "query_value": [1, 2],
                             "space_type": "cosinesimil",
+                            "ignore_unmapped": True,
                         },
                     },
                 }
@@ -227,6 +229,7 @@ def test_get_k_nn__by_id__multiple_filter(nn_seeker):
                             "field": "embedding_01",
                             "query_value": [1, 2],
                             "space_type": "cosinesimil",
+                            "ignore_unmapped": True,
                         },
                     },
                 }

@@ -3,6 +3,7 @@ import logging
 import os
 import pathlib
 import shutil
+import datetime
 from hashlib import sha256
 from typing import cast
 
@@ -86,9 +87,15 @@ class EmbedText:
         for model in models_to_use:
             if model in self.models:
                 logger.info("Embedding text with model %s", model)
+                start_encode = datetime.datetime.now()
                 response[model] = cast(
                     ndarray, self.models[model].encode(embed_text)
                 ).tolist()
+                end_encode = datetime.datetime.now()
+                call_duration_encode = (
+                    end_encode - start_encode
+                ).total_seconds() * 1000
+                logger.info(f"Embedding took {call_duration_encode} ms -> succesfull")
                 continue
             response[model] = "unknown model!"
             logger.warning("The model '%s' is not known in service config!", model)
@@ -98,7 +105,14 @@ class EmbedText:
         return response
 
     def add_embedding_to_document(self, id, embedding):
+        embedding["needs_reembedding"] = False
+
         # Send request to search service to add embedding to index
+        logger.info(
+            "Calling search service to add embedding with id ["
+            + str(id)
+            + "] to document"
+        )
         httpx.post(
             url=f"{self.config.get('base_url_search')}/documents/{id}",
             json=embedding,

@@ -7,13 +7,11 @@ logger = logging.getLogger(__name__)
 
 class ModelParametersCard(ContentCard):
 
-    CARD_WIDTH = 500
-
     def draw(self, model_params):
 
         card = pn.Card(
             styles={ 'background': 'lightgrey', 'overflow': 'auto' },
-            width=self.CARD_WIDTH,
+            width=self.card_width,
             hide_header=True
         )
 

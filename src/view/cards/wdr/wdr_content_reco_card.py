@@ -13,8 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class WDRContentRecoCard(WDRContentCard):
-    CARD_HEIGHT = 600
-    IMAGE_HEIGHT = 200
 
     def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_func):
         stylesheet_image = """
@@ -88,7 +86,7 @@ class WDRContentRecoCard(WDRContentCard):
                 "overflow": "auto",
             },
             margin=5,
-            height=self.CARD_HEIGHT,
+            height=self.card_height,
             hide_header=True,
         )
 
