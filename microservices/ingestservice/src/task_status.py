@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class TaskStatus:
     _tasks: dict[str, BulkIngestTask] = {}
-    _lifetime_seconds = 60 * 60 * 24 * 7
+    _lifetime_seconds = 60 * 60 * 24 * 7  # 1 week
 
     def __init__(self, id: str) -> None:
         self.id = id

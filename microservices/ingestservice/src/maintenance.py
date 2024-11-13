@@ -1,10 +1,14 @@
 import asyncio
+import datetime
 import logging
 from typing import Any
 
 import httpx
 from envyaml import EnvYAML
+from google.cloud import storage
 from src.clients import SearchServiceClient
+from src.ingest import delta_ingest
+from src.preprocess_data import DataPreprocessor
 from src.task_status import TaskStatus
 
 logger = logging.getLogger(__name__)
@@ -46,10 +50,11 @@ async def embed_partially_created_records(
                 )
         logger.info("Re-embedding task is done")
 
+
 async def embed_partially_created_record(
-    client: httpx.AsyncClient, models: list[str], record: dict[str, Any]
+    client: httpx.AsyncClient, models: list[str], record_kv: tuple[str, dict[str, Any]]
 ):
-    id, record = record
+    id, record = record_kv
     models_for_embedding = [
         model for model in models if (model not in record) or (not record[model])
     ]
@@ -113,7 +118,7 @@ def build_query(models: list[str]) -> dict:
         },
     }
 
-    logger.info("Re-embedding Maintenance query: %s", query)
+    logger.debug("Re-embedding Maintenance query: %s", query)
     return query
 
 
@@ -122,3 +127,26 @@ async def task_cleaner(interval_seconds: float):
         logger.info("Cleaning up tasks")
         TaskStatus.clear()
         await asyncio.sleep(interval_seconds)
+
+
+async def delta_load_background_task(
+    interval_seconds: float,
+    bucket: storage.Bucket,
+    data_preprocessor: DataPreprocessor,
+    search_service_client: SearchServiceClient,
+    prefix: str,
+):
+    while True:
+        await asyncio.sleep(interval_seconds)
+        logger.info("Running delta load task")
+        try:
+            await asyncio.to_thread(
+                delta_ingest,
+                bucket=bucket,
+                data_preprocessor=data_preprocessor,
+                search_service_client=search_service_client,
+                prefix=prefix,
+                task_id=f"delta_load_{datetime.datetime.now()}",
+            )
+        except Exception:
+            logger.error("Error during re-embedding task", exc_info=True)

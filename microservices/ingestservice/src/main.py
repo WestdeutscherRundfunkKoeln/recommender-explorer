@@ -13,7 +13,7 @@ from fastapi.exceptions import HTTPException
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
 from src.clients import SearchServiceClient
-from src.ingest import bulk_ingest, full_ingest, process_upsert_event
+from src.ingest import full_ingest, process_upsert_event
 from src.maintenance import reembedding_background_task, task_cleaner
 from src.models import (
     FullLoadRequest,
