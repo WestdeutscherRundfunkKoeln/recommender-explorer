@@ -25,7 +25,7 @@ def test_client():
 
 
 class MockBlob:
-    def __init__(self, data: dict[str, str], name: str):
+    def __init__(self, data: str, name: str):
         self.data = data
         self.name = name
 
@@ -44,7 +44,7 @@ class MockBucket:
 
     def blob(self, blob_name: str):
         if blob_name not in self.data:
-            self.data[blob_name] = MockBlob({}, blob_name)
+            self.data[blob_name] = MockBlob("", blob_name)
         return self.data[blob_name]
 
     def list_blobs(self, *args, **kwargs):
@@ -58,8 +58,9 @@ class MockBucket:
 
 class MockStorageClient:
     def __init__(self, data: dict[str, str]):
-        self._buckets = {"wdr-recommender-exporter-dev-import": MockBucket(data)}
-        self.bucket_name = None
+        self._buckets = {
+            "wdr-recommender-exporter-dev-import": MockBucket(data),
+        }
 
     def bucket(self, bucket_name: str):
         if bucket_name not in self._buckets:
@@ -74,6 +75,7 @@ def overwrite_storage_client():
             {
                 "externalid": "test",
                 "id": "test",
+                "sophoraId": "test",
                 "title": "test",
                 "description": "test",
                 "longDescription": "test",
@@ -171,9 +173,9 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
 
     assert response.status_code == 200
     requests = httpx_mock.get_requests()
-    assert len(requests) == 3
+    assert len(requests) == 2
     # Request to the search service to check hash
-    request = requests[1]
+    request = requests[0]
     assert request.method == "GET"
     assert (
         request.url
@@ -181,15 +183,8 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
     )
     assert request.headers["x-api-key"] == "test-key"
 
-    # Request to the embedding service
-    request = requests[2]
-    assert request.method == "POST"
-    assert request.url == config["base_url_embedding"] + "/add-embedding-to-doc"
-    assert request.headers["x-api-key"] == "test-key"
-    assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
-
     # Request to the search service for upsert
-    request = requests[0]
+    request = requests[1]
     assert request.method == "POST"
     assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
@@ -199,6 +194,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
             {
                 "externalid": "test",
                 "id": "test",
+                "cmsId": "test",
                 "title": "test",
                 "description": "test",
                 "longDescription": "test",
@@ -233,6 +229,7 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
                 "showTitel": "",
                 "showType": "",
                 "uuid": None,
+                "needs_reembedding": True,
             }
         ).encode()
     )
@@ -293,10 +290,10 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
 
     assert response.status_code == 200
     requests = httpx_mock.get_requests()
-    assert len(requests) == 3
+    assert len(requests) == 2
 
     # Request to the search service to check hash
-    request = requests[1]
+    request = requests[0]
     assert request.method == "GET"
     assert (
         request.url
@@ -304,15 +301,8 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
     )
     assert request.headers["x-api-key"] == "test-key"
 
-    # Request to the embedding service
-    request = requests[2]
-    assert request.method == "POST"
-    assert request.url == config["base_url_embedding"] + "/add-embedding-to-doc"
-    assert request.headers["x-api-key"] == "test-key"
-    assert request.content == json.dumps({"id": "test", "embedText": "test"}).encode()
-
     # Request to the search service for upsert
-    request = requests[0]
+    request = requests[1]
     assert request.method == "POST"
     assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
@@ -322,6 +312,7 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
             {
                 "externalid": "test",
                 "id": "test",
+                "cmsId": "test",
                 "title": "test",
                 "description": "test",
                 "longDescription": "test",
@@ -356,6 +347,7 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
                 "showTitel": "",
                 "showType": "",
                 "uuid": None,
+                "needs_reembedding": True,
             }
         ).encode()
     )
@@ -419,7 +411,7 @@ def test_upsert_event__with_available_correct_document__matching_hash(
     assert len(requests) == 2
 
     # Request to the search service to check hash
-    request = requests[1]
+    request = requests[0]
     assert request.method == "GET"
     assert (
         request.url
@@ -428,7 +420,7 @@ def test_upsert_event__with_available_correct_document__matching_hash(
     assert request.headers["x-api-key"] == "test-key"
 
     # Request to the search service for upsert
-    request = requests[0]
+    request = requests[1]
     assert request.method == "POST"
     assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
@@ -438,6 +430,7 @@ def test_upsert_event__with_available_correct_document__matching_hash(
             {
                 "externalid": "test",
                 "id": "test",
+                "cmsId": "test",
                 "title": "test",
                 "description": "test",
                 "longDescription": "test",
@@ -472,6 +465,7 @@ def test_upsert_event__with_available_correct_document__matching_hash(
                 "showTitel": "",
                 "showType": "",
                 "uuid": None,
+                "needs_reembedding": False,
             }
         ).encode()
     )
@@ -561,7 +555,7 @@ def test_upsert_event_invalid_document(
     assert uploaded_data["event_type"] == "OBJECT_FINALIZE"
     assert (
         uploaded_data["exception"]
-        == "10 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
+        == "11 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ncmsId\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
     )
     assert uploaded_data["url"] == "http://testserver/events"
 
@@ -661,6 +655,7 @@ def test_bulk_ingest__with_validation_error(
                 "test": {
                     "externalid": "test",
                     "id": "test",
+                    "cmsId": "test",
                     "title": "test",
                     "description": "test",
                     "longDescription": "test",
@@ -707,7 +702,9 @@ def test_bulk_ingest__with_validation_error(
     task = response.json()["task"]
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
-    assert len(task["errors"]) > 0
+    assert len(task["errors"]) == 1
+    assert task["completed_items"] == 1
+    assert task["failed_items"] == 1
 
 
 def test_bulk_ingest__with_general_error(test_client, httpx_mock):
@@ -732,6 +729,8 @@ def test_bulk_ingest__with_general_error(test_client, httpx_mock):
     assert task["id"] == task_id
     assert task["status"] == "FAILED"
     assert task["errors"] == ["Test error"]
+    assert task["completed_items"] == 0
+    assert task["failed_items"] == 0
 
 
 def test_get_task__exists(test_client: TestClient, overwrite_tasks):
@@ -745,6 +744,8 @@ def test_get_task__exists(test_client: TestClient, overwrite_tasks):
             "status": "PREPROCESSING",
             "errors": [],
             "created_at": "2023-10-23T23:00:00Z",
+            "completed_items": 0,
+            "failed_items": 0,
         }
     }
 
@@ -768,6 +769,8 @@ def test_get_tasks(test_client: TestClient, overwrite_tasks):
                 "errors": [],
                 "created_at": "2023-10-23T23:00:00Z",
                 "completed_at": None,
+                "completed_items": 0,
+                "failed_items": 0,
             }
         ]
     }

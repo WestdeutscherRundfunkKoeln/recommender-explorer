@@ -28,6 +28,9 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             self.https_proxy = self.pa_service_config.get("https_proxy")
             self.endpoint = self.pa_service_config.get("endpoint")
             self.field_mapping = self.pa_service_config.get("field_mapping")
+            self.number_of_recommendations = self.pa_service_config.get(
+                "number_of_recommendations", 10
+            )
 
         if not self.pa_service_config:
             raise ConfigError(
@@ -65,6 +68,13 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 "expect Configuration in Key: pa_service.auth_header_value",
                 {},
             )
+        elif not isinstance(self.number_of_recommendations, int):
+            raise ConfigError(
+                "Could not get valid Configuration for Service from config yaml. BaseDataAccessorPaService needs correctly configured Service, "
+                "expect int value in Configuration in Key: pa_service.number_of_recommendations",
+                {},
+            )
+
         headers = (
             {
                 "Content-Type": "application/json",
@@ -153,10 +163,11 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             new_item_dto = copy.copy(item_dto)
             item_hit = pa_service_hit["item"]
             new_item_dto = update_from_props(new_item_dto, item_hit, self.field_mapping)
-            new_item_dto.score = pa_service_hit.get("score", 0)
+            new_item_dto.dist = pa_service_hit.get("score", 0)
             new_item_dto._position = "start" if index == 0 else "reco"
             item_dtos.append(new_item_dto)
-        return item_dtos[:6], total_items
+
+        return item_dtos[: self.number_of_recommendations + 1], total_items
 
 
 def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:

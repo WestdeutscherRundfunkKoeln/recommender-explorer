@@ -13,9 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class WDRContentRecoCard(WDRContentCard):
-    CARD_HEIGHT = 600
-    IMAGE_HEIGHT = 200
-
     def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_func):
         stylesheet_image = """
                                  .img_wrapper {
@@ -88,14 +85,19 @@ class WDRContentRecoCard(WDRContentCard):
                 "overflow": "auto",
             },
             margin=5,
-            height=self.CARD_HEIGHT,
+            height=self.card_height,
             hide_header=True,
         )
 
         card.objects = child_objects
 
-        append_custom_css_for_insert_id_button(self.config, model_config, content_dto, model)
-        click_handler = create_click_handler(content_dto.externalid, self.reco_explorer_app_instance.config_based_nav_controls)
+        append_custom_css_for_insert_id_button(
+            self.config, model_config, content_dto, model
+        )
+        click_handler = create_click_handler(
+            content_dto.externalid,
+            self.reco_explorer_app_instance.config_based_nav_controls,
+        )
         insert_id_button_widget = insert_id_button(click_handler)
 
         return super().draw(content_dto, card, insert_id_button_widget)
