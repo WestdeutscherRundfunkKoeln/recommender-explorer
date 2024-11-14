@@ -191,3 +191,7 @@ def get_document_from_blob(
         document.needs_reembedding = False
 
     return document
+
+
+def delete_batch():
+    pass
