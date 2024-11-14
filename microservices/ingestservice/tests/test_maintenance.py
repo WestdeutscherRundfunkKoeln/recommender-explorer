@@ -271,58 +271,28 @@ def test_delete(
         status_code=200,
     )
     httpx_mock.add_response(
-        method="POST",
+        method="DELETE",
         url=f"{config['base_url_search']}/documents",
-        json={},
         status_code=200,
     )
     bucket = MockBucket(
         data={
             "test/test1.json": json.dumps(
                 {
-                    "externalid": "test1",
                     "id": "test1",
-                    "sophoraId": "test1",
-                    "title": "test1",
-                    "description": "test1",
-                    "longDescription": "test1",
-                    "availableFrom": "2023-10-23T23:00:00.000+02:00",
-                    "availableTo": "2023-10-23T23:00:00.000+02:00",
-                    "duration": 200,
-                    "thematicCategories": [],
-                    "genreCategory": "test1",
-                    "subgenreCategories": [],
-                    "teaserimage": "test1",
-                    "embedText": "test1",
                 }
             ),
             "test/test2.json": json.dumps(
                 {
-                    "externalid": "test2",
                     "id": "test2",
-                    "sophoraId": "test2",
-                    "title": "test2",
-                    "description": "test2",
-                    "longDescription": "test2",
-                    "availableFrom": "2023-10-23T23:00:00.000+02:00",
-                    "availableTo": "2023-10-23T23:00:00.000+02:00",
-                    "duration": 200,
-                    "thematicCategories": [],
-                    "genreCategory": "test2",
-                    "subgenreCategories": [],
-                    "teaserimage": "test2",
-                    "embedText": "test2",
-                }
-            ),
-            "test/test_invalid.json": json.dumps(
-                {
-                    "id": "test_invalid",
                 }
             ),
         }
     )
 
-    delete_batch()
+    delete_batch(
+        bucket=bucket, prefix="test/", search_service_client=search_service_client
+    )
 
     task_status = TaskStatus.get("test")
     assert task_status is not None
@@ -331,7 +301,7 @@ def test_delete(
     assert task_status.errors[0].startswith("Validation error")
 
     requests = httpx_mock.get_requests()
-    assert len(requests) == 3
+    assert len(requests) == 2
 
     request = requests[0]
     assert request.method == "POST"
@@ -343,56 +313,7 @@ def test_delete(
     }
 
     request = requests[1]
-    assert request.method == "GET"
-    assert (
-        request.url
-        == f"{config['base_url_search']}/documents/test2?fields=embedTextHash"
-    )
-    assert request.headers["x-api-key"] == config["api_key"]
-
-    request = requests[2]
-    assert request.method == "POST"
+    assert request.method == "DELETE"
     assert request.url == f"{config['base_url_search']}/documents"
     assert request.headers["x-api-key"] == config["api_key"]
-    assert json.loads(request.content.decode()) == {
-        "test2": {
-            "externalid": "test2",
-            "id": "test2",
-            "cmsId": "test2",
-            "title": "test2",
-            "description": "test2",
-            "longDescription": "test2",
-            "availableFrom": "2023-10-23T23:00:00+0200",
-            "availableTo": "2023-10-23T23:00:00+0200",
-            "duration": 200,
-            "thematicCategories": [],
-            "thematicCategoriesIds": None,
-            "thematicCategoriesTitle": None,
-            "genreCategory": "test2",
-            "genreCategoryId": None,
-            "subgenreCategories": [],
-            "subgenreCategoriesIds": None,
-            "subgenreCategoriesTitle": None,
-            "teaserimage": "test2",
-            "geoAvailability": None,
-            "embedText": "test2",
-            "episodeNumber": "",
-            "hasAudioDescription": False,
-            "hasDefaultVersion": False,
-            "hasSignLanguage": False,
-            "hasSubtitles": False,
-            "isChildContent": False,
-            "isOnlineOnly": False,
-            "isOriginalLanguage": False,
-            "producer": "",
-            "publisherId": "",
-            "seasonNumber": "",
-            "sections": "",
-            "showCrid": "",
-            "showId": "",
-            "showTitel": "",
-            "showType": "",
-            "needs_reembedding": True,
-            "uuid": None,
-        }
-    }
+    assert json.loads(request.content.decode()) == ["test3"]

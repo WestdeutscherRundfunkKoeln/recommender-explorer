@@ -29,7 +29,7 @@ def process_upsert_event(
     search_service_client: SearchServiceClient,
     storage: storage.Client,
     data_preprocessor: DataPreprocessor,
-):
+) -> dict:
     document = None
     try:
         blob = storage.bucket(event.bucket).blob(event.name)
@@ -57,7 +57,7 @@ def full_ingest(
     search_service_client: SearchServiceClient,
     prefix: str,
     task_id: str,
-):
+) -> None:
     with TaskStatus(task_id) as task_status:
         bulk_ingest(
             blobs=iter(bucket.list_blobs(match_glob=f"{prefix}*.json")),
@@ -73,7 +73,7 @@ def delta_ingest(
     search_service_client: SearchServiceClient,
     prefix: str,
     task_id: str,
-):
+) -> None:
     with TaskStatus(task_id) as task_status:
         blobs = bucket.list_blobs(match_glob=f"{prefix}*.json")
         documents = [
@@ -85,7 +85,7 @@ def delta_ingest(
         delta = [
             blob
             for blob in blobs
-            if blob.name.split("/")[-1].split(".")[0] not in documents
+            if blob.name.removeprefix(prefix).removesuffix(".json") not in documents
         ]
         bulk_ingest(
             blobs=iter(delta),
@@ -100,7 +100,7 @@ def bulk_ingest(
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
     task_status: TaskStatus,
-):
+) -> None:
     batch_start = 1
     batch_end = 0
     # iterator is consumed slice by slice
@@ -193,5 +193,21 @@ def get_document_from_blob(
     return document
 
 
-def delete_batch():
-    pass
+def delete_batch(
+    bucket: storage.Bucket, prefix: str, search_service_client: SearchServiceClient
+) -> None:
+    try:
+        ids_in_bucket = [
+            blob.name.removeprefix(prefix).removesuffix(".json")
+            for blob in bucket.list_blobs(match_glob=f"{prefix}*.json")
+        ]
+        ids_in_oss = [
+            doc["_id"]
+            for doc in search_service_client.scan(
+                {"_source": False, "query": {"match_all": {}}}
+            )
+        ]
+        delta = [id for id in ids_in_oss if id not in ids_in_bucket]
+        search_service_client.delete_multiple_documents(delta)
+    except Exception:
+        logger.error("Error during delete batch", exc_info=True)
