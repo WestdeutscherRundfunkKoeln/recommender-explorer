@@ -31,6 +31,11 @@ class SearchServiceClient:
         response.raise_for_status()
         return response.json()
 
+    def delete_multiple_documents(self, documents: list[str]):
+        response = self.client.request("DELETE", "/documents", json=documents)
+        response.raise_for_status()
+        return response
+
     def create_multiple_documents(self, documents: dict[str, Any]):
         response = self.client.post("/documents", json=documents)
         response.raise_for_status()
