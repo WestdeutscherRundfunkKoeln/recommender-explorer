@@ -74,12 +74,23 @@ class OssAccessor:
             index=self.target_idx_name,
             raise_on_error=False,
             raise_on_exception=False,
-            actions=self.doc_generator(jsonlst),
+            actions=self.upsert_action_generator(jsonlst),
         ):
             if not success:
                 print("A document failed:", info)
 
-    def doc_generator(
+    def bulk_delete(self, ids: list[str]) -> None:
+        for success, info in helpers.parallel_bulk(
+            client=self.oss_client,
+            index=self.target_idx_name,
+            raise_on_error=False,
+            raise_on_exception=False,
+            actions=self.delete_action_generator(ids),
+        ):
+            if not success:
+                print("A delete failed:", info)
+
+    def upsert_action_generator(
         self, jsonlst: dict[str, dict]
     ) -> Iterator[dict[str, Any]]:  # TODO: review this
         for id, item in jsonlst.items():
@@ -88,6 +99,14 @@ class OssAccessor:
                 "_index": self.target_idx_name,
                 "_id": id,
                 "_source": {"doc": item, "doc_as_upsert": True},
+            }
+
+    def delete_action_generator(self, ids: list[str]) -> Iterator[dict[str, Any]]:
+        for id in ids:
+            yield {
+                "_op_type": "delete",
+                "_index": self.target_idx_name,
+                "_id": id,
             }
 
     def get_oss_doc(self, id: str, fields: list[str]) -> dict:
