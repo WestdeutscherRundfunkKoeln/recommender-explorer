@@ -140,6 +140,7 @@ def upsert_batch(
 
     task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
     search_service_client.create_multiple_documents(items)
+    logger.info("Uploaded items %s", list(items.keys()))
     return element_counter
 
 
@@ -209,5 +210,6 @@ def delete_batch(
         ]
         delta = [id for id in ids_in_oss if id not in ids_in_bucket]
         search_service_client.delete_multiple_documents(delta)
+        logger.info("Deleted items %s", delta)
     except Exception:
         logger.error("Error during delete batch", exc_info=True)

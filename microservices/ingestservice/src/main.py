@@ -15,9 +15,10 @@ from google.cloud.exceptions import GoogleCloudError
 from src.clients import SearchServiceClient
 from src.ingest import full_ingest, process_upsert_event
 from src.maintenance import (
+    delete_background_task,
+    delta_load_background_task,
     reembedding_background_task,
     task_cleaner,
-    delta_load_background_task,
 )
 from src.models import (
     FullLoadRequest,
@@ -69,6 +70,17 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(
             delta_load_background_task(
                 interval_seconds=config["delta_load_interval_seconds"],
+                bucket=storage_client_factory().bucket(config["bucket"]),
+                data_preprocessor=data_preprocessor,
+                search_service_client=search_service_client,
+                prefix=config["bucket_prefix"],
+            )
+        )
+    )
+    maintenance_tasks.add(
+        asyncio.create_task(
+            delete_background_task(
+                interval_seconds=config["delete_interval_seconds"],
                 bucket=storage_client_factory().bucket(config["bucket"]),
                 data_preprocessor=data_preprocessor,
                 search_service_client=search_service_client,

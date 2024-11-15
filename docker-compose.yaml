@@ -64,6 +64,7 @@ services:
       - STORAGE_SERVICE_ACCOUNT=
       - REEMBED_INTERVAL_SECONDS=10
       - DELTA_LOAD_INTERVAL_SECONDS=10
+      - DELETE_INTERVAL_SECONDS=10
       - GCS_URL=http://fake-gcs-server
       - BUCKET=test
       - BUCKET_PREFIX=""

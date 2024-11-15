@@ -7,7 +7,7 @@ import httpx
 from envyaml import EnvYAML
 from google.cloud import storage
 from src.clients import SearchServiceClient
-from src.ingest import delta_ingest
+from src.ingest import delta_ingest, delete_batch
 from src.preprocess_data import DataPreprocessor
 from src.task_status import TaskStatus
 
@@ -150,3 +150,24 @@ async def delta_load_background_task(
             )
         except Exception:
             logger.error("Error during re-embedding task", exc_info=True)
+
+
+async def delete_background_task(
+    interval_seconds: float,
+    bucket: storage.Bucket,
+    data_preprocessor: DataPreprocessor,
+    search_service_client: SearchServiceClient,
+    prefix: str,
+):
+    while True:
+        await asyncio.sleep(interval_seconds)
+        logger.info("Running delete task")
+        try:
+            await asyncio.to_thread(
+                delete_batch,
+                bucket=bucket,
+                search_service_client=search_service_client,
+                prefix=prefix,
+            )
+        except Exception:
+            logger.error("Error during delete task", exc_info=True)

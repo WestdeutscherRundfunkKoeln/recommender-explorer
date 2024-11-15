@@ -172,8 +172,8 @@ def test_bulk_ingest(
         assert_document_is_in_opensearch(resp, id)
 
 
-def test_reembedding_maintenance(search_service: httpx.Client):
-    id = "no_embedding"
+def test_reembedding_maintenance(search_service: httpx.Client, files: list[str]):
+    id = files[0].removesuffix(".json")
     resp = search_service.post(f"/documents/{id}", json={"embedText": "test"})
     assert resp.is_success
 
@@ -198,5 +198,16 @@ def test_delta_load_maintenance(search_service: httpx.Client, files: list[str]):
     assert payload["_id"] == ids[0]
     assert list(payload["_source"].keys()) == ["test"]
 
-    resp = search_service.get(f"/documents/{ids[1]}")
-    assert_document_is_in_opensearch(resp, ids[1])
+    assert_document_is_in_opensearch(search_service.get(f"/documents/{ids[1]}"), ids[1])
+
+
+def test_delete_maintenance(search_service: httpx.Client, files: list[str]):
+    search_service.post("/documents/test", json={"test": "test"})
+    assert search_service.get("/documents/test").is_success
+
+    # wait for maintainance tasks to run
+    time.sleep(15)
+
+    response = search_service.get("/documents/test")
+    assert response.is_error
+    assert response.status_code == 404
