@@ -157,6 +157,8 @@ def test_bulk_ingest(
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
     assert task["errors"] == []
+    assert task["completed_items"] == 2
+    assert task["failed_items"] == 0
     assert datetime.fromisoformat(task["created_at"]) > start_ts
     assert datetime.fromisoformat(task["completed_at"]) < start_ts + timedelta(
         minutes=1
@@ -186,12 +188,31 @@ def test_reembedding_maintenance(search_service: httpx.Client, files: list[str])
     assert_document_is_in_opensearch(resp, id)
 
 
-def test_delta_load_maintenance(search_service: httpx.Client, files: list[str]):
+def test_delta_load_maintenance(
+    search_service: httpx.Client, ingest_service: httpx.Client, files: list[str]
+):
     ids = [f.removesuffix(".json") for f in files]
     search_service.post(f"/documents/{ids[0]}", json={"test": "test"})
 
-    # wait for both maintainance tasks to run
-    time.sleep(30)
+    # poll task status
+    resp = ingest_service.get("/tasks")
+    assert resp.is_success
+    delta_task = sorted(
+        [task["id"] for task in resp.json()["tasks"] if task["id"].startswith("delta")]
+    )[-1]
+    for _ in range(6):
+        time.sleep(10)
+        resp = ingest_service.get(f"/tasks/{delta_task}")
+        task = resp.json()["task"]
+        if task["status"] == "COMPLETED":
+            break
+
+    task = ingest_service.get(f"/tasks/{delta_task}").json()["task"]
+    assert task["status"] == "COMPLETED"
+    assert task["errors"] == []
+    assert task["completed_items"] == 1
+    assert task["failed_items"] == 0
+
     resp = search_service.get(f"/documents/{ids[0]}")
     assert resp.is_success
     payload = resp.json()
