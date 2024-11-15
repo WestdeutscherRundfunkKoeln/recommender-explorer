@@ -101,32 +101,26 @@ def bulk_ingest(
     search_service_client: SearchServiceClient,
     task_status: TaskStatus,
 ) -> None:
-    batch_start = 1
-    batch_end = 0
     # iterator is consumed slice by slice
     while batch := list(itertools.islice(blobs, CHUNKSIZE)):
-        batch_end = upsert_batch(
+        upsert_batch(
             batch=batch,
             task_status=task_status,
-            element_counter=batch_start,
             data_preprocessor=data_preprocessor,
             search_service_client=search_service_client,
         )
-        logger.info("Uploaded items %s to %s", batch_start, batch_end)
-        batch_start = batch_end + 1
+        logger.info("Uploaded %s items", len(batch))
 
 
 def upsert_batch(
     batch: list[Blob],
     task_status: TaskStatus,
-    element_counter: int,
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
-) -> int:
+) -> None:
     task_status.set_status(BulkIngestTaskStatus.PREPROCESSING)
     items = {}
     for blob in batch:
-        element_counter += 1
         try:
             document = get_document_from_blob(
                 blob=blob,
@@ -141,7 +135,8 @@ def upsert_batch(
     task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
     search_service_client.create_multiple_documents(items)
     logger.info("Uploaded items %s", list(items.keys()))
-    return element_counter
+    task_status.increment_completed(len(items))
+    task_status.increment_failed(len(batch) - len(items))
 
 
 def get_document_from_blob(

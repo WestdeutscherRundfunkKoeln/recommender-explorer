@@ -646,9 +646,9 @@ def test_bulk_ingest__with_validation_error(
     task = response.json()["task"]
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
-    assert len(task["errors"]) == 1
     assert task["completed_items"] == 1
     assert task["failed_items"] == 1
+    assert len(task["errors"]) == 1
     assert task["errors"][0].startswith("Validation error")
 
 
