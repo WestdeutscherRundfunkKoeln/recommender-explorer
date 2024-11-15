@@ -13,7 +13,7 @@ from fastapi.exceptions import HTTPException
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
 from src.clients import SearchServiceClient
-from src.ingest import bulk_ingest, get_document_from_blob, process_upsert_event
+from src.ingest import bulk_ingest, full_ingest, process_upsert_event
 from src.maintenance import reembedding_background_task, task_cleaner
 from src.models import (
     FullLoadRequest,
@@ -114,7 +114,7 @@ def ingest_multiple_items(
 ) -> FullLoadResponse:
     task_id = str(uuid.uuid4())
     tasks.add_task(
-        bulk_ingest,
+        full_ingest,
         bucket=storage.bucket(body.bucket),
         data_preprocessor=data_preprocessor,
         search_service_client=search_service_client,

@@ -100,37 +100,60 @@ def process_upsert_event(
         raise
 
 
-def bulk_ingest(
+def full_ingest(
     bucket: storage.Bucket,
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
     prefix: str,
     task_id: str,
 ):
-    logger.info("Starting bulk ingest")
-    task_status = TaskStatus.spawn(id=task_id)
-    try:
-        batch_start = 1
-        batch_end = 0
+    with TaskStatus(task_id) as task_status:
         blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
-        blobs_iter = iter(blobs)
-        # iterator is consumed slice by slice
-        while batch := list(itertools.islice(blobs_iter, CHUNKSIZE)):
-            batch_end = upsert_batch(
-                batch=batch,
-                task_status=task_status,
-                element_counter=batch_start,
-                data_preprocessor=data_preprocessor,
-                search_service_client=search_service_client,
-            )
-            logger.info("Uploaded items %s to %s", batch_start, batch_end)
-            batch_start = batch_end + 1
+        bulk_ingest(
+            blobs=blobs,
+            data_preprocessor=data_preprocessor,
+            search_service_client=search_service_client,
+            task_status=task_status,
+        )
 
-        task_status.set_status(BulkIngestTaskStatus.COMPLETED)
-    except Exception as e:
-        logger.error("Error during bulk ingest", exc_info=True)
-        task_status.add_error(str(e))
-        task_status.set_status(BulkIngestTaskStatus.FAILED)
+
+def delta_ingest(
+    bucket: storage.Bucket,
+    data_preprocessor: DataPreprocessor,
+    search_service_client: SearchServiceClient,
+    prefix: str,
+    task_id: str,
+):
+    with TaskStatus(task_id) as task_status:
+        blobs = list(bucket.list_blobs(match_glob=f"{prefix}*.json"))
+        bulk_ingest(
+            blobs=blobs,
+            data_preprocessor=data_preprocessor,
+            search_service_client=search_service_client,
+            task_status=task_status,
+        )
+
+
+def bulk_ingest(
+    blobs: list[Blob],
+    data_preprocessor: DataPreprocessor,
+    search_service_client: SearchServiceClient,
+    task_status: TaskStatus,
+):
+    batch_start = 1
+    batch_end = 0
+    blobs_iter = iter(blobs)
+    # iterator is consumed slice by slice
+    while batch := list(itertools.islice(blobs_iter, CHUNKSIZE)):
+        batch_end = upsert_batch(
+            batch=batch,
+            task_status=task_status,
+            element_counter=batch_start,
+            data_preprocessor=data_preprocessor,
+            search_service_client=search_service_client,
+        )
+        logger.info("Uploaded items %s to %s", batch_start, batch_end)
+        batch_start = batch_end + 1
 
 
 def upsert_batch(
