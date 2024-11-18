@@ -6,4 +6,8 @@ base_url_embedding: https://test.io/embed
 dead_letter_bucket: test_dead_letter_bucket
 storage_service_account: "{}"
 gcs_url: "test"
+task_cleaner_interval: $TASK_CLEANER_INTERVAL|"0 2 * * *"
+reembed_interval: $REEMBED_INTERVAL|"* * * * *"
+delta_load_interval: $DELTA_LOAD_INTERVAL|"0 2 * * *"
+delete_interval: $DELETE_INTERVAL|"0 2 * * *"
 

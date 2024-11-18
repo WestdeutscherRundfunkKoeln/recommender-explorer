@@ -55,12 +55,12 @@ maintenance_tasks = set()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     maintenance_tasks.add(
-        asyncio.create_task(task_cleaner(config["task_cleaner_interval_seconds"]))
+        asyncio.create_task(task_cleaner(config["task_cleaner_interval"]))
     )
     maintenance_tasks.add(
         asyncio.create_task(
             reembedding_background_task(
-                interval_seconds=config["reembed_interval_seconds"],
+                interval=config["reembed_interval"],
                 search_service_client=search_service_client,
                 config=config,
             )
@@ -69,7 +69,7 @@ async def lifespan(app: FastAPI):
     maintenance_tasks.add(
         asyncio.create_task(
             delta_load_background_task(
-                interval_seconds=config["delta_load_interval_seconds"],
+                interval=config["delta_load_interval"],
                 bucket=storage_client_factory().bucket(config["bucket"]),
                 data_preprocessor=data_preprocessor,
                 search_service_client=search_service_client,
@@ -80,9 +80,8 @@ async def lifespan(app: FastAPI):
     maintenance_tasks.add(
         asyncio.create_task(
             delete_background_task(
-                interval_seconds=config["delete_interval_seconds"],
+                interval=config["delete_interval"],
                 bucket=storage_client_factory().bucket(config["bucket"]),
-                data_preprocessor=data_preprocessor,
                 search_service_client=search_service_client,
                 prefix=config["bucket_prefix"],
             )

@@ -100,7 +100,7 @@ def test_events(
     assert resp.json()["_id"] == id
 
     # wait until sync is done
-    time.sleep(15)
+    time.sleep(61)
 
     # The document is available in the opensearch with embeddings
     resp = search_service.get(f"/documents/{id}")
@@ -165,7 +165,7 @@ def test_bulk_ingest(
     )
 
     # wait for maintainance to run
-    time.sleep(11)
+    time.sleep(61)
 
     # check documents in opensearch
     ids = [f.removesuffix(".json") for f in files]
@@ -183,7 +183,7 @@ def test_reembedding_maintenance(search_service: httpx.Client, files: list[str])
     assert resp.is_success
 
     # wait for maintainance to run
-    time.sleep(11)
+    time.sleep(61)
     resp = search_service.get(f"/documents/{id}")
     assert_document_is_in_opensearch(resp, id)
 
@@ -219,6 +219,7 @@ def test_delta_load_maintenance(
     assert payload["_id"] == ids[0]
     assert list(payload["_source"].keys()) == ["test"]
 
+    time.sleep(75)
     assert_document_is_in_opensearch(search_service.get(f"/documents/{ids[1]}"), ids[1])
 
 
@@ -227,7 +228,7 @@ def test_delete_maintenance(search_service: httpx.Client, files: list[str]):
     assert search_service.get("/documents/test").is_success
 
     # wait for maintainance tasks to run
-    time.sleep(15)
+    time.sleep(61)
 
     response = search_service.get("/documents/test")
     assert response.is_error

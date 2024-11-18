@@ -1,4 +1,5 @@
 import asyncio
+import aiocron
 import datetime
 import logging
 from typing import Any
@@ -7,7 +8,7 @@ import httpx
 from envyaml import EnvYAML
 from google.cloud import storage
 from src.clients import SearchServiceClient
-from src.ingest import delta_ingest, delete_batch
+from src.ingest import delete_batch, delta_ingest
 from src.preprocess_data import DataPreprocessor
 from src.task_status import TaskStatus
 
@@ -15,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 async def reembedding_background_task(
-    interval_seconds: float, search_service_client: SearchServiceClient, config: EnvYAML
+    interval: str, search_service_client: SearchServiceClient, config: EnvYAML
 ):
     while True:
-        await asyncio.sleep(interval_seconds)
+        await aiocron.crontab(interval).next()
         logger.info("Running re-embedding task")
         try:
             await embed_partially_created_records(search_service_client, config)
@@ -122,22 +123,22 @@ def build_query(models: list[str]) -> dict:
     return query
 
 
-async def task_cleaner(interval_seconds: float):
+async def task_cleaner(interval: str):
     while True:
         logger.info("Cleaning up tasks")
         TaskStatus.clear()
-        await asyncio.sleep(interval_seconds)
+        await aiocron.crontab(interval).next()
 
 
 async def delta_load_background_task(
-    interval_seconds: float,
+    interval: str,
     bucket: storage.Bucket,
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
     prefix: str,
 ):
     while True:
-        await asyncio.sleep(interval_seconds)
+        await aiocron.crontab(interval).next()
         logger.info("Running delta load task")
         try:
             await asyncio.to_thread(
@@ -153,14 +154,13 @@ async def delta_load_background_task(
 
 
 async def delete_background_task(
-    interval_seconds: float,
+    interval: str,
     bucket: storage.Bucket,
-    data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
     prefix: str,
 ):
     while True:
-        await asyncio.sleep(interval_seconds)
+        await aiocron.crontab(interval).next()
         logger.info("Running delete task")
         try:
             await asyncio.to_thread(
