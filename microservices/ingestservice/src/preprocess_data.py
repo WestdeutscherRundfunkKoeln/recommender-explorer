@@ -1,10 +1,9 @@
-from dto.recoexplorer_item import RecoExplorerItem
-from fastapi import HTTPException
-from pydantic import ValidationError
-import logging
 import json
-import pyjq
+import logging
+
 import httpx
+import pyjq
+from dto.recoexplorer_item import RecoExplorerItem
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -31,11 +30,13 @@ class DataPreprocessor:
                     "id": mapped_data.externalid,
                     "embedText": mapped_data.embedText,
                 },
-                timeout=0.25, #### TOBIAS: Reason for timeout in single ingests?
+                timeout=0.25,  #### TOBIAS: Reason for timeout in single ingests?
                 headers={"x-api-key": self.api_key},
             )
         except httpx.ReadTimeout:
-            logger.info("Embedding Call of item [" + str(mapped_data.externalid) + "] timed out")
+            logger.info(
+                "Embedding Call of item [" + str(mapped_data.externalid) + "] timed out"
+            )
             ### Tobias - this times out all of the time - but the embedding is still written because
             ### we discard the timeout
             pass

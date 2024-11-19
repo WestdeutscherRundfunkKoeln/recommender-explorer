@@ -17,11 +17,11 @@ class WDRContentCard:
     domain_mapping = {"wdr.de": "https://www1.wdr.de"}
 
     def __init__(
-            self,
-            config,
-            reco_explorer_app_instance: RecoExplorerApp = None,
-            height=None,
-            width=None,
+        self,
+        config,
+        reco_explorer_app_instance: RecoExplorerApp = None,
+        height=None,
+        width=None,
     ):
         self.config = config
         self.reco_explorer_app_instance = reco_explorer_app_instance

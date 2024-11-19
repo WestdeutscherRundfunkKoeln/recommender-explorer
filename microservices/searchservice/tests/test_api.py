@@ -199,3 +199,55 @@ def test_documents_no_embedding__invalid_request(test_client: TestClient):
         },
     )
     assert response.status_code == 400
+
+
+def test_scan_documents__valid_request(test_client: TestClient):
+    response = test_client.post(
+        "/documents/test1",
+        json={"id": "test1"},
+    )
+    assert response.status_code == 200
+    response = test_client.post(
+        "/documents/test2",
+        json={"id": "test2"},
+    )
+    assert response.status_code == 200
+    response = test_client.post(
+        "scan",
+        json={
+            "_source": False,
+            "query": {"match_all": {}},
+            "size": 1,
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+    assert [item["_id"] for item in response.json()] == ["test1", "test2"]
+
+
+def test_bulk_delete_document__valid_request(test_client: TestClient):
+    response = test_client.post(
+        "/documents/test1",
+        json={"id": "test1"},
+    )
+    assert response.status_code == 200
+    assert test_client.get("/documents/test1").is_success
+
+    response = test_client.post(
+        "/documents/test2",
+        json={"id": "test2"},
+    )
+    assert response.status_code == 200
+    assert test_client.get("/documents/test2").is_success
+
+    response = test_client.request(
+        "DELETE",
+        "/documents",
+        json=["test1", "test2"],
+    )
+    assert response.status_code == 200
+    assert response.json() is None
+
+    sleep(1)  # wait for data to be deleted
+    assert test_client.get("/documents/test1").is_error
+    assert test_client.get("/documents/test2").is_error

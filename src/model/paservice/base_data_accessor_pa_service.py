@@ -28,7 +28,9 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             self.https_proxy = self.pa_service_config.get("https_proxy")
             self.endpoint = self.pa_service_config.get("endpoint")
             self.field_mapping = self.pa_service_config.get("field_mapping")
-            self.number_of_recommendations = self.pa_service_config.get("number_of_recommendations", 10)
+            self.number_of_recommendations = self.pa_service_config.get(
+                "number_of_recommendations", 10
+            )
 
         if not self.pa_service_config:
             raise ConfigError(
@@ -165,7 +167,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             new_item_dto._position = "start" if index == 0 else "reco"
             item_dtos.append(new_item_dto)
 
-        return item_dtos[:self.number_of_recommendations + 1], total_items
+        return item_dtos[: self.number_of_recommendations + 1], total_items
 
 
 def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:

@@ -180,7 +180,7 @@ class ItemFilterWidget(MultiSelectionWidget):
             return
 
         item_filter_widget.param.watch(
-            self.reco_explorer_app_instance.trigger_item_filter_choice,
+            self.reco_explorer_app_instance.trigger_filter_choice,
             "value",
             onlychanged=True,
         )
@@ -209,7 +209,7 @@ class ModelChoiceWidget(MultiSelectionWidget):
             return
 
         model_watcher = model_choice_widget.param.watch(
-            self.reco_explorer_app_instance.trigger_model_choice_new,
+            self.reco_explorer_app_instance.trigger_filter_choice,
             "value",
             onlychanged=True,
         )
@@ -217,7 +217,7 @@ class ModelChoiceWidget(MultiSelectionWidget):
             "model_choice",
             model_choice_widget,
             model_watcher,
-            self.reco_explorer_app_instance.trigger_model_choice_new,
+            self.reco_explorer_app_instance.trigger_filter_choice,
         )
 
         model_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
