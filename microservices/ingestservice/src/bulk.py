@@ -8,14 +8,19 @@ from envyaml import EnvYAML
 from google.cloud import storage
 from google.cloud.exceptions import NotFound
 from pydantic import ValidationError
+from src.log_handler import TaskLogHandler
 from src.clients import SearchServiceClient
 from src.models import BulkIngestTaskStatus
 from src.preprocess_data import DataPreprocessor
 from src.task_status import TaskStatus
 
-logger = logging.getLogger(__name__)
 CHUNKSIZE = 50
 HASH_FIELD = "embedTextHash"
+
+logger = logging.getLogger(__name__)
+handler = TaskLogHandler()
+handler.setLevel(logging.ERROR)
+logger.addHandler(handler)
 
 
 def bulk_ingest(
@@ -81,27 +86,29 @@ def read_data_and_embed(
     data_preprocessor: DataPreprocessor,
     config: EnvYAML,
 ) -> dict | None:
-    def _log_err(error: Exception, message: str):
-        logger.error(
-            message,
-            exc_info=True,
-        )
-        message = f"{message}: {str(error)}"
-        task_status.add_error(message)
-
     logger.info(f"Preprocessing {blob.name}")
     try:
         data = json.loads(
             blob.download_as_text()
         )  # TODO: add retry logic, see https://cloud.google.com/python/docs/reference/storage/latest/google.cloud.storage.blob.Blob#google_cloud_storage_blob_Blob_download_as_text
-    except NotFound as e:
-        _log_err(e, f"Could not find file {blob.name}")
+    except NotFound:
+        logger.error(
+            "Could not find file %s",
+            blob.name,
+            exc_info=True,
+            extra={"task": task_status},
+        )
         return
 
     try:
         mapped_data = data_preprocessor.map_data(data)
-    except ValidationError as e:
-        _log_err(e, f"Error during preprocessing of file {blob.name}")
+    except ValidationError:
+        logger.error(
+            "Error during preprocessing of file %s",
+            blob.name,
+            exc_info=True,
+            extra={"task": task_status},
+        )
         return
 
     # Trigger embedding service to add embeddings to index
@@ -114,8 +121,13 @@ def read_data_and_embed(
             timeout=None,
             headers={"x-api-key": config["api_key"]},
         )
-    except httpx.TimeoutException as e:
-        _log_err(e, f"Error during embedding calculation for file {blob.name}")
+    except httpx.TimeoutException:
+        logger.error(
+            "Error during embedding calculation for file %s",
+            blob.name,
+            exc_info=True,
+            extra={"task": task_status},
+        )
         return
 
     if embeddings.status_code != 200:

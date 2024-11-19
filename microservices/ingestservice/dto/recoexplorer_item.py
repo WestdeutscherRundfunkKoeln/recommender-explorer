@@ -23,7 +23,7 @@ class RecoExplorerItem(BaseModel, extra="allow"):
     subgenreCategoriesTitle: Optional[list] = []
     teaserimage: str
     geoAvailability: Optional[str] = ""
-    embedText: Optional[str] = ""
+    embedText: str
     episodeNumber: Optional[str] = ""
     hasAudioDescription: Optional[bool] = False
     hasDefaultVersion: Optional[bool] = False
@@ -40,6 +40,7 @@ class RecoExplorerItem(BaseModel, extra="allow"):
     showId: Optional[str] = ""
     showTitel: Optional[str] = ""  # showTitle?
     showType: Optional[str] = ""
+    needs_reembedding: Optional[bool] = True
 
     @field_serializer("availableFrom", "availableTo")
     def serialize_dt(self, dt: datetime, _info):

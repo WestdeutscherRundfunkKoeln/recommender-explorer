@@ -45,6 +45,14 @@ def bulk_create_document(
     return oss_accessor.bulk_ingest(data)
 
 
+@router.delete("/documents")
+def bulk_delete_document(
+    data: list[str],
+    oss_accessor: OssAccessor = Depends(get_oss_accessor),
+):
+    return oss_accessor.bulk_delete(data)
+
+
 @router.delete("/documents/{document_id}")
 def delete_document(
     document_id: str, oss_accessor: OssAccessor = Depends(get_oss_accessor)
@@ -68,6 +76,14 @@ def get_document_with_query(
     oss_accessor: OssAccessor = Depends(get_oss_accessor),
 ):
     return oss_accessor.get_oss_docs(query)
+
+
+@router.post("/scan")
+def scan_documents(
+    query: dict[str, Any],
+    oss_accessor: OssAccessor = Depends(get_oss_accessor),
+):
+    return oss_accessor.scan_oss_docs(query)
 
 
 # TODO: search query for the nearest neighbors
