@@ -41,40 +41,42 @@ def download_model(
 
 
 class EmbedText:
-    def __init__(self, config):
+    def __init__(self, config, model_config):
         self.config = config
+        self.model_config = model_config
         self.models = {}
         bucket = None
         if sa := self.config.get("service_account"):
             credentials = service_account.Credentials.from_service_account_info(sa)
             client = storage.Client(credentials=credentials)
             bucket = client.bucket(self.config["bucket_name"])
-        for model in self.config["models"]:
-            for model_name, model_path in model.items():
-                bucket_path = (
-                    f'{self.config["bucket_path"]}/{model_path.split("/")[-1]}.zip'
-                )
-                local_path = (
-                    (pathlib.Path(config["local_model_path"]) / bucket_path)
-                    .as_posix()
-                    .split(".")[0]
-                )
-                if not os.path.exists(local_path):
-                    logger.info("Model %s not found at %s", model_path, local_path)
-                    if bucket:
-                        download_model(
-                            bucket=bucket,
-                            model_zip=bucket_path,
-                            local_path=local_path,
-                        )
-                load_path = local_path if os.path.exists(local_path) else model_path
+        for model in self.model_config:
+            bucket_path = (
+                f'{self.config["bucket_path"]}/{model["model_path"].split("/")[-1]}.zip'
+            )
+            local_path = (
+                (pathlib.Path(config["local_model_path"]) / bucket_path)
+                .as_posix()
+                .split(".")[0]
+            )
+            if not os.path.exists(local_path):
+                logger.info("Model %s not found at %s", model["model_path"], local_path)
+                if bucket:
+                    download_model(
+                        bucket=bucket,
+                        model_zip=bucket_path,
+                        local_path=local_path,
+                    )
+            load_path = (
+                local_path if os.path.exists(local_path) else model["model_path"]
+            )
 
-                self.models[model_name] = SentenceTransformer(
-                    load_path,
-                    device="cpu",
-                    cache_folder=config["local_model_path"],
-                    trust_remote_code=True,
-                )
+            self.models[model["model_name"]] = SentenceTransformer(
+                load_path,
+                device="cpu",
+                cache_folder=config["local_model_path"],
+                trust_remote_code=True,
+            )
 
     def embed_text(self, embed_text: str, models_to_use: list[str] | None):
         response: dict[str, str | list[float]] = {
