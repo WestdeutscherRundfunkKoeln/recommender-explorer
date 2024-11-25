@@ -86,7 +86,7 @@ class WDRContentDraftCard:
             pn.pane.Markdown(f"""
             ***
             ##### DRAFT
-            {" ".join(content_dto.description.split(" ")[:500]).strip()}...
+            {" ".join(content_dto.description.split(" ")[:500]).strip()}{'...' if len(content_dto.description) > 500 else ""}
             """),
         ]
 
