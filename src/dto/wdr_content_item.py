@@ -51,7 +51,7 @@ class WDRContentItemDto(ItemDto):
     def viewer(self) -> str:
         match self._position:
             case constants.ITEM_POSITION_START:
-                if not self.externalid:
+                if self._is_draft:
                     self._viewer = (
                         "WDRContentDraftCard@view.cards.wdr.wdr_content_draft_card"
                     )
