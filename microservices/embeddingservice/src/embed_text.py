@@ -43,7 +43,7 @@ def download_model(
 class EmbedText:
     def __init__(self, config, model_config):
         self.config = config
-        self.model_config = model_config
+        self.model_config = model_config["c2c_models"]
         self.models = {}
         bucket = None
         if sa := self.config.get("service_account"):
