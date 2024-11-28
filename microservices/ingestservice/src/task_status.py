@@ -1,28 +1,18 @@
+import logging
 from datetime import datetime, timedelta, timezone
+from types import TracebackType
 
 from src.models import BulkIngestTask, BulkIngestTaskStatus
+
+logger = logging.getLogger(__name__)
 
 
 class TaskStatus:
     _tasks: dict[str, BulkIngestTask] = {}
-    _lifetime_seconds = 60 * 60 * 24 * 7
+    _lifetime_seconds = 60 * 60 * 24 * 7  # 1 week
 
     def __init__(self, id: str) -> None:
         self.id = id
-
-    @classmethod
-    def spawn(cls, id: str) -> "TaskStatus":
-        task_status = cls(id)
-        cls.put(
-            id,
-            BulkIngestTask(
-                id=id,
-                status=BulkIngestTaskStatus.PREPROCESSING,
-                errors=[],
-                created_at=datetime.now(tz=timezone.utc),
-            ),
-        )
-        return task_status
 
     def set_status(self, status: BulkIngestTaskStatus) -> None:
         self._tasks[self.id].status = status
@@ -37,6 +27,40 @@ class TaskStatus:
 
     def increment_failed(self, value: int = 1) -> None:
         self._tasks[self.id].failed_items += value
+
+    def __enter__(self) -> "TaskStatus":
+        logger.info("Starting ingest task %s", self.id)
+        self.put(
+            self.id,
+            BulkIngestTask(
+                id=self.id,
+                status=BulkIngestTaskStatus.PREPROCESSING,
+                errors=[],
+                created_at=datetime.now(tz=timezone.utc),
+            ),
+        )
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ):
+        if exc_type is None:
+            logger.info("Ingest task %s completed", self.id)
+            self.set_status(BulkIngestTaskStatus.COMPLETED)
+        else:
+            assert exc_val is not None
+            assert exc_tb is not None
+            logger.error(
+                "Error during ingest task %s",
+                self.id,
+                exc_info=(exc_type, exc_val, exc_tb),
+            )
+            self.add_error(str(exc_val))
+            self.set_status(BulkIngestTaskStatus.FAILED)
+            return True
 
     @classmethod
     def get(cls, id: str) -> BulkIngestTask | None:

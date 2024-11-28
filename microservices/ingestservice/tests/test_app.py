@@ -1,14 +1,13 @@
 import datetime
 import json
-from typing import Any
 from pytest_httpx import HTTPXMock
 
 import pytest
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
-from google.api_core.exceptions import GoogleAPICallError
 from src.task_status import TaskStatus
 from src.models import BulkIngestTask, BulkIngestTaskStatus
+from tests.test_util import MockStorageClient
 
 load_dotenv("tests/test.env")
 
@@ -22,50 +21,6 @@ from src.main import (
 @pytest.fixture(scope="module")
 def test_client():
     return TestClient(app)
-
-
-class MockBlob:
-    def __init__(self, data: str, name: str):
-        self.data = data
-        self.name = name
-
-    def download_as_text(self):
-        if not self.data:
-            raise GoogleAPICallError("Blob not found")
-        return self.data
-
-    def upload_from_string(self, data: str):
-        self.data = data
-
-
-class MockBucket:
-    def __init__(self, data: dict[str, Any]):
-        self.data = {k: MockBlob(v, k) for k, v in data.items()}
-
-    def blob(self, blob_name: str):
-        if blob_name not in self.data:
-            self.data[blob_name] = MockBlob("", blob_name)
-        return self.data[blob_name]
-
-    def list_blobs(self, *args, **kwargs):
-        prefix = kwargs["match_glob"].split("/")[0]
-        if prefix == "raise_error":
-            raise Exception("Test error")
-        for blob in self.data.values():
-            if blob.name.startswith(prefix):
-                yield blob
-
-
-class MockStorageClient:
-    def __init__(self, data: dict[str, str]):
-        self._buckets = {
-            "wdr-recommender-exporter-dev-import": MockBucket(data),
-        }
-
-    def bucket(self, bucket_name: str):
-        if bucket_name not in self._buckets:
-            self._buckets[bucket_name] = MockBucket({})
-        return self._buckets[bucket_name]
 
 
 @pytest.fixture(autouse=True)
@@ -188,51 +143,46 @@ def test_upsert_event__with_available_correct_document__no_embedding_in_oss(
     assert request.method == "POST"
     assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
-    assert (
-        request.content
-        == json.dumps(
-            {
-                "externalid": "test",
-                "id": "test",
-                "cmsId": "test",
-                "title": "test",
-                "description": "test",
-                "longDescription": "test",
-                "availableFrom": "2023-10-23T23:00:00+0200",
-                "availableTo": "2023-10-23T23:00:00+0200",
-                "duration": None,
-                "thematicCategories": [],
-                "thematicCategoriesIds": None,
-                "thematicCategoriesTitle": None,
-                "genreCategory": "test",
-                "genreCategoryId": None,
-                "subgenreCategories": [],
-                "subgenreCategoriesIds": None,
-                "subgenreCategoriesTitle": None,
-                "teaserimage": "test",
-                "geoAvailability": None,
-                "embedText": "test",
-                "episodeNumber": "",
-                "hasAudioDescription": False,
-                "hasDefaultVersion": False,
-                "hasSignLanguage": False,
-                "hasSubtitles": False,
-                "isChildContent": False,
-                "isOnlineOnly": False,
-                "isOriginalLanguage": False,
-                "producer": "",
-                "publisherId": "",
-                "seasonNumber": "",
-                "sections": "",
-                "showCrid": "",
-                "showId": "",
-                "showTitel": "",
-                "showType": "",
-                "uuid": None,
-                "needs_reembedding": True,
-            }
-        ).encode()
-    )
+    assert json.loads(request.content.decode()) == {
+        "externalid": "test",
+        "id": "test",
+        "cmsId": "test",
+        "title": "test",
+        "description": "test",
+        "longDescription": "test",
+        "availableFrom": "2023-10-23T23:00:00+0200",
+        "availableTo": "2023-10-23T23:00:00+0200",
+        "duration": 200,
+        "thematicCategories": [],
+        "thematicCategoriesIds": None,
+        "thematicCategoriesTitle": None,
+        "genreCategory": "test",
+        "genreCategoryId": None,
+        "subgenreCategories": [],
+        "subgenreCategoriesIds": None,
+        "subgenreCategoriesTitle": None,
+        "teaserimage": "test",
+        "geoAvailability": None,
+        "embedText": "test",
+        "episodeNumber": "",
+        "hasAudioDescription": False,
+        "hasDefaultVersion": False,
+        "hasSignLanguage": False,
+        "hasSubtitles": False,
+        "isChildContent": False,
+        "isOnlineOnly": False,
+        "isOriginalLanguage": False,
+        "producer": "",
+        "publisherId": "",
+        "seasonNumber": "",
+        "sections": "",
+        "showCrid": "",
+        "showId": "",
+        "showTitel": "",
+        "showType": "",
+        "uuid": None,
+        "needs_reembedding": True,
+    }
 
 
 def test_upsert_event__with_available_correct_document__no_matching_hash(
@@ -306,51 +256,46 @@ def test_upsert_event__with_available_correct_document__no_matching_hash(
     assert request.method == "POST"
     assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
-    assert (
-        request.content
-        == json.dumps(
-            {
-                "externalid": "test",
-                "id": "test",
-                "cmsId": "test",
-                "title": "test",
-                "description": "test",
-                "longDescription": "test",
-                "availableFrom": "2023-10-23T23:00:00+0200",
-                "availableTo": "2023-10-23T23:00:00+0200",
-                "duration": None,
-                "thematicCategories": [],
-                "thematicCategoriesIds": None,
-                "thematicCategoriesTitle": None,
-                "genreCategory": "test",
-                "genreCategoryId": None,
-                "subgenreCategories": [],
-                "subgenreCategoriesIds": None,
-                "subgenreCategoriesTitle": None,
-                "teaserimage": "test",
-                "geoAvailability": None,
-                "embedText": "test",
-                "episodeNumber": "",
-                "hasAudioDescription": False,
-                "hasDefaultVersion": False,
-                "hasSignLanguage": False,
-                "hasSubtitles": False,
-                "isChildContent": False,
-                "isOnlineOnly": False,
-                "isOriginalLanguage": False,
-                "producer": "",
-                "publisherId": "",
-                "seasonNumber": "",
-                "sections": "",
-                "showCrid": "",
-                "showId": "",
-                "showTitel": "",
-                "showType": "",
-                "uuid": None,
-                "needs_reembedding": True,
-            }
-        ).encode()
-    )
+    assert json.loads(request.content.decode()) == {
+        "externalid": "test",
+        "id": "test",
+        "cmsId": "test",
+        "title": "test",
+        "description": "test",
+        "longDescription": "test",
+        "availableFrom": "2023-10-23T23:00:00+0200",
+        "availableTo": "2023-10-23T23:00:00+0200",
+        "duration": 200,
+        "thematicCategories": [],
+        "thematicCategoriesIds": None,
+        "thematicCategoriesTitle": None,
+        "genreCategory": "test",
+        "genreCategoryId": None,
+        "subgenreCategories": [],
+        "subgenreCategoriesIds": None,
+        "subgenreCategoriesTitle": None,
+        "teaserimage": "test",
+        "geoAvailability": None,
+        "embedText": "test",
+        "episodeNumber": "",
+        "hasAudioDescription": False,
+        "hasDefaultVersion": False,
+        "hasSignLanguage": False,
+        "hasSubtitles": False,
+        "isChildContent": False,
+        "isOnlineOnly": False,
+        "isOriginalLanguage": False,
+        "producer": "",
+        "publisherId": "",
+        "seasonNumber": "",
+        "sections": "",
+        "showCrid": "",
+        "showId": "",
+        "showTitel": "",
+        "showType": "",
+        "uuid": None,
+        "needs_reembedding": True,
+    }
 
 
 def test_upsert_event__with_available_correct_document__matching_hash(
@@ -424,51 +369,46 @@ def test_upsert_event__with_available_correct_document__matching_hash(
     assert request.method == "POST"
     assert request.url == config["base_url_search"] + "/documents/test"
     assert request.headers["x-api-key"] == "test-key"
-    assert (
-        request.content
-        == json.dumps(
-            {
-                "externalid": "test",
-                "id": "test",
-                "cmsId": "test",
-                "title": "test",
-                "description": "test",
-                "longDescription": "test",
-                "availableFrom": "2023-10-23T23:00:00+0200",
-                "availableTo": "2023-10-23T23:00:00+0200",
-                "duration": None,
-                "thematicCategories": [],
-                "thematicCategoriesIds": None,
-                "thematicCategoriesTitle": None,
-                "genreCategory": "test",
-                "genreCategoryId": None,
-                "subgenreCategories": [],
-                "subgenreCategoriesIds": None,
-                "subgenreCategoriesTitle": None,
-                "teaserimage": "test",
-                "geoAvailability": None,
-                "embedText": "test",
-                "episodeNumber": "",
-                "hasAudioDescription": False,
-                "hasDefaultVersion": False,
-                "hasSignLanguage": False,
-                "hasSubtitles": False,
-                "isChildContent": False,
-                "isOnlineOnly": False,
-                "isOriginalLanguage": False,
-                "producer": "",
-                "publisherId": "",
-                "seasonNumber": "",
-                "sections": "",
-                "showCrid": "",
-                "showId": "",
-                "showTitel": "",
-                "showType": "",
-                "uuid": None,
-                "needs_reembedding": False,
-            }
-        ).encode()
-    )
+    assert json.loads(request.content.decode()) == {
+        "externalid": "test",
+        "id": "test",
+        "cmsId": "test",
+        "title": "test",
+        "description": "test",
+        "longDescription": "test",
+        "availableFrom": "2023-10-23T23:00:00+0200",
+        "availableTo": "2023-10-23T23:00:00+0200",
+        "duration": 200,
+        "thematicCategories": [],
+        "thematicCategoriesIds": None,
+        "thematicCategoriesTitle": None,
+        "genreCategory": "test",
+        "genreCategoryId": None,
+        "subgenreCategories": [],
+        "subgenreCategoriesIds": None,
+        "subgenreCategoriesTitle": None,
+        "teaserimage": "test",
+        "geoAvailability": None,
+        "embedText": "test",
+        "episodeNumber": "",
+        "hasAudioDescription": False,
+        "hasDefaultVersion": False,
+        "hasSignLanguage": False,
+        "hasSubtitles": False,
+        "isChildContent": False,
+        "isOnlineOnly": False,
+        "isOriginalLanguage": False,
+        "producer": "",
+        "publisherId": "",
+        "seasonNumber": "",
+        "sections": "",
+        "showCrid": "",
+        "showId": "",
+        "showTitel": "",
+        "showType": "",
+        "uuid": None,
+        "needs_reembedding": False,
+    }
 
 
 def test_upsert_event_no_document_found(
@@ -501,7 +441,7 @@ def test_upsert_event_no_document_found(
     )
 
     assert response.status_code == 200
-    assert response.json() == {"detail": "400: Blob not found"}
+    assert response.json() == {"detail": "400 Blob not found"}
     assert len(httpx_mock.get_requests()) == 0
 
     bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
@@ -511,7 +451,7 @@ def test_upsert_event_no_document_found(
     assert uploaded_data["name"] == "prod/nonexistent.json"
     assert uploaded_data["bucket"] == "wdr-recommender-exporter-dev-import"
     assert uploaded_data["event_type"] == "OBJECT_FINALIZE"
-    assert uploaded_data["exception"] == "400: Blob not found"
+    assert uploaded_data["exception"] == "400 Blob not found"
     assert uploaded_data["url"] == "http://testserver/events"
 
 
@@ -555,7 +495,7 @@ def test_upsert_event_invalid_document(
     assert uploaded_data["event_type"] == "OBJECT_FINALIZE"
     assert (
         uploaded_data["exception"]
-        == "11 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ncmsId\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
+        == "12 validation errors for RecoExplorerItem\nexternalid\n  Input should be a valid string [type=string_type, input_value=1337, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nid\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ncmsId\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ntitle\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\ndescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nlongDescription\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\navailableFrom\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\navailableTo\n  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/datetime_type\nthematicCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nsubgenreCategories\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/list_type\nteaserimage\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type\nembedText\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.9/v/string_type"
     )
     assert uploaded_data["url"] == "http://testserver/events"
 
@@ -615,12 +555,19 @@ def test_bulk_ingest__with_validation_error(
     test_client: TestClient, httpx_mock: HTTPXMock
 ):
     httpx_mock.add_response(
-        url=config["base_url_embedding"] + "/embedding", json={"model": [1, 2]}
-    )
-    httpx_mock.add_response(
         url=config["base_url_search"] + "/documents",
         json={"status": "ok"},
         status_code=200,
+    )
+    httpx_mock.add_response(
+        url=config["base_url_search"] + "/documents/test?fields=embedTextHash",
+        method="GET",
+        json={
+            "took": 1,
+            "timed_out": False,
+            "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
+            "_source": {},
+        },
     )
 
     response = test_client.post(
@@ -639,62 +586,59 @@ def test_bulk_ingest__with_validation_error(
 
     # Request to the search service
     request = requests[0]
-    assert request.method == "POST"
-    assert request.url == config["base_url_embedding"] + "/embedding"
+    assert request.method == "GET"
+    assert (
+        request.url
+        == config["base_url_search"] + "/documents/test?fields=embedTextHash"
+    )
     assert request.headers["x-api-key"] == "test-key"
-    assert request.content == json.dumps({"embedText": "test"}).encode()
 
     request = requests[1]
     assert request.method == "POST"
     assert request.url == config["base_url_search"] + "/documents"
     assert request.headers["x-api-key"] == "test-key"
-    assert (
-        request.content
-        == json.dumps(
-            {
-                "test": {
-                    "externalid": "test",
-                    "id": "test",
-                    "cmsId": "test",
-                    "title": "test",
-                    "description": "test",
-                    "longDescription": "test",
-                    "availableFrom": "2023-10-23T23:00:00+0200",
-                    "availableTo": "2023-10-23T23:00:00+0200",
-                    "duration": None,
-                    "thematicCategories": [],
-                    "thematicCategoriesIds": None,
-                    "thematicCategoriesTitle": None,
-                    "genreCategory": "test",
-                    "genreCategoryId": None,
-                    "subgenreCategories": [],
-                    "subgenreCategoriesIds": None,
-                    "subgenreCategoriesTitle": None,
-                    "teaserimage": "test",
-                    "geoAvailability": None,
-                    "embedText": "test",
-                    "episodeNumber": "",
-                    "hasAudioDescription": False,
-                    "hasDefaultVersion": False,
-                    "hasSignLanguage": False,
-                    "hasSubtitles": False,
-                    "isChildContent": False,
-                    "isOnlineOnly": False,
-                    "isOriginalLanguage": False,
-                    "producer": "",
-                    "publisherId": "",
-                    "seasonNumber": "",
-                    "sections": "",
-                    "showCrid": "",
-                    "showId": "",
-                    "showTitel": "",
-                    "showType": "",
-                    "uuid": None,
-                    "model": [1, 2],
-                }
-            }
-        ).encode()
-    )
+    assert json.loads(request.content.decode()) == {
+        "test": {
+            "externalid": "test",
+            "id": "test",
+            "cmsId": "test",
+            "title": "test",
+            "description": "test",
+            "longDescription": "test",
+            "availableFrom": "2023-10-23T23:00:00+0200",
+            "availableTo": "2023-10-23T23:00:00+0200",
+            "duration": 200,
+            "thematicCategories": [],
+            "thematicCategoriesIds": None,
+            "thematicCategoriesTitle": None,
+            "genreCategory": "test",
+            "genreCategoryId": None,
+            "subgenreCategories": [],
+            "subgenreCategoriesIds": None,
+            "subgenreCategoriesTitle": None,
+            "teaserimage": "test",
+            "geoAvailability": None,
+            "embedText": "test",
+            "episodeNumber": "",
+            "hasAudioDescription": False,
+            "hasDefaultVersion": False,
+            "hasSignLanguage": False,
+            "hasSubtitles": False,
+            "isChildContent": False,
+            "isOnlineOnly": False,
+            "isOriginalLanguage": False,
+            "producer": "",
+            "publisherId": "",
+            "seasonNumber": "",
+            "sections": "",
+            "showCrid": "",
+            "showId": "",
+            "showTitel": "",
+            "showType": "",
+            "uuid": None,
+            "needs_reembedding": True,
+        }
+    }
     response = test_client.get(
         f"/tasks/{task_id}",
     )
@@ -702,9 +646,10 @@ def test_bulk_ingest__with_validation_error(
     task = response.json()["task"]
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
-    assert len(task["errors"]) == 1
     assert task["completed_items"] == 1
     assert task["failed_items"] == 1
+    assert len(task["errors"]) == 1
+    assert task["errors"][0].startswith("Validation error")
 
 
 def test_bulk_ingest__with_general_error(test_client, httpx_mock):

@@ -269,6 +269,8 @@ class NnSeekerOpenSearch(NnSeeker):
                     )
                 case "sort":
                     transposed["sort"] = value
+                case "score":
+                    transposed["score"] = value
                 case "clean":
                     script_term = self._prepare_query_bool_script_statement(value)
                 case "blacklist":
