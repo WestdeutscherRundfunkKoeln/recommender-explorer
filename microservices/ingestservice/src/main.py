@@ -74,6 +74,7 @@ async def lifespan(app: FastAPI):
                 data_preprocessor=data_preprocessor,
                 search_service_client=search_service_client,
                 prefix=config["bucket_prefix"],
+                log_bucket=storage_client_factory().bucket(config["log_bucket"]),
             )
         )
     )
@@ -146,6 +147,7 @@ def ingest_multiple_items(
         search_service_client=search_service_client,
         prefix=body.prefix,
         task_id=task_id,
+        log_bucket=storage.bucket(config["log_bucket"]),
     )
     return FullLoadResponse(task_id=task_id)
 

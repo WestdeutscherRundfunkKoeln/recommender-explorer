@@ -57,8 +57,9 @@ def full_ingest(
     search_service_client: SearchServiceClient,
     prefix: str,
     task_id: str,
+    log_bucket: storage.Bucket,
 ) -> None:
-    with TaskStatus(task_id) as task_status:
+    with TaskStatus(task_id, log_bucket) as task_status:
         bulk_ingest(
             blobs=iter(bucket.list_blobs(match_glob=f"{prefix}*.json")),
             data_preprocessor=data_preprocessor,
@@ -73,8 +74,9 @@ def delta_ingest(
     search_service_client: SearchServiceClient,
     prefix: str,
     task_id: str,
+    log_bucket: storage.Bucket,
 ) -> None:
-    with TaskStatus(task_id) as task_status:
+    with TaskStatus(task_id, log_bucket) as task_status:
         blobs = bucket.list_blobs(match_glob=f"{prefix}*.json")
         documents = [
             doc["_id"]
