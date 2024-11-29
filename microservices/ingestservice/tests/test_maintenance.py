@@ -179,6 +179,7 @@ def test_delta_ingest(
             ),
         }
     )
+    log_bucket = MockBucket({})
 
     delta_ingest(
         bucket=bucket,
@@ -186,6 +187,7 @@ def test_delta_ingest(
         search_service_client=search_service_client,
         prefix="test/",
         task_id="test",
+        log_bucket=log_bucket,
     )
 
     task_status = TaskStatus.get("test")

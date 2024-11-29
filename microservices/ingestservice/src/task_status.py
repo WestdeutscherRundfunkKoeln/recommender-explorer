@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime, timedelta, timezone
 from types import TracebackType
+from typing import cast
 
 from google.cloud.exceptions import GoogleCloudError
 from google.cloud.storage import Bucket
@@ -53,13 +54,14 @@ class TaskStatus:
         exc_tb: TracebackType | None,
     ):
         result = (
-            self._on_success
+            self._on_success()
             if exc_type is None
             else self._on_error(exc_type, exc_val, exc_tb)
         )
+        print(result)
         try:
             self.log_bucket.blob(f"{self.id}.json").upload_from_string(
-                json.dumps(self.get(self.id))
+                cast(BulkIngestTask, self.get(self.id)).model_dump_json()
             )
         except GoogleCloudError:
             logger.error("Error during upload of log file", exc_info=True)
