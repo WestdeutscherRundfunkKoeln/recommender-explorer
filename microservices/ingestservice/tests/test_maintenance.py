@@ -196,6 +196,11 @@ def test_delta_ingest(
     assert len(task_status.errors) == 1
     assert task_status.errors[0].startswith("Validation error")
 
+    data_in_bucket = json.loads(log_bucket.blob("test.json").data)
+    assert data_in_bucket["status"] == "COMPLETED"
+    assert len(data_in_bucket["errors"]) == 1
+    assert data_in_bucket["errors"][0].startswith("Validation error")
+
     requests = httpx_mock.get_requests()
     assert len(requests) == 3
 
@@ -295,12 +300,6 @@ def test_delete(
     delete_batch(
         bucket=bucket, prefix="test/", search_service_client=search_service_client
     )
-
-    task_status = TaskStatus.get("test")
-    assert task_status is not None
-    assert task_status.status == "COMPLETED"
-    assert len(task_status.errors) == 1
-    assert task_status.errors[0].startswith("Validation error")
 
     requests = httpx_mock.get_requests()
     assert len(requests) == 2
