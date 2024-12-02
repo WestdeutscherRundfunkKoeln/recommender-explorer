@@ -24,7 +24,7 @@ def test_client():
 
 
 @pytest.fixture(autouse=True)
-def overwrite_storage_client():
+def mock_storage_client():
     data = {
         "prod/valid.json": json.dumps(
             {
@@ -414,7 +414,7 @@ def test_upsert_event__with_available_correct_document__matching_hash(
 def test_upsert_event_no_document_found(
     test_client: TestClient,
     httpx_mock: HTTPXMock,
-    overwrite_storage_client: MockStorageClient,
+    mock_storage_client: MockStorageClient,
 ):
     response = test_client.post(
         "/events",
@@ -444,7 +444,7 @@ def test_upsert_event_no_document_found(
     assert response.json() == {"detail": "400 Blob not found"}
     assert len(httpx_mock.get_requests()) == 0
 
-    bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
+    bucket_data = mock_storage_client.bucket("test_dead_letter_bucket").data
     blob = next((blob for blob in bucket_data if blob.startswith("20")))
     assert blob is not None
     uploaded_data = json.loads(bucket_data[blob].data)
@@ -458,7 +458,7 @@ def test_upsert_event_no_document_found(
 def test_upsert_event_invalid_document(
     test_client: TestClient,
     httpx_mock: HTTPXMock,
-    overwrite_storage_client: MockStorageClient,
+    mock_storage_client: MockStorageClient,
 ):
     response = test_client.post(
         "/events",
@@ -487,7 +487,7 @@ def test_upsert_event_invalid_document(
     assert response.status_code == 200
     assert len(httpx_mock.get_requests()) == 0
 
-    bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
+    bucket_data = mock_storage_client.bucket("test_dead_letter_bucket").data
     blob = next((blob for blob in bucket_data if blob.startswith("20")))
     uploaded_data = json.loads(bucket_data[blob].data)
     assert uploaded_data["name"] == "prod/invalid.json"
@@ -552,7 +552,9 @@ def test_delete_event_with_available_correct_document(
 
 
 def test_bulk_ingest__with_validation_error(
-    test_client: TestClient, httpx_mock: HTTPXMock
+    test_client: TestClient,
+    httpx_mock: HTTPXMock,
+    mock_storage_client: MockStorageClient,
 ):
     httpx_mock.add_response(
         url=config["base_url_search"] + "/documents",
@@ -651,8 +653,21 @@ def test_bulk_ingest__with_validation_error(
     assert len(task["errors"]) == 1
     assert task["errors"][0].startswith("Validation error")
 
+    log_bucket = mock_storage_client.bucket(config["log_bucket"])
+    assert len(log_bucket.data.keys()) == 1
+    blob = json.loads(log_bucket.blob(list(log_bucket.data.keys())[0]).data)
+    assert blob["status"] == "COMPLETED"
+    assert blob["completed_items"] == 1
+    assert blob["failed_items"] == 1
+    assert len(blob["errors"]) == 1
+    assert blob["errors"][0].startswith("Validation error")
 
-def test_bulk_ingest__with_general_error(test_client, httpx_mock):
+
+def test_bulk_ingest__with_general_error(
+    test_client: TestClient,
+    httpx_mock: HTTPXMock,
+    mock_storage_client: MockStorageClient,
+):
     response = test_client.post(
         "/ingest-multiple-items",
         json={
@@ -676,6 +691,14 @@ def test_bulk_ingest__with_general_error(test_client, httpx_mock):
     assert task["errors"] == ["Test error"]
     assert task["completed_items"] == 0
     assert task["failed_items"] == 0
+
+    log_bucket = mock_storage_client.bucket(config["log_bucket"])
+    assert len(log_bucket.data.keys()) == 1
+    blob = json.loads(log_bucket.blob(list(log_bucket.data.keys())[0]).data)
+    assert blob["status"] == "FAILED"
+    assert blob["completed_items"] == 0
+    assert blob["failed_items"] == 0
+    assert blob["errors"] == ["Test error"]
 
 
 def test_get_task__exists(test_client: TestClient, overwrite_tasks):
