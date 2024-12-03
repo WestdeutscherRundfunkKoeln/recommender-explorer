@@ -138,21 +138,23 @@ This configuration will create a Header with a Title, Logo and a Background Colo
 All widgets are organized in Blocks. Every Widgets need to be in an Block to be shown and so you need at least one block in your navigation. 
 
 ### Block Config Overview
-| keyword           | mandatory | fallback value         | description                                                                                                         |
-|-------------------|-----------|------------------------|---------------------------------------------------------------------------------------------------------------------|
-| label             | no        | Default Block Headline | headline of the block                                                                                               |
-| show_reset_button | no        | True                   | Switch if a reaset button for the block should be displayed or not                                                  |
-| components        | yes       | -                      | contains the configuration of the widgets which can be shown. Can be all of the widgets named in this Documentation |
-
+| keyword           | mandatory | fallback value         | description                                                                                                                                                                                                                                                                                                                                              |
+|-------------------|-----------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| label             | no        | Default Block Headline | headline of the block                                                                                                                                                                                                                                                                                                                                    |
+| show_reset_button | no        | True                   | Switch if a reaset button for the block should be displayed or not                                                                                                                                                                                                                                                                                       |
+| components        | yes       | -                      | contains the configuration of the widgets which can be shown. Can be all of the widgets named in this Documentation                                                                                                                                                                                                                                      |
+| linkto            | no        | -                      | links the block to the required accordion that's a part of the Accordion of Cards Widget that must has the ui_acc activated. The value is numeric and starts with 0 which points to the first accordion and so on. not giving a value here simply keeps the block always in the UI so it doesn't get affected by the changes "selection" of an accordion |
 ### Example of a Block Configuration
 
 	- label: 'Block A'
+      linkto: "0"
 	  components: 
 	    - type: 'accordion'
           ...
         - type: 'text_field'
           ...
     - label: 'Block B'
+      linkto: "1"
       show_reset_button: False
       components:
         - type: 'multi_select'
@@ -161,6 +163,43 @@ All widgets are organized in Blocks. Every Widgets need to be in an Block to be 
           ...
         - type: 'date_time_picker'
           ...
+
+
+### Example with Accordion with Cards Widget that controls the UI
+
+    - label: Modelle wählen
+          components:
+            - type: accordion_with_cards
+              ui_acc: true
+              content:
+                - type: accordion
+                  label: A
+                  content:
+
+                - type: accordion
+                  label: B
+                  content:
+
+        - label: 'Block A'
+              linkto: "0" #this block will be shown on the UI when the accordion with lable A is selected
+              components: 
+                - type: 'accordion'
+                  ...
+                - type: 'text_field'
+                  ...
+            - label: 'Block B'
+              linkto: "1"  #this block will be shown on the UI when the accordion with lable B is selected
+              show_reset_button: False
+              components:
+                - type: 'multi_select'
+                  ...
+                - type: 'accordion'
+                  ...
+                - type: 'date_time_picker'
+                  ...
+
+      
+            
 
 This Configuration will create 2 Blocks with Headlines 'Block A' and 'Block B'. Block A will contain a Accordion Widget and a Text Field Widget and Block B will contain a Multi Select Widget, a Accordion Widget and a DateTimePicker Widget. Also it will not display a reset button. Be aware that these Widgets need configuration in itself. See each Widgets Documentation here.
 
@@ -403,7 +442,7 @@ You can configure an Upper Item Filter Multi Select Widget which references the 
     type: 'multi_select'
     label: 'test_upper_item_widget'
     register_as: 'upper_item_filter'
-    linked_filter_name: 'item_filter_A'
+    linked_filter_name: 'item_filter_A' ## In this application the categories are "genres" and "subgenres"
     filter_category: 'a_category'
     dictionary_options:
 	    Option A: 'categories_a'
@@ -492,13 +531,13 @@ This configuration would create a Accordion Widget with a label and two contents
 
 ###  Accordion Cards Config Overview
 
-| keyword | mandatory | fallback value | description                                                                                                                                                                                                                                                                                   |
-|---------|-----------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| type    | yes       | -              | widget type definition: **accordion_with_cards**                                                                                                                                                                                                                                              |
-| active  | no        | [0]            | When there are multiple widgets in the accordion this defines which accordion content widget should be open when the application is started (0 -> first). Each widget which should be open must be in the list, when the list is empty (fallback) the first accordion content widget is open. |
-| toggle  | no        | False          | Option Flag which defines if more than one accordion content type can be opened if there are multiple ones. If True and first accordion content is opened and user opens the second accordion content, the first one gets closed automatically.                                               |
-| content | yes       | -              | This defines the cards of the accordion. There can be multiple entries of other accordion widgets here which need to be exactly configured like they would, when standing alone.                                                                                                              |
-
+| keyword | mandatory | fallback value | description                                                                                                                                                                                                                                                                                     |
+|---------|-----------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| type    | yes       | -              | widget type definition: **accordion_with_cards**                                                                                                                                                                                                                                                |
+| active  | no        | [0]            | When there are multiple widgets in the accordion this defines which accordion content widget should be open when the application is started (0 -> first). Each widget which should be open must be in the list, when the list is empty (fallback) the first accordion content widget is open.   |
+| toggle  | no        | False          | Option Flag which defines if more than one accordion content type can be opened if there are multiple ones. If True and first accordion content is opened and user opens the second accordion content, the first one gets closed automatically.                                                 |
+| content | yes       | -              | This defines the cards of the accordion. There can be multiple entries of other accordion widgets here which need to be exactly configured like they would, when standing alone.                                                                                                                |
+| ui_acc  | no        | -                          | Tells if this widget can control the UI and will have specific widgets linked to it and therefore we will monitor its changes                                                                                                                                                       |
 ### Example of an Accordion Cards Widget Configuration
 
     -   type: 'accordion_with_cards'

@@ -21,17 +21,6 @@ class AccordionWidget(UIWidget):
 
         accordion_widget = pn.Accordion()
 
-        ISUI = config.get(c.UI_ACC, "")
-
-        if ISUI:
-            label = config.get(c.ACCORDION_LABEL_KEY, "")
-            print(f"Accordion with label '{label}' will have a watcher")
-
-            #accordion_widget.active = [0]  # Example: make the first panel active
-
-            # Watch for changes to the active state
-            accordion_widget.param.watch(self.on_accordion_change2, 'active', onlychanged=True)
-
         accordion_content = self.create_accordion_content(
             config.get(c.ACCORDION_CONTENT_KEY, "")
         )
@@ -193,19 +182,19 @@ class AccordionWidgetWithCards(AccordionWidget):
 
         # check if this accordion has a UI functionality, if so, assign a watcher to it
         ISUI = config.get(c.UI_ACC)
-
+        # also check for the label
         if ISUI:
             print("An Accordion Card will have a watcher")
             active_list = config.get(c.ACCORDION_CARD_ACTIVE_KEY)
             if active_list is not None:
                 accordion_widget_with_cards.active = [active_list]
+            #active_list = self.get_config_value(config, c.ACCORDION_CARD_ACTIVE_KEY, int)
+            #if active_list:
+                #accordion_widget_with_cards.active = list(map(int, str(active_list)))
 
             # Watch for changes to the active state
             accordion_widget_with_cards.param.watch(self.on_accordion_card_change, 'active', onlychanged=True)
 
-        #active_list = self.get_config_value(config, c.ACCORDION_CARD_ACTIVE_KEY, int)
-        #if active_list:
-            #accordion_widget_with_cards.active = list(map(int, str(active_list)))
 
         accordion_widget_with_cards.toggle = self.get_config_value(
             config, c.ACCORDION_CARD_TOGGLE_KEY, bool

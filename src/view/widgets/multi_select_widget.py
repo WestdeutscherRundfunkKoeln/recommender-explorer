@@ -1,10 +1,10 @@
+from cProfile import label
 from typing import Any
 
 import panel as pn
 from view import ui_constants as c
 from view.widgets.widget import UIWidget
 from view.util.view_utils import find_widget_by_name
-
 
 class MultiSelectionWidget(UIWidget):
     def get_multi_select_options(
@@ -31,6 +31,7 @@ class MultiSelectionWidget(UIWidget):
                 if c.MULTI_SELECT_DEFAULT_OPTION_KEY in option:
                     option_default.append(option_label)
             return option_list, option_default
+
         elif c.MULTI_SELECT_DICTIONARY_OPTIONS_KEY in multi_select_config:
             return {
                 k: v
@@ -38,9 +39,15 @@ class MultiSelectionWidget(UIWidget):
                 for k, v in option.items()
             }, []
         elif c.MULTI_SELECT_OPTIONS_DEFAULT_FUNCTION_KEY in multi_select_config:
-            return self.controller_instance.get_item_defaults(
-                multi_select_config[c.MULTI_SELECT_OPTIONS_DEFAULT_FUNCTION_KEY]
-            ), []
+            modified_list = list(
+                filter(
+                    lambda item: item != "n/a",
+                    self.controller_instance.get_item_defaults(
+                        multi_select_config[c.MULTI_SELECT_OPTIONS_DEFAULT_FUNCTION_KEY]
+                    )
+                )
+            )
+            return modified_list, []
         return [], []
 
     def build_multi_select_widget(self, config) -> pn.widgets.MultiSelect | None:
@@ -95,6 +102,8 @@ class MultiSelectionWidget(UIWidget):
             "upper_item_filter": UpperItemFilterWidget,
             "reco_filter": RecoFilterWidget,
             "model_choice": ModelChoiceWidget,
+            "user_choice": UserChoiceWidget, # you have to build a class for this
+            "reco_filter_u2c": RecoFilter_U2C_Widget
         }.get(multi_select_register_value)
 
         if multi_select_register_value is None:
@@ -111,9 +120,9 @@ class MultiSelectionWidget(UIWidget):
             multi_select_widget.is_leaf_widget = True
             self.set_action_parameter(config, multi_select_widget)
 
-        tooltip = pn.widgets.TooltipIcon(
-            value=config.get(c.MULTI_SELECT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
-        )
+        # Creates the tooltip only if the value in the config file is not False
+        tooltip_value = config.get(c.TEXT_INPUT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
+        tooltip = None if not tooltip_value else pn.widgets.TooltipIcon(value=tooltip_value)
 
         return pn.Row(multi_select_widget, tooltip)
 
@@ -174,6 +183,7 @@ class ItemFilterWidget(MultiSelectionWidget):
         Returns:
             multi_select_widget (widget): final item filter widget built from given config
         """
+
         item_filter_widget = self.build_multi_select_widget(config)
 
         if not item_filter_widget:
@@ -184,11 +194,80 @@ class ItemFilterWidget(MultiSelectionWidget):
             "value",
             onlychanged=True,
         )
+
         self.controller_instance.register("item_filter", item_filter_widget)
 
         item_filter_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_FILTER
 
         return item_filter_widget
+
+
+
+class UserChoiceWidget(MultiSelectionWidget):
+    def create(self, config: dict[str, Any]) -> pn.widgets.MultiSelect | None:
+        """
+        Builds a multi select User_choice widget based on the given config from config yaml.
+
+        Args:
+            multi_select_config (config): config of a multi select from config yaml.
+
+        Returns:
+            multi_select_widget (widget): final model choice multi select widget built from given config
+        """
+        user_choice_widget = self.build_multi_select_widget(config)
+
+        if not user_choice_widget:
+            return
+
+        model_watcher = user_choice_widget.param.watch(
+            self.reco_explorer_app_instance.trigger_model_choice_new,
+            "value",
+            onlychanged=True,
+        )
+        self.controller_instance.register(
+            "user_choice",
+            user_choice_widget,
+            model_watcher,
+            self.reco_explorer_app_instance.trigger_user_filter_choice,
+        )
+
+        user_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
+
+        return user_choice_widget
+
+
+
+class RecoFilter_U2C_Widget(MultiSelectionWidget):
+    def create(self, config: dict[str, Any]) -> pn.widgets.MultiSelect | None:
+        """
+        Builds a multi select Reco_Filter_U2C widget based on the given config from config yaml.
+
+        Args:
+            multi_select_config (config): config of a multi select from config yaml.
+
+        Returns:
+            multi_select_widget (widget): final Reco_Filter_U2C multi select widget built from given config
+        """
+        Reco_Filter_U2C = self.build_multi_select_widget(config)
+
+        if not Reco_Filter_U2C:
+            return
+
+        model_watcher = Reco_Filter_U2C.param.watch(
+            self.reco_explorer_app_instance.trigger_reco_filter_choice,
+            "value",
+            onlychanged=True,
+        )
+        self.controller_instance.register(
+            "reco_filter_u2c",
+            Reco_Filter_U2C,
+            model_watcher,
+            self.reco_explorer_app_instance.trigger_reco_filter_choice,
+        )
+
+        Reco_Filter_U2C.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
+
+        return Reco_Filter_U2C
 
 
 class ModelChoiceWidget(MultiSelectionWidget):
@@ -263,29 +342,21 @@ class RecoFilterWidget(MultiSelectionWidget):
         return reco_filter_widget
 
 
+
+
+
 class UpperItemFilterWidget(MultiSelectionWidget):
     def create(self, config) -> pn.widgets.MultiSelect | None:
         """
-        Builds a multi select upper filter widget based on the given config from config yaml.
-        An upper item filter is a  multi select widget which gets registered as upper item filter at the controller.
-        It also is linked to an item filter by name reference and needs a filter category to work.
-
-        Args:
-            multi_select_config (config): config of a multi select from config yaml.
-
-        Returns:
-            multi_select_widget (widget): final upper item filter widget built from given config
+        Builds a multi-select upper filter widget based on the given config.
+        Links this filter to another item filter and registers it in the controller.
         """
         upper_item_filter_widget = self.build_multi_select_widget(config)
         linked_filter_name = config.get(c.MULTI_SELECT_LINKED_FILTER_NAME_KEY)
         filter_category = config.get(c.MULTI_SELECT_FILTER_CATEGORY)
 
-        if (
-            (upper_item_filter_widget is None)
-            or (not linked_filter_name)
-            or (not filter_category)
-        ):
-            return
+        if not all([upper_item_filter_widget, linked_filter_name, filter_category]):
+            return None
 
         upper_item_filter_widget.param.watch(
             lambda event: self.load_options_after_filter_got_set(
@@ -295,7 +366,6 @@ class UpperItemFilterWidget(MultiSelectionWidget):
             onlychanged=True,
         )
         self.controller_instance.register("upper_item_filter", upper_item_filter_widget)
-
         upper_item_filter_widget.reset_identifier = c.RESET_IDENTIFIER_UPPER_ITEM_FILTER
 
         return upper_item_filter_widget
@@ -304,24 +374,67 @@ class UpperItemFilterWidget(MultiSelectionWidget):
         self, target_widget_name, category, filter_widget, event
     ):
         """
-        Loads options for item filter after upper item filter was triggered. First select the referenced item filter by name
-        and then get and insert new filter options for the target item filter based on the selected upper item filter.
-
-        :param target_widget_name: target item filter widgets name.
-        :param category: category to set how to get new option values for target item filter.
-        :param filter_widget: upper item filter widget.
-        :param event: event type triggered by upper item filter.
+        Updates options for the target item filter when the upper item filter is triggered.
         """
-        if (event.type != "changed") or (category != "genres"):
-            return
+        # upper_category = equsls to the widget that is named filter_widget
+        # widget = equsls to the widget that has the named category
 
-        target_widget = find_widget_by_name_recursive(
+        # Find the target widget (item filter widget) by name
+        target_widget = self.find_widget_by_name_recursive(
             self.reco_explorer_app_instance.config_based_nav_controls,
             target_widget_name,
         )
+
+        print("the widget is ")
+        print(target_widget)
 
         target_widget.value = (
             self.controller_instance.get_genres_and_subgenres_from_upper_category(
                 filter_widget.value, category
             )
         )
+
+        print("the widget is ")
+        print(target_widget)
+
+
+    def find_widget_by_name_recursive(self, widget, target_widget_name):
+        """
+        Recursively searches for a widget by its 'name' attribute.
+
+        Args:
+            widget: The current widget or container to check.
+            target_widget_name: The name of the widget you're looking for.
+
+        Returns:
+            The widget if found, otherwise None.
+        """
+        # Check if the widget itself matches the target name
+        if hasattr(widget, 'name') and widget.name == target_widget_name:
+            return widget
+
+        # If the widget is a container (like Column, Row, Accordion), iterate through its children
+        if hasattr(widget, 'objects'):
+            for child in widget.objects:
+                result = self.find_widget_by_name_recursive(child, target_widget_name)  # Added self
+                if result:
+                    return result  # Found the widget, return it
+
+        return None  # Widget not found in this branch
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

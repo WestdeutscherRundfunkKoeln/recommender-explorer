@@ -6,6 +6,8 @@ UI_CONFIG_TITLE_KEY = "title"
 UI_CONFIG_LOGO_KEY = "logo"
 UI_CONFIG_HEADER_BACKGROUND_COLOR_KEY = "header_background"
 UI_CONFIG_CUSTOM_CSS_KEY = "custom_css"
+UI_CONFIG_PAGE_SIZE_KEY = "page_size"
+FALLBACK_UI_PAGE_SIZE_VALUE = 4
 
 # Text Input
 TEXT_INPUT_PLACEHOLDER_KEY = "placeholder"
@@ -82,9 +84,6 @@ TEXT_AREA_INPUT_ACCESSOR_KEY = "accessor_function"
 TEXT_AREA_INPUT_VALIDATOR_KEY = "validator_function"
 TEXT_AREA_INPUT_URL_PARAMETER_KEY = "url_parameter"
 
-
-
-
 TEXT_AREA_ROWS_NUM = "rows"
 TEXT_AREA_MAX_ROWS_NUM = "max_rows"
 AUTO_GROW = "auto_grow"
@@ -110,6 +109,8 @@ SLIDER_STEP_KEY = "step"
 SLIDER_COMPONENT_GROUP_KEY = "component_group"
 SLIDER_TOOLTIP_KEY = "tooltip"
 
+SLIDER_CUSTOM_KEY = "custom"
+
 # Block
 BLOCKS_CONFIG_KEY = "blocks"
 
@@ -132,6 +133,7 @@ RADIO_BOX_TYPE_VALUE = "radio_box"
 TEXT_AREA_INPUT_TYPE_VALUE = "text_area_input"
 ACCORDION_RESET_BUTTON_TYPE_VALUE = "accordion-reset-button"
 ACCORDION_WITH_CARDS_TYPE_VALUE = "accordion_with_cards"
+
 
 
 # Fallbacks (if no key and value was given in the config yaml)

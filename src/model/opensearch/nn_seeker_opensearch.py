@@ -230,7 +230,7 @@ class NnSeekerOpenSearch(NnSeeker):
             "keywords": self._prepare_query_term_list_condition_statement,
         }
 
-        for label, value in reco_filter.items():
+        for label, value in list(reco_filter.items()):
             if not value:
                 continue
 
@@ -239,7 +239,10 @@ class NnSeekerOpenSearch(NnSeeker):
             if isinstance(value, list):
                 value = value[0]
 
+
             action, actor = label.split("_")
+
+            logger.debug(f"Processing label: {label}, value: {value}")
 
             match action:
                 case "termfilter":
@@ -254,6 +257,8 @@ class NnSeekerOpenSearch(NnSeeker):
                     )
                 case "sort":
                     transposed["sort"] = value
+                case "score":
+                    transposed["score"] = value
                 case "clean":
                     script_term = self._prepare_query_bool_script_statement(value)
                 case "blacklist":
@@ -268,6 +273,7 @@ class NnSeekerOpenSearch(NnSeeker):
                     self.LIST_FILTER_TERMS[captured_action](
                         values_list, captured_action, bool_terms
                     )
+
                 case _:
                     logger.warning(
                         "Received unknown filter action [" + action + "]. Omitting."

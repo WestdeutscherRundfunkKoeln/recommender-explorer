@@ -1,10 +1,7 @@
 import asyncio
 import logging
 import traceback
-from logging import setLogRecordFactory
 from typing import Any
-
-
 import constants
 import panel as pn
 from controller.reco_controller import RecommendationController
@@ -28,8 +25,20 @@ from view.widgets.text_area_input_widget import TextAreaInputWidget
 from view.widgets.text_field_widget import TextFieldWidget
 from view.widgets.accordion_widget import AccordionWidgetWithCards
 
+
+
+
+
+#loggin preference
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 #
@@ -107,27 +116,20 @@ class RecoExplorerApp:
 
         #
         self.define_item_pagination()
-        if ui_constants.UI_CONFIG_KEY not in self.config:
-            self.define_start_item_selections()
-            self.define_start_item_filtering()
-            self.define_reco_filtering_selection()
-            self.define_reco_filtering_selection_u2c()
-            self.define_reco_sorting()
-            self.define_reco_duplicate_filtering()
-            self.define_reco_incomplete_filtering()
-            self.define_model_selections()
-            self.define_user_selections()
-            self.define_reco_duration_filtering()
-            self.define_score_threshold()
+
 
         # a grid for start items/users and recos
         self.item_grid = pn.GridSpec()
+
 
         # init some of the component values
         self.set_c2c_model_definitions()
         self.set_u2c_model_definitions()
 
         self.url_parameter_text_field_mapping = {}
+
+        # stores the UI elements to avoid building them when the states changes
+        block_list2 = []
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -150,810 +152,6 @@ class RecoExplorerApp:
         self.floating_elements = pn.Row(height=0, width=0)
 
 
-    def define_start_item_filtering(self):
-        # genre selector
-        self.genreRadio = pn.widgets.RadioBoxGroup(
-            name="erzählweiseGenreRadio",
-            options={"Erzählweise": "choose_upper_genre", "Genre": "choose_genre"},
-            visible=True,
-        )
-
-        self.genreRadio.params = {
-            "label": "erzählweiseGenreRadio",
-            "visible_action": ("choose_upper_genre", "erzaehlweise"),
-            "visible_action_2": ("choose_genre", "genres"),
-            "reset_to": None,
-        }
-
-        self.genreRadio_watcher = self.genreRadio.param.watch(
-            self.toggle_visibility, "value", onlychanged=True
-        )
-        self.controller.register(
-            "upper_item_filter",
-            self.genreRadio,
-            self.genreRadio_watcher,
-            self.toggle_visibility,
-        )
-
-        self.erzaehlweise = pn.widgets.MultiSelect(
-            options={
-                "Genres Doku": "categories_documentation",
-                "Genres Fiktion": "categories_fiction",
-                "Genres Show": "categories_show",
-                "Genres Information": "categories_information",
-                "Genres Live": "categories_live",
-            },
-            visible=True,
-            size=5,
-        )
-
-        self.erzaehlweise.params = {"label": "erzaehlweiseCategory", "reset_to": []}
-
-        self.erzaehlweise.param.watch(
-            self.toggle_genre_selection_by_upper_genre, "value", onlychanged=True
-        )
-        self.controller.register("upper_item_filter", self.erzaehlweise)
-
-        self.genres = pn.widgets.MultiSelect(options=[], visible=False, size=4)
-
-        self.genres.params = {"label": "genreCategory", "reset_to": []}
-
-        self.genres.options = self.controller.get_item_defaults("genreCategory")
-        self.genres.param.watch(self.toggle_start_components, "visible")
-        self.genres.param.watch(
-            self.trigger_item_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register("item_filter", self.genres)
-
-        self.genre_start_col = pn.Column(
-            self.genreRadio, self.erzaehlweise, self.genres
-        )
-
-        # subgenre selector
-        self.subgenreRadio = pn.widgets.RadioBoxGroup(
-            name="inhaltSubgenreRadio",
-            options={"Inhalt": "choose_upper_subgenre", "Subgenre": "choose_subgenre"},
-            visible=True,
-        )
-
-        self.subgenreRadio.params = {
-            "label": "inhaltSubgenreRadio",
-            "visible_action": ("choose_upper_subgenre", "inhalt"),
-            "visible_action_2": ("choose_subgenre", "subgenres"),
-            "reset_to": None,
-        }
-
-        self.subgenreRadio_watcher = self.subgenreRadio.param.watch(
-            self.toggle_visibility, "value", onlychanged=True
-        )
-        self.controller.register(
-            "upper_item_filter",
-            self.subgenreRadio,
-            self.subgenreRadio_watcher,
-            self.toggle_visibility,
-        )
-
-        self.inhalt = pn.widgets.MultiSelect(
-            options={
-                "Subgenres Doku": "categories_documentation",
-                "Subgenres Fiktion": "categories_fiction",
-                "Subgenres Show": "categories_show",
-                "Subgenres Information": "categories_information",
-                "Subgenres Live": "categories_live",
-            },
-            visible=True,
-            size=5,
-        )
-
-        self.inhalt.params = {"label": "inhaltCategory", "reset_to": []}
-
-        self.inhalt.param.watch(
-            self.toggle_genre_selection_by_upper_genre, "value", onlychanged=True
-        )
-        self.controller.register("upper_item_filter", self.inhalt)
-
-        self.subgenres = pn.widgets.MultiSelect(options=[], visible=False, size=4)
-
-        self.subgenres.params = {"label": "subgenreCategories", "reset_to": []}
-
-        self.subgenres.options = self.controller.get_item_defaults("subgenreCategories")
-        self.subgenres.param.watch(self.toggle_start_components, "visible")
-        self.subgenres.param.watch(
-            self.trigger_item_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register("item_filter", self.subgenres)
-
-        self.subgenre_start_col = pn.Column(
-            self.subgenreRadio, self.inhalt, self.subgenres
-        )
-
-        # theme selector
-        self.themes = pn.widgets.MultiSelect(
-            name="Themen", options=[], visible=True, size=4
-        )
-
-        self.themes.params = {"label": "thematicCategories", "reset_to": []}
-
-        self.themes.options = self.controller.get_item_defaults("thematicCategories")
-        self.themes.param.watch(self.toggle_start_components, "visible")
-        self.themes.param.watch(
-            self.trigger_item_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register("item_filter", self.themes)
-
-        # show selector
-        self.shows = pn.widgets.MultiSelect(
-            name="Sendereihen", options=[], visible=True, size=4
-        )
-
-        self.shows.params = {"label": "showTitel", "reset_to": []}
-
-        self.shows.options = self.controller.get_item_defaults("showTitle")
-        self.shows.param.watch(self.toggle_start_components, "visible")
-        self.shows.param.watch(
-            self.trigger_item_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register("item_filter", self.shows)
-
-        # reset button
-        self.item_resetter = pn.widgets.Button(
-            name="Auswahl zurücksetzen", button_type="primary", margin=10
-        )
-
-        self.item_resetter.params = {
-            "label": "item_resetter",
-            "resets": ["item_choice", "upper_item_filter", "item_filter"],
-        }
-
-        self.item_resetter.on_click(self.trigger_item_reset)
-
-
-    def define_start_item_selections(self):
-        # startvideo selector
-        self.startvid = pn.widgets.RadioBoxGroup(
-            name="Startvideo",
-            options=[
-                "Datum",
-                self.config["opensearch"]["primary_field"].capitalize(),
-                "URL",
-                "Text",
-            ],
-            value="Datum",
-        )
-
-        self.startvid.param.watch(self.toggle_start_components, "value")
-
-        # date selector - start
-        self.startdate = pn.widgets.DatetimePicker(name="Startdatum", visible=True)
-
-        self.startdate.params = {
-            "validator": "_check_date",
-            "label": "startdateinput",
-            "accessor": "get_items_by_date",
-            "has_paging": True,
-            "reset_to": None,
-        }
-
-        self.startdate.param.watch(self.toggle_start_components, "visible")
-        self.startdate.param.watch(
-            self.trigger_item_selection, "value", onlychanged=True
-        )
-        self.controller.register("item_choice", self.startdate)
-
-        # date selector - end
-        self.enddate = pn.widgets.DatetimePicker(name="Enddatum", visible=True)
-        self.enddate.params = {
-            "validator": "_check_date",
-            "label": "enddateinput",
-            "accessor": "get_items_by_date",
-            "has_paging": True,
-            "reset_to": None,
-        }
-
-        self.enddate.param.watch(self.toggle_start_components, "visible")
-        self.enddate.param.watch(self.trigger_item_selection, "value", onlychanged=True)
-        self.controller.register("item_choice", self.enddate)
-
-        # crid input
-        self.crid_input = pn.widgets.TextInput(
-            placeholder=self.config["opensearch"]["primary_field"],
-            visible=False,
-            max_length=100000,  # TODO: max length adjustment not working, find out how to solve
-        )
-
-        self.crid_input.params = {
-            "validator": "_check_" + self.config["opensearch"]["primary_field"],
-            "accessor": "get_item_by_" + self.config["opensearch"]["primary_field"],
-            "label": "cridinput",
-            "has_paging": False,
-            "reset_to": "",
-        }
-        self.crid_input.param.watch(self.toggle_start_components, "visible")
-        self.crid_input.param.watch(
-            self.trigger_item_selection, "value", onlychanged=True
-        )
-        self.controller.register("item_choice", self.crid_input)
-
-        # url input
-        self.url_input = pn.widgets.TextInput(
-            name="URL", placeholder="https://", visible=False
-        )
-
-        self.url_input.params = {
-            "validator": "_check_url",
-            "accessor": "get_item_by_url",
-            "label": "urlinput",
-            "has_paging": False,
-            "reset_to": "",
-        }
-
-        self.url_input.param.watch(self.toggle_start_components, "visible")
-        self.url_input.param.watch(
-            self.trigger_item_selection, "value", onlychanged=True
-        )
-        self.controller.register("item_choice", self.url_input)
-
-        # text input
-        self.text_input = pn.widgets.TextAreaInput(
-            name="Text",
-            placeholder="Text here",
-            visible=False,
-            max_length=99_999,  # empirical max_length
-            rows=5,
-            max_rows=10,
-            auto_grow=True,
-        )
-
-        self.text_input.params = {
-            "validator": "_check_text",
-            "accessor": "get_item_by_text",  #
-            "label": "text_input",  #
-            "has_paging": False,
-            "reset_to": "",
-        }
-
-        self.text_input.param.watch(self.toggle_start_components, "visible")
-        self.text_input.param.watch(
-            self.trigger_item_selection, "value", onlychanged=True
-        )
-        self.controller.register("item_choice", self.text_input)
-
-        # all input sources as columns
-        self.input_sources = pn.Column(
-            self.startvid,
-            self.crid_input,
-            self.url_input,
-            self.text_input,
-            self.startdate,
-            self.enddate,
-        )
-
-
-    # Filtering block u2c
-    def define_reco_filtering_selection_u2c(self):
-        self.editorial_choice = pn.widgets.MultiSelect(
-            name="Empfehlungen auf Kategorie einschränken",
-            options=[],
-            visible=True,
-            size=4,
-        )
-
-        self.editorial_choice.params = {
-            "label": "editorialCategories",
-            "validator": "_check_editorial_category",
-            "reset_to": [],
-        }
-
-        self.editorial_choice.options = list(
-            filter(
-                lambda item: item != "n/a",
-                self.controller.get_item_defaults("editorialCategories"),
-            )
-        )
-
-        user_editorial_watcher = self.editorial_choice.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-
-        self.controller.register(
-            "reco_filter_u2c",
-            self.editorial_choice,
-            user_editorial_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # reset button
-        self.reco_resetter_u2c = pn.widgets.Button(
-            name="Auswahl zurücksetzen", button_type="primary", margin=10
-        )
-
-        self.reco_resetter_u2c.params = {
-            "label": "reco_resetter_u2c",
-            "resets": ["reco_filter_u2c"],
-        }
-
-        self.reco_resetter_u2c.on_click(self.trigger_reco_reset)
-
-    # Filtering blokc c2c
-    def define_reco_filtering_selection(self):
-        # Select if same, other, mix or custom choice of genre, subgenre, theme and show
-        # genre filter selector
-        self.genreFilter = pn.widgets.MultiSelect(
-            name="Genre-Filterauswahl",
-            options={
-                "Nur gleiches Genre": "same_genre",
-                "Nur andere Genres": "different_genre",
-                "Erzählweise auswählen": "choose_erzählweise",
-                "Genres auswählen": "choose_genre",
-            },
-            size=4,
-            visible=True,
-        )
-
-        self.genreFilter.params = {
-            "label": "termfilter_genre",
-            "visible_action": ("choose_genre", "genreSelect"),
-            "visible_action_2": ("choose_erzählweise", "erzaehlweiseSelect"),
-            "reset_to": None,
-        }
-
-        genre_watcher = self.genreFilter.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.genreFilter,
-            genre_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # subgenre filter selector
-        self.subgenreFilter = pn.widgets.MultiSelect(
-            name="Subgenre-Filterauswahl",
-            options={
-                "Nur gleiche Subgenres": "same_subgenre",
-                "Nur andere Subgenres": "different_subgenre",
-                "Inhalt auswählen": "choose_inhalt",
-                "Subgenres auswählen": "choose_subgenre",
-            },
-            size=4,
-            visible=True,
-        )
-
-        self.subgenreFilter.params = {
-            "label": "termfilter_subgenre",
-            "visible_action": ("choose_subgenre", "subgenreSelect"),
-            "visible_action_2": ("choose_inhalt", "inhaltSelect"),
-            "reset_to": None,
-        }
-
-        subgenre_watcher = self.subgenreFilter.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.subgenreFilter,
-            subgenre_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # theme filter selector
-        self.themeFilter = pn.widgets.MultiSelect(
-            name="Themen-Filterauswahl",
-            options={
-                "Nur gleiche Themen": "same_theme",
-                "Nur andere Themen": "different_theme",
-                "Themen auswählen": "choose_theme",
-            },
-            size=3,
-            visible=True,
-        )
-
-        self.themeFilter.params = {
-            "label": "termfilter_theme",
-            "visible_action": ("choose_theme", "themeSelect"),
-            "reset_to": None,
-        }
-
-        theme_watcher = self.themeFilter.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.themeFilter,
-            theme_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # show filter selector
-        self.showFilter = pn.widgets.MultiSelect(
-            name="Sendereihen-Filterauswahl",
-            options={
-                "Nur gleiche Sendereihe": "same_show",
-                "Nur andere Sendereihen": "different_show",
-                "Sendereihen auswählen": "choose_show",
-            },
-            size=3,
-            visible=True,
-        )
-
-        self.showFilter.params = {
-            "label": "termfilter_show",
-            "visible_action": ("choose_show", "showSelect"),
-            "reset_to": None,
-        }
-
-        show_watcher = self.showFilter.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.showFilter,
-            show_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # Select specific genre, subgenre, theme and show
-        # genre selector
-        self.erzaehlweiseSelect = pn.widgets.MultiSelect(
-            options={
-                "Genres Doku": "categories_documentation",
-                "Genres Fiktion": "categories_fiction",
-                "Genres Show": "categories_show",
-                "Genres Information": "categories_information",
-                "Genres Live": "categories_live",
-            },
-            visible=False,
-            size=5,
-        )
-
-        self.erzaehlweiseSelect.params = {
-            "label": "value_erzaehlweiseCategory",
-            "reset_to": [],
-        }
-
-        erzaehlweise_watcher = self.erzaehlweiseSelect.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.erzaehlweiseSelect,
-            erzaehlweise_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        self.genreSelect = pn.widgets.MultiSelect(
-            name="Genre", options=[], visible=False
-        )
-
-        self.genreSelect.params = {"label": "value_genreCategory", "reset_to": []}
-
-        self.genreSelect.options = self.controller.get_item_defaults("genreCategory")
-        genre_s_watcher = self.genreSelect.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.genreSelect,
-            genre_s_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # subgenre selector
-        self.inhaltSelect = pn.widgets.MultiSelect(
-            options={
-                "Subgenres Doku": "categories_documentation",
-                "Subgenres Fiktion": "categories_fiction",
-                "Subgenres Show": "categories_show",
-                "Subgenres Information": "categories_information",
-                "Subgenres Live": "categories_live",
-            },
-            visible=False,
-            size=5,
-        )
-
-        self.inhaltSelect.params = {"label": "value_inhaltCategory", "reset_to": []}
-
-        inhalt_watcher = self.inhaltSelect.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.inhaltSelect,
-            inhalt_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        self.subgenreSelect = pn.widgets.MultiSelect(
-            name="Subgenre", options=[], visible=False
-        )
-
-        self.subgenreSelect.params = {
-            "label": "value_subgenreCategories",
-            "reset_to": [],
-        }
-
-        self.subgenreSelect.options = self.controller.get_item_defaults(
-            "subgenreCategories"
-        )
-        subgenre_s_watcher = self.subgenreSelect.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.subgenreSelect,
-            subgenre_s_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # theme selector
-        self.themeSelect = pn.widgets.MultiSelect(
-            name="Thema", options=[], visible=False
-        )
-
-        self.themeSelect.params = {"label": "value_thematicCategories", "reset_to": []}
-
-        self.themeSelect.options = self.controller.get_item_defaults(
-            "thematicCategories"
-        )
-        theme_s_watcher = self.themeSelect.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.themeSelect,
-            theme_s_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # show selector
-        self.showSelect = pn.widgets.MultiSelect(
-            name="Sendereihe", options=[], visible=False
-        )
-
-        self.showSelect.params = {"label": "value_showTitel", "reset_to": []}
-
-        self.showSelect.options = self.controller.get_item_defaults("showTitle")
-        show_s_watcher = self.showSelect.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.showSelect,
-            show_s_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-        # combine selections into columns
-        self.genre_col = pn.Column(
-            self.genreFilter, self.erzaehlweiseSelect, self.genreSelect
-        )
-        self.subgenre_col = pn.Column(
-            self.subgenreFilter, self.inhaltSelect, self.subgenreSelect
-        )
-        self.theme_col = pn.Column(self.themeFilter, self.themeSelect)
-        self.show_col = pn.Column(self.showFilter, self.showSelect)
-
-        # reset button
-        self.reco_resetter = pn.widgets.Button(
-            name="Auswahl zurücksetzen", button_type="primary", margin=10
-        )
-
-        self.reco_resetter.params = {
-            "label": "reco_resetter",
-            "resets": ["reco_filter", "upper_reco_filter"],
-        }
-
-        self.reco_resetter.on_click(self.trigger_reco_reset)
-
-    def define_reco_sorting(self):
-        # sorting filter selector
-        self.sort = pn.widgets.MultiSelect(
-            name="Sortieren", options={"Aktualität": "desc", "Longtail": "asc"}, size=2
-        )
-
-        self.sort.params = {"label": "sort_recos", "reset_to": []}
-        sort_watcher = self.sort.param.watch(
-            self.trigger_item_selection, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter", self.sort, sort_watcher, self.trigger_item_selection
-        )
-
-    def define_reco_duplicate_filtering(self):
-        # duplicate filter selector
-        self.duplicate = pn.widgets.MultiSelect(
-            name="Duplikatfilter",
-            options={
-                "Doppelte Crid": ["filterDuplicateCrid", "crid"],
-                "Identische Description": ["filterDuplicateDescription", "description"],
-                "Identische ImageUrl": ["filterDuplicateImageUrl", "teaserimage"],
-            },
-            size=3,
-        )
-
-        self.duplicate.params = {"label": "remove_duplicate", "reset_to": []}
-
-        duplicate_watcher = self.duplicate.param.watch(
-            self.trigger_item_selection, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.duplicate,
-            duplicate_watcher,
-            self.trigger_item_selection,
-        )
-
-    def define_reco_incomplete_filtering(self):
-        # incomplete filter selector
-        self.incompleteSelect = pn.widgets.MultiSelect(
-            name="Nur ausgefüllte Daten für:",
-            options={"Subgenre": "subgenreCategories", "Thema": "thematicCategories"},
-            size=2,
-        )
-
-        self.incompleteSelect.params = {"label": "clean_incomplete", "reset_to": []}
-
-        incomplete_watcher = self.incompleteSelect.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.incompleteSelect,
-            incomplete_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-    def define_reco_duration_filtering(self):
-        gte_values = [2, 5, 10, 15, 30, 45]
-
-        # duration filter selector
-        self.duration_filter = pn.widgets.MultiSelect(
-            name="Länge-Filter",
-            options={
-                "Alle": [],
-                **{
-                    f"ONLY > {minute} Minuten": {"duration": {"gte": minute * 60}}
-                    for minute in gte_values
-                },
-            },
-            size=1,
-        )
-
-        self.duration_filter.params = {"label": "rangefilter_duration", "reset_to": []}
-
-        duration_filter_watcher = self.duration_filter.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.duration_filter,
-            duration_filter_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-    def define_score_threshold(self):
-        threshold_values = [
-            0.95,
-            0.9,
-            0.85,
-            0.8,
-            0.75,
-            0.7,
-            0.65,
-            0.6,
-            0.55,
-            0.5,
-            0.45,
-            0.4,
-        ]
-        # duration filter selector
-        self.score_threshold_filter = (
-            pn.widgets.MultiSelect(  # TODO: change this to continuous slider
-                name="Modell-Score",
-                options={
-                    "Alle": [],
-                    **{
-                        f"ONLY SCORE > {score_threshold}": score_threshold
-                        for score_threshold in threshold_values
-                    },
-                },
-                size=1,
-            )
-        )
-
-        self.score_threshold_filter.params = {
-            "label": "score_threshold",
-            "reset_to": 0.0,
-        }
-
-        score_threshold_filter_watcher = self.score_threshold_filter.param.watch(
-            self.trigger_reco_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "reco_filter",
-            self.score_threshold_filter,
-            score_threshold_filter_watcher,
-            self.trigger_reco_filter_choice,
-        )
-
-    def define_user_selections(self):
-        self.user_filter_choice = pn.widgets.Select(
-            name="Nutzer:in rezipiert in erster Linie", options=[], visible=True, size=4
-        )
-
-        self.user_filter_choice.params = {
-            "validator": "_check_category",
-            "accessor": "get_users_by_category",
-            "label": "genre_users",
-            "has_paging": True,
-            "reset_to": None,
-            "active": True,
-        }
-        self.user_filter_choice.options = self.controller.get_item_defaults(
-            "genreCategory"
-        )
-        user_filter_watcher = self.user_filter_choice.param.watch(
-            self.trigger_user_filter_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "user_choice",
-            self.user_filter_choice,
-            user_filter_watcher,
-            self.trigger_user_filter_choice,
-        )
-
-    def define_model_selections(self):
-        ## c2c selections
-        self.c2c_choice = pn.widgets.MultiSelect(
-            name="", options=self.c2c_models, value=self.c2c_model_default
-        )
-        self.c2c_choice.params = {
-            "label": constants.MODEL_CONFIG_C2C,
-            "reset_to": self.c2c_model_default,
-        }
-        model_watcher = self.c2c_choice.param.watch(
-            self.trigger_model_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "model_choice", self.c2c_choice, model_watcher, self.trigger_model_choice
-        )
-
-        ## u2c selections
-        self.u2c_model_choice = pn.widgets.MultiSelect(
-            name="",
-            options=self.u2c_models,
-        )
-        self.u2c_model_choice.params = {
-            "label": constants.MODEL_CONFIG_U2C,
-            "reset_to": [],
-        }
-        model_watcher = self.u2c_model_choice.param.watch(
-            self.trigger_model_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "model_choice",
-            self.u2c_model_choice,
-            model_watcher,
-            self.trigger_model_choice,
-        )
-
-        # reset button
-        self.model_resetter = pn.widgets.Button(
-            name="Auswahl zurücksetzen", button_type="primary", margin=10
-        )
-
-        self.model_resetter.params = {
-            "label": "model_resetter",
-            "resets": ["model_choice"],
-        }
-
-        self.model_resetter.on_click(self.trigger_model_reset)
-
-
-
-
-    # event handling
     async def trigger_reco_filter_choice(self, event):
         logger.info(event)
         self.toggle_visibility(event)
@@ -1148,13 +346,6 @@ class RecoExplorerApp:
             self.text_input.visible = True
         # shorten this, either combine last two elifs or with dict of widget groups
 
-
-
-
-
-
-
-
     def toggle_model_choice(self, event):
         logger.info(event)
         active_block = event.obj.active[0]
@@ -1165,31 +356,12 @@ class RecoExplorerApp:
             self.put_navigational_block(3, self.filter_block[1])
         self.assemble_navigation_elements()
 
-
-
-
-
-
-
-
-
-
     def toggle_client_choice(self, event):
         logger.info(event)
         self.client = event.obj.value
         pn.state.location.update_query(client=self.client)
         # await this call?
         pn.state.location.reload = True
-
-
-
-
-
-
-
-
-
-
 
     def toggle_user_choice(self, event):
         active_component = event.obj.objects[event.obj.active[0]]
@@ -1198,14 +370,6 @@ class RecoExplorerApp:
                 component.params["active"] = False
             else:
                 component.params["active"] = True
-
-
-
-
-
-
-
-
 
     def toggle_genre_selection_by_upper_genre(self, event):
         logger.info(event)
@@ -1337,25 +501,6 @@ class RecoExplorerApp:
                 return None
             return widget.create(common_ui_widget_config)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def build_widgets(self, widgets_config):
         widgets_list = []
         if widgets_config is not None:
@@ -1377,10 +522,7 @@ class RecoExplorerApp:
                         widget_config)
                 )
 
-            elif "radio_box" == component_type:
-                widgets_list.append(
-                    self.widgets[ui_constants.RADIO_BOX_TYPE_VALUE].create(widget_config)
-                )
+
 
             else:
                 logger.error("Unknown UI Config Type: " + component_type)
@@ -1390,20 +532,6 @@ class RecoExplorerApp:
 
 
         return widgets_list
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def build_blocks(self):
         """
@@ -1433,39 +561,13 @@ class RecoExplorerApp:
                     ui_constants.BLOCK_CONFIG_LABEL_KEY,
                     ui_constants.FALLBACK_BLOCK_LABEL_VALUE,
                 ),
+                ui_constants.BLOCKS_CONFIG_LINKTO: block_config.get(
+                    ui_constants.BLOCKS_CONFIG_LINKTO
+                ),
                 ui_constants.BLOCK_WIDGETS_LIST_KEY: list_of_widgets_in_block,
             }
             block_list.append(block)
         return block_list
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def append_block_to_navigation(self, block):
         """
@@ -1483,10 +585,8 @@ class RecoExplorerApp:
         for block_component in block.get(ui_constants.BLOCK_WIDGETS_LIST_KEY):
             self.config_based_nav_controls.append(block_component)
 
-    # stores the UI elements to avoid calling build_blocks() when the states changes
-    block_list2 = []
+    def build_ui(self):
 
-    def build_UI(self):
         # clear the nav controls
         self.config_based_nav_controls.clear()
 
@@ -1516,31 +616,33 @@ class RecoExplorerApp:
         # then it's an index sent by the accordion_widget class
         if ActiveAccordion != "":
             choosen_accordion = ActiveAccordion
-            self.build_UI() #reset the nav bar before doing modifications
+            self.build_ui() #reset the nav bar before doing modifications
 
         # Create a dictionary to group blocks by their linkto value
         grouped_blocks = {}
         # To store blocks without 'linkto'
         no_linkto_blocks = []
 
-
         # Iterate through the blocks_config configurations
         for block_config in blocks_config:
             # Get the 'linkto' value if it exists
             linkto_value = block_config.get(ui_constants.BLOCKS_CONFIG_LINKTO)
-
-            # Print the values for verification
-            print(f"Processing block: {block_config['label']}, linkto: {linkto_value}")
 
             # Check if the block has a 'linkto' value
             if linkto_value:
                 if linkto_value not in grouped_blocks:
                     grouped_blocks[linkto_value] = []
 
+                # Get the label of that accordion
+                Acc_label = block_config.get(ui_constants.BLOCK_LABEL_LIST_KEY)
+
                 # Find the corresponding block from the blocks list
                 corresponding_blocks = [
-                    block for block in block_list2 if block.get('label') == block_config['label']
+                    block for block in block_list2
+                    if block.get('label') == Acc_label and block.get('linkto') == linkto_value
                 ]
+
+                print(corresponding_blocks)
                 # Append the corresponding blocks to the group
                 grouped_blocks[linkto_value].extend(corresponding_blocks)
             else:
@@ -1549,7 +651,6 @@ class RecoExplorerApp:
                     block for block in block_list2 if block.get('label') == block_config['label']
                 ]
                 no_linkto_blocks.extend(corresponding_blocks)
-
 
         if grouped_blocks:
             choosen_blocks = grouped_blocks.get(choosen_accordion, [])
@@ -1568,220 +669,56 @@ class RecoExplorerApp:
                 if index + 1 != len(block_list2):
                     self.config_based_nav_controls.append(pn.layout.Divider())
 
-
-
-
-
     def assemble_components(self):
         accordion_max_width = ui_constants.ACCORDION_MAX_WIDTH
         if ui_constants.UI_CONFIG_BLOCKS in self.config:
             # build client choice
-            self.build_UI()
+            self.build_ui()
 
             # check if particular blocks belong to another ones and then populate the navigation
             self.add_blocks_to_navigation()
 
+            # empty screen hinweis
+            self.item_grid[0, 0] = pn.pane.Alert(
+                "Wähle ein oder mehrere Modelle, sowie ein Start-Item oder -User",
+                alert_type="warning",
+            )
+
+            # previous button
+            self.previousPage = pn.widgets.Button(
+                name=self.LEFT_ARROW,
+                button_type="primary",
+                margin=10,
+                width=50,
+                disabled=True,
+            )
+            self.previousPage.on_click(self.trigger_item_pagination)
+            self.pagination.append(self.previousPage)
+
+            self.pagination.append(pn.pane.Markdown("""### Seite """))
+            self.pagination.append(pn.pane.Markdown("""### - """))
+            self.pagination.append(pn.pane.Markdown("""### von """))
+            self.pagination.append(pn.pane.Markdown("""### - """))
+
+            # next button
+            self.nextPage = pn.widgets.Button(
+                name=self.RIGHT_ARROW,
+                button_type="primary",
+                width=50,
+                margin=10,
+                disabled=True,
+            )
+            self.nextPage.on_click(self.trigger_item_pagination)
+            self.pagination.append(self.nextPage)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-        ## this part builds the ARD version or the no config file case and it does not call the build_blocks function
-
+        ## In case no config file was given
         else:
-            # Client
-            self.client_choice = pn.widgets.RadioButtonGroup(
-                name="",
-                options=get_client_options(self.config_full_paths),
-                value=self.client,
+            # empty screen hinweis
+            self.item_grid[0, 0] = pn.pane.Alert(
+                "Couldn't find a Config file",
+                alert_type="warning",
             )
-
-            if self.client_choice_visibility:
-                self.put_navigational_block(
-                    0, ["### Mandant wählen", self.client_choice]
-                )
-                self.client_choice.param.watch(
-                    self.toggle_client_choice, "value", onlychanged=True
-                )
-
-
-
-
-
-
-
-
-
-
-
-            # Models
-            if (
-                constants.MODEL_CONFIG_U2C in self.config
-            ):  # TODO: refactor bootstrapping of application to make this more generic
-                self.model_choice = pn.Accordion(
-                    ("Content-2-Content", self.c2c_choice),
-                    ("User-2-Content", self.u2c_model_choice),
-                )
-            else:
-                self.model_choice = pn.Accordion(("Content-2-Content", self.c2c_choice))
-
-
-
-
-            self.model_choice.active = [0]
-            self.model_choice.toggle = True
-            self.model_choice.max_width = accordion_max_width
-
-            self.put_navigational_block(
-                1, ["### Modelle wählen", self.model_choice, self.model_resetter]
-            )
-
-            self.model_choice.param.watch(
-                self.toggle_model_choice, "active", onlychanged=True
-            )
-
-
-
-
-
-
-
-
-
-
-
-            # Item source
-            self.item_source = pn.Accordion(
-                ("Quelle wählen", self.input_sources),
-                ("Genre wählen", self.genre_start_col),
-                ("Subgenre wählen", self.subgenre_start_col),
-                ("Thema wählen", self.themes),
-                ("Sendereihe wählen", self.shows),
-            )
-            self.item_source.active = [0]
-            self.item_source.max_width = accordion_max_width
-
-            # User source
-            self.user_source = pn.Accordion(("User-Filter", self.user_filter_choice))
-            #            self.user_source.active = [1,1]
-            self.user_source.toggle = False
-            self.user_source.max_width = accordion_max_width
-            self.user_source.param.watch(
-                self.toggle_user_choice, "active", onlychanged=True
-            )
-
-
-
-
-
-
-            self.source_block = {}
-            self.source_block[0] = [
-                "### Start-Video bestimmen",
-                self.item_source,
-                self.item_resetter,
-            ]
-            self.source_block[1] = [
-                "### Start-User bestimmen",
-                self.user_source,
-                self.item_resetter,
-            ]
-
-            self.put_navigational_block(2, self.source_block[0])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            # Postprocessing and Filtering
-            self.reco_items = pn.Accordion(
-                ("Modell-Score", self.score_threshold_filter),
-                ("Duplikatfilterung", self.duplicate),
-                ("Sortierung", self.sort),
-                ("Fehlende Daten ausblenden", self.incompleteSelect),
-                ("Länge-Filter", self.duration_filter),
-                ("Genre-Filter", self.genre_col),
-                ("Subgenre-Filter", self.subgenre_col),
-                ("Themen-Filter", self.theme_col),
-                ("Sendereihe-Filter", self.show_col),
-            )
-            self.reco_items.max_width = accordion_max_width
-
-            # Postprocessing and Filtering U2C
-            self.reco_items_u2c = pn.Accordion(
-                ("Editorial-Categories", self.editorial_choice)
-            )
-            self.reco_items_u2c.max_width = accordion_max_width
-
-            self.filter_block = {}
-            self.filter_block[0] = [
-                "### Empfehlungen beeinflussen",
-                self.reco_items,
-                self.reco_resetter,
-            ]
-            self.filter_block[1] = [
-                "### Empfehlungen beeinflussen",
-                self.reco_items_u2c,
-                self.reco_resetter_u2c,
-            ]
-
-            self.put_navigational_block(3, self.filter_block[0])
-            self.assemble_navigation_elements()
-
-        # empty screen hinweis
-        self.item_grid[0, 0] = pn.pane.Alert(
-            "Wähle ein oder mehrere Modelle, sowie ein Start-Item oder -User",
-            alert_type="warning",
-        )
-
-        # previous button
-        self.previousPage = pn.widgets.Button(
-            name=self.LEFT_ARROW,
-            button_type="primary",
-            margin=10,
-            width=50,
-            disabled=True,
-        )
-        self.previousPage.on_click(self.trigger_item_pagination)
-        self.pagination.append(self.previousPage)
-
-        self.pagination.append(pn.pane.Markdown("""### Seite """))
-        self.pagination.append(pn.pane.Markdown("""### - """))
-        self.pagination.append(pn.pane.Markdown("""### von """))
-        self.pagination.append(pn.pane.Markdown("""### - """))
-
-        # next button
-        self.nextPage = pn.widgets.Button(
-            name=self.RIGHT_ARROW,
-            button_type="primary",
-            width=50,
-            margin=10,
-            disabled=True,
-        )
-        self.nextPage.on_click(self.trigger_item_pagination)
-        self.pagination.append(self.nextPage)
-
-
-
-
 
     def get_version_information_and_append_to_sidebar(self, sidebar):
         """
@@ -1799,7 +736,6 @@ class RecoExplorerApp:
             sidebar.append(version_widget)
         return sidebar
 
-    #
 
     async def get_items_with_parameters(self):
         """
@@ -1878,3 +814,17 @@ class RecoExplorerApp:
             main=[self.floating_elements, self.item_grid, self.pagination],
             header_background=header_background,
         )
+
+
+
+
+
+
+
+
+
+
+
+
+
+

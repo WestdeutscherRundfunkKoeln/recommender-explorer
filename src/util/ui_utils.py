@@ -4,9 +4,6 @@ def retrieve_default_model_accordion(ui_config):
     # in Modelle wählen identify the key that points to the active accordion and return it.
     # if the block is called "Modelle wählen" then we should do the search procedure.
 
-
-
-
     # Access the blocks in the config
     blocks = ui_config.get("blocks", [])
 

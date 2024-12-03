@@ -8,6 +8,7 @@ from view.widgets.widget import UIWidget
 
 class SliderWidget(UIWidget):
     def create(self, config: dict[str, Any]) -> pn.Row:
+
         slider = pn.widgets.FloatSlider(
             name=config.get(c.SLIDER_NAME_KEY, "Wert"),
             format=PrintfTickFormatter(
@@ -45,4 +46,25 @@ class SliderWidget(UIWidget):
             value=config.get(c.SLIDER_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
         )
 
+        if(config.get(c.SLIDER_CUSTOM_KEY)):
+            self.change_slider_value(slider)
+            slider.param.watch(self.change_slider_value, "value")
+
         return pn.Row(slider, tooltip)
+
+
+
+    def change_slider_value(self, event_or_slider):
+        """Change the value of the slider."""
+        if isinstance(event_or_slider, pn.widgets.FloatSlider):  # Manual call
+            slider = event_or_slider
+        else:  # Event-driven call
+            slider = event_or_slider.obj
+
+        transformed_value = slider.value * 60
+        transformed_format = {"duration": {"gte": transformed_value}}
+        # Optionally: attach this transformed value as a property for further use
+        slider.transformed_value = transformed_format
+        print(f"Transformed Slider Value: {transformed_format}")
+        print("************************************************************************************************************")
+
