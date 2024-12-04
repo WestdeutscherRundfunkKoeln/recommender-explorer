@@ -63,8 +63,4 @@ class SliderWidget(UIWidget):
 
         transformed_value = slider.value * 60
         transformed_format = {"duration": {"gte": transformed_value}}
-        # Optionally: attach this transformed value as a property for further use
-        slider.transformed_value = transformed_format
-        print(f"Transformed Slider Value: {transformed_format}")
-        print("************************************************************************************************************")
 

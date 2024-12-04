@@ -380,13 +380,11 @@ class UpperItemFilterWidget(MultiSelectionWidget):
         # widget = equsls to the widget that has the named category
 
         # Find the target widget (item filter widget) by name
-        target_widget = self.find_widget_by_name_recursive(
+        target_widget = find_widget_by_name(
             self.reco_explorer_app_instance.config_based_nav_controls,
             target_widget_name,
         )
 
-        print("the widget is ")
-        print(target_widget)
 
         target_widget.value = (
             self.controller_instance.get_genres_and_subgenres_from_upper_category(
@@ -394,33 +392,8 @@ class UpperItemFilterWidget(MultiSelectionWidget):
             )
         )
 
-        print("the widget is ")
-        print(target_widget)
 
 
-    def find_widget_by_name_recursive(self, widget, target_widget_name):
-        """
-        Recursively searches for a widget by its 'name' attribute.
-
-        Args:
-            widget: The current widget or container to check.
-            target_widget_name: The name of the widget you're looking for.
-
-        Returns:
-            The widget if found, otherwise None.
-        """
-        # Check if the widget itself matches the target name
-        if hasattr(widget, 'name') and widget.name == target_widget_name:
-            return widget
-
-        # If the widget is a container (like Column, Row, Accordion), iterate through its children
-        if hasattr(widget, 'objects'):
-            for child in widget.objects:
-                result = self.find_widget_by_name_recursive(child, target_widget_name)  # Added self
-                if result:
-                    return result  # Found the widget, return it
-
-        return None  # Widget not found in this branch
 
 
 

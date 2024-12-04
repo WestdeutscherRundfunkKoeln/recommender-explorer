@@ -9,19 +9,22 @@ def retrieve_default_model_accordion(ui_config):
 
     # Iterate over each block
     for block in blocks:
-        # Check if the label is "Modelle wählen"
-        if block.get("label") == "Modelle wählen":
-            # Iterate over the components within the block
-            for component in block.get("components", []):
-                # Check if the component type is "accordion_with_cards"
-                if component.get("type") == "accordion_with_cards":
-                    # Get the "active" key value and return it as a string
-                    active_value = component.get("active")
-                    if active_value is not None:
-                        return str(active_value)
+        # Skip if the label is not "Modelle wählen"
+        if block.get("label") != "Modelle wählen":
+            continue
 
-    # If not found, return None
-    return None
+        # Iterate over the components within the block
+        for component in block.get("components", []):
+            # Skip if the component type is not "accordion_with_cards"
+            if component.get("type") != "accordion_with_cards":
+                continue
+
+            # Get the "active" key value and return it as a string
+            active_value = component.get("active")
+            return str(active_value) if active_value is not None else None
+
+    # If not found, return a default value
+    return str(1)
 
 
 

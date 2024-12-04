@@ -230,7 +230,7 @@ class NnSeekerOpenSearch(NnSeeker):
             "keywords": self._prepare_query_term_list_condition_statement,
         }
 
-        for label, value in list(reco_filter.items()):
+        for label, value in reco_filter.items():
             if not value:
                 continue
 
@@ -242,7 +242,6 @@ class NnSeekerOpenSearch(NnSeeker):
 
             action, actor = label.split("_")
 
-            logger.debug(f"Processing label: {label}, value: {value}")
 
             match action:
                 case "termfilter":

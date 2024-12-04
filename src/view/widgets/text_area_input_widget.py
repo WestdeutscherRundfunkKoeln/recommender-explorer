@@ -43,4 +43,8 @@ class TextAreaInputWidget(UIWidget):
 
         text_area_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
 
+        tooltip_value = config.get(c.TEXT_INPUT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
+        tooltip = None if not tooltip_value else pn.widgets.TooltipIcon(value=tooltip_value)
+
+
         return text_area_input_widget

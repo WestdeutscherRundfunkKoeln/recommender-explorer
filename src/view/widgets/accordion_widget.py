@@ -147,11 +147,6 @@ class AccordionWidget(UIWidget):
         else:
             return None
 
-    def on_accordion_change2(self, event):
-        # You can access the new value with event.new and the old value with event.old
-        print("Accordion state changed!")
-        print(f"New active state: {event.new}, Old active state: {event.old}")
-
 
 class AccordionWidgetWithCards(AccordionWidget):
     def create(self, config: dict[str, Any]) -> pn.Accordion:
@@ -226,8 +221,6 @@ class AccordionWidgetWithCards(AccordionWidget):
             return None
 
     def on_accordion_card_change(self, event):
-        print(f"Accordion With Cards has changed!")
-        print(f"New active state: {event.new}, Old active state: {event.old}")
         # Convert to string and remove brackets
         State = str(event.new).strip("[]")
         State = State.replace(" ", "")
