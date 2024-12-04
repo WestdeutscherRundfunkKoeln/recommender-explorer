@@ -3,6 +3,7 @@ import logging
 import traceback
 import functools
 from typing import Any
+import httpx
 
 import constants
 import panel as pn
@@ -39,6 +40,15 @@ class RecoExplorerApp:
     ) -> None:
         # basic setup
         self.config = config
+        base_url_embedding = config["ingest"]["base_url_embedding"]
+        api_key = config["ingest"]["api_key"]
+        model_config = httpx.get(
+            f"{base_url_embedding}/model_config",
+            timeout=None,
+            headers={"x-api-key": api_key},
+        ).json()
+        self.config["c2c_config"] = model_config
+
         self.client = client
         self.config_full_paths = config_full_paths
         self.config_full_path = config_full_paths[client]
@@ -51,18 +61,10 @@ class RecoExplorerApp:
             ui_constants.DATE_TIME_PICKER_TYPE_VALUE: DateTimePickerWidget(
                 self, self.controller
             ),
-            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(
-                self, self.controller
-            ),
-            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(
-                self, self.controller
-            ),
-            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(
-                self, self.controller
-            ),
-            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(
-                self, self.controller
-            ),
+            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(self, self.controller),
+            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(self, self.controller),
+            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
+            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
             ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(
                 self, self.controller
             ),
@@ -945,7 +947,9 @@ class RecoExplorerApp:
         if isinstance(page_size, int):
             return page_size
         else:
-            logger.info(f"{page_size} is not a valid page size. Fallback to default: {ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE}")
+            logger.info(
+                f"{page_size} is not a valid page size. Fallback to default: {ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE}"
+            )
             return ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE
 
     # event handling
@@ -1561,17 +1565,12 @@ class RecoExplorerApp:
         self.disablePageButtons()
 
     def add_cards_row(self, models: list[any], config: str, idx: int, row: list[any]):
-        """
-
-        """
+        """ """
         start_card = None
         reco_cards = []
         for idz, item_dto in enumerate(row):
             card = self.controller.get_item_viewer(item_dto, self)
-            if (
-                    self.controller.get_display_mode()
-                    == constants.DISPLAY_MODE_SINGLE
-            ):
+            if self.controller.get_display_mode() == constants.DISPLAY_MODE_SINGLE:
                 displayed_card = card.draw(
                     item_dto, idz, models[0], config, self.trigger_modal
                 )
@@ -1584,11 +1583,17 @@ class RecoExplorerApp:
             else:
                 reco_cards.append(displayed_card)
 
-        cards_row = pn.Row(start_card, *reco_cards[:self.page_size])
-        row_with_navigation_buttons = self.create_navigation_elements_for_cards_row(cards_row, start_card, reco_cards)
-        self.main_content.append(pn.Row(pn.Column(cards_row, row_with_navigation_buttons)))
+        cards_row = pn.Row(start_card, *reco_cards[: self.page_size])
+        row_with_navigation_buttons = self.create_navigation_elements_for_cards_row(
+            cards_row, start_card, reco_cards
+        )
+        self.main_content.append(
+            pn.Row(pn.Column(cards_row, row_with_navigation_buttons))
+        )
 
-    def create_navigation_elements_for_cards_row(self, cards_row: pn.Row, start_card: pn.layout.card.Card, reco_cards: list) -> pn.Row:
+    def create_navigation_elements_for_cards_row(
+        self, cards_row: pn.Row, start_card: pn.layout.card.Card, reco_cards: list
+    ) -> pn.Row:
         """
         :param cards_row: pn.Row, the parent row containing the card elements to navigate through
         :param start_card: pn.layout.card.Card, the card element at the start
@@ -1613,8 +1618,12 @@ class RecoExplorerApp:
             "next_button": next_button,
         }
 
-        prev_button.on_click(functools.partial(self._update_prev, widgets=widgets_in_row))
-        next_button.on_click(functools.partial(self._update_next, widgets=widgets_in_row))
+        prev_button.on_click(
+            functools.partial(self._update_prev, widgets=widgets_in_row)
+        )
+        next_button.on_click(
+            functools.partial(self._update_next, widgets=widgets_in_row)
+        )
 
         return row_with_navigation_buttons
 
@@ -1628,14 +1637,18 @@ class RecoExplorerApp:
         of the cards list, it adjusts the page size and updates the cards to display the next set of cards. Finally, it toggles
         the 'next_button' and 'prev_button' widgets based on the new page size.
         """
-        if widgets['page_size'] < len(widgets['reco_cards']):
-            widgets['page_size'] += self.page_size
-            widgets['cards_row'].objects = [
-                widgets['start_card'],
-                *widgets['reco_cards'][widgets['page_size'] - self.page_size:widgets['page_size']]
+        if widgets["page_size"] < len(widgets["reco_cards"]):
+            widgets["page_size"] += self.page_size
+            widgets["cards_row"].objects = [
+                widgets["start_card"],
+                *widgets["reco_cards"][
+                    widgets["page_size"] - self.page_size : widgets["page_size"]
+                ],
             ]
-        widgets['prev_button'].disabled = False
-        widgets['next_button'].disabled = (widgets['page_size'] + self.page_size) > len(widgets['reco_cards'])
+        widgets["prev_button"].disabled = False
+        widgets["next_button"].disabled = (widgets["page_size"] + self.page_size) > len(
+            widgets["reco_cards"]
+        )
 
     def _update_prev(self, event, widgets: dict[any]):
         """
@@ -1647,14 +1660,16 @@ class RecoExplorerApp:
         page size, it adjusts the page size and updates the cards to display the previous set of cards. Finally, it toggles the
         'next_button' and 'prev_button' widgets based on the new page size.
         """
-        if widgets['page_size'] > self.page_size:
-            widgets['page_size'] -= self.page_size
-            widgets['cards_row'].objects = [
-                widgets['start_card'],
-                *widgets['reco_cards'][widgets['page_size'] - self.page_size:widgets['page_size']]
+        if widgets["page_size"] > self.page_size:
+            widgets["page_size"] -= self.page_size
+            widgets["cards_row"].objects = [
+                widgets["start_card"],
+                *widgets["reco_cards"][
+                    widgets["page_size"] - self.page_size : widgets["page_size"]
+                ],
             ]
-        widgets['next_button'].disabled = False
-        widgets['prev_button'].disabled = widgets['page_size'] <= self.page_size
+        widgets["next_button"].disabled = False
+        widgets["prev_button"].disabled = widgets["page_size"] <= self.page_size
 
     @staticmethod
     def render_404():
