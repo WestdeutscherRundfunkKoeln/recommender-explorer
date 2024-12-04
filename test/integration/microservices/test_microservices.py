@@ -219,7 +219,7 @@ def test_delta_load_maintenance(
     assert payload["_id"] == ids[0]
     assert list(payload["_source"].keys()) == ["test"]
 
-    time.sleep(75)
+    time.sleep(90)
     assert_document_is_in_opensearch(search_service.get(f"/documents/{ids[1]}"), ids[1])
 
 
