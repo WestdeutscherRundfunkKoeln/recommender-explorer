@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 import panel as pn
 from dto.wdr_content_item import WDRContentItemDto
@@ -19,7 +20,7 @@ class WDRContentCard:
     def __init__(
         self,
         config,
-        reco_explorer_app_instance: RecoExplorerApp = None,
+        reco_explorer_app_instance: RecoExplorerApp | None = None,
         height=None,
         width=None,
     ):
@@ -31,10 +32,10 @@ class WDRContentCard:
     def draw(
         self,
         content_dto: WDRContentItemDto,
-        card,
-        button: pn.widgets.Button or None = None,
+        card: pn.Card,
+        button: pn.widgets.Button | None = None,
     ):
-        base_card_objects = [
+        base_card_objects: list[pn.viewable.Viewable] = [
             pn.pane.Markdown(f"""
                        #### {content_dto.title}
                        **Datentyp:** {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} 
@@ -55,5 +56,7 @@ class WDRContentCard:
         if button:
             base_card_objects.insert(1, button)
 
-        card.objects = card.objects + base_card_objects
+        card.objects = (
+            cast(list[pn.viewable.Viewable], card.objects) + base_card_objects
+        )
         return card
