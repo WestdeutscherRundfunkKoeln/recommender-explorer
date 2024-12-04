@@ -44,7 +44,10 @@ def add_embedding_to_document(data: AddEmbeddingToDocRequest):
 
 @router.get("/models")
 def get_models():
-    return [model["model_name"] for model in model_config["c2c_models"]]
+    return [
+        model_config["c2c_models"][model]["model_name"]
+        for model in model_config["c2c_models"]
+    ]
 
 
 @router.get("/model_config")

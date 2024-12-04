@@ -51,9 +51,7 @@ class EmbedText:
             client = storage.Client(credentials=credentials)
             bucket = client.bucket(self.config["bucket_name"])
         for model in self.model_config:
-            bucket_path = (
-                f'{self.config["bucket_path"]}/{model["model_path"].split("/")[-1]}.zip'
-            )
+            bucket_path = f'{self.config["bucket_path"]}/{self.model_config[model]["model_path"].split("/")[-1]}.zip'
             local_path = (
                 (pathlib.Path(config["local_model_path"]) / bucket_path)
                 .as_posix()
@@ -71,7 +69,7 @@ class EmbedText:
                 local_path if os.path.exists(local_path) else model["model_path"]
             )
 
-            self.models[model["model_name"]] = SentenceTransformer(
+            self.models[self.model_config[model]["model_name"]] = SentenceTransformer(
                 load_path,
                 device="cpu",
                 cache_folder=config["local_model_path"],
