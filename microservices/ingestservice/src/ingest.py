@@ -1,6 +1,7 @@
 import itertools
 import json
 import logging
+import time
 from hashlib import sha256
 from typing import Iterable
 
@@ -131,6 +132,7 @@ def upsert_batch(
         except (GoogleAPICallError, ValidationError, json.JSONDecodeError):
             continue
         items[document.externalid] = document.model_dump()
+        time.sleep(0.1)
 
     task_status.set_status(BulkIngestTaskStatus.IN_FLIGHT)
     search_service_client.create_multiple_documents(items)
