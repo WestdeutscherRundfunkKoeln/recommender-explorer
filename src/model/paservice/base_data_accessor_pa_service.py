@@ -191,5 +191,4 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
     ]
     if weights:
         request_body["weights"] = weights
-    print(request_body)
     return request_body
