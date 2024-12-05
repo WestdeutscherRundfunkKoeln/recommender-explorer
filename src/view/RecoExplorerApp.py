@@ -130,9 +130,10 @@ class RecoExplorerApp:
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
         for model in models.keys():
-            self.c2c_models.append(model)
-            if models[model]["default"]:
-                self.c2c_model_default.append(model)
+            if models[model]["display_in_reco_explorer"]:
+                self.c2c_models.append(model)
+                if models[model]["default"]:
+                    self.c2c_model_default.append(model)
 
     def set_u2c_model_definitions(self):
         if constants.MODEL_CONFIG_U2C in self.config:
