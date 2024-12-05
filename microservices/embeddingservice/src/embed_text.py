@@ -58,7 +58,11 @@ class EmbedText:
                 .split(".")[0]
             )
             if not os.path.exists(local_path):
-                logger.info("Model %s not found at %s", model["model_path"], local_path)
+                logger.info(
+                    "Model %s not found at %s",
+                    self.model_config[model]["model_path"],
+                    local_path,
+                )
                 if bucket:
                     download_model(
                         bucket=bucket,
@@ -66,7 +70,9 @@ class EmbedText:
                         local_path=local_path,
                     )
             load_path = (
-                local_path if os.path.exists(local_path) else model["model_path"]
+                local_path
+                if os.path.exists(local_path)
+                else self.model_config[model]["model_path"]
             )
 
             self.models[self.model_config[model]["model_name"]] = SentenceTransformer(
