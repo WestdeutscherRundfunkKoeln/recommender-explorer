@@ -58,7 +58,6 @@ class TaskStatus:
             if exc_type is None
             else self._on_error(exc_type, exc_val, exc_tb)
         )
-        print(result)
         try:
             self.log_bucket.blob(f"{self.id}.json").upload_from_string(
                 cast(BulkIngestTask, self.get(self.id)).model_dump_json()
