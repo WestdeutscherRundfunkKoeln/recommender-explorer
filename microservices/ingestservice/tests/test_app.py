@@ -551,6 +551,113 @@ def test_delete_event_with_available_correct_document(
     assert request.headers["x-api-key"] == "test-key"
 
 
+def test_delete_event_with_missing_document(
+    test_client: TestClient, httpx_mock: HTTPXMock
+):
+    httpx_mock.add_response(
+        status_code=404,
+    )
+
+    response = test_client.post(
+        "/events",
+        headers={"Content-Type": "application/json", "eventType": "OBJECT_DELETE"},
+        json={
+            "kind": "storage#object",
+            "id": "wdr-recommender-exporter-dev-import/produktion/c65b43ee-cd44-4653-a03d-241ac052c36b.json/1712568938633012",
+            "selfLink": "https://www.googleapis.com/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json",
+            "name": "prod/valid.json",
+            "bucket": "wdr-recommender-exporter-dev-import",
+            "generation": "1712568938633012",
+            "metageneration": "1",
+            "contentType": "application/json",
+            "timeCreated": "2024-04-08T09:35:38.666Z",
+            "updated": "2024-04-08T09:35:38.666Z",
+            "storageClass": "STANDARD",
+            "timeStorageClassUpdated": "2024-04-08T09:35:38.666Z",
+            "size": "1504",
+            "md5Hash": "nUoVmkcgy2xR5l676DzUgw==",
+            "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json?generation=1712568938633012&alt=media",
+            "crc32c": "+IKxJA==",
+            "etag": "CLSu9rmosoUDEAE=",
+        },
+    )
+
+    assert response.status_code == 200
+    assert (
+        response.json()
+        == "Delete event for valid is ignored, as the entry is not found in OSS"
+    )
+    requests = httpx_mock.get_requests()
+    assert len(requests) == 1
+
+    # Request to the search service
+    request = requests[0]
+    assert request.method == "DELETE"
+    assert request.url == config["base_url_search"] + "/documents/valid"
+    assert request.headers["x-api-key"] == "test-key"
+
+
+def test_delete_event_with_general_error(
+    test_client: TestClient,
+    httpx_mock: HTTPXMock,
+    overwrite_storage_client: MockStorageClient,
+):
+    httpx_mock.add_response(
+        status_code=500,
+    )
+
+    response = test_client.post(
+        "/events",
+        headers={"Content-Type": "application/json", "eventType": "OBJECT_DELETE"},
+        json={
+            "kind": "storage#object",
+            "id": "wdr-recommender-exporter-dev-import/produktion/c65b43ee-cd44-4653-a03d-241ac052c36b.json/1712568938633012",
+            "selfLink": "https://www.googleapis.com/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json",
+            "name": "prod/valid.json",
+            "bucket": "wdr-recommender-exporter-dev-import",
+            "generation": "1712568938633012",
+            "metageneration": "1",
+            "contentType": "application/json",
+            "timeCreated": "2024-04-08T09:35:38.666Z",
+            "updated": "2024-04-08T09:35:38.666Z",
+            "storageClass": "STANDARD",
+            "timeStorageClassUpdated": "2024-04-08T09:35:38.666Z",
+            "size": "1504",
+            "md5Hash": "nUoVmkcgy2xR5l676DzUgw==",
+            "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json?generation=1712568938633012&alt=media",
+            "crc32c": "+IKxJA==",
+            "etag": "CLSu9rmosoUDEAE=",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "detail": "Server error '500 Internal Server Error' for url 'https://test.io/search/documents/valid'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    }
+
+    bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
+    blob = next((blob for blob in bucket_data if blob.startswith("20")))
+    assert blob is not None
+    uploaded_data = json.loads(bucket_data[blob].data)
+    assert uploaded_data["name"] == "prod/valid.json"
+    assert uploaded_data["bucket"] == "wdr-recommender-exporter-dev-import"
+    assert uploaded_data["event_type"] == "OBJECT_DELETE"
+    assert (
+        uploaded_data["exception"]
+        == "Server error '500 Internal Server Error' for url 'https://test.io/search/documents/valid'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    )
+    assert uploaded_data["url"] == "http://testserver/events"
+
+    requests = httpx_mock.get_requests()
+    assert len(requests) == 1
+
+    # Request to the search service
+    request = requests[0]
+    assert request.method == "DELETE"
+    assert request.url == config["base_url_search"] + "/documents/valid"
+    assert request.headers["x-api-key"] == "test-key"
+
+
 def test_bulk_ingest__with_validation_error(
     test_client: TestClient, httpx_mock: HTTPXMock
 ):

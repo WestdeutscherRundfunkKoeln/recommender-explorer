@@ -10,8 +10,10 @@ from typing import Annotated
 from envyaml import EnvYAML
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header, Request
 from fastapi.exceptions import HTTPException
+from fastapi.responses import JSONResponse
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
+from httpx import HTTPStatusError
 from src.clients import SearchServiceClient
 from src.ingest import full_ingest, process_upsert_event
 from src.maintenance import (
@@ -99,7 +101,7 @@ def health_check():
     return {"status": "OK"}
 
 
-@router.post("/events", response_model=OpenSearchResponse)
+@router.post("/events", response_model=OpenSearchResponse | str)
 def ingest_item(
     storage: Annotated[storage.Client, Depends(storage_client_factory)],
     event: StorageChangeEvent,
@@ -108,7 +110,14 @@ def ingest_item(
 ):
     try:
         if event_type == EVENT_TYPE_DELETE:
-            return search_service_client.delete(event.blob_id)
+            try:
+                return search_service_client.delete(event.blob_id)
+            except HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    msg = f"Delete event for {event.blob_id} is ignored, as the entry is not found in OSS"
+                    logger.warning(msg)
+                    return msg
+                raise e
         else:
             return process_upsert_event(
                 event=event,
