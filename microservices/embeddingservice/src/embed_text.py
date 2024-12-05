@@ -6,6 +6,7 @@ import shutil
 import datetime
 from hashlib import sha256
 from typing import cast
+import re
 
 import httpx
 from google.cloud import storage
@@ -51,36 +52,39 @@ class EmbedText:
             client = storage.Client(credentials=credentials)
             bucket = client.bucket(self.config["bucket_name"])
         for model in self.model_config:
-            bucket_path = f'{self.config["bucket_path"]}/{self.model_config[model]["model_path"].split("/")[-1]}.zip'
-            local_path = (
-                (pathlib.Path(config["local_model_path"]) / bucket_path)
-                .as_posix()
-                .split(".")[0]
-            )
-            if not os.path.exists(local_path):
-                logger.info(
-                    "Model %s not found at %s",
-                    self.model_config[model]["model_path"],
-                    local_path,
+            if re.match(r"^opensearch://", self.model_config[model]["endpoint"]):
+                bucket_path = f'{self.config["bucket_path"]}/{self.model_config[model]["model_path"].split("/")[-1]}.zip'
+                local_path = (
+                    (pathlib.Path(config["local_model_path"]) / bucket_path)
+                    .as_posix()
+                    .split(".")[0]
                 )
-                if bucket:
-                    download_model(
-                        bucket=bucket,
-                        model_zip=bucket_path,
-                        local_path=local_path,
+                if not os.path.exists(local_path):
+                    logger.info(
+                        "Model %s not found at %s",
+                        self.model_config[model]["model_path"],
+                        local_path,
                     )
-            load_path = (
-                local_path
-                if os.path.exists(local_path)
-                else self.model_config[model]["model_path"]
-            )
+                    if bucket:
+                        download_model(
+                            bucket=bucket,
+                            model_zip=bucket_path,
+                            local_path=local_path,
+                        )
+                load_path = (
+                    local_path
+                    if os.path.exists(local_path)
+                    else self.model_config[model]["model_path"]
+                )
 
-            self.models[self.model_config[model]["model_name"]] = SentenceTransformer(
-                load_path,
-                device="cpu",
-                cache_folder=config["local_model_path"],
-                trust_remote_code=True,
-            )
+                self.models[self.model_config[model]["model_name"]] = (
+                    SentenceTransformer(
+                        load_path,
+                        device="cpu",
+                        cache_folder=config["local_model_path"],
+                        trust_remote_code=True,
+                    )
+                )
 
     def embed_text(self, embed_text: str, models_to_use: list[str] | None):
         response: dict[str, str | list[float]] = {
