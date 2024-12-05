@@ -13,7 +13,13 @@ from util.dto_utils import update_from_props
 logger = logging.getLogger(__name__)
 
 
-WEIGHTS = ("weight_audio", "weight_video", "weight_beitrag")
+WEIGHTS = (
+    "weight_audio",
+    "weight_video",
+    "weight_beitrag",
+    "weight_fotostrecke",
+    "weight_link",
+)
 
 
 class BaseDataAccessorPaService(BaseDataAccessor):
@@ -185,4 +191,5 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
     ]
     if weights:
         request_body["weights"] = weights
+    print(request_body)
     return request_body
