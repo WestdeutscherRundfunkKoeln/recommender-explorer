@@ -1,6 +1,6 @@
 from typing import Any
 
-from google.api_core.exceptions import GoogleAPICallError
+from google.cloud.exceptions import NotFound
 
 
 class MockBlob:
@@ -9,9 +9,11 @@ class MockBlob:
         self.name = name
 
     def download_as_text(self):
+        if self.name == "error":
+            raise Exception("Test error")
+
         if not self.data:
-            err = GoogleAPICallError("Blob not found")
-            err.code = 400
+            err = NotFound("Blob not found")
             raise err
         return self.data
 
@@ -30,7 +32,6 @@ class MockBucket:
 
     def list_blobs(self, *args, **kwargs):
         prefix = kwargs["match_glob"].split("/")[0]
-        print(prefix)
         if prefix == "raise_error":
             raise Exception("Test error")
         for blob in self.data.values():

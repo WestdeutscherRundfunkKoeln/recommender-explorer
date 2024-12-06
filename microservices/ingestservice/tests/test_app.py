@@ -441,17 +441,51 @@ def test_upsert_event_no_document_found(
     )
 
     assert response.status_code == 200
-    assert response.json() == {"detail": "400 Blob not found"}
+    assert response.json() == "Blob not found"
+    assert len(httpx_mock.get_requests()) == 0
+
+
+def test_upsert_event_general_error(
+    test_client: TestClient,
+    httpx_mock: HTTPXMock,
+    overwrite_storage_client: MockStorageClient,
+):
+    response = test_client.post(
+        "/events",
+        headers={"Content-Type": "application/json", "eventType": "OBJECT_FINALIZE"},
+        json={
+            "kind": "storage#object",
+            "id": "wdr-recommender-exporter-dev-import/produktion/c65b43ee-cd44-4653-a03d-241ac052c36b.json/1712568938633012",
+            "selfLink": "https://www.googleapis.com/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json",
+            "name": "error",
+            "bucket": "wdr-recommender-exporter-dev-import",
+            "generation": "1712568938633012",
+            "metageneration": "1",
+            "contentType": "application/json",
+            "timeCreated": "2024-04-08T09:35:38.666Z",
+            "updated": "2024-04-08T09:35:38.666Z",
+            "storageClass": "STANDARD",
+            "timeStorageClassUpdated": "2024-04-08T09:35:38.666Z",
+            "size": "1504",
+            "md5Hash": "nUoVmkcgy2xR5l676DzUgw==",
+            "mediaLink": "https://storage.googleapis.com/download/storage/v1/b/wdr-recommender-exporter-dev-import/o/produktion%2Fc65b43ee-cd44-4653-a03d-241ac052c36b.json?generation=1712568938633012&alt=media",
+            "crc32c": "+IKxJA==",
+            "etag": "CLSu9rmosoUDEAE=",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"detail": "Test error"}
     assert len(httpx_mock.get_requests()) == 0
 
     bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
     blob = next((blob for blob in bucket_data if blob.startswith("20")))
     assert blob is not None
     uploaded_data = json.loads(bucket_data[blob].data)
-    assert uploaded_data["name"] == "prod/nonexistent.json"
+    assert uploaded_data["name"] == "error"
     assert uploaded_data["bucket"] == "wdr-recommender-exporter-dev-import"
     assert uploaded_data["event_type"] == "OBJECT_FINALIZE"
-    assert uploaded_data["exception"] == "400 Blob not found"
+    assert uploaded_data["exception"] == "Test error"
     assert uploaded_data["url"] == "http://testserver/events"
 
 

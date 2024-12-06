@@ -5,6 +5,8 @@ import time
 from hashlib import sha256
 from typing import Iterable
 
+from google.cloud.exceptions import NotFound
+
 from dto.recoexplorer_item import RecoExplorerItem
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
@@ -31,7 +33,7 @@ def process_upsert_event(
     search_service_client: SearchServiceClient,
     storage: storage.Client,
     data_preprocessor: DataPreprocessor,
-) -> dict:
+) -> dict | str:
     document = None
     try:
         blob = storage.bucket(event.bucket).blob(event.name)
@@ -43,6 +45,8 @@ def process_upsert_event(
         )
 
         return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
+    except NotFound:
+        return "Blob not found"
     except Exception:
         if document:
             logger.info(
