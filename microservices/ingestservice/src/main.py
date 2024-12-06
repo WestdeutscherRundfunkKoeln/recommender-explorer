@@ -10,12 +10,10 @@ from typing import Annotated
 from envyaml import EnvYAML
 from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, Header, Request
 from fastapi.exceptions import HTTPException
-from fastapi.responses import JSONResponse
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
-from httpx import HTTPStatusError
 from src.clients import SearchServiceClient
-from src.ingest import full_ingest, process_upsert_event
+from src.ingest import full_ingest, process_delete_event, process_upsert_event
 from src.maintenance import (
     delete_background_task,
     delta_load_background_task,
@@ -110,14 +108,9 @@ def ingest_item(
 ):
     try:
         if event_type == EVENT_TYPE_DELETE:
-            try:
-                return search_service_client.delete(event.blob_id)
-            except HTTPStatusError as e:
-                if e.response.status_code == 404:
-                    msg = f"Delete event for {event.blob_id} is ignored, as the entry is not found in OSS"
-                    logger.warning(msg)
-                    return msg
-                raise e
+            return process_delete_event(
+                event=event, search_service_client=search_service_client
+            )
         else:
             return process_upsert_event(
                 event=event,
