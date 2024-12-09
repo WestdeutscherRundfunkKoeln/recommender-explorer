@@ -304,8 +304,6 @@
     }
   },
   "required": [
-    "indexing_sources",
-    "databackend",
     "opensearch",
     "c2c_config"
   ]
