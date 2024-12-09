@@ -13,7 +13,7 @@ from fastapi.exceptions import HTTPException
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
 from src.clients import SearchServiceClient
-from src.ingest import full_ingest, process_upsert_event
+from src.ingest import full_ingest, process_delete_event, process_upsert_event
 from src.maintenance import (
     delete_background_task,
     delta_load_background_task,
@@ -99,7 +99,7 @@ def health_check():
     return {"status": "OK"}
 
 
-@router.post("/events", response_model=OpenSearchResponse)
+@router.post("/events", response_model=OpenSearchResponse | str)
 def ingest_item(
     storage: Annotated[storage.Client, Depends(storage_client_factory)],
     event: StorageChangeEvent,
@@ -108,7 +108,9 @@ def ingest_item(
 ):
     try:
         if event_type == EVENT_TYPE_DELETE:
-            return search_service_client.delete(event.blob_id)
+            return process_delete_event(
+                event=event, search_service_client=search_service_client
+            )
         else:
             return process_upsert_event(
                 event=event,
