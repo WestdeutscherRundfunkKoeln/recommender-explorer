@@ -47,7 +47,7 @@ class MultiSelectionWidget(UIWidget):
                     )
                 )
             )
-            return modified_list, []
+            return modified_list, [modified_list[0]] if modified_list else []
         return [], []
 
     def build_multi_select_widget(self, config) -> pn.widgets.MultiSelect | None:
@@ -288,15 +288,16 @@ class ModelChoiceWidget(MultiSelectionWidget):
             return
 
         model_watcher = model_choice_widget.param.watch(
-            self.reco_explorer_app_instance.trigger_model_choice_new,
+            self.reco_explorer_app_instance.trigger_model_choice,
             "value",
             onlychanged=True,
+
         )
         self.controller_instance.register(
             "model_choice",
             model_choice_widget,
             model_watcher,
-            self.reco_explorer_app_instance.trigger_model_choice_new,
+            self.reco_explorer_app_instance.trigger_model_choice,
         )
 
         model_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE

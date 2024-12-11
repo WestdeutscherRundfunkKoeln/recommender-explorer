@@ -356,7 +356,7 @@ class RecommendationController:
     def _get_start_users_u2c(self, model: dict) -> tuple[int, list]:
         active_components = self._get_active_start_components()
         has_paging = [x.params.get("has_paging", False) for x in active_components]
-        self._validate_input_data(active_components)
+        #self._validate_input_data(active_components)
         start_idx, end_idx = (0, 0)
         if any(has_paging):
             start_idx = (self.get_page_number() - 1) * self.get_num_items()
@@ -629,7 +629,7 @@ class RecommendationController:
         if self.model_type == constants.MODEL_TYPE_U2C:
             return list(
                 filter(
-                    lambda x: x.params["active"] == True,
+                    lambda x: x.visible == True,
                     self.components["user_choice"].values(),
                 )
             )

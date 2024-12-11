@@ -130,6 +130,7 @@ class RecoExplorerApp:
 
         # stores the UI elements to avoid building them when the states changes
         block_list2 = []
+        choosen_accordion = None
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -177,13 +178,25 @@ class RecoExplorerApp:
         self.disablePageButtons()
         await self.get_items_with_parameters()
 
+
+
+
+
+
+
+
+
+
+
+
+
     async def trigger_model_choice(self, event):
         logger.info(event)
-        if self.model_choice.active[0] == 0:
+        if choosen_accordion == "0":
             self.controller.reset_component(
                 "model_choice", constants.MODEL_CONFIG_U2C, []
             )
-        elif self.model_choice.active[0] == 1:
+        elif choosen_accordion == "1":
             self.controller.reset_component(
                 "model_choice", constants.MODEL_CONFIG_C2C, []
             )
@@ -196,6 +209,24 @@ class RecoExplorerApp:
         self.controller.reset_page_number()
         self.disablePageButtons()
         await self.get_items_with_parameters()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     async def trigger_user_cluster_choice(self, event):
         logger.info(event)
@@ -606,7 +637,7 @@ class RecoExplorerApp:
     def add_blocks_to_navigation(self,ActiveAccordion:str=""):
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         global block_list2
-
+        global choosen_accordion
         # decide if this function was called by an accordion_with_cards widget or by the assembly function
         if ActiveAccordion == "":
             blocks = self.build_blocks()
