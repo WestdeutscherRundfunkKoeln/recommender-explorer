@@ -1358,7 +1358,7 @@ class RecoExplorerApp:
             logger.debug("found blocks %s", blocks)
             block_counts = len(blocks)
             # Client
-            client_title = pn.pane.Markdown("### Client Selection")
+            client_title = pn.pane.Markdown("### Mandant wählen")
             client_choice = pn.widgets.RadioBoxGroup(
                 name="Client",
                 options=get_client_options(self.config_full_paths),
@@ -1380,7 +1380,7 @@ class RecoExplorerApp:
 
         else:
             # Client
-            client_title = pn.pane.Markdown("### Client Selection")
+            client_title = pn.pane.Markdown("### Mandant wählen")
             self.client_choice = pn.widgets.RadioBoxGroup(
                 name="Client",
                 options=get_client_options(self.config_full_paths),
