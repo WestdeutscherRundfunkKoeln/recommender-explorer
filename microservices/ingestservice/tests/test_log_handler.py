@@ -4,8 +4,8 @@ from src.task_status import TaskStatus
 from src.log_handler import TaskLogHandler
 
 
-def test_task_handler():
-    with TaskStatus("test") as task:
+def test_task_handler(mocker):
+    with TaskStatus("test", mocker.Mock()) as task:
         handler = TaskLogHandler()
         logger = logging.getLogger("test")
         logger.addHandler(handler)

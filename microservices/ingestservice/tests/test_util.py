@@ -30,7 +30,6 @@ class MockBucket:
 
     def list_blobs(self, *args, **kwargs):
         prefix = kwargs["match_glob"].split("/")[0]
-        print(prefix)
         if prefix == "raise_error":
             raise Exception("Test error")
         for blob in self.data.values():
