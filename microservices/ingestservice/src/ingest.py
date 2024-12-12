@@ -5,10 +5,13 @@ import time
 from hashlib import sha256
 from typing import Iterable
 
+from google.cloud.exceptions import NotFound
+
 from dto.recoexplorer_item import RecoExplorerItem
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud import storage
 from google.cloud.storage.blob import Blob
+from httpx import HTTPStatusError
 from pydantic import ValidationError
 from src.clients import SearchServiceClient
 from src.log_handler import TaskLogHandler
@@ -30,7 +33,7 @@ def process_upsert_event(
     search_service_client: SearchServiceClient,
     storage: storage.Client,
     data_preprocessor: DataPreprocessor,
-) -> dict:
+) -> dict | str:
     document = None
     try:
         blob = storage.bucket(event.bucket).blob(event.name)
@@ -42,6 +45,8 @@ def process_upsert_event(
         )
 
         return upsert_response  # TODO: check for meaningful return object. still kept for backward compatibility?
+    except NotFound:
+        return "Blob not found"
     except Exception:
         if document:
             logger.info(
@@ -50,6 +55,20 @@ def process_upsert_event(
         else:
             logger.info("Exception when ingesting item", exc_info=True)
         raise
+
+
+def process_delete_event(
+    event: StorageChangeEvent,
+    search_service_client: SearchServiceClient,
+) -> dict | str:
+    try:
+        return search_service_client.delete(event.blob_id)
+    except HTTPStatusError as e:
+        if e.response.status_code == 404:
+            msg = f"Delete event for {event.blob_id} is ignored, as the entry is not found in OSS"
+            logger.warning(msg)
+            return msg
+        raise e
 
 
 def full_ingest(
