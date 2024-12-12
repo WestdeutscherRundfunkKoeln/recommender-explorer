@@ -128,6 +128,13 @@ class RecommendationController:
             if model == chosen_model
         ][0]
 
+
+        print("The Mode is")
+        print(self.model_type)
+        print("The model is")
+        print(chosen_model)
+
+
         ## set display type, single or multi
         if len(self.components["model_choice"][self.model_config].value) > 1:
             self.display_mode = constants.DISPLAY_MODE_MULTI

@@ -192,6 +192,7 @@ class RecoExplorerApp:
 
     async def trigger_model_choice(self, event):
         logger.info(event)
+        global choosen_accordion
         if choosen_accordion == "0":
             self.controller.reset_component(
                 "model_choice", constants.MODEL_CONFIG_U2C, []
@@ -638,6 +639,10 @@ class RecoExplorerApp:
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         global block_list2
         global choosen_accordion
+<<<<<<< HEAD
+=======
+
+>>>>>>> f45328d (Fixed model switching)
         # decide if this function was called by an accordion_with_cards widget or by the assembly function
         if ActiveAccordion == "":
             blocks = self.build_blocks()
