@@ -51,6 +51,7 @@ class WDRContentStartCard(WDRContentCard):
                              font-weight: 500; 
                              font-size: 12px;
                          }
+                         
                      """
 
         teaserimage = pn.pane.HTML(f"""
@@ -66,9 +67,27 @@ class WDRContentStartCard(WDRContentCard):
         teaserimage.stylesheets = [stylesheet_image]
         teaserimage.margin = (0, 0, 0, 0)
 
+        button = pn.widgets.Button(name="Details öffnen", button_type="primary", width_policy="fit")
+
+        truncated_description = pn.pane.Markdown(f"""
+        ***
+        ##### {content_dto.title}
+        {" ".join(content_dto.longDescription.split(" ")[:500])}...
+        """)
+
+        config = {"headerControls": {"maximize": "remove", "collapse": "remove", "minimize":"remove", "smallify":"remove"}}
+
+        float_panel = pn.layout.FloatPanel(truncated_description, sizing_mode="stretch_width", width=400, height=330, config=config, visible=False)
+
+        def toggle_float_panel(event):
+            float_panel.visible = not float_panel.visible
+
+        button.on_click(toggle_float_panel)
+
         child_objects = [
             teaserimage,
-            pn.pane.Markdown(f""" ### Modell: {model} """)
+            pn.pane.Markdown(f""" ### Modell: {model} """),
+            button,
         ]
 
         card = pn.Card(
@@ -80,4 +99,6 @@ class WDRContentStartCard(WDRContentCard):
 
         card.objects = child_objects
 
-        return super().draw(content_dto, card)
+        card = super().draw(content_dto, card, button)
+
+        return pn.Column(card, float_panel)

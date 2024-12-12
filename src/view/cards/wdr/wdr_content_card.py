@@ -34,6 +34,7 @@ class WDRContentCard:
         content_dto: WDRContentItemDto,
         card: pn.Card,
         button: pn.widgets.Button | None = None,
+        #extra_data=None,
     ):
         base_card_objects: list[pn.viewable.Viewable] = [
             pn.pane.Markdown(f"""
@@ -46,15 +47,13 @@ class WDRContentCard:
                        **Keywords:** {', '.join(set(content_dto.keywords))}
                        **Sophora ID:** [{content_dto.cmsId}](https://{content_dto.domain}{content_dto.structurePath}/{content_dto.cmsId}.html)
                 """),
-            pn.pane.Markdown(f"""
-            ***
-            ##### {content_dto.title}
-            {" ".join(content_dto.longDescription.split(" ")[:500])}...
-            """),
         ]
 
         if button:
             base_card_objects.insert(1, button)
+
+        #if extra_data:
+            #base_card_objects.append(pn.pane.Markdown(f"Extra Data: {extra_data}"))
 
         card.objects = (
             cast(list[pn.viewable.Viewable], card.objects) + base_card_objects
