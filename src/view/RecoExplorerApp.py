@@ -639,10 +639,7 @@ class RecoExplorerApp:
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         global block_list2
         global choosen_accordion
-<<<<<<< HEAD
-=======
 
->>>>>>> f45328d (Fixed model switching)
         # decide if this function was called by an accordion_with_cards widget or by the assembly function
         if ActiveAccordion == "":
             blocks = self.build_blocks()
