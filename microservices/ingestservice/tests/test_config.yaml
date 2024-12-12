@@ -10,4 +10,5 @@ task_cleaner_interval: $TASK_CLEANER_INTERVAL|"0 2 * * *"
 reembed_interval: $REEMBED_INTERVAL|"* * * * *"
 delta_load_interval: $DELTA_LOAD_INTERVAL|"0 2 * * *"
 delete_interval: $DELETE_INTERVAL|"0 2 * * *"
+log_bucket: log_bucket
 

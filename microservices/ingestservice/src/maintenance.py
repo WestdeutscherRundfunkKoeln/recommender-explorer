@@ -136,6 +136,7 @@ async def delta_load_background_task(
     data_preprocessor: DataPreprocessor,
     search_service_client: SearchServiceClient,
     prefix: str,
+    log_bucket: storage.Bucket,
 ):
     while True:
         await aiocron.crontab(interval).next()
@@ -148,6 +149,7 @@ async def delta_load_background_task(
                 search_service_client=search_service_client,
                 prefix=prefix,
                 task_id=f"delta_load_{datetime.datetime.now()}",
+                log_bucket=log_bucket,
             )
         except Exception:
             logger.error("Error during re-embedding task", exc_info=True)
