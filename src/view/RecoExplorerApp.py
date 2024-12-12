@@ -675,7 +675,6 @@ class RecoExplorerApp:
                     if block.get('label') == Acc_label and block.get('linkto') == linkto_value
                 ]
 
-                print(corresponding_blocks)
                 # Append the corresponding blocks to the group
                 grouped_blocks[linkto_value].extend(corresponding_blocks)
             else:
