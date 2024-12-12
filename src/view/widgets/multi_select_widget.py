@@ -47,7 +47,7 @@ class MultiSelectionWidget(UIWidget):
                     )
                 )
             )
-            return modified_list, [modified_list[0]] if modified_list else []
+            return modified_list, [] if modified_list else []
         return [], []
 
     def build_multi_select_widget(self, config) -> pn.widgets.MultiSelect | None:
