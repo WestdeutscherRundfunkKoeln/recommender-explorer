@@ -2,7 +2,7 @@
 .PHONY: run_tests_integration_microservices
 run_tests_integration_microservices:
 	docker compose up --build -d --wait
-	python -m pytest test/integration/microservices || exit 0
+	python -m pytest test/integration/microservices -vv || exit 0
 	docker compose  kill
 	docker compose  rm -f
 
