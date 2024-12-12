@@ -7,7 +7,9 @@ class ItemDto(ABC):
     _position: str
     _item_type: str
     _provenance: str
+    _is_draft: bool = False
 
+    @property
     @abstractmethod
     def viewer(self) -> str:
         pass
@@ -35,4 +37,3 @@ class ItemDto(ABC):
     @item_type.setter
     def item_type(self, v) -> None:
         self._item_type = v
-

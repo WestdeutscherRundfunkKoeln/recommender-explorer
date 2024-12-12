@@ -10,7 +10,12 @@ class SearchServiceClient:
     def from_config(cls, config) -> "SearchServiceClient":
         base_url = config["base_url_search"]
         api_key = config["api_key"]
-        client = httpx.Client(base_url=base_url, headers={"x-api-key": api_key})
+        timeout = httpx.Timeout(5.0, read=config.get("timeout", 10 * 60.0))
+        client = httpx.Client(
+            base_url=base_url,
+            headers={"x-api-key": api_key},
+            timeout=timeout,
+        )
         return cls(client)
 
     def close(self):
