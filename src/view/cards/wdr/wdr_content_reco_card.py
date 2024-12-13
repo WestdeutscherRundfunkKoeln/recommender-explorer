@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class WDRContentRecoCard(WDRContentCard):
-    def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_func, *args, **kwargs):
+    def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_func):
         stylesheet_image = """
                                  .img_wrapper {
                                      position: relative;
@@ -118,7 +118,7 @@ class WDRContentRecoCard(WDRContentCard):
         )
         insert_id_button_widget = insert_id_button(click_handler)
 
-        card = super().draw(content_dto, card, insert_id_button_widget, button, *args, **kwargs)
+        card = super().draw(content_dto, card, insert_id_button_widget, button)
 
         return pn.Column(card, float_panel)
 

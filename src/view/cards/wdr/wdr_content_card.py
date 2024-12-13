@@ -34,7 +34,7 @@ class WDRContentCard:
         content_dto: WDRContentItemDto,
         card: pn.Card,
         button: pn.widgets.Button | None = None,
-        #extra_data=None,
+        extra_data: pn.widgets.Button | None = None,
     ):
         base_card_objects: list[pn.viewable.Viewable] = [
             pn.pane.Markdown(f"""
@@ -52,8 +52,8 @@ class WDRContentCard:
         if button:
             base_card_objects.insert(1, button)
 
-        #if extra_data:
-            #base_card_objects.append(pn.pane.Markdown(f"Extra Data: {extra_data}"))
+        if extra_data:
+            base_card_objects.append(extra_data)
 
         card.objects = (
             cast(list[pn.viewable.Viewable], card.objects) + base_card_objects
