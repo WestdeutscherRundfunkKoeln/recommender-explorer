@@ -2,13 +2,13 @@ import logging
 import sys
 
 import panel as pn
-from envyaml import EnvYAML
+
+import httpx
 
 from exceptions.config_error import ConfigError
 from util.file_utils import (
     get_config_from_search,
     get_configs_from_arg,
-    load_ui_config,
     load_config,
     load_deployment_version_config,
 )
@@ -45,6 +45,14 @@ try:
     config["reco_explorer_url_base"] = pn.state.location.href.replace(
         pn.state.location.search, ""
     )
+    base_url_embedding = config["ingest"]["base_url_embedding"]
+    api_key = config["ingest"]["api_key"]
+    model_config = httpx.get(
+        f"{base_url_embedding}/model_config",
+        timeout=None,
+        headers={"x-api-key": api_key},
+    ).json()
+    config["c2c_config"] = model_config
 
     getExplorerInstance(config_full_paths, config, client).server_doc()
 

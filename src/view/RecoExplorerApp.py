@@ -3,7 +3,6 @@ import logging
 import traceback
 import functools
 from typing import Any
-import httpx
 
 import constants
 import panel as pn
@@ -40,15 +39,6 @@ class RecoExplorerApp:
     ) -> None:
         # basic setup
         self.config = config
-        base_url_embedding = config["ingest"]["base_url_embedding"]
-        api_key = config["ingest"]["api_key"]
-        model_config = httpx.get(
-            f"{base_url_embedding}/model_config",
-            timeout=None,
-            headers={"x-api-key": api_key},
-        ).json()
-        self.config["c2c_config"] = model_config
-
         self.client = client
         self.config_full_paths = config_full_paths
         self.config_full_path = config_full_paths[client]
@@ -129,10 +119,10 @@ class RecoExplorerApp:
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
-        for model in models.keys():
-            if models[model]["display_in_reco_explorer"]:
+        for model, model_config in models.items():
+            if model_config["display_in_reco_explorer"]:
                 self.c2c_models.append(model)
-                if models[model]["default"]:
+                if model_config["default"]:
                     self.c2c_model_default.append(model)
 
     def set_u2c_model_definitions(self):
