@@ -13,8 +13,7 @@ NAMESPACE = "embedding"
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 
 config = EnvYAML(CONFIG_PATH)
-model_config = config.get("models", default="")
-text_embedder = EmbedText(config, model_config)
+text_embedder = EmbedText(config)
 
 API_PREFIX = config.get("api_prefix", default="")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
@@ -44,15 +43,16 @@ def add_embedding_to_document(data: AddEmbeddingToDocRequest):
 
 @router.get("/models")
 def get_models():
+    # model_config = config.get("models", default="")
     return [
-        model_config["c2c_models"][model]["model_name"]
-        for model in model_config["c2c_models"]
+        config["models"]["c2c_models"][model]["model_name"]
+        for model in config["models"]["c2c_models"]
     ]
 
 
 @router.get("/model_config")
 def get_model_config():
-    return model_config
+    return config["models"]
 
 
 # main app
