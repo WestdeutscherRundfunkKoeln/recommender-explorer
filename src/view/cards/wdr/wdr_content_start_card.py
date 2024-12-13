@@ -52,7 +52,28 @@ class WDRContentStartCard(WDRContentCard):
                              font-size: 12px;
                          }
                          
+                         .relative-container {
+                             position: relative;
+                             display: inline-block;
+                         }
+                         
+                         .float-panel {
+                             position: absolute;
+                             top: 50%;
+                             left: 50%;
+                             transform: translate(-50%, -50%);
+                             z-index: 1000;
+                             display: none;
+                         }   
+                         
+                         .float-panel.visible {
+                              display: block;
+                         }     
+                         
                      """
+
+        pn.extension(raw_css=[stylesheet_image])
+
         teaserimage = pn.pane.HTML(f"""
                      <div class="img_wrapper">
                          <img class="blurred_background" src={content_dto.teaserimage}>
@@ -76,12 +97,27 @@ class WDRContentStartCard(WDRContentCard):
 
         config = {"headerControls": {"maximize": "remove", "collapse": "remove", "minimize":"remove", "smallify":"remove"}}
 
-        float_panel = pn.layout.FloatPanel(truncated_description, sizing_mode="stretch_width", height=330, config=config, visible=False, contained=True, css_classes=["float-panel"],)
+        float_panel = pn.layout.FloatPanel(
+            truncated_description,
+            sizing_mode="stretch_width",
+            height=330,
+            config=config,
+            visible=False,
+            contained=True,
+            styles={"position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)", "z-index": "1000"},)
 
         float_panel_container = pn.bind(lambda visible: float_panel if visible else None, float_panel.param.visible)
 
+        #def toggle_float_panel(event):
+            #float_panel.visible = not float_panel.visible
+
         def toggle_float_panel(event):
+            if float_panel.visible:
+                float_panel.css_classes = ["float-panel"]
+            else:
+                float_panel.css_classes = ["float-panel", "visible"]
             float_panel.visible = not float_panel.visible
+
 
         button.on_click(toggle_float_panel)
 

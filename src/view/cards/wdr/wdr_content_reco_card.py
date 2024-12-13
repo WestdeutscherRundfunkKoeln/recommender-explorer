@@ -8,7 +8,6 @@ from view.cards.cards_utils import create_click_handler
 from view.cards.cards_utils import append_custom_css_for_insert_id_button
 from view.cards.cards_utils import insert_id_button
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -74,15 +73,37 @@ class WDRContentRecoCard(WDRContentCard):
 
         button = pn.widgets.Button(name="Details öffnen", button_type="primary", width_policy="fit")
 
+        floating_objects = [
+            pn.pane.Markdown(f"""
+                       #### {content_dto.title}
+                       **Datentyp:** {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} 
+                       **Datum:** {content_dto.availableFrom}
+                       **Strukturpfad:** {content_dto.structurePath}
+                       **External ID:** {content_dto.externalid}
+                       **Themen:** {', '.join(set(content_dto.thematicCategories))}
+                       **Keywords:** {', '.join(set(content_dto.keywords))}
+                       **Sophora ID:** [{content_dto.cmsId}](https://{content_dto.domain}{content_dto.structurePath}/{content_dto.cmsId}.html)
+                """),
+        ]
+
         truncated_description = pn.pane.Markdown(f"""
         ***
         ##### {content_dto.title}
         {" ".join(content_dto.longDescription.split(" ")[:500])}...
         """)
 
-        config = {"headerControls": {"maximize": "remove", "collapse": "remove", "minimize":"remove", "smallify":"remove"}}
+        config = {
+            "headerControls": {"maximize": "remove", "collapse": "remove", "minimize": "remove", "smallify": "remove"}}
 
-        float_panel = pn.layout.FloatPanel(truncated_description, sizing_mode="stretch_width",  height=330, config=config, visible=False)
+        float_panel = pn.layout.FloatPanel(
+            floating_objects,
+            truncated_description,
+            sizing_mode="stretch_width",
+            width=330,
+            height=330,
+            config=config,
+            visible=False,
+            styles={"position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)", "z-index": "1000"},)
 
         float_panel_container = pn.bind(lambda visible: float_panel if visible else None, float_panel.param.visible)
 
@@ -124,4 +145,4 @@ class WDRContentRecoCard(WDRContentCard):
 
         return pn.Column(card, float_panel_container)
 
-        #return super().draw(content_dto, card, insert_id_button_widget)
+        # return super().draw(content_dto, card, insert_id_button_widget)
