@@ -82,7 +82,9 @@ class WDRContentRecoCard(WDRContentCard):
 
         config = {"headerControls": {"maximize": "remove", "collapse": "remove", "minimize":"remove", "smallify":"remove"}}
 
-        float_panel = pn.layout.FloatPanel(truncated_description, sizing_mode="stretch_width", width=400, height=330, config=config, visible=False)
+        float_panel = pn.layout.FloatPanel(truncated_description, sizing_mode="stretch_width",  height=330, config=config, visible=False)
+
+        float_panel_container = pn.bind(lambda visible: float_panel if visible else None, float_panel.param.visible)
 
         def toggle_float_panel(event):
             float_panel.visible = not float_panel.visible
@@ -120,6 +122,6 @@ class WDRContentRecoCard(WDRContentCard):
 
         card = super().draw(content_dto, card, insert_id_button_widget, button)
 
-        return pn.Column(card, float_panel)
+        return pn.Column(card, float_panel_container)
 
         #return super().draw(content_dto, card, insert_id_button_widget)
