@@ -92,18 +92,25 @@ class WDRContentRecoCard(WDRContentCard):
         {" ".join(content_dto.longDescription.split(" ")[:500])}...
         """)
 
+
+        background_color = self.get_background_color(content_dto, model, model_config)
+
         config = {
             "headerControls": {"maximize": "remove", "collapse": "remove", "minimize": "remove", "smallify": "remove"}}
 
         float_panel = pn.layout.FloatPanel(
-            floating_objects,
-            truncated_description,
+            pn.Column(
+                teaserimage,
+                super().draw(content_dto, pn.Card()),
+                truncated_description
+            ),
+            #truncated_description,
             sizing_mode="stretch_width",
             width=330,
             height=330,
             config=config,
             visible=False,
-            styles={"position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)", "z-index": "1000"},)
+            styles={"background": background_color, "position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)", "z-index": "1000"},)
 
         float_panel_container = pn.bind(lambda visible: float_panel if visible else None, float_panel.param.visible)
 

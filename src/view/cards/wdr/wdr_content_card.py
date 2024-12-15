@@ -59,3 +59,6 @@ class WDRContentCard:
             cast(list[pn.viewable.Viewable], card.objects) + base_card_objects
         )
         return card
+
+    def get_background_color(self, content_dto, model, model_config):
+        return self.config[model_config][content_dto.provenance][model]["reco_color"]
