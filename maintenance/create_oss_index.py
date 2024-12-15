@@ -43,35 +43,22 @@ def load_and_preprocess_data(s3_bucket,
 
     # decode IDs in subgenre and thematic cats
     s3 = boto3.resource('s3')
-
-    subgenre_obj = s3.Object(s3_bucket, s3_subgenre_lut_file)
-    subgenre_lut = json.load(subgenre_obj.get()['Body'])
-
-    thematic_obj = s3.Object(s3_bucket, s3_thematic_lut_file)
-    thematic_lut = json.load(thematic_obj.get()['Body'])
     df["embedText"] = df["title"] + ". " + df["description"]
     df["embedTextHash"] = [
         sha256(text.encode("utf-8")).hexdigest() for text in df["embedText"]
     ]
 
-    df["subgenreCategoriesIds"] = df["subgenreCategories"]
-    df["thematicCategoriesIds"] = df["thematicCategories"]
-
-    # df.loc['subgenreCategories'].apply([lambda catid: subgenre_lut[catid]] )
-
-    df["subgenreCategories"] = df.subgenreCategoriesIds.apply(
-        lambda row: [subgenre_lut[v] for v in row if subgenre_lut.get(v)]
-    )
-    df["thematicCategories"] = df.thematicCategoriesIds.apply(
-        lambda row: [thematic_lut[v] for v in row if thematic_lut.get(v)]
-    )
+    df["subgenreCategoriesIds"] = df["subgenreCategoriesId"]
+    df["thematicCategoriesIds"] = df["thematicCategoriesId"]
+    df["subgenreCategories"] = df["subgenreCategoriesTitle"]
+    df["thematicCategories"] = df["thematicCategoriesTitle"]
 
     # load and process show luts
     transposed = []
     for index, row in df.iterrows():
 
         show_luts = {}
-        show_core_id = row.get('showCoreId', False)
+        show_core_id = row.get('showCrid', False)
         prim_id = row.id
 
         if not show_core_id:
@@ -155,6 +142,13 @@ def postprocess_data(df):
     df["startDate"] = pd.to_datetime(
         df["availableTo"], errors="coerce", utc=True
     ).fillna(pd.Timestamp("2099-12-31T00:00:00Z"))
+
+    if "isChildContent" in df.columns:
+        df["isChildContent"] = df["isChildContent"].fillna(0).astype('bool')
+    if "fskAgeRating" in df.columns:
+        df["fskAgeRating"] = df["fskAgeRating"].fillna(0).astype('bool')
+    if "isFamilyFriendly" in df.columns:
+        df["isFamilyFriendly"] = df["isFamilyFriendly"].fillna(0).astype('bool')
 
     if "editorialCategories" in df.columns:
         df["editorialCategories"].fillna('n/a', inplace=True)
@@ -325,3 +319,4 @@ if __name__ == "__main__":
     logger.info("Upload show luts to OSS idx [" + target_idx + ']')
     show_df = show_df[show_df['id'].notna()]
     upload_show_luts(show_df, oss_client, target_idx)
+    logger.info("All done and finished")
