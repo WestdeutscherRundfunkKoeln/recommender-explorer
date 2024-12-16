@@ -73,44 +73,41 @@ class WDRContentRecoCard(WDRContentCard):
 
         button = pn.widgets.Button(name="Details öffnen", button_type="primary", width_policy="fit")
 
-        floating_objects = [
+        truncated_description = pn.Card(
             pn.pane.Markdown(f"""
-                       #### {content_dto.title}
-                       **Datentyp:** {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} 
-                       **Datum:** {content_dto.availableFrom}
-                       **Strukturpfad:** {content_dto.structurePath}
-                       **External ID:** {content_dto.externalid}
-                       **Themen:** {', '.join(set(content_dto.thematicCategories))}
-                       **Keywords:** {', '.join(set(content_dto.keywords))}
-                       **Sophora ID:** [{content_dto.cmsId}](https://{content_dto.domain}{content_dto.structurePath}/{content_dto.cmsId}.html)
-                """),
-        ]
-
-        truncated_description = pn.pane.Markdown(f"""
         ***
         ##### {content_dto.title}
         {" ".join(content_dto.longDescription.split(" ")[:500])}...
-        """)
+        """,
+                             styles={
+                                 'background': self.config[model_config][content_dto.provenance][model][
+                                     "reco_color"], }))
 
-
-        background_color = self.get_background_color(content_dto, model, model_config)
+        teaserimage_card = pn.Card(
+            teaserimage,
+            styles={
+                'background': self.config[model_config][content_dto.provenance][model]["reco_color"],
+            },
+        )
 
         config = {
             "headerControls": {"maximize": "remove", "collapse": "remove", "minimize": "remove", "smallify": "remove"}}
 
         float_panel = pn.layout.FloatPanel(
             pn.Column(
-                teaserimage,
-                super().draw(content_dto, pn.Card()),
+                teaserimage_card,
+                super().draw(content_dto, pn.Card(
+                    styles={'background': self.config[model_config][content_dto.provenance][model]["reco_color"]})),
                 truncated_description
             ),
-            #truncated_description,
             sizing_mode="stretch_width",
             width=330,
             height=330,
             config=config,
             visible=False,
-            styles={"background": background_color, "position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)", "z-index": "1000"},)
+            styles={"background": self.config[model_config][content_dto.provenance][model]["reco_color"],
+                    "position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)",
+                    "z-index": "1000"}, )
 
         float_panel_container = pn.bind(lambda visible: float_panel if visible else None, float_panel.param.visible)
 
