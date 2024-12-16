@@ -1,5 +1,6 @@
 import logging
 from typing import cast
+from datetime import datetime
 
 import panel as pn
 from dto.wdr_content_item import WDRContentItemDto
@@ -36,11 +37,15 @@ class WDRContentCard:
         button: pn.widgets.Button | None = None,
         extra_data: pn.widgets.Button | None = None,
     ):
+        try:
+            formatted_date = datetime.fromisoformat(content_dto.availableFrom).strftime("%d-%b-%Y %H:%M")
+        except ValueError:
+            formatted_date = content_dto.availableFrom
         base_card_objects: list[pn.viewable.Viewable] = [
             pn.pane.Markdown(f"""
                        #### {content_dto.title}
                        **Datentyp:** {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} 
-                       **Datum:** {content_dto.availableFrom}
+                       **Datum:** {formatted_date}
                        **Strukturpfad:** {content_dto.structurePath}
                        **External ID:** {content_dto.externalid}
                        **Themen:** {', '.join(set(content_dto.thematicCategories))}

@@ -149,4 +149,4 @@ class WDRContentRecoCard(WDRContentCard):
 
         return pn.Column(card, float_panel_container)
 
-        # return super().draw(content_dto, card, insert_id_button_widget)
+
