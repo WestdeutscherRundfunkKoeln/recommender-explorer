@@ -101,7 +101,8 @@ class WDRContentRecoCard(WDRContentCard):
                 truncated_description
             ),
             sizing_mode="stretch_width",
-            width=330,
+            min_width=450,
+            max_width=700,
             height=330,
             config=config,
             visible=False,
@@ -148,5 +149,3 @@ class WDRContentRecoCard(WDRContentCard):
         card = super().draw(content_dto, card, insert_id_button_widget, button)
 
         return pn.Column(card, float_panel_container)
-
-

@@ -119,19 +119,18 @@ class WDRContentStartCard(WDRContentCard):
                 truncated_description
             ),
             sizing_mode="stretch_width",
-            width=330,
+            min_width=450,
+            max_width=700,
             height=330,
             config=config,
             visible=False,
-            #contained=True,
+            contained=True,
             styles={"position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)",
                     "z-index": "1000",
                     "background": self.config[model_config][content_dto.provenance][model]['start_color']},
-            css_classes=["floating-panel"],
         )
 
         float_panel_container = pn.bind(lambda visible: float_panel if visible else None, float_panel.param.visible)
-
 
         def toggle_float_panel(event):
             if float_panel.visible:
