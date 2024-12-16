@@ -1,3 +1,4 @@
+from traceback import print_tb
 from typing import Any
 
 import panel as pn
@@ -39,6 +40,7 @@ class AccordionWidget(UIWidget):
             )
 
         accordion_widget.active = [config.get(c.ACCORDION_ACTIVE_KEY, [])]
+
 
         accordion_widget.is_leaf_widget = False
         accordion_widget.hidden_label = config.get(
@@ -175,18 +177,22 @@ class AccordionWidgetWithCards(AccordionWidget):
 
         accordion_widget_with_cards = pn.Accordion(*accordion_cards_tuples)
 
+        active_list = config.get(c.ACCORDION_CARD_ACTIVE_KEY)
+
+
+
+        if active_list is not None:
+            if isinstance(active_list, list):
+                accordion_widget_with_cards.active = active_list
+            else:
+                accordion_widget_with_cards.active = [active_list]
+
+
         # check if this accordion has a UI functionality, if so, assign a watcher to it
         ISUI = config.get(c.UI_ACC)
         # also check for the label
         if ISUI:
             print("An Accordion Card will have a watcher")
-            active_list = config.get(c.ACCORDION_CARD_ACTIVE_KEY)
-            if active_list is not None:
-                accordion_widget_with_cards.active = [active_list]
-            #active_list = self.get_config_value(config, c.ACCORDION_CARD_ACTIVE_KEY, int)
-            #if active_list:
-                #accordion_widget_with_cards.active = list(map(int, str(active_list)))
-
             # Watch for changes to the active state
             accordion_widget_with_cards.param.watch(self.on_accordion_card_change, 'active', onlychanged=True)
 
@@ -194,6 +200,9 @@ class AccordionWidgetWithCards(AccordionWidget):
         accordion_widget_with_cards.toggle = self.get_config_value(
             config, c.ACCORDION_CARD_TOGGLE_KEY, bool
         )
+
+        if isinstance(accordion_widget_with_cards.active, list) and len(accordion_widget_with_cards.active) > 1 and accordion_widget_with_cards.toggle:
+             raise Exception("Toggle can't be true with more than one active card")
 
         return accordion_widget_with_cards
 
