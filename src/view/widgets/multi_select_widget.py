@@ -190,7 +190,7 @@ class ItemFilterWidget(MultiSelectionWidget):
             return
 
         item_filter_widget.param.watch(
-            self.reco_explorer_app_instance.trigger_item_filter_choice,
+            self.reco_explorer_app_instance.trigger_filter_choice,
             "value",
             onlychanged=True,
         )

@@ -1,14 +1,25 @@
-import panel as pn
 import logging
-from dto.content_item import ContentItemDto
-from view.cards.content_card import ContentCard
+from datetime import datetime, timezone
+
+import panel as pn
+from dto.wdr_content_item import WDRContentItemDto
+from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
 
 
-class ContentStartCard(ContentCard):
+class WDRContentDraftCard:
+    CARD_HEIGHT = 600
 
-    def draw(self, content_dto: ContentItemDto, nr, model, model_config, modal_viewer):
+    def __init__(
+        self, config, reco_explorer_app_instance: RecoExplorerApp | None = None
+    ):
+        self.config = config
+        self.reco_explorer_app_instance = reco_explorer_app_instance
+
+    def draw(
+        self, content_dto: WDRContentItemDto, nr, model, model_config, modal_viewer
+    ):
         stylesheet_image = """
                          .img_wrapper {
                              position: relative;
@@ -54,31 +65,40 @@ class ContentStartCard(ContentCard):
                          }
                      """
 
-        teaserimage = pn.pane.HTML(f"""
+        teaserimage = pn.pane.HTML("""
                      <div class="img_wrapper">
-                         <img class="blurred_background" src={content_dto.teaserimage}>
-                         <img class="teaser_image" src={content_dto.teaserimage}>
-                         <div class="duration_label">
-                             <span>{(content_dto.duration / 60):.0f} Min.</span>
-                         </div>
+                         <img class="blurred_background" src="https://www1.wdr.de/resources/img/wdr/logo/wdr_logo.svg">
+                         <img class="teaser_image" src="https://www1.wdr.de/resources/img/wdr/logo/wdr_logo.svg">
                      </div>
                      """)
 
         teaserimage.stylesheets = [stylesheet_image]
         teaserimage.margin = (0, 0, 0, 0)
 
-        child_objects = [
+        child_objects: list[pn.viewable.Viewable] = [
             teaserimage,
-            pn.pane.Markdown(f""" ### Modell: {model} """)
+            pn.pane.Markdown(f""" ### Modell: {model} """),
+            pn.pane.Markdown(f"""
+                   #### DRAFT
+                   **Datentyp:** Beitrag 📰 
+                   **Datum:** {datetime.now(tz=timezone.utc)}
+            """),
+            pn.pane.Markdown(f"""
+            ***
+            ##### DRAFT
+            {" ".join(content_dto.description.split(" ")[:500]).strip()}{'...' if len(content_dto.description) > 500 else ""}
+            """),
         ]
 
-        card = pn.Card(
-            styles={'background': self.config[model_config][content_dto.provenance][model]['start_color'], 'overflow': 'auto'},
+        return pn.Card(
+            styles={
+                "background": self.config[model_config][content_dto.provenance][model][
+                    "start_color"
+                ],
+                "overflow": "auto",
+            },
             margin=5,
-            height=self.card_height,
-            hide_header=True
+            height=self.CARD_HEIGHT,
+            hide_header=True,
+            objects=child_objects,
         )
-
-        card.objects = child_objects
-
-        return super().draw(content_dto, card)

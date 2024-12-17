@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta, timezone
-import json
 import time
 from pathlib import Path
 
 import httpx
 import pytest
 from envyaml import EnvYAML
+from opensearchpy import OpenSearch, RequestsHttpConnection
 
 
 @pytest.fixture(scope="module")
@@ -24,6 +24,21 @@ def ingest_service():
 def embedding_service():
     with httpx.Client(base_url="http://0.0.0.0:1338") as client:
         yield client
+
+
+@pytest.fixture(autouse=True)
+def reset_opensearch():
+    with OpenSearch(
+        hosts=[{"host": "0.0.0.0", "port": 9200}],
+        http_auth=("admin", "admin"),
+        use_ssl=False,
+        verify_certs=False,
+        connection_class=RequestsHttpConnection,
+        timeout=600,
+    ) as client:
+        client.indices.create(index="test_index")
+        yield
+        client.indices.delete(index="test_index")
 
 
 def models():
@@ -85,7 +100,7 @@ def test_events(
     assert resp.json()["_id"] == id
 
     # wait until sync is done
-    time.sleep(1)
+    time.sleep(61)
 
     # The document is available in the opensearch with embeddings
     resp = search_service.get(f"/documents/{id}")
@@ -142,10 +157,15 @@ def test_bulk_ingest(
     assert task["id"] == task_id
     assert task["status"] == "COMPLETED"
     assert task["errors"] == []
+    assert task["completed_items"] == 2
+    assert task["failed_items"] == 0
     assert datetime.fromisoformat(task["created_at"]) > start_ts
     assert datetime.fromisoformat(task["completed_at"]) < start_ts + timedelta(
         minutes=1
     )
+
+    # wait for maintainance to run
+    time.sleep(61)
 
     # check documents in opensearch
     ids = [f.removesuffix(".json") for f in files]
@@ -154,15 +174,62 @@ def test_bulk_ingest(
         assert_document_is_in_opensearch(resp, id)
 
 
-def test_reembedding_maintenance(search_service: httpx.Client):
-    id = "no_embedding"
-    resp = search_service.post("/documents/no_embedding", json={"embedText": "test"})
+def test_reembedding_maintenance(search_service: httpx.Client, files: list[str]):
+    id = files[0].removesuffix(".json")
+    resp = search_service.post(f"/documents/{id}", json={"embedText": "test"})
     assert resp.is_success
 
-    resp = search_service.get("/documents/no_embedding")
+    resp = search_service.get(f"/documents/{id}")
     assert resp.is_success
 
     # wait for maintainance to run
-    time.sleep(11)
-    resp = search_service.get("/documents/no_embedding")
+    time.sleep(61)
+    resp = search_service.get(f"/documents/{id}")
     assert_document_is_in_opensearch(resp, id)
+
+
+def test_delta_load_maintenance(
+    search_service: httpx.Client, ingest_service: httpx.Client, files: list[str]
+):
+    ids = [f.removesuffix(".json") for f in files]
+    search_service.post(f"/documents/{ids[0]}", json={"test": "test"})
+
+    # poll task status
+    resp = ingest_service.get("/tasks")
+    assert resp.is_success
+    delta_task = sorted(
+        [task["id"] for task in resp.json()["tasks"] if task["id"].startswith("delta")]
+    )[-1]
+    for _ in range(6):
+        time.sleep(10)
+        resp = ingest_service.get(f"/tasks/{delta_task}")
+        task = resp.json()["task"]
+        if task["status"] == "COMPLETED":
+            break
+
+    task = ingest_service.get(f"/tasks/{delta_task}").json()["task"]
+    assert task["status"] == "COMPLETED"
+    assert task["errors"] == []
+    assert task["completed_items"] == 1
+    assert task["failed_items"] == 0
+
+    resp = search_service.get(f"/documents/{ids[0]}")
+    assert resp.is_success
+    payload = resp.json()
+    assert payload["_id"] == ids[0]
+    assert list(payload["_source"].keys()) == ["test"]
+
+    time.sleep(120)
+    assert_document_is_in_opensearch(search_service.get(f"/documents/{ids[1]}"), ids[1])
+
+
+def test_delete_maintenance(search_service: httpx.Client, files: list[str]):
+    search_service.post("/documents/test", json={"test": "test"})
+    assert search_service.get("/documents/test").is_success
+
+    # wait for maintainance tasks to run
+    time.sleep(61)
+
+    response = search_service.get("/documents/test")
+    assert response.is_error
+    assert response.status_code == 404

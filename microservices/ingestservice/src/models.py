@@ -51,6 +51,8 @@ class BulkIngestTask(BaseModel):
     errors: list[str]
     created_at: datetime.datetime
     completed_at: datetime.datetime | None = None
+    completed_items: int = 0
+    failed_items: int = 0
 
 
 class SingleTaskResponse(BaseModel):

@@ -112,6 +112,7 @@ To Configure A UI, the config file needs to contain some Key Value Pairs. In the
 | title             | no        | Recommender Explorer | Title of the App. Is Shown in the visible Header                                                                |
 | logo              | no        | -                    | Can contain a URL to an Icon or Logo Image. If empty, no Logo will be displayed in Header                       |
 | header_background | no        | #194569              | Sets the Color of the visible Header Band which also contains the Title and the Logo                            |
+| page_size         | no        | 4                    | Sets the Page Size of the result row, so 4 means, you can see 4 recommandations for a start item initially      |
 | blocks            | yes       | -                    | A list of Blocks, which contain the Widgets Configuration. At least on block must be configured to show some UI |
 | custom_css        | no        | -                    | If you want to style UI Elements you can change appearance by adding custom css to the application              |
 
@@ -121,7 +122,8 @@ To Configure A UI, the config file needs to contain some Key Value Pairs. In the
 	ui_config:
 	  title: A Test Example
       logo: https://www.urlToALogo.com/logo.svg
-      header_background: #194569  
+      header_background: #194569
+      page_size: 5
       blocks:
 	    - label: 'Block A'
           components:

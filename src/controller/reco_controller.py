@@ -10,10 +10,12 @@ import constants
 
 from model.sagemaker.clustering_model_client import ClusteringModelClient
 from model.opensearch.base_data_accessor_opensearch import BaseDataAccessorOpenSearch
+from exceptions.config_error import ConfigError
 from exceptions.date_validation_error import DateValidationError
 from exceptions.model_validation_error import ModelValidationError
 from exceptions.user_not_found_error import UnknownUserError
 from exceptions.item_not_found_error import UnknownItemError
+from exceptions.embedding_not_found_error import UnknownItemEmbeddingError
 from exceptions.empty_search_error import EmptySearchError
 from util.postprocessing import FilterPostproc
 from util.dto_utils import (
@@ -57,7 +59,7 @@ class RecommendationController:
         #
         # TODO - refactor this into model code
         #
-        self.num_NN = 5  # num start items to fetch from backend per call
+        self.num_NN = self.config.get('opensearch.number_of_recommendations', 5)  # num start items to fetch from backend per call
         self.num_items = 0  # num start items to fetch from backend per call
         self.num_items_single_view = 4
         self.num_items_multi_view = 4
@@ -67,6 +69,15 @@ class RecommendationController:
         self.model_config = ""
         self.user_cluster = []  # refactor once clustering endpoint is better
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
+
+        if not isinstance(self.num_NN, int):
+            raise ConfigError(
+                "Could not get valid Configuration for Service from config yaml. RecommendationController needs correctly configured Service, "
+                "expect int value in Configuration in Key: opensearch.number_of_recommendations",
+                {},
+            )
+        else:
+            self.num_NN = min(self.num_NN, 20)
 
     def register(self, component_group, component, watcher=None, callback=None):
         self.components[component_group][component.params["label"]] = component
@@ -301,7 +312,7 @@ class RecommendationController:
                     item_row.append(reco_item)
 
                 all_items.append(item_row)
-            except (UnknownUserError, UnknownItemError) as e:
+            except (UnknownUserError, UnknownItemError, UnknownItemEmbeddingError) as e:
                 not_found_item = dto_from_classname(
                     class_name="NotFoundDto",
                     position=constants.ITEM_POSITION_START,

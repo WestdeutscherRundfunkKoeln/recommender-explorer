@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import traceback
+import functools
 from typing import Any
 import constants
 import panel as pn
@@ -26,9 +27,6 @@ from view.widgets.text_field_widget import TextFieldWidget
 from view.widgets.accordion_widget import AccordionWidgetWithCards
 
 
-
-
-
 #loggin preference
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -39,7 +37,6 @@ formatter = logging.Formatter(
 )
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
-
 
 #
 # Main App
@@ -88,9 +85,6 @@ class RecoExplorerApp:
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
 
-        self.RIGHT_ARROW = "\u25b6"
-        self.LEFT_ARROW = "\u25c0"
-
         # display mode
         self.display_mode = constants.DISPLAY_MODE_SINGLE
 
@@ -117,9 +111,9 @@ class RecoExplorerApp:
         #
         self.define_item_pagination()
 
-
-        # a grid for start items/users and recos
-        self.item_grid = pn.GridSpec()
+        self.template = pn.template.BootstrapTemplate()
+        self.main_content = pn.Column()
+        self.page_size = self.define_page_size()
 
 
         # init some of the component values
@@ -149,46 +143,88 @@ class RecoExplorerApp:
 
     # pn component definitions
     def define_item_pagination(self):
+        self.pagination_top = pn.Row()
         self.pagination = pn.Row()
         self.floating_elements = pn.Row(height=0, width=0)
 
+    def define_model_selections(self):
+        ## c2c selections
+        self.c2c_choice = pn.widgets.MultiSelect(
+            name="", options=self.c2c_models, value=self.c2c_model_default
+        )
+        self.c2c_choice.params = {
+            "label": constants.MODEL_CONFIG_C2C,
+            "reset_to": self.c2c_model_default,
+        }
+        model_watcher = self.c2c_choice.param.watch(
+            self.trigger_model_choice, "value", onlychanged=True
+        )
+        self.controller.register(
+            "model_choice", self.c2c_choice, model_watcher, self.trigger_model_choice
+        )
 
+        ## u2c selections
+        self.u2c_model_choice = pn.widgets.MultiSelect(
+            name="",
+            options=self.u2c_models,
+        )
+        self.u2c_model_choice.params = {
+            "label": constants.MODEL_CONFIG_U2C,
+            "reset_to": [],
+        }
+        model_watcher = self.u2c_model_choice.param.watch(
+            self.trigger_model_choice, "value", onlychanged=True
+        )
+        self.controller.register(
+            "model_choice",
+            self.u2c_model_choice,
+            model_watcher,
+            self.trigger_model_choice,
+        )
+
+        # reset button
+        self.model_resetter = pn.widgets.Button(
+            name="Auswahl zurücksetzen", button_type="primary", margin=10
+        )
+
+        self.model_resetter.params = {
+            "label": "model_resetter",
+            "resets": ["model_choice"],
+        }
+
+        self.model_resetter.on_click(self.trigger_model_reset)
+
+    def define_page_size(self):
+        page_size = self.get_ui_config_value(
+            ui_constants.UI_CONFIG_PAGE_SIZE_KEY,
+            ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE,
+        )
+        if isinstance(page_size, int):
+            return page_size
+        else:
+            logger.info(f"{page_size} is not a valid page size. Fallback to default: {ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE}")
+            return ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE
+
+    # event handling
     async def trigger_reco_filter_choice(self, event):
-        logger.info(event)
-        self.toggle_visibility(event)
-        await self.get_items_with_parameters()
-
-    async def trigger_start_filter_choice(self, event):
         logger.info(event)
         self.toggle_visibility(event)
         await self.get_items_with_parameters()
 
     async def trigger_item_pagination(self, event):
         logger.info(event)
-        if event.obj.name == self.RIGHT_ARROW:
+        if event.obj.name == ui_constants.RIGHT_ARROW:
             self.controller.increase_page_number()
-        elif event.obj.name == self.LEFT_ARROW:
+        elif event.obj.name == ui_constants.LEFT_ARROW:
             self.controller.decrease_page_number()
         await self.get_items_with_parameters()
         self.disablePageButtons()
 
-    async def trigger_item_filter_choice(self, event):
+    async def trigger_filter_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
         self.disablePageButtons()
         await self.get_items_with_parameters()
-
-
-
-
-
-
-
-
-
-
-
-
 
     async def trigger_model_choice(self, event):
         logger.info(event)
@@ -211,24 +247,6 @@ class RecoExplorerApp:
         self.disablePageButtons()
         await self.get_items_with_parameters()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     async def trigger_user_cluster_choice(self, event):
         logger.info(event)
         self.controller.reset_page_number()
@@ -248,17 +266,17 @@ class RecoExplorerApp:
             await self.get_items_with_parameters()
             self.pagination[4] = self.controller.get_num_pages()
         else:
-            self.item_grid.objects = {}
+            self.main_content[:] = []
             self.floating_elements = []
         self.controller.reset_page_number()
         self.disablePageButtons()
 
     def trigger_item_reset(self, event):
         logger.info(event)
+        self.main_content[:] = []
+        self.floating_elements.objects = []
         self.controller.reset_defaults(event.obj.params["resets"])
         self.controller.reset_page_number()
-        self.item_grid.objects = {}
-        self.floating_elements.objects = []
         self.draw_pagination()
 
     async def trigger_reco_reset(self, event):
@@ -268,13 +286,8 @@ class RecoExplorerApp:
         await self.get_items_with_parameters()
 
     def trigger_model_reset(self, event):
-        logger.info(event)
         self.model_choice.active = [0]
-        self.controller.reset_defaults(event.obj.params["resets"])
-        self.controller.reset_page_number()
-        self.item_grid.objects = {}
-        self.floating_elements.objects = []
-        self.draw_pagination()
+        self.trigger_item_reset(event)
 
     def trigger_modal(self, event):
         logger.info(event)
@@ -378,16 +391,6 @@ class RecoExplorerApp:
             self.text_input.visible = True
         # shorten this, either combine last two elifs or with dict of widget groups
 
-    def toggle_model_choice(self, event):
-        logger.info(event)
-        active_block = event.obj.active[0]
-        self.put_navigational_block(2, self.source_block[active_block])
-        if active_block == 0:
-            self.put_navigational_block(3, self.filter_block[0])
-        else:
-            self.put_navigational_block(3, self.filter_block[1])
-        self.assemble_navigation_elements()
-
     def toggle_client_choice(self, event):
         logger.info(event)
         self.client = event.obj.value
@@ -448,20 +451,15 @@ class RecoExplorerApp:
             self.inhaltSelect.value = []
 
     def disablePageButtons(self):
-        if self.controller.get_page_number() == 1:
-            self.previousPage.disabled = True
-        else:
-            self.previousPage.disabled = False
-
-        if self.controller.get_page_number() == self.controller.get_num_pages():
-            self.nextPage.disabled = True
-        else:
-            self.nextPage.disabled = False
+        self.previousPage.disabled = self.controller.get_page_number() == 1
+        self.nextPage.disabled = (
+            self.controller.get_page_number() == self.controller.get_num_pages()
+        )
 
     # assembly & rendering
 
     def draw_pagination(self):
-        if not self.item_grid.objects:
+        if not self.main_content.objects:
             from_page = " - "
             to_page = " - "
         else:
@@ -512,8 +510,7 @@ class RecoExplorerApp:
         return self.config.get(ui_constants.UI_CONFIG_KEY + "." + key, fallback)
 
     def build_common_ui_widget_dispatcher(
-        self, common_ui_widget_type: str, common_ui_widget_config: dict[str, Any]
-    ):
+        self, common_ui_widget_type: str, common_ui_widget_config: dict[str, Any]):
         """
         Decides which common ui widget should be build based on the given ui type. If no type matches returns None
 
@@ -710,15 +707,18 @@ class RecoExplorerApp:
             # check if particular blocks belong to another ones and then populate the navigation
             self.add_blocks_to_navigation()
 
+
             # empty screen hinweis
-            self.item_grid[0, 0] = pn.pane.Alert(
+            self.NoModelChossen = pn.pane.Alert(
                 "Wähle ein oder mehrere Modelle, sowie ein Start-Item oder -User",
                 alert_type="warning",
             )
 
+            self.pagination_top.append(self.NoModelChossen)
+
             # previous button
             self.previousPage = pn.widgets.Button(
-                name=self.LEFT_ARROW,
+                name= ui_constants.LEFT_ARROW,
                 button_type="primary",
                 margin=10,
                 width=50,
@@ -734,7 +734,7 @@ class RecoExplorerApp:
 
             # next button
             self.nextPage = pn.widgets.Button(
-                name=self.RIGHT_ARROW,
+                name= ui_constants.RIGHT_ARROW,
                 button_type="primary",
                 width=50,
                 margin=10,
@@ -743,14 +743,14 @@ class RecoExplorerApp:
             self.nextPage.on_click(self.trigger_item_pagination)
             self.pagination.append(self.nextPage)
 
-
         ## In case no config file was given
         else:
             # empty screen hinweis
-            self.item_grid[0, 0] = pn.pane.Alert(
+            self.NoConfig = pn.pane.Alert(
                 "Couldn't find a Config file",
                 alert_type="warning",
             )
+            self.pagination.append(self.NoConfig)
 
     def get_version_information_and_append_to_sidebar(self, sidebar):
         """
@@ -768,38 +768,123 @@ class RecoExplorerApp:
             sidebar.append(version_widget)
         return sidebar
 
-
     async def get_items_with_parameters(self):
         """
         Calls the actual search function in controller to get results for query
         """
-        self.item_grid.objects = {}
+        self.main_content[:] = []
+        self.pagination_top [:] = []
 
         try:
             models, items, config = await asyncio.to_thread(self.controller.get_items)
             for idx, row in enumerate(items):
-                for idz, item_dto in enumerate(row):
-                    card = self.controller.get_item_viewer(item_dto, self)
-                    if (
-                        self.controller.get_display_mode()
-                        == constants.DISPLAY_MODE_SINGLE
-                    ):
-                        self.item_grid[idx, idz] = card.draw(
-                            item_dto, idz, models[0], config, self.trigger_modal
-                        )
-                    else:
-                        self.item_grid[idx, idz] = card.draw(
-                            item_dto, idz, models[idx], config, self.trigger_modal
-                        )
-            self.draw_pagination()
+                self.add_cards_row(models, config, idx, row)
+                self.draw_pagination()
+
         except (EmptySearchError, ModelValidationError) as e:
-            self.item_grid[0, 0] = pn.pane.Alert(str(e), alert_type="warning")
+            self.main_content.append(pn.pane.Alert(str(e), alert_type="warning"))
         except DateValidationError as e:
             logger.info(str(e))
         except Exception as e:
-            self.item_grid[0, 0] = pn.pane.Alert(str(e), alert_type="danger")
+            self.main_content.append(pn.pane.Alert(str(e), alert_type="danger"))
             logger.warning(traceback.print_exc())
         self.disablePageButtons()
+
+    def add_cards_row(self, models: list[any], config: str, idx: int, row: list[any]):
+        """
+
+        """
+        start_card = None
+        reco_cards = []
+        for idz, item_dto in enumerate(row):
+            card = self.controller.get_item_viewer(item_dto, self)
+            if (
+                    self.controller.get_display_mode()
+                    == constants.DISPLAY_MODE_SINGLE
+            ):
+                displayed_card = card.draw(
+                    item_dto, idz, models[0], config, self.trigger_modal
+                )
+            else:
+                displayed_card = card.draw(
+                    item_dto, idz, models[idx], config, self.trigger_modal
+                )
+            if idz == 0:
+                start_card = displayed_card
+            else:
+                reco_cards.append(displayed_card)
+
+        cards_row = pn.Row(start_card, *reco_cards[:self.page_size])
+        row_with_navigation_buttons = self.create_navigation_elements_for_cards_row(cards_row, start_card, reco_cards)
+        self.main_content.append(pn.Row(pn.Column(cards_row, row_with_navigation_buttons)))
+
+    def create_navigation_elements_for_cards_row(self, cards_row: pn.Row, start_card: pn.layout.card.Card, reco_cards: list) -> pn.Row:
+        """
+        :param cards_row: pn.Row, the parent row containing the card elements to navigate through
+        :param start_card: pn.layout.card.Card, the card element at the start
+        :param reco_cards: list, list of recommended card elements
+        :return: pn.Row, row with navigation buttons for navigating through the cards
+        """
+        prev_button = pn.widgets.Button(name=f"{ui_constants.LEFT_ARROW}", width=100)
+        prev_button.disabled = True
+        next_button = pn.widgets.Button(name=f"{ui_constants.RIGHT_ARROW}", width=100)
+        row_with_navigation_buttons = pn.Row(
+            prev_button,
+            pn.Spacer(),
+            next_button,
+        )
+
+        widgets_in_row = {
+            "cards_row": cards_row,
+            "start_card": start_card,
+            "reco_cards": reco_cards,
+            "page_size": self.page_size,
+            "prev_button": prev_button,
+            "next_button": next_button,
+        }
+
+        prev_button.on_click(functools.partial(self._update_prev, widgets=widgets_in_row))
+        next_button.on_click(functools.partial(self._update_next, widgets=widgets_in_row))
+
+        return row_with_navigation_buttons
+
+    def _update_next(self, event, widgets: dict[any]):
+        """
+        :param event: Event that triggers the update
+        :param widgets: Dictionary containing widgets to be updated
+        :return: None
+
+        This method updates the next page of cards based on the current page size. If the page size is smaller than the length
+        of the cards list, it adjusts the page size and updates the cards to display the next set of cards. Finally, it toggles
+        the 'next_button' and 'prev_button' widgets based on the new page size.
+        """
+        if widgets['page_size'] < len(widgets['reco_cards']):
+            widgets['page_size'] += self.page_size
+            widgets['cards_row'].objects = [
+                widgets['start_card'],
+                *widgets['reco_cards'][widgets['page_size'] - self.page_size:widgets['page_size']]
+            ]
+        widgets['prev_button'].disabled = False
+        widgets['next_button'].disabled = (widgets['page_size'] + self.page_size) > len(widgets['reco_cards'])
+
+    def _update_prev(self, event, widgets: dict[any]):
+        """
+        :param event: Event that triggers the update
+        :param widgets: Dictionary containing widgets to be updated
+        :return: None
+
+        This method updates the previous page of cards based on the current page size. If the page size is greater than the stored
+        page size, it adjusts the page size and updates the cards to display the previous set of cards. Finally, it toggles the
+        'next_button' and 'prev_button' widgets based on the new page size.
+        """
+        if widgets['page_size'] > self.page_size:
+            widgets['page_size'] -= self.page_size
+            widgets['cards_row'].objects = [
+                widgets['start_card'],
+                *widgets['reco_cards'][widgets['page_size'] - self.page_size:widgets['page_size']]
+            ]
+        widgets['next_button'].disabled = False
+        widgets['prev_button'].disabled = widgets['page_size'] <= self.page_size
 
     @staticmethod
     def render_404():
@@ -837,26 +922,14 @@ class RecoExplorerApp:
         # finally add onload, check if url parameter are defined in config and link to widgets
         pn.state.onload(self.update_widgets_from_url_parameter)
 
-        # Create and return the BootstrapTemplate
-        return pn.template.BootstrapTemplate(
+        self.template = pn.template.BootstrapTemplate(
             site_url="./",
             title=title,
             logo=logo,
             sidebar=[sidebar],
-            main=[self.floating_elements, self.item_grid, self.pagination],
+            main=[self.floating_elements, self.pagination_top, self.main_content, self.pagination],
             header_background=header_background,
         )
 
-
-
-
-
-
-
-
-
-
-
-
-
+        return self.template
 

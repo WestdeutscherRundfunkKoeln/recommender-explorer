@@ -18,6 +18,10 @@
           "pattern": "^#[0-9a-fA-F]{6}$",
           "description": "Background color of the Header. Must be a valid HEX color code."
         },
+        "page_size": {
+          "type": "integer",
+          "description": "Page size defines how many recommendations are shown on one page."
+        },
         "blocks": {
           "type": "array",
           "items": {

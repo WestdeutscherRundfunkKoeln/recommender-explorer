@@ -74,6 +74,9 @@
         },
         "primary_field": {
           "type": "string"
+        },
+        "number_of_recommendations": {
+          "type": "integer"
         }
       },
       "required": [
