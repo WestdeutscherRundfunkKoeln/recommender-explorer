@@ -47,6 +47,48 @@ def test_accordion_widget_create(
     assert accordion_widget_to_test.hidden_label == "Test Accordion"
 
 
+def test_accordion_widget_with_cards_with_toggle_activated_and_several_active_cards_fails(mocker):
+    with pytest.raises(Exception) as e_info:
+            # mock errroneous config { active: [0,1], toggle: True }
+            ### create the AccordionsWithCards widget (instance.create(config) )
+
+        mocker_app = mocker.MagicMock()
+        mocker_ctrl = mocker.MagicMock()
+
+        config = {
+            "type": "accordion",
+            "label": "Test Accordion",
+            "options": "content_gets_mocked",
+            "active": [0,1],
+        }
+
+        def mock_get_config_value_side_effect(*args, **kwargs):
+            if args[2] == int:
+                return 2
+            elif args[2] == bool:
+                return True
+            else:
+                return None
+
+        mock_get_config_value = mocker.patch.object(
+            src.view.widgets.accordion_widget.AccordionWidgetWithCards, 'get_config_value',
+        )
+        mock_get_config_value.side_effect = mock_get_config_value_side_effect
+
+        mock_create_accordion_content = mocker.patch.object(
+            src.view.widgets.accordion_widget.AccordionWidget, 'create_accordion_content',
+            return_value=[]
+        )
+
+        instance = AccordionWidgetWithCards(mocker_app, mocker_ctrl)
+
+        accordion_widget_with_cards_to_test = instance.create(config)
+
+        #assert not (isinstance(accordion_widget_with_cards_to_test.active, list) and len(
+            #accordion_widget_with_cards_to_test.active) > 1 and accordion_widget_with_cards_to_test.toggle), \
+            #"Assertion failed: active is a list with more than 1 element and toggle is True"
+
+
 def test_accordion_widget_with_cards_create(mocker):
     mocker_app = mocker.MagicMock()
     mocker_ctrl = mocker.MagicMock()
@@ -77,7 +119,9 @@ def test_accordion_widget_with_cards_create(mocker):
     )
 
     instance = AccordionWidgetWithCards(mocker_app, mocker_ctrl)
+
     accordion_widget_with_cards_to_test = instance.create(config)
+
 
     mock_create_accordion_content.assert_called()
     mock_get_config_value.assert_called()
