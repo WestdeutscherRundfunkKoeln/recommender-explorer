@@ -149,6 +149,12 @@ def postprocess_data(df):
         df["fskAgeRating"] = df["fskAgeRating"].fillna(0).astype('bool')
     if "isFamilyFriendly" in df.columns:
         df["isFamilyFriendly"] = df["isFamilyFriendly"].fillna(0).astype('bool')
+    if "targetAudienceMinAge" in df.columns:
+        df["targetAudienceMinAge"] = df["targetAudienceMinAge"].fillna(0).astype('bool')
+    if "targetAudienceMaxAge" in df.columns:
+        df["targetAudienceMaxAge"] = df["targetAudienceMaxAge"].fillna(0).astype('bool')
+
+
 
     if "editorialCategories" in df.columns:
         df["editorialCategories"].fillna('n/a', inplace=True)
