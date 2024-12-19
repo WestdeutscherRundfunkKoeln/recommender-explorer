@@ -13,7 +13,13 @@ from util.dto_utils import update_from_props
 logger = logging.getLogger(__name__)
 
 
-WEIGHTS = ("weight_audio", "weight_video", "weight_beitrag")
+WEIGHTS = (
+    "weight_audio",
+    "weight_video",
+    "weight_beitrag",
+    "weight_fotostrecke",
+    "weight_link",
+)
 
 
 class BaseDataAccessorPaService(BaseDataAccessor):

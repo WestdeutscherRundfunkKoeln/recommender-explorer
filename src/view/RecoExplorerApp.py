@@ -28,8 +28,6 @@ from view.widgets.accordion_widget import AccordionWidgetWithCards
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-
 #
 # Main App
 #
@@ -1354,15 +1352,16 @@ class RecoExplorerApp:
             blocks = self.build_blocks()
             logger.debug("found blocks %s", blocks)
             block_counts = len(blocks)
-
             # Client
-            client_choice = pn.widgets.RadioButtonGroup(
-                name="",
+            client_title = pn.pane.Markdown("### Mandant wählen")
+            client_choice = pn.widgets.RadioBoxGroup(
+                name="Client",
                 options=get_client_options(self.config_full_paths),
                 value=self.client,
             )
 
             if self.client_choice_visibility:
+                self.config_based_nav_controls.append(client_title)
                 client_choice.param.watch(
                     self.toggle_client_choice, "value", onlychanged=True
                 )
@@ -1376,8 +1375,9 @@ class RecoExplorerApp:
 
         else:
             # Client
-            self.client_choice = pn.widgets.RadioButtonGroup(
-                name="",
+            client_title = pn.pane.Markdown("### Mandant wählen")
+            self.client_choice = pn.widgets.RadioBoxGroup(
+                name="Client",
                 options=get_client_options(self.config_full_paths),
                 value=self.client,
             )

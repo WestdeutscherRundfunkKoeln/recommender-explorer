@@ -127,7 +127,7 @@ services:
       - ui
     build: .
     container_name: reco-explorer-ui
-    command: panel serve RecoExplorer.py --address 0.0.0.0 --port 80 --allow-websocket-origin="*" --log-level info --args config=config/config_mediathek.yaml
+    command: panel serve RecoExplorer.py --address 0.0.0.0 --port 80 --allow-websocket-origin="*" --log-level info --args config=config/config_wdr.yaml
     ports:
       - 8080:80
     expose:
@@ -139,7 +139,7 @@ services:
       - OPENSEARCH_USER=admin
       - OPENSEARCH_PASS=admin
       - OPENSEARCH_INDEX=test_index
-      - OPENSEARCH_USE_SSL=true
+      - BASE_URL_EMBEDDING=http://embedding-service
     networks:
       - opensearch-net
   fake-gcs-server:
