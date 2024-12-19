@@ -68,6 +68,7 @@ class MultiSelectionWidget(UIWidget):
 
         multi_select_label = config.get(c.MULTI_SELECT_LABEL_KEY, "")
         multi_select_name = config.get(c.MULTI_SELECT_DISPLAY_NAME_KEY, "")
+        multi_select_paging = config.get(c.MULTI_SELECT_PAGING, False)
 
         multi_select_widget = pn.widgets.MultiSelect(
             options=options,
@@ -80,6 +81,7 @@ class MultiSelectionWidget(UIWidget):
         multi_select_widget.params = {
             "label": multi_select_label,
             "reset_to": default,
+            "has_paging": multi_select_paging
         }
         return multi_select_widget
 
@@ -215,6 +217,8 @@ class UserChoiceWidget(MultiSelectionWidget):
             multi_select_widget (widget): final model choice multi select widget built from given config
         """
         user_choice_widget = self.build_multi_select_widget(config)
+        user_choice_widget.value = [user_choice_widget.options[0]]
+
 
         if not user_choice_widget:
             return
@@ -252,7 +256,6 @@ class RecoFilter_U2C_Widget(MultiSelectionWidget):
 
         if not Reco_Filter_U2C:
             return
-
         model_watcher = Reco_Filter_U2C.param.watch(
             self.reco_explorer_app_instance.trigger_reco_filter_choice,
             "value",
@@ -341,9 +344,6 @@ class RecoFilterWidget(MultiSelectionWidget):
         reco_filter_widget.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
 
         return reco_filter_widget
-
-
-
 
 
 class UpperItemFilterWidget(MultiSelectionWidget):

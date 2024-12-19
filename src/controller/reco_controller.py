@@ -411,15 +411,18 @@ class RecommendationController:
         field_map = self.config[constants.MODEL_CONFIG_U2C]["clustering_models"][
             "U2C-Knn-Model"
         ]["field_mapping"]
-        response = self.user_cluster_accessor.get_users_by_category(genre_widget.value)
-        num_users = len(response[genre_widget.value])
+        genre_widget_value = genre_widget.value[0]
+        response = self.user_cluster_accessor.get_users_by_category(genre_widget_value)
+        num_users = len(response[genre_widget_value])
         users = []
-        for user_props in response[genre_widget.value][start_idx:end_idx]:
+
+        for user_props in response[genre_widget_value][start_idx:end_idx]:
             new_user = copy.copy(user_dto)
             new_user.source = "Primäres Genre"
-            new_user.source_value = genre_widget.value
+            new_user.source_value = genre_widget_value
             new_user = update_from_props(new_user, user_props, field_map)
             users.append(new_user)
+
         return num_users, users
 
     def _get_start_users_by_cluster(
@@ -504,7 +507,6 @@ class RecommendationController:
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
 
         reco_filter = self._get_current_filter_state("reco_filter_u2c")
-
 
         kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
             start_item, (self.num_NN + 1), reco_filter
@@ -637,6 +639,8 @@ class RecommendationController:
 
         :return: list of active start components
         """
+
+
         if self.model_type == constants.MODEL_TYPE_U2C:
             return list(
                 filter(
