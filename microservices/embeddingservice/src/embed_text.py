@@ -43,33 +43,40 @@ def download_model(
 class EmbedText:
     def __init__(self, config):
         self.config = config
+        self.model_configs = config["models"]["c2c_models"]
         self.models = {}
         bucket = None
         if sa := self.config.get("service_account"):
             credentials = service_account.Credentials.from_service_account_info(sa)
             client = storage.Client(credentials=credentials)
             bucket = client.bucket(self.config["bucket_name"])
-        for model in self.config["models"]:
-            for model_name, model_path in model.items():
-                bucket_path = (
-                    f'{self.config["bucket_path"]}/{model_path.split("/")[-1]}.zip'
-                )
+        for model, model_config in self.model_configs.items():
+            if model_config["endpoint"].startswith("opensearch://"):
+                bucket_path = f'{self.config["bucket_path"]}/{model_config["model_path"].split("/")[-1]}.zip'
                 local_path = (
                     (pathlib.Path(config["local_model_path"]) / bucket_path)
                     .as_posix()
                     .split(".")[0]
                 )
                 if not os.path.exists(local_path):
-                    logger.info("Model %s not found at %s", model_path, local_path)
+                    logger.info(
+                        "Model %s not found at %s",
+                        model_config["model_path"],
+                        local_path,
+                    )
                     if bucket:
                         download_model(
                             bucket=bucket,
                             model_zip=bucket_path,
                             local_path=local_path,
                         )
-                load_path = local_path if os.path.exists(local_path) else model_path
+                load_path = (
+                    local_path
+                    if os.path.exists(local_path)
+                    else model_config["model_path"]
+                )
 
-                self.models[model_name] = SentenceTransformer(
+                self.models[model_config["model_name"]] = SentenceTransformer(
                     load_path,
                     device="cpu",
                     cache_folder=config["local_model_path"],
