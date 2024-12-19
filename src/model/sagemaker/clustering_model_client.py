@@ -40,6 +40,7 @@ class ClusteringModelClient:
         return user_cluster
 
     def get_users_by_category(self, genreCategory):
+
         body_dict = {
             "action": "filter_users",
             "params":{
@@ -52,6 +53,7 @@ class ClusteringModelClient:
 
         json_body = json.dumps(body_dict)
 
+
         try:
           
             logger.info('Invoking clustering endpoint call to [' + self.__model_config['endpoint'] + ']')
@@ -61,11 +63,13 @@ class ClusteringModelClient:
                 Body=json_body,
                 ContentType="application/json",
             )
+
         except Exception as e:
             logging.error(e)
             raise EndpointError("Couldn't get a response from endpoint [" + self.__model_config['endpoint'] + ']', {})
 
         response_data = json.loads(response["Body"].read().decode("utf-8"))
+
         if not len(response_data):
             raise UnknownUserError("Momentan gibt es keine Benutzer, die in erster Linie das Genre [" + genreCategory + "]" + " konsumieren", {})
         user_cluster = {}

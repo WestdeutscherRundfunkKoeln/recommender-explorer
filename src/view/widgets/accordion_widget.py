@@ -1,3 +1,4 @@
+from traceback import print_tb
 from typing import Any
 
 import panel as pn
@@ -18,7 +19,9 @@ class AccordionWidget(UIWidget):
         Returns:
             accordion_widget (widget): final widget built from given config
         """
+
         accordion_widget = pn.Accordion()
+
         accordion_content = self.create_accordion_content(
             config.get(c.ACCORDION_CONTENT_KEY, "")
         )
@@ -38,6 +41,7 @@ class AccordionWidget(UIWidget):
 
         accordion_widget.active = [config.get(c.ACCORDION_ACTIVE_KEY, [])]
 
+
         accordion_widget.is_leaf_widget = False
         accordion_widget.hidden_label = config.get(
             c.ACCORDION_LABEL_KEY, c.FALLBACK_ACCORDION_LABEL_VALUE
@@ -56,6 +60,7 @@ class AccordionWidget(UIWidget):
         Returns:
             accordion_content (list): list of common ui widgets as contents for a accordion widget
         """
+
         accordion_content = []
         if accordion_contents_config:
             for accordion_content_config in accordion_contents_config:
@@ -121,8 +126,8 @@ class AccordionWidget(UIWidget):
                 widget
             )
             if (
-                multi_select_widget is not None
-                and multi_select_widget.name == target_widget_label
+                    multi_select_widget is not None
+                    and multi_select_widget.name == target_widget_label
             ):
                 return widget
         return None
@@ -136,9 +141,9 @@ class AccordionWidget(UIWidget):
         :return: The multi-select widget if it matches the conditions, otherwise None.
         """
         if (
-            isinstance(widget, pn.Row)
-            and len(widget) == 2
-            and isinstance(widget[0], panel.widgets.select.MultiSelect)
+                isinstance(widget, pn.Row)
+                and len(widget) == 2
+                and isinstance(widget[0], panel.widgets.select.MultiSelect)
         ):
             return widget[0]
         else:
@@ -156,6 +161,7 @@ class AccordionWidgetWithCards(AccordionWidget):
 
         :return: An instance of pn.Accordion with configured content and options.
         """
+
         accordion_contents = self.create_accordion_content(
             config.get(c.ACCORDION_CONTENT_KEY, "")
         )
@@ -168,15 +174,35 @@ class AccordionWidgetWithCards(AccordionWidget):
         accordion_cards_tuples = [
             (content.hidden_label, content[0]) for content in accordion_contents
         ]
+
         accordion_widget_with_cards = pn.Accordion(*accordion_cards_tuples)
 
-        active_list = self.get_config_value(config, c.ACCORDION_CARD_ACTIVE_KEY, int)
-        if active_list:
-            accordion_widget_with_cards.active = list(map(int, str(active_list)))
+        active_list = config.get(c.ACCORDION_CARD_ACTIVE_KEY)
+
+
+
+        if active_list is not None:
+            if isinstance(active_list, list):
+                accordion_widget_with_cards.active = active_list
+            else:
+                accordion_widget_with_cards.active = [active_list]
+
+
+        # check if this accordion has a UI functionality, if so, assign a watcher to it
+        ISUI = config.get(c.UI_ACC)
+        # also check for the label
+        if ISUI:
+            print("An Accordion Card will have a watcher")
+            # Watch for changes to the active state
+            accordion_widget_with_cards.param.watch(self.on_accordion_card_change, 'active', onlychanged=True)
+
 
         accordion_widget_with_cards.toggle = self.get_config_value(
             config, c.ACCORDION_CARD_TOGGLE_KEY, bool
         )
+
+        if isinstance(accordion_widget_with_cards.active, list) and len(accordion_widget_with_cards.active) > 1 and accordion_widget_with_cards.toggle:
+             raise Exception("Toggle can't be true with more than one active card")
 
         return accordion_widget_with_cards
 
@@ -202,3 +228,11 @@ class AccordionWidgetWithCards(AccordionWidget):
             return False
         else:
             return None
+
+    def on_accordion_card_change(self, event):
+        # Convert to string and remove brackets
+        State = str(event.new).strip("[]")
+        State = State.replace(" ", "")
+        self.reco_explorer_app_instance.add_blocks_to_navigation(State)
+
+
