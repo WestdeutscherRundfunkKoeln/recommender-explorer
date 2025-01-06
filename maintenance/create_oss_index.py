@@ -153,7 +153,10 @@ def postprocess_data(df):
         df["targetAudienceMinAge"] = df["targetAudienceMinAge"].fillna(0).astype('bool')
     if "targetAudienceMaxAge" in df.columns:
         df["targetAudienceMaxAge"] = df["targetAudienceMaxAge"].fillna(0).astype('bool')
-
+    if "episodeNumber" in df.columns:
+        df["episodeNumber"] = df["episodeNumber"].fillna(0)
+    if "seasonNumber" in df.columns:
+        df["seasonNumber"] = df["seasonNumber"].fillna(0)
 
 
     if "editorialCategories" in df.columns:
