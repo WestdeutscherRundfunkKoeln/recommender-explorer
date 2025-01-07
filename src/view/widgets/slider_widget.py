@@ -16,7 +16,7 @@ class SliderWidget(UIWidget):
             start=config.get(c.SLIDER_START_KEY, 0),
             end=config.get(c.SLIDER_END_KEY, 1),
             step=config.get(c.SLIDER_STEP_KEY, 0.01),
-            value=config.get(c.SLIDER_START_KEY, 0),
+            value=config.get(c.SLIDER_DEFAULT_KEY, config.get(c.SLIDER_START_KEY, 0)),
             width=c.FILTER_WIDTH,
         )
         slider.params = {
