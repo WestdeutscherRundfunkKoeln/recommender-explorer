@@ -120,7 +120,7 @@ class WDRContentRecoCard(WDRContentCard):
         child_objects = [
             teaserimage,
             pn.pane.Markdown(f""" ### Score: {str(round(content_dto.dist, 2))}"""),
-            button,
+            #button,
         ]
 
         card = pn.Card(
