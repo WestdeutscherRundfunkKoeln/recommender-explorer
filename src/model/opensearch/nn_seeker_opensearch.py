@@ -254,7 +254,9 @@ class NnSeekerOpenSearch(NnSeeker):
             if isinstance(value, list):
                 value = value[0]
 
+
             action, actor = label.split("_")
+
 
             match action:
                 case "termfilter":
@@ -285,6 +287,7 @@ class NnSeekerOpenSearch(NnSeeker):
                     self.LIST_FILTER_TERMS[captured_action](
                         values_list, captured_action, bool_terms
                     )
+
                 case _:
                     logger.warning(
                         "Received unknown filter action [" + action + "]. Omitting."

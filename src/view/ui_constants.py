@@ -7,6 +7,8 @@ UI_CONFIG_LOGO_KEY = "logo"
 UI_CONFIG_HEADER_BACKGROUND_COLOR_KEY = "header_background"
 UI_CONFIG_PAGE_SIZE_KEY = "page_size"
 UI_CONFIG_CUSTOM_CSS_KEY = "custom_css"
+UI_CONFIG_PAGE_SIZE_KEY = "page_size"
+FALLBACK_UI_PAGE_SIZE_VALUE = 4
 
 # Text Input
 TEXT_INPUT_PLACEHOLDER_KEY = "placeholder"
@@ -36,6 +38,7 @@ MULTI_SELECT_ACTION_OPTION_KEY = "action_option"
 MULTI_SELECT_ACTION_OPTION_VALUE_KEY = "option_value"
 MULTI_SELECT_ACTION_TARGET_WIDGET_KEY = "target_widget"
 MULTI_SELECT_TOOLTIP_KEY = "tooltip"
+MULTI_SELECT_PAGING = "has_paging"
 
 # Reset Button
 RESET_BUTTON_LABEL = "Auswahl zurücksetzen"
@@ -83,6 +86,15 @@ TEXT_AREA_INPUT_ACCESSOR_KEY = "accessor_function"
 TEXT_AREA_INPUT_VALIDATOR_KEY = "validator_function"
 TEXT_AREA_INPUT_URL_PARAMETER_KEY = "url_parameter"
 
+TEXT_AREA_ROWS_NUM = "rows"
+TEXT_AREA_MAX_ROWS_NUM = "max_rows"
+AUTO_GROW = "auto_grow"
+VISIBLE = "visible"
+
+
+
+
+
 # Accordion Reset Button
 ACCORDION_RESET_LABEL_KEY = "label"
 ACCORDION_RESET_BUTTON_STYLE_KEY = "button-style"
@@ -100,8 +112,14 @@ SLIDER_STEP_KEY = "step"
 SLIDER_COMPONENT_GROUP_KEY = "component_group"
 SLIDER_TOOLTIP_KEY = "tooltip"
 
+SLIDER_CUSTOM_KEY = "custom"
+
 # Block
 BLOCKS_CONFIG_KEY = "blocks"
+
+BLOCKS_CONFIG_LINKTO = "linkto"
+UI_ACC = "ui_acc"
+
 BLOCK_LABEL_LIST_KEY = "label"
 BLOCK_WIDGETS_LIST_KEY = "widgets"
 BLOCK_CONFIG_LABEL_KEY = "label"
@@ -120,6 +138,7 @@ ACCORDION_RESET_BUTTON_TYPE_VALUE = "accordion-reset-button"
 ACCORDION_WITH_CARDS_TYPE_VALUE = "accordion_with_cards"
 
 
+
 # Fallbacks (if no key and value was given in the config yaml)
 FALLBACK_UI_CONFIG_TITLE_VALUE = "Recommender Explorer"
 FALLBACK_UI_CONFIG_LOGO_VALUE = ""
@@ -136,7 +155,7 @@ FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE = "Default Text Area Input"
 UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
 
 TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
-FILTER_WIDTH = 250
+FILTER_WIDTH = 300
 
 # Content Cards
 INSERT_ID_BUTTON_LABEL = "Als Start Item übernehmen"

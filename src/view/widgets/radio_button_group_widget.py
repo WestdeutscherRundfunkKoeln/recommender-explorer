@@ -8,7 +8,6 @@ from view import ui_constants as c
 class RadioButtonGroupWidget(UIWidget):
 
     def __init__(self):
-        logger.info("helllloooo")
         super().__init()
 
     def create(self, config: dict[str, Any]) -> pn.Column | None:
