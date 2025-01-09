@@ -143,8 +143,7 @@ class WDRContentStartCard(WDRContentCard):
 
         child_objects = [
             teaserimage,
-            pn.pane.Markdown(f""" ### Modell: {model} """),
-            #button,
+            pn.pane.Markdown(f""" ### Modell: {model} """)
         ]
 
         card = pn.Card(
