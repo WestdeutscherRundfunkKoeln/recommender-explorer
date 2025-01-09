@@ -1043,22 +1043,7 @@ class RecoExplorerApp:
             )
             self.floating_elements.append(floatpanel)
 
-        if button == "params_button":
-            title = "Model Parameters - " + self.u2c_model_choice.value[0] + ""
-            params_dto = dto_from_classname(
-                "ModelParametersDto",
-                constants.ITEM_POSITION_START,
-                constants.ITEM_TYPE_CONTENT,
-                constants.ITEM_PROVENANCE_C2C,
-            )
-            card = self.controller.get_item_viewer(params_dto)
-            model_params = self.controller.get_model_params()
-            item_row = card.draw(model_params)
-            config = {"headerControls": "closeonly xs", "position": "center"}
-            floatpanel = pn.layout.FloatPanel(
-                item_row, name=title, margin=2, config=config, contained=False
-            )
-            self.floating_elements.append(floatpanel)
+
 
     # toggling ui components
 

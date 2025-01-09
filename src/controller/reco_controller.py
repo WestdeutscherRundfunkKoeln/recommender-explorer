@@ -199,8 +199,6 @@ class RecommendationController:
             class_ = getattr(module, item_accessor_name)
             self.item_accessor = class_(self.config)
 
-    def get_model_params(self):
-        return self.reco_accessor.get_model_params()
 
     def get_items_by_field(self, item_dto: ItemDto, ids: list):
         ids_prim = []
