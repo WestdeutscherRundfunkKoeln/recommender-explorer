@@ -87,8 +87,9 @@ class TextFieldWidget(UIWidget):
 
         text_input_widget.is_leaf_widget = True
 
-        tooltip_value = config.get(c.TEXT_INPUT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
-        tooltip = None if not tooltip_value else pn.widgets.TooltipIcon(value=tooltip_value)
+        tooltip = pn.widgets.TooltipIcon(
+            value=config.get(c.TEXT_INPUT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
+        )
 
         return pn.Row(text_input_widget, tooltip)
 

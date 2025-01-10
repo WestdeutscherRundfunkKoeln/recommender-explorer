@@ -43,16 +43,4 @@ class TextAreaInputWidget(UIWidget):
 
         text_area_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
 
-        # Check if the key exists in the config
-        if c.TEXT_INPUT_TOOLTIP_KEY in config:
-            tooltip_value = config[c.TEXT_INPUT_TOOLTIP_KEY]
-            tooltip_widget = pn.widgets.TooltipIcon(value=tooltip_value)
-        else:
-            tooltip_widget = None
-
-        # Build the layout dynamically, excluding the tooltip if not needed
-        if tooltip_widget:
-            return pn.Row(text_area_input_widget, tooltip_widget)
-        else:
-            return pn.Row(text_area_input_widget)
-
+        return text_area_input_widget
