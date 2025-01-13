@@ -58,7 +58,7 @@ ACCORDION_CONTENT_KEY = "content"
 ACCORDION_LABEL_KEY = "label"
 ACCORDION_ACTIVE_KEY = "active"
 ACCORDION_RESET_BUTTON_KEY = "accordion-reset-button"
-ACCORDION_MAX_WIDTH = 323
+ACCORDION_MAX_WIDTH = 312
 
 
 # Radio Box
@@ -154,7 +154,7 @@ FALLBACK_TEXT_AREA_INPUT_LABEL_VALUE = "Default Text Area Input"
 UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
 
 TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
-FILTER_WIDTH = 300
+FILTER_WIDTH = 258
 
 # Content Cards
 INSERT_ID_BUTTON_LABEL = "Als Start Item übernehmen"

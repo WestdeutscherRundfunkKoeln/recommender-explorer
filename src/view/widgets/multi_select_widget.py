@@ -130,9 +130,9 @@ class MultiSelectionWidget(UIWidget):
 
         # Build the layout dynamically, excluding the tooltip if not needed
         if tooltip_widget:
-            return pn.Column(multi_select_widget, tooltip_widget)
+            return pn.Row(multi_select_widget, tooltip_widget)
         else:
-            return pn.Column(multi_select_widget)
+            return pn.Row(multi_select_widget)
 
     def set_action_parameter(
             self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect
