@@ -179,6 +179,7 @@ class AccordionWidgetWithCards(AccordionWidget):
 
         active_list = config.get(c.ACCORDION_CARD_ACTIVE_KEY)
 
+
         accordion_widget_with_cards.max_width = c.ACCORDION_MAX_WIDTH
 
 

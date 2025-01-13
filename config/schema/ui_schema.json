@@ -555,6 +555,10 @@
           "type": "number",
           "description": "step size"
         },
+        "default": {
+          "type": "number",
+          "description": "initial value"
+        },
         "unit": {
           "type": "string",
           "description": "unit to display"

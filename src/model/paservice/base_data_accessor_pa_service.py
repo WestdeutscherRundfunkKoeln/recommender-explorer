@@ -21,6 +21,13 @@ WEIGHTS = (
     "weight_link",
 )
 
+UTILITIES = (
+    "weight_similar_semantic",
+    "weight_similar_tags",
+    "weight_similar_temporal",
+    "weight_similar_popular",
+)
+
 
 class BaseDataAccessorPaService(BaseDataAccessor):
     def __init__(self, config):
@@ -131,7 +138,6 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 self.endpoint, json=build_request(external_id, filter)
             )
             response.raise_for_status()
-
             return self.__get_items_from_response(item, response.json())
         except httpx.HTTPStatusError as e:
             logging.error(e, exc_info=True)
@@ -191,4 +197,12 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
     ]
     if weights:
         request_body["weights"] = weights
+
+    utilities = {
+        w.removeprefix("weight_similar_"): filter[w]
+        for w in UTILITIES
+        if w in filter and filter[w] > 0
+    }
+    if utilities:
+        request_body["utilities"] = utilities
     return request_body

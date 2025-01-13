@@ -590,6 +590,7 @@ This Example would create three radio Buttons with the labels: Option A, Option 
 | start   | no        | 0.0            | start value of the slider                                                                                                                                                                                                                                                            |
 | end     | no        | 1.0            | end value of the slider                                                                                                                                                                                                                                                            |
 | step    | no        | 0.1            | step value of the slider
+| default | no        | start          | initial value of the slider
 | unit    | no        | -              | unit that will be displayed after the slider value
 | label   | no        | relativerangefilter_duration | defines the filter that will be applied
 | component_group   | no        | reco_filter | defines component_group the filter that will be assigned to
@@ -602,6 +603,7 @@ This Example would create three radio Buttons with the labels: Option A, Option 
     start: 0.0
     end: 50.0
     step: 0.5
+    default: 10.0
     unit: 's'
     label: 'relativerangefilter_duration'
     component_group: 'reco_filter'

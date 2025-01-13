@@ -43,4 +43,5 @@ class TextAreaInputWidget(UIWidget):
 
         text_area_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
 
+
         return text_area_input_widget

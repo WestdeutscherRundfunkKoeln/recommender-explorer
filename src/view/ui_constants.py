@@ -106,6 +106,7 @@ SLIDER_LABEL_KEY = "label"
 SLIDER_NAME_KEY = "name"
 SLIDER_UNIT_KEY = "unit"
 SLIDER_START_KEY = "start"
+SLIDER_DEFAULT_KEY = "default"
 SLIDER_END_KEY = "end"
 SLIDER_STEP_KEY = "step"
 SLIDER_COMPONENT_GROUP_KEY = "component_group"
@@ -156,11 +157,12 @@ UI_CONFIG_BLOCKS = f"{UI_CONFIG_KEY}.{BLOCKS_CONFIG_KEY}"
 TOOLTIP_FALLBACK = "!! Hinterlegen Sie bitte einen beschreibenden Text zu diesem Parameter in der UI-Configuration.!!"
 FILTER_WIDTH = 258
 
+
 # Content Cards
 INSERT_ID_BUTTON_LABEL = "Als Start Item übernehmen"
 
 # UI Elements
 UP_ARROW = "\u25b2"
 DOWN_ARROW = "\u25bc"
-RIGHT_ARROW = "\u25B6"
-LEFT_ARROW = "\u25C0"
+RIGHT_ARROW = "\u25b6"
+LEFT_ARROW = "\u25c0"
