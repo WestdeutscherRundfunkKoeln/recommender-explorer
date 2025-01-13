@@ -103,7 +103,6 @@ class RecoExplorerApp:
         self.u2c_models = []
 
         #
-        self.nav_controls = pn.WidgetBox()
         self.navigational_components = {}
         self.config_based_nav_controls = pn.WidgetBox()
         self.client_choice_visibility = len(self.config_full_paths) > 1
@@ -472,12 +471,7 @@ class RecoExplorerApp:
     def put_navigational_block(self, position, block):
         self.navigational_components[position] = block
 
-    def assemble_navigation_elements(self):
-        self.nav_controls.clear()
-        for block in self.navigational_components.values():
-            for component in block:
-                self.nav_controls.append(component)
-            self.nav_controls.append(pn.layout.Divider())
+
 
     def update_widgets_from_url_parameter(self):
         """
@@ -911,11 +905,8 @@ class RecoExplorerApp:
             self.get_ui_config_value(ui_constants.UI_CONFIG_CUSTOM_CSS_KEY, "")
         )
 
-        # Decide which sidebar to use, if config_based is available prefer this
-        if len(self.config_based_nav_controls) == 0:
-            sidebar = self.nav_controls
-        else:
-            sidebar = self.config_based_nav_controls
+
+        sidebar = self.config_based_nav_controls
 
         sidebar = self.get_version_information_and_append_to_sidebar(sidebar)
 

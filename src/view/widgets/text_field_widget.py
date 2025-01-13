@@ -1,5 +1,4 @@
 from typing import Any
-
 import panel as pn
 from view import ui_constants as c
 from view.widgets.widget import UIWidget
@@ -91,3 +90,4 @@ class TextFieldWidget(UIWidget):
         tooltip = None if not tooltip_value else pn.widgets.TooltipIcon(value=tooltip_value)
 
         return pn.Row(text_input_widget, tooltip)
+

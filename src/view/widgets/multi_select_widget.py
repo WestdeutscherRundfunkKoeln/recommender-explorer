@@ -122,23 +122,24 @@ class MultiSelectionWidget(UIWidget):
             multi_select_widget.is_leaf_widget = True
             self.set_action_parameter(config, multi_select_widget)
 
-        # Creates the tooltip only if the value in the config file is not False
-        tooltip_value = config.get(c.TEXT_INPUT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
-        tooltip = None if not tooltip_value else pn.widgets.TooltipIcon(value=tooltip_value)
+        if c.TEXT_INPUT_TOOLTIP_KEY in config:
+            tooltip_value = config[c.TEXT_INPUT_TOOLTIP_KEY]
+            tooltip_widget = pn.widgets.TooltipIcon(value=tooltip_value)
+        else:
+            tooltip_widget = None
 
-        return pn.Row(multi_select_widget, tooltip)
+        # Build the layout dynamically, excluding the tooltip if not needed
+        if tooltip_widget:
+            return pn.Row(multi_select_widget, tooltip_widget)
+        else:
+            return pn.Row(multi_select_widget)
 
     def set_action_parameter(
-        self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect
+            self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect
     ) -> pn.widgets.MultiSelect | None:
         """
-        Sets action option parameter on the multi-select widget based on the provided configuration. Action parameter will be used to toggle
-        visibility of other widgets by selecting the configured option. Action parameter are dictionary entries with key = multi select
-        option value and value = label of the target widget.
-
-        :param config: Configuration containing trigger actions.
-        :param multi_select_widget: The multi-select widget to set action parameter on.
-        :return: The multi select widget with the action parameter attached if configured
+        Sets action option parameter on the multi-select widget based on the provided configuration.
+        Also sets the initial visibility of target widgets based on the initial selection.
         """
         if config.get(c.MULTI_SELECT_ACTION_OPTION_KEY):
             action_parameter = {
@@ -147,29 +148,70 @@ class MultiSelectionWidget(UIWidget):
             }
             if action_parameter:
                 multi_select_widget.action_parameter = action_parameter
+
+                # Initialize visibility of target widgets to False
+                for action_option_value, action_target_widget_label in action_parameter.items():
+                    action_target_widget = find_widget_by_name(
+                        self.reco_explorer_app_instance.config_based_nav_controls,
+                        action_target_widget_label,
+                        True,
+                    )
+                    if action_target_widget:
+                        action_target_widget.visible = False  # Hide by default
+
+                # Trigger visibility update after the initial setup
+                self.update_visibility_based_on_selection(multi_select_widget)
+
+                # Force re-evaluation of visibility
+                multi_select_widget.param.trigger('value')  # Trigger update of visibility
         return multi_select_widget
-
-    async def trigger_multi_select_reco_filter_choice(self, event):
+    # checks if the target widget should be visible based on the selected value and sets visible accordingly.
+    def update_visibility_based_on_selection(self, multi_select_widget: pn.widgets.MultiSelect):
         """
-        Checks multi select widget for action parameters and sets visibility trigger for each of them.
-        After that runs the usual get items function to search for items with given filters and parameters.
-
-        :param event: The event which triggers the watcher function. Contains the widget itself.
-        :return:
+        Update the visibility of the target widgets based on the current selection in the multi-select widget.
         """
-        if hasattr(event.obj, "action_parameter"):
-            for (
-                action_option_value,
-                action_target_widget_label,
-            ) in event.obj.action_parameter.items():
+        if hasattr(multi_select_widget, "action_parameter"):
+            # Ensure that all targets are checked against the current selection
+            for action_option_value, action_target_widget_label in multi_select_widget.action_parameter.items():
                 action_target_widget = find_widget_by_name(
                     self.reco_explorer_app_instance.config_based_nav_controls,
                     action_target_widget_label,
                     True,
                 )
                 if action_target_widget:
-                    action_target_widget.visible = action_option_value == event.new[0]
+                    # Show target widget if its corresponding action option is selected
+                    action_target_widget.visible = action_option_value in multi_select_widget.value
 
+    async def trigger_multi_select_reco_filter_choice(self, event):
+        """
+        Checks multi-select widget for action parameters and sets visibility trigger for each of them.
+        After that, runs the usual get items function to search for items with given filters and parameters.
+        """
+        print(f"Triggered by event: {event}")
+
+        if hasattr(event.obj, "action_parameter"):
+            print("Event object has action_parameter.")
+            print("Action parameter values:", event.obj.action_parameter)
+
+            for action_option_value, action_target_widget_label in event.obj.action_parameter.items():
+                print(f"Processing action option: {action_option_value}, target: {action_target_widget_label}")
+
+                action_target_widget = find_widget_by_name(
+                    self.reco_explorer_app_instance.config_based_nav_controls,
+                    action_target_widget_label,
+                    True,
+                )
+
+                if action_target_widget:
+                    print(f"Found target widget: {action_target_widget_label}")
+                    # Update visibility based on the new value in multi-select
+                    action_target_widget.visible = action_option_value in event.new
+                else:
+                    print(f"Target widget {action_target_widget_label} not found.")
+        else:
+            print("Event object does not have action_parameter.")
+
+        print("Running get_items_with_parameters.")
         await self.reco_explorer_app_instance.get_items_with_parameters()
 
 
