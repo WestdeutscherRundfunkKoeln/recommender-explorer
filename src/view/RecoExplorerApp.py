@@ -599,14 +599,16 @@ class RecoExplorerApp:
         self.config_based_nav_controls.clear()
 
         # Client
+        client_title = pn.pane.Markdown("### Mandant wählen")
         client_choice = pn.widgets.RadioBoxGroup(
-            name="",
+            name="Client",
             options=get_client_options(self.config_full_paths),
             value=self.client,
             sizing_mode='scale_width',
         )
 
         if self.client_choice_visibility:
+            self.config_based_nav_controls.append(client_title)
             client_choice.param.watch(
                 self.toggle_client_choice, "value", onlychanged=True
             )
