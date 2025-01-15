@@ -599,10 +599,11 @@ class RecoExplorerApp:
         self.config_based_nav_controls.clear()
 
         # Client
-        client_choice = pn.widgets.RadioButtonGroup(
+        client_choice = pn.widgets.RadioBoxGroup(
             name="",
             options=get_client_options(self.config_full_paths),
             value=self.client,
+            sizing_mode='scale_width',
         )
 
         if self.client_choice_visibility:
@@ -752,8 +753,7 @@ class RecoExplorerApp:
         Calls the actual search function in controller to get results for query
         """
         self.main_content[:] = []
-        self.pagination_top [:] = []
-
+        self.pagination_top[:] = []
         try:
             models, items, config = await asyncio.to_thread(self.controller.get_items)
             for idx, row in enumerate(items):

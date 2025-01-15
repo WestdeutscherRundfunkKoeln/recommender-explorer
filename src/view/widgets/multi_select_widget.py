@@ -187,11 +187,7 @@ class MultiSelectionWidget(UIWidget):
         Checks multi-select widget for action parameters and sets visibility trigger for each of them.
         After that, runs the usual get items function to search for items with given filters and parameters.
         """
-        print(f"Triggered by event: {event}")
-
         if hasattr(event.obj, "action_parameter"):
-            print("Event object has action_parameter.")
-            print("Action parameter values:", event.obj.action_parameter)
 
             for action_option_value, action_target_widget_label in event.obj.action_parameter.items():
                 print(f"Processing action option: {action_option_value}, target: {action_target_widget_label}")
@@ -203,16 +199,12 @@ class MultiSelectionWidget(UIWidget):
                 )
 
                 if action_target_widget:
-                    print(f"Found target widget: {action_target_widget_label}")
                     # Update visibility based on the new value in multi-select
                     action_target_widget.visible = action_option_value in event.new
-                else:
-                    print(f"Target widget {action_target_widget_label} not found.")
+
         else:
             print("Event object does not have action_parameter.")
-
-        print("Running get_items_with_parameters.")
-        await self.reco_explorer_app_instance.get_items_with_parameters()
+            await self.reco_explorer_app_instance.get_items_with_parameters()
 
 
 class ItemFilterWidget(MultiSelectionWidget):
@@ -434,23 +426,3 @@ class UpperItemFilterWidget(MultiSelectionWidget):
                 filter_widget.value, category
             )
         )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
