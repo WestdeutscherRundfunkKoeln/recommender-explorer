@@ -448,7 +448,7 @@ def test_upsert_event_no_document_found(
 def test_upsert_event_general_error(
     test_client: TestClient,
     httpx_mock: HTTPXMock,
-    overwrite_storage_client: MockStorageClient,
+    mock_storage_client: MockStorageClient,
 ):
     response = test_client.post(
         "/events",
@@ -634,7 +634,7 @@ def test_delete_event_with_missing_document(
 def test_delete_event_with_general_error(
     test_client: TestClient,
     httpx_mock: HTTPXMock,
-    overwrite_storage_client: MockStorageClient,
+    mock_storage_client: MockStorageClient,
 ):
     httpx_mock.add_response(
         status_code=500,
@@ -669,7 +669,7 @@ def test_delete_event_with_general_error(
         "detail": "Server error '500 Internal Server Error' for url 'https://test.io/search/documents/valid'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
     }
 
-    bucket_data = overwrite_storage_client.bucket("test_dead_letter_bucket").data
+    bucket_data = mock_storage_client.bucket("test_dead_letter_bucket").data
     blob = next((blob for blob in bucket_data if blob.startswith("20")))
     assert blob is not None
     uploaded_data = json.loads(bucket_data[blob].data)
