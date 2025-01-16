@@ -30,4 +30,4 @@ jobs:
       - name: Run tests
         run: |
           cd microservices/${{ inputs.service-name }}service
-          python -m pytest tests
+          python -m pytest tests --cache-clear
