@@ -1,5 +1,5 @@
 # Ingest Service
-TODO: Descripe the purpose of service
+TODO: Descripe purpose of service
 
 # Parameters and configuration options
 TODO:List startup parameters
