@@ -13,5 +13,6 @@ delete_interval: $DELETE_INTERVAL|"0 2 * * *"
 gcs_url: $GCS_URL|
 bucket: $BUCKET
 bucket_prefix: $BUCKET_PREFIX
+log_bucket: $LOG_BUCKET
 models:
   - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2
