@@ -414,7 +414,6 @@ def test_upsert_event__with_available_correct_document__matching_hash(
 def test_upsert_event_no_document_found(
     test_client: TestClient,
     httpx_mock: HTTPXMock,
-    mock_storage_client: MockStorageClient,
 ):
     response = test_client.post(
         "/events",
