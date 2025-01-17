@@ -13,6 +13,9 @@ class TextAreaInputWidget(UIWidget):
             ),
             placeholder=config.get(c.TEXT_AREA_INPUT_PLACEHOLDER_KEY, ""),
             max_length=99_999,
+            rows= config.get(c.TEXT_AREA_ROWS_NUM, 3),
+            max_rows= config.get(c.TEXT_AREA_MAX_ROWS_NUM, 5),
+            auto_grow= config.get(c.AUTO_GROW, True)
         )
 
         text_area_input_widget.params = {
@@ -39,5 +42,6 @@ class TextAreaInputWidget(UIWidget):
         text_area_input_widget.is_leaf_widget = True
 
         text_area_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
+
 
         return text_area_input_widget

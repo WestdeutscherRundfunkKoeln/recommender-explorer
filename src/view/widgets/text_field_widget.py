@@ -1,5 +1,4 @@
 from typing import Any
-
 import panel as pn
 from view import ui_constants as c
 from view.widgets.widget import UIWidget
@@ -26,11 +25,13 @@ class TextFieldWidget(UIWidget):
         text_field_validator = config.get(c.TEXT_INPUT_VALIDATOR_KEY)
         url_parameter = config.get(c.TEXT_INPUT_URL_PARAMETER_KEY)
         component_group = config.get(c.TEXT_INPUT_COMPONENT_GROUP_KEY)
+        visible = config.get(c.VISIBLE, False)
 
         text_input_widget = pn.widgets.TextInput(
             placeholder=text_field_placeholder,
             name=text_field_label,
             width=c.FILTER_WIDTH,
+            visible = visible,
         )
 
         if text_field_label == "" and text_field_placeholder != "":
@@ -85,8 +86,8 @@ class TextFieldWidget(UIWidget):
 
         text_input_widget.is_leaf_widget = True
 
-        tooltip = pn.widgets.TooltipIcon(
-            value=config.get(c.TEXT_INPUT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
-        )
+        tooltip_value = config.get(c.TEXT_INPUT_TOOLTIP_KEY, c.TOOLTIP_FALLBACK)
+        tooltip = None if not tooltip_value else pn.widgets.TooltipIcon(value=tooltip_value)
 
         return pn.Row(text_input_widget, tooltip)
+

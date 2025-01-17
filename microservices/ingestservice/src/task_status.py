@@ -1,6 +1,11 @@
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 from types import TracebackType
+from typing import cast
+
+from google.cloud.exceptions import GoogleCloudError
+from google.cloud.storage import Bucket
 
 from src.models import BulkIngestTask, BulkIngestTaskStatus
 
@@ -11,8 +16,9 @@ class TaskStatus:
     _tasks: dict[str, BulkIngestTask] = {}
     _lifetime_seconds = 60 * 60 * 24 * 7  # 1 week
 
-    def __init__(self, id: str) -> None:
+    def __init__(self, id: str, log_bucket: Bucket) -> None:
         self.id = id
+        self.log_bucket = log_bucket
 
     def set_status(self, status: BulkIngestTaskStatus) -> None:
         self._tasks[self.id].status = status
@@ -47,20 +53,39 @@ class TaskStatus:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ):
-        if exc_type is None:
-            logger.info("Ingest task %s completed", self.id)
-            self.set_status(BulkIngestTaskStatus.COMPLETED)
-        else:
-            assert exc_val is not None
-            assert exc_tb is not None
-            logger.error(
-                "Error during ingest task %s",
-                self.id,
-                exc_info=(exc_type, exc_val, exc_tb),
+        result = (
+            self._on_success()
+            if exc_type is None
+            else self._on_error(exc_type, exc_val, exc_tb)
+        )
+        try:
+            self.log_bucket.blob(f"{self.id}.json").upload_from_string(
+                cast(BulkIngestTask, self.get(self.id)).model_dump_json()
             )
-            self.add_error(str(exc_val))
-            self.set_status(BulkIngestTaskStatus.FAILED)
-            return True
+        except GoogleCloudError:
+            logger.error("Error during upload of log file", exc_info=True)
+        return result
+
+    def _on_success(self) -> None:
+        logger.info("Ingest task %s completed", self.id)
+        self.set_status(BulkIngestTaskStatus.COMPLETED)
+
+    def _on_error(
+        self,
+        exc_type: type[BaseException],
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        assert exc_val is not None
+        assert exc_tb is not None
+        logger.error(
+            "Error during ingest task %s",
+            self.id,
+            exc_info=(exc_type, exc_val, exc_tb),
+        )
+        self.add_error(str(exc_val))
+        self.set_status(BulkIngestTaskStatus.FAILED)
+        return True
 
     @classmethod
     def get(cls, id: str) -> BulkIngestTask | None:

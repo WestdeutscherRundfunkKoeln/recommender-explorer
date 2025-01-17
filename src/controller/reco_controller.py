@@ -199,8 +199,6 @@ class RecommendationController:
             class_ = getattr(module, item_accessor_name)
             self.item_accessor = class_(self.config)
 
-    def get_model_params(self):
-        return self.reco_accessor.get_model_params()
 
     def get_items_by_field(self, item_dto: ItemDto, ids: list):
         ids_prim = []
@@ -367,7 +365,7 @@ class RecommendationController:
     def _get_start_users_u2c(self, model: dict) -> tuple[int, list]:
         active_components = self._get_active_start_components()
         has_paging = [x.params.get("has_paging", False) for x in active_components]
-        self._validate_input_data(active_components)
+        #self._validate_input_data(active_components)
         start_idx, end_idx = (0, 0)
         if any(has_paging):
             start_idx = (self.get_page_number() - 1) * self.get_num_items()
@@ -411,15 +409,18 @@ class RecommendationController:
         field_map = self.config[constants.MODEL_CONFIG_U2C]["clustering_models"][
             "U2C-Knn-Model"
         ]["field_mapping"]
-        response = self.user_cluster_accessor.get_users_by_category(genre_widget.value)
-        num_users = len(response[genre_widget.value])
+        genre_widget_value = genre_widget.value[0]
+        response = self.user_cluster_accessor.get_users_by_category(genre_widget_value)
+        num_users = len(response[genre_widget_value])
         users = []
-        for user_props in response[genre_widget.value][start_idx:end_idx]:
+
+        for user_props in response[genre_widget_value][start_idx:end_idx]:
             new_user = copy.copy(user_dto)
             new_user.source = "Primäres Genre"
-            new_user.source_value = genre_widget.value
+            new_user.source_value = genre_widget_value
             new_user = update_from_props(new_user, user_props, field_map)
             users.append(new_user)
+
         return num_users, users
 
     def _get_start_users_by_cluster(
@@ -504,7 +505,6 @@ class RecommendationController:
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
 
         reco_filter = self._get_current_filter_state("reco_filter_u2c")
-
 
         kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
             start_item, (self.num_NN + 1), reco_filter
@@ -637,10 +637,12 @@ class RecommendationController:
 
         :return: list of active start components
         """
+
+
         if self.model_type == constants.MODEL_TYPE_U2C:
             return list(
                 filter(
-                    lambda x: x.params["active"] == True,
+                    lambda x: x.visible == True,
                     self.components["user_choice"].values(),
                 )
             )

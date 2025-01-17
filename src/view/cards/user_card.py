@@ -32,15 +32,6 @@ class UserCard():
             history_button.on_click(modal_func)
             card_optional_objects.append(history_button)
 
-        if 1: #user_dto.model_params:
-            params_button = pn.widgets.Button(name='Modellparameter anzeigen', button_type='primary')
-            params_button.params = {
-                'item': user_dto,
-                'button': 'params_button'
-            }
-            params_button.on_click(modal_func)
-            card_optional_objects.append(params_button)
-
         card_objects = [
             pn.pane.Markdown(f""" ### Modell: { model } """),
             pn.pane.PNG(user_dto.avatar, width=130, height=150, align='center'),

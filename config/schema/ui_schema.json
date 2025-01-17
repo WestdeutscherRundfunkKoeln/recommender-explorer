@@ -56,6 +56,9 @@
                       "$ref": "#/$defs/accordion"
                     },
                     {
+                      "$ref": "#/$defs/accordion_with_cards"
+                    },
+                    {
                       "$ref": "#/$defs/radio_box"
                     },
                     {
@@ -301,26 +304,44 @@
             ]
           }
         },
-        "dictionary_options": {
-          "type": "array",
-          "description": "Array of options which can be selected.",
-          "items": {
-            "type": "object",
-            "additionalProperties": {
-              "anyOf": [
-                {
+      "dictionary_options": {
+        "type": "array",
+        "description": "Array of options which can be selected.",
+        "items": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
                   "type": "string"
-                },
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
                 }
-              ]
-            }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "duration": {
+                    "type": "object",
+                    "properties": {
+                      "gte": {
+                        "type": ["integer", "number"]
+                      }
+                    },
+                    "required": ["gte"]
+                  }
+                },
+                "additionalProperties": true
+              },
+              {
+                "type": "number"
+              }
+            ]
           }
-        },
+        }
+      },
         "option_default": {
           "type": "string",
           "description": "Key of the default option."
@@ -371,6 +392,7 @@
         }
       }
     },
+
     "accordion": {
       "type": "object",
       "properties": {
@@ -453,6 +475,14 @@
         "content"
       ]
     },
+
+
+
+
+
+
+
+
     "radio_box": {
       "type": "object",
       "properties": {
@@ -524,6 +554,10 @@
         "step": {
           "type": "number",
           "description": "step size"
+        },
+        "default": {
+          "type": "number",
+          "description": "initial value"
         },
         "unit": {
           "type": "string",
