@@ -5,9 +5,11 @@ from view.cards.wdr.wdr_content_card import WDRContentCard
 
 logger = logging.getLogger(__name__)
 
+
 class WDRContentStartCard(WDRContentCard):
 
     def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_viewer):
+
         stylesheet_image = """
                          .img_wrapper {
                              position: relative;
@@ -51,7 +53,28 @@ class WDRContentStartCard(WDRContentCard):
                              font-weight: 500; 
                              font-size: 12px;
                          }
+                         
+                         .relative-container {
+                             position: relative;
+                             display: inline-block;
+                         }
+                         
+                         .float-panel {
+                             position: absolute;
+                             top: 50%;
+                             left: 50%;
+                             transform: translate(-50%, -50%);
+                             z-index: 1000;
+                             display: none;
+                         }   
+                         
+                         .float-panel.visible {
+                              display: block;
+                         }     
+                         
                      """
+
+        pn.extension(raw_css=[stylesheet_image])
 
         teaserimage = pn.pane.HTML(f"""
                      <div class="img_wrapper">
@@ -66,13 +89,66 @@ class WDRContentStartCard(WDRContentCard):
         teaserimage.stylesheets = [stylesheet_image]
         teaserimage.margin = (0, 0, 0, 0)
 
+        button = pn.widgets.Button(name="Details öffnen", button_type="primary", width_policy="fit")
+
+        truncated_description = pn.Card(
+            pn.pane.Markdown(f"""
+        ***
+        ##### {content_dto.title}
+        {" ".join(content_dto.longDescription.split(" ")[:500])}...
+        """,
+                             styles={
+                                 'background': self.config[model_config][content_dto.provenance][model]["reco_color"], }
+                             ))
+
+        teaserimage_card = pn.Card(
+            teaserimage,
+            styles={
+                'background': self.config[model_config][content_dto.provenance][model]["reco_color"],
+            },
+        )
+
+        config = {
+            "headerControls": {"maximize": "remove", "collapse": "remove", "minimize": "remove", "smallify": "remove"}}
+
+        float_panel = pn.layout.FloatPanel(
+            pn.Column(
+                teaserimage_card,
+                super().draw(content_dto, pn.Card(
+                    styles={'background': self.config[model_config][content_dto.provenance][model]["reco_color"]})),
+                truncated_description
+            ),
+            sizing_mode="stretch_width",
+            min_width=450,
+            max_width=700,
+            height=330,
+            config=config,
+            visible=False,
+            contained=True,
+            styles={"position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)",
+                    "z-index": "1000",
+                    "background": self.config[model_config][content_dto.provenance][model]['start_color']},
+        )
+
+        float_panel_container = pn.bind(lambda visible: float_panel if visible else None, float_panel.param.visible)
+
+        def toggle_float_panel(event):
+            if float_panel.visible:
+                float_panel.css_classes = ["float-panel"]
+            else:
+                float_panel.css_classes = ["float-panel", "visible"]
+            float_panel.visible = not float_panel.visible
+
+        button.on_click(toggle_float_panel)
+
         child_objects = [
             teaserimage,
             pn.pane.Markdown(f""" ### Modell: {model} """)
         ]
 
         card = pn.Card(
-            styles={ 'background': self.config[model_config][content_dto.provenance][model]['start_color'], 'overflow': 'auto' },
+            styles={'background': self.config[model_config][content_dto.provenance][model]['start_color'],
+                    'overflow': 'auto'},
             margin=5,
             height=self.card_height,
             hide_header=True
@@ -80,4 +156,6 @@ class WDRContentStartCard(WDRContentCard):
 
         card.objects = child_objects
 
-        return super().draw(content_dto, card)
+        card = super().draw(content_dto, card, button)
+
+        return pn.Column(card, float_panel_container)
