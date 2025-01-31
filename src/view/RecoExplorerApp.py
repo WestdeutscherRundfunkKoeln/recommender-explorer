@@ -25,6 +25,7 @@ from view.widgets.slider_widget import SliderWidget
 from view.widgets.text_area_input_widget import TextAreaInputWidget
 from view.widgets.text_field_widget import TextFieldWidget
 from view.widgets.accordion_widget import AccordionWidgetWithCards
+from view.widgets.empfehlungstyp_widget import EmpfehlungstypWidget
 
 
 #loggin preference
@@ -53,6 +54,9 @@ class RecoExplorerApp:
         self.controller = RecommendationController(self.config)
 
         self.widgets = {
+            ui_constants.EMPFEHLUNGSTYP_TYPE_VALUE: EmpfehlungstypWidget(
+                self, self.controller
+            ),
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
                 self, self.controller
             ),
@@ -456,8 +460,6 @@ class RecoExplorerApp:
     def put_navigational_block(self, position, block):
         self.navigational_components[position] = block
 
-
-
     def update_widgets_from_url_parameter(self):
         """
         Gets called by onload and iterate over dictionary: {Key: <parameter_name_from_config> Value: <widget_from_config>, ...}
@@ -503,6 +505,9 @@ class RecoExplorerApp:
         if common_ui_widget_type == ui_constants.RADIO_BOX_TYPE_VALUE:
             radio_box_widget = RadioBoxWidget(self, self.controller)
             return radio_box_widget.create(common_ui_widget_config)
+        elif common_ui_widget_type == ui_constants.EMPFEHLUNGSTYP_TYPE_VALUE:
+            empfehlungstyp_widget = EmpfehlungstypWidget(self, self.controller)
+            return empfehlungstyp_widget.create()
         else:
             widget = self.widgets.get(common_ui_widget_type)
             if not widget:
@@ -530,10 +535,8 @@ class RecoExplorerApp:
                         widget_config)
                 )
 
-
-
             else:
-                logger.error("Unknown UI Config Type: " + component_type)
+                logger.error("UI Config Type: " + component_type)
 
         else:
             logger.error("No UI Widgets are defined in Config File, or key name is wrong")

@@ -10,6 +10,10 @@ UI_CONFIG_CUSTOM_CSS_KEY = "custom_css"
 UI_CONFIG_PAGE_SIZE_KEY = "page_size"
 FALLBACK_UI_PAGE_SIZE_VALUE = 4
 
+
+
+
+
 # Text Input
 TEXT_INPUT_PLACEHOLDER_KEY = "placeholder"
 TEXT_INPUT_LABEL_KEY = "label"
@@ -136,6 +140,7 @@ RADIO_BOX_TYPE_VALUE = "radio_box"
 TEXT_AREA_INPUT_TYPE_VALUE = "text_area_input"
 ACCORDION_RESET_BUTTON_TYPE_VALUE = "accordion-reset-button"
 ACCORDION_WITH_CARDS_TYPE_VALUE = "accordion_with_cards"
+EMPFEHLUNGSTYP_TYPE_VALUE = "empfehlungstyp"
 
 
 
