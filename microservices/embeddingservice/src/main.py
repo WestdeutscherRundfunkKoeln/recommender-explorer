@@ -74,10 +74,31 @@ def get_model_config(key: str):
 @router.get("/model_config")
 def get_all_model_configs():
     """
-    Endpoint to return all model configurations if no key-specific path is used.
-    :return: All model configurations.
+    Endpoint to return aggregated 'c2c_models' and 'u2c_models' from all configurations.
+    If either 'c2c_models' or 'u2c_models' is missing, it is ignored in the output.
+    Only the first occurrence of each model key is included for each model type.
+
+    :return: Aggregated 'c2c_models' and 'u2c_models' configurations.
     """
-    return config["models"]
+    aggregated_c2c_models = {}
+    aggregated_u2c_models = {}
+
+    for key, value in config["models"].items():
+        if "c2c_models" in value:
+            for model_key, model_config in value["c2c_models"].items():
+                if model_key not in aggregated_c2c_models:
+                    aggregated_c2c_models[model_key] = model_config
+        if "u2c_models" in value:
+            for model_key, model_config in value["u2c_models"].items():
+                if model_key not in aggregated_u2c_models:
+                    aggregated_u2c_models[model_key] = model_config
+    response = {}
+    if aggregated_c2c_models:
+        response["c2c_models"] = aggregated_c2c_models
+    if aggregated_u2c_models:
+        response["u2c_models"] = aggregated_u2c_models
+
+    return response
 
 
 # main app
