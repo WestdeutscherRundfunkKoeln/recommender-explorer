@@ -1,5 +1,6 @@
+import json
 import logging
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from src.embed_text import EmbedText
 from dto.embed_data import AddEmbeddingToDocRequest, EmbeddingRequest
 from envyaml import EnvYAML
@@ -13,7 +14,16 @@ NAMESPACE = "embedding"
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 
 config = EnvYAML(CONFIG_PATH)
-text_embedder = EmbedText(config)
+config_dict = dict(config)
+
+if isinstance(config_dict["models"], str):
+    try:
+        config_dict["models"] = json.loads(config_dict["models"])
+    except json.JSONDecodeError as e:
+        logger.error("Error parsing models config: %s", e)
+        raise e
+
+text_embedder = EmbedText(config_dict)
 
 API_PREFIX = config.get("api_prefix", default="")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
@@ -49,8 +59,24 @@ def get_models():
     ]
 
 
+@router.get("/model_config/{key}")
+def get_model_config(key: str):
+    """
+    Endpoint to return the model configuration based on a key provided as a path parameter.
+    :param key: Key for which model configuration is requested (e.g., 'wdr' or 'br').
+    :return: Model configuration if key exists, else an error.
+    """
+    if key in config["models"]:
+        return config["models"][key]
+    raise HTTPException(status_code=404, detail=f"Model configuration not found for key: {key}")
+
+
 @router.get("/model_config")
-def get_model_config():
+def get_all_model_configs():
+    """
+    Endpoint to return all model configurations if no key-specific path is used.
+    :return: All model configurations.
+    """
     return config["models"]
 
 
