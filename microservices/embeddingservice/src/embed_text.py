@@ -18,11 +18,14 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 def download_model(
-    bucket: storage.Bucket,
-    model_zip: str,
-    local_path: str,
+        bucket: storage.Bucket,
+        model_zip: str,
+        local_path: str,
 ) -> None:
-    """Creats a temp directory and download the model to it. Synchronize download between processces via FileLock."""
+    """
+    Creates a temp directory and download the model to it.
+    Synchronize download between processes via FileLock.
+    """
     if model_zip not in [blob.name for blob in bucket.list_blobs()]:
         logger.info("Model %s not found in bucket.", model_zip)
         return
@@ -41,38 +44,99 @@ def download_model(
 
 
 class EmbedText:
-    def __init__(self, config):
+    def __init__(self, config, key: str = None):
+        """
+        Initialize the EmbedText class.
+
+        :param config: The full configuration dictionary.
+        :param key: The key under which the model configurations are stored (e.g., 'wdr', 'br').
+                    If no key is provided, all models across all keys will be loaded.
+        """
         self.config = config
+        self.model_configs = None
         self.models = {}
-        bucket = None
+        self.current_key = key
+        self.bucket = None
+
+        # Initialize the bucket for downloading models, if needed
         if sa := self.config.get("service_account"):
             credentials = service_account.Credentials.from_service_account_info(sa)
             client = storage.Client(credentials=credentials)
-            bucket = client.bucket(self.config["bucket_name"])
-        for model in self.config["models"]:
-            for model_name, model_path in model.items():
-                bucket_path = (
-                    f'{self.config["bucket_path"]}/{model_path.split("/")[-1]}.zip'
-                )
+            self.bucket = client.bucket(self.config["bucket_name"])
+
+        if key:
+            self.load_models_for_key(key)
+        else:
+            self.load_all_models()
+
+    def load_models_for_key(self, key: str):
+        """
+        Load models based on the provided key (e.g., 'wdr', 'br').
+
+        :param key: The key under which the model configurations are stored.
+        """
+        if key not in self.config["models"]:
+            raise ValueError(f"Key '{key}' not found in models configuration!")
+
+        logger.info(f"Loading models for key '{key}'")
+        self.current_key = key
+        self.models = {}
+
+        # Get the model configurations for the selected key
+        self.model_configs = self.config["models"][key]["c2c_models"]
+
+        self._load_models(self.model_configs)
+
+    def load_all_models(self):
+        """
+        Load all models from all keys, ignoring any specific key.
+        """
+        logger.info("Loading all models across all keys")
+        self.models = {}
+        self.model_configs = {}
+
+        for key, configuration in self.config["models"].items():
+            if "c2c_models" in configuration:
+                self.model_configs.update(configuration["c2c_models"])
+
+        self._load_models(self.model_configs)
+
+    def _load_models(self, model_configs):
+        """
+        Common logic to load models from the provided model configurations.
+
+        :param model_configs: Dictionary containing model configurations to load.
+        """
+        for model, model_config in self.model_configs.items():
+            if model_config["endpoint"].startswith("opensearch://"):
+                bucket_path = f'{self.config["bucket_path"]}/{model_config["model_path"].split("/")[-1]}.zip'
                 local_path = (
-                    (pathlib.Path(config["local_model_path"]) / bucket_path)
+                    (pathlib.Path(self.config["local_model_path"]) / bucket_path)
                     .as_posix()
                     .split(".")[0]
                 )
                 if not os.path.exists(local_path):
-                    logger.info("Model %s not found at %s", model_path, local_path)
-                    if bucket:
+                    logger.info(
+                        "Model %s not found at %s",
+                        model_config["model_path"],
+                        local_path,
+                    )
+                    if self.bucket:
                         download_model(
-                            bucket=bucket,
+                            bucket=self.bucket,
                             model_zip=bucket_path,
                             local_path=local_path,
                         )
-                load_path = local_path if os.path.exists(local_path) else model_path
+                load_path = (
+                    local_path
+                    if os.path.exists(local_path)
+                    else model_config["model_path"]
+                )
 
-                self.models[model_name] = SentenceTransformer(
+                self.models[model_config["model_name"]] = SentenceTransformer(
                     load_path,
                     device="cpu",
-                    cache_folder=config["local_model_path"],
+                    cache_folder=self.config["local_model_path"],
                     trust_remote_code=True,
                 )
 
