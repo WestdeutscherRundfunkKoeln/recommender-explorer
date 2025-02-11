@@ -1,7 +1,12 @@
-import json
 import logging
 from fastapi import FastAPI, APIRouter, HTTPException
 from src.embed_text import EmbedText
+from src.model_config_utils import (
+    load_and_validate_model_config,
+    get_model_names,
+    get_full_model_config,
+)
+from src.constants import MODELS_KEY
 from dto.embed_data import AddEmbeddingToDocRequest, EmbeddingRequest
 from envyaml import EnvYAML
 import os
@@ -14,16 +19,11 @@ NAMESPACE = "embedding"
 CONFIG_PATH = os.environ.get("CONFIG_FILE", default="config.yaml")
 
 config = EnvYAML(CONFIG_PATH)
-config_dict = dict(config)
+model_config_dict = load_and_validate_model_config(dict(config))
+text_embedder = EmbedText(model_config_dict)
 
-if isinstance(config_dict["models"], str):
-    try:
-        config_dict["models"] = json.loads(config_dict["models"])
-    except json.JSONDecodeError as e:
-        logger.error("Error parsing models config: %s", e)
-        raise e
-
-text_embedder = EmbedText(config_dict)
+aggregated_model_name_config = get_model_names(model_config_dict)
+aggregated_full_model_config = get_full_model_config(model_config_dict)
 
 API_PREFIX = config.get("api_prefix", default="")
 ROUTER_PREFIX = os.path.join(API_PREFIX, NAMESPACE) if API_PREFIX else ""
@@ -53,10 +53,7 @@ def add_embedding_to_document(data: AddEmbeddingToDocRequest):
 
 @router.get("/models")
 def get_models():
-    return [
-        model_config["model_name"]
-        for model, model_config in config["models"]["c2c_models"].items()
-    ]
+    return aggregated_model_name_config
 
 
 @router.get("/model_config/{key}")
@@ -66,8 +63,8 @@ def get_model_config(key: str):
     :param key: Key for which model configuration is requested (e.g., 'wdr' or 'br').
     :return: Model configuration if key exists, else an error.
     """
-    if key in config["models"]:
-        return config["models"][key]
+    if key in config[MODELS_KEY]:
+        return config[MODELS_KEY][key]
     raise HTTPException(status_code=404, detail=f"Model configuration not found for key: {key}")
 
 
@@ -80,25 +77,7 @@ def get_all_model_configs():
 
     :return: Aggregated 'c2c_models' and 'u2c_models' configurations.
     """
-    aggregated_c2c_models = {}
-    aggregated_u2c_models = {}
-
-    for key, value in config["models"].items():
-        if "c2c_models" in value:
-            for model_key, model_config in value["c2c_models"].items():
-                if model_key not in aggregated_c2c_models:
-                    aggregated_c2c_models[model_key] = model_config
-        if "u2c_models" in value:
-            for model_key, model_config in value["u2c_models"].items():
-                if model_key not in aggregated_u2c_models:
-                    aggregated_u2c_models[model_key] = model_config
-    response = {}
-    if aggregated_c2c_models:
-        response["c2c_models"] = aggregated_c2c_models
-    if aggregated_u2c_models:
-        response["u2c_models"] = aggregated_u2c_models
-
-    return response
+    return aggregated_full_model_config
 
 
 # main app

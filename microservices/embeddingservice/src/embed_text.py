@@ -13,6 +13,11 @@ from google.oauth2 import service_account
 from numpy import ndarray
 from sentence_transformers import SentenceTransformer
 
+from src.constants import (
+    MODELS_KEY,
+    C2C_MODELS_KEY,
+)
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -44,7 +49,7 @@ def download_model(
 
 
 class EmbedText:
-    def __init__(self, config, key: str = None):
+    def __init__(self, config):
         """
         Initialize the EmbedText class.
 
@@ -55,7 +60,6 @@ class EmbedText:
         self.config = config
         self.model_configs = None
         self.models = {}
-        self.current_key = key
         self.bucket = None
 
         # Initialize the bucket for downloading models, if needed
@@ -64,49 +68,18 @@ class EmbedText:
             client = storage.Client(credentials=credentials)
             self.bucket = client.bucket(self.config["bucket_name"])
 
-        if key:
-            self.load_models_for_key(key)
-        else:
-            self.load_all_models()
-
-    def load_models_for_key(self, key: str):
-        """
-        Load models based on the provided key (e.g., 'wdr', 'br').
-
-        :param key: The key under which the model configurations are stored.
-        """
-        if key not in self.config["models"]:
-            raise ValueError(f"Key '{key}' not found in models configuration!")
-
-        logger.info(f"Loading models for key '{key}'")
-        self.current_key = key
-        self.models = {}
-
-        # Get the model configurations for the selected key
-        self.model_configs = self.config["models"][key]["c2c_models"]
-
-        self._load_models(self.model_configs)
+        self.load_all_models()
 
     def load_all_models(self):
         """
         Load all models from all keys, ignoring any specific key.
         """
         logger.info("Loading all models across all keys")
-        self.models = {}
-        self.model_configs = {}
 
-        for key, configuration in self.config["models"].items():
-            if "c2c_models" in configuration:
-                self.model_configs.update(configuration["c2c_models"])
+        for key, configuration in self.config[MODELS_KEY].items():
+            if C2C_MODELS_KEY in configuration:
+                self.model_configs = (configuration[C2C_MODELS_KEY])
 
-        self._load_models(self.model_configs)
-
-    def _load_models(self, model_configs):
-        """
-        Common logic to load models from the provided model configurations.
-
-        :param model_configs: Dictionary containing model configurations to load.
-        """
         for model, model_config in self.model_configs.items():
             if model_config["endpoint"].startswith("opensearch://"):
                 bucket_path = f'{self.config["bucket_path"]}/{model_config["model_path"].split("/")[-1]}.zip'

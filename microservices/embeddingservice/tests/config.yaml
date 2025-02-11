@@ -4,8 +4,23 @@ base_url_search: https://test.io/search
 base_url_ingest: https://test.io/ingest
 base_url_embedding: https://test.io/embedding
 models:
-  - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2
-  - distiluse-base-multilingual-cased-v1: sentence-transformers/distiluse-base-multilingual-cased-v1
+  wdr:
+    c2c_models:
+      Jina-A:
+        display_name: "Jina-A"
+        endpoint: "opensearch://jina-embeddings-v2-base-de-4096"
+        model_name: "jina-embeddings-v2-base-de-4096"
+        model_path: "sentence_transformers/jina-embeddings-v2-base-de-4096"
+      Jina-B:
+        display_name: "Jina-B"
+        endpoint: "opensearch://jina-embeddings-v2-base-de-128"
+        model_name: "jina-embeddings-v2-base-de-128"
+        model_path: "sentence_transformers/jina-embeddings-v2-base-de-128"
+    u2c_models:
+      PA-Service-Var-III:
+        display_name: 'PA-Service-Var-III'
+        endpoint: 'https://ts1.dev.mt.ard.hrnmtech.de:8443/ard/recommendation/user2content'
+        model_name: "pa-service-var-III"
 local_model_path: test_dl
 bucket_path: sentence_transformers
 
