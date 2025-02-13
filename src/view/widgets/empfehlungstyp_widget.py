@@ -46,17 +46,11 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
 
         self.btn1 = pn.widgets.Button(name='Ähnlicher', width=120)
-        self.btn1.on_click(self.on_btn1_click)
         self.btn2 = pn.widgets.Button(name='Aktueller', width=120)
-        self.btn2.on_click(self.on_btn2_click)
         self.btn3 = pn.widgets.Button(name='Weniger Diversität', width=120)
-        self.btn3.on_click(self.on_btn3_click)
         self.btn4 = pn.widgets.Button(name='Mehr Diversität', width=120)
-        self.btn4.on_click(self.on_btn4_click)
         self.btn5 = pn.widgets.Button(name='Weniger Aktualität', width=120)
-        self.btn5.on_click(self.on_btn5_click)
         self.btn6 = pn.widgets.Button(name='Mehr Aktualität', width=120)
-        self.btn6.on_click(self.on_btn6_click)
 
         # Create the accordion layout
         self.accordion = pn.layout.Accordion()
