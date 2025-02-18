@@ -205,17 +205,15 @@ class RecommendationController:
 
     def get_items_by_field(self, item_dto: ItemDto, ids: list):
         ids_prim = []
-        ident, db_ident = get_primary_idents(self.config)
+        _, db_ident = get_primary_idents(self.config)
         try:
             for id in ids:
                 ids_prim.append(
                     self.item_accessor.get_primary_key_by_field(id, db_ident)
                 )
-            item_dtos, num_items = self.item_accessor.get_items_by_ids(
-                item_dto, ids_prim
-            )
+            item_dtos, _ = self.item_accessor.get_items_by_ids(item_dto, ids_prim)
             return item_dtos
-        except EmptySearchError as e:
+        except EmptySearchError:
             logger.warning("couldn't find item from user history")
 
     def get_items(self) -> tuple[list, list[list], str]:
@@ -242,9 +240,7 @@ class RecommendationController:
             for model in selected_models:
                 model_info = self.config[self.model_config][self.model_type][model]
                 self.set_model_and_strategy(model_info)
-                hits, items, model_config = self.get_items_by_strategy_and_model(
-                    model_info
-                )
+                _, items, _ = self.get_items_by_strategy_and_model(model_info)
                 res.append(items[0])
             return list(selected_models), res, self.model_config
 
@@ -284,7 +280,7 @@ class RecommendationController:
         """
         all_items = []
         item_row = []
-        for index, start_item in enumerate(returned_items):
+        for start_item in returned_items:
             item_row.append(start_item)
         all_items.append(item_row)
         return [model_info["display_name"]], all_items, self.model_config
@@ -301,7 +297,7 @@ class RecommendationController:
         :return: Final List of Item DTOs for this search
         """
         all_items = []
-        for index, start_item in enumerate(start_items):
+        for start_item in start_items:
             item_row = [start_item]
             try:
                 nn_items, nn_dists = self._get_reco_items(start_item, model_info)
@@ -323,7 +319,7 @@ class RecommendationController:
                     item_row.append(reco_item)
 
                 all_items.append(item_row)
-            except (UnknownUserError, UnknownItemError, UnknownItemEmbeddingError) as e:
+            except (UnknownUserError, UnknownItemError, UnknownItemEmbeddingError):
                 not_found_item = dto_from_classname(
                     class_name="NotFoundDto",
                     position=constants.ITEM_POSITION_START,
@@ -414,6 +410,7 @@ class RecommendationController:
         self, user_dto: UserItemDto, genre_widget, start_idx, end_idx
     ) -> tuple[int, list[UserItemDto]]:
         # TODO: improve the model config pass
+        assert self.user_cluster_accessor is not None
         self.user_cluster_accessor.set_model_config(
             self.config[constants.MODEL_CONFIG_U2C]["clustering_models"][
                 "U2C-Knn-Model"
@@ -480,6 +477,7 @@ class RecommendationController:
         :param model: Config of models from the configuration yaml
         :return:
         """
+        assert self.reco_accessor is not None
         reco_filter = self._get_current_filter_state("reco_filter")
         logger.warning("calling " + str(self.reco_accessor))
 
@@ -488,7 +486,7 @@ class RecommendationController:
         )
 
         if oss_field != "id":
-            ident, db_ident = get_primary_idents(self.config)
+            _, db_ident = get_primary_idents(self.config)
             kidxs_prim = []
             try:
                 for kidx in kidxs:
@@ -518,11 +516,12 @@ class RecommendationController:
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
         reco_filter = self._get_current_filter_state("reco_filter_u2c")
 
+        assert self.reco_accessor is not None
         kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
             start_item, (self.num_NN + 1), reco_filter
         )
 
-        ident, db_ident = get_primary_idents(self.config)
+        _, db_ident = get_primary_idents(self.config)
         kidxs_prim = []
         try:
             for kidx in kidxs:
@@ -655,15 +654,13 @@ class RecommendationController:
         if self.model_type == constants.MODEL_TYPE_U2C:
             return list(
                 filter(
-                    lambda x: x.visible == True,
+                    lambda x: x.visible,
                     self.components["user_choice"].values(),
                 )
             )
         elif self.model_type == constants.MODEL_TYPE_C2C:
             return list(
-                filter(
-                    lambda x: x.visible == True, self.components["item_choice"].values()
-                )
+                filter(lambda x: x.visible, self.components["item_choice"].values())
             )
         else:
             raise TypeError("Unknown model type [" + self.model_type + "]")
@@ -705,10 +702,10 @@ class RecommendationController:
             )
 
     def import_filter_rules(self):
-        1
+        pass
 
     def export_filter_rules(self):
-        1
+        pass
 
     def get_genres_and_subgenres_from_upper_category(
         self, selected_upper_categories, category
