@@ -257,33 +257,10 @@ class RecommendationController:
         """
         item_hits, start_items = self._get_start_items(model_info)
 
-        if model_info.get("recos_in_same_response", False):
-            return self.get_items_from_response_with_recommendations_included(
-                model_info, start_items
-            )
-        else:
-            self.set_num_pages(item_hits)
-            return self.get_reco_items_for_start_items_from_response(
-                model_info, start_items
-            )
-
-    def get_items_from_response_with_recommendations_included(
-        self, model_info: dict, returned_items
-    ) -> tuple[list, list[list], str]:
-        """
-        Returns the items from the response. Here Recommendations are already part of the response, so mostly
-        just iterate over results and return list of items.
-
-        :param model_info: selected model info dictionary
-        :param returned_items: items returned in response - here already contains recommendations
-        :return: Final List of Item DTOs for this search
-        """
-        all_items = []
-        item_row = []
-        for start_item in returned_items:
-            item_row.append(start_item)
-        all_items.append(item_row)
-        return [model_info["display_name"]], all_items, self.model_config
+        self.set_num_pages(item_hits)
+        return self.get_reco_items_for_start_items_from_response(
+            model_info, start_items
+        )
 
     def get_reco_items_for_start_items_from_response(
         self, model_info: dict, start_items
