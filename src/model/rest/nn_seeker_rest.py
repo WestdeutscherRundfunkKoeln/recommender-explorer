@@ -28,6 +28,7 @@ UTILITIES = (
     "weight_similar_tags",
     "weight_similar_temporal",
     "weight_similar_popular",
+    "weight_similar_diverse",
 )
 
 
