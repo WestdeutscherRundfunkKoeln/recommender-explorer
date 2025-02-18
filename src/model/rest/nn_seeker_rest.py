@@ -15,6 +15,21 @@ logger = logging.getLogger(__name__)
 
 RequestParamsBuilder = Callable[[ItemDto, str], dict[str, Any]]
 
+WEIGHTS = (
+    "weight_audio",
+    "weight_video",
+    "weight_beitrag",
+    "weight_fotostrecke",
+    "weight_link",
+)
+
+UTILITIES = (
+    "weight_similar_semantic",
+    "weight_similar_tags",
+    "weight_similar_temporal",
+    "weight_similar_popular",
+)
+
 
 class NnSeekerRest(NnSeeker):
     def __init__(self, config, max_num_neighbours=16):
@@ -133,6 +148,29 @@ class NnSeekerRest(NnSeeker):
             selected_params["includedCategories"] = ",".join(
                 nn_filter["editorialCategories"]
             )
+        if "relativerangefilter_duration" in nn_filter:
+            selected_params["maxDurationFactor"] = nn_filter[
+                "relativerangefilter_duration"
+            ]
+        if "blacklist_externalid" in nn_filter:
+            selected_params["excludedIds"] = (
+                nn_filter["blacklist_externalid"].replace(" ", "").split(",")
+            )
+        weights = [
+            {"type": w.removeprefix("weight_"), "weight": nn_filter[w]}
+            for w in WEIGHTS
+            if w in nn_filter and nn_filter[w] > 0
+        ]
+        if weights:
+            selected_params["weights"] = weights
+
+        utilities = {
+            w.removeprefix("weight_similar_"): nn_filter[w]
+            for w in UTILITIES
+            if w in nn_filter and nn_filter[w] > 0
+        }
+        if utilities:
+            selected_params["utilities"] = utilities
         return selected_params
 
     def set_model_config(self, model_config):

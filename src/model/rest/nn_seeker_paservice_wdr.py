@@ -7,6 +7,7 @@ class NnSeekerPaServiceWDR(NnSeekerRest):
     def _get_request_params_c2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
         return {
             "referenceId": item.__getattribute__(oss_field),
+            "reco": False,
         }
 
     @staticmethod

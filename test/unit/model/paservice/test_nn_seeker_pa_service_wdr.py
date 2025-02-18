@@ -26,8 +26,6 @@ TEST_MODEL_CONFIG_C2C = {
     "properties": {
         "auth_header": "test",
         "auth_header_value": "test",
-        "param_similarityType": "content",
-        "param_abGroup": "B",
     },
     "default": False,
 }
@@ -51,7 +49,14 @@ def test_get_k_NN(mocker):
     nn_seeker = NnSeekerPaServiceWDR(TEST_CONFIG)
     nn_seeker.set_model_config(TEST_MODEL_CONFIG_C2C)
     ids, scores, oss_field = nn_seeker.get_k_NN(
-        ContentItemDto("test", "test", "test", externalid="test"), 3, {}
+        item=ContentItemDto("test", "test", "test", externalid="test"),
+        k=3,
+        nn_filter={
+            "relativerangefilter_duration": 100,
+            "blacklist_externalid": "test_blacklist_id1,test_blacklist_id2",
+            "weight_audio": 1,
+            "weight_video": 2,
+        },
     )
     assert ids == ["test2", "test1"]
     assert scores == [0.2, 0.1]
@@ -61,16 +66,16 @@ def test_get_k_NN(mocker):
         "https://test.io/recos",
         fields={
             "referenceId": "test",
-            "excludedIds": ["test1", "test2"],
-            "maxDurationFactor": 1.0,
+            "excludedIds": ["test_blacklist_id1", "test_blacklist_id2"],
+            "maxDurationFactor": 100,
             "reco": False,
             "weights": [
                 {
-                    "type": "w1",
+                    "type": "audio",
                     "weight": 1,
                 },
                 {
-                    "type": "w2",
+                    "type": "video",
                     "weight": 2,
                 },
             ],
