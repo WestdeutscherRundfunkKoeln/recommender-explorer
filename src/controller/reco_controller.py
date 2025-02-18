@@ -169,7 +169,7 @@ class RecommendationController:
         return getattr(module, viewer_name)
 
     def get_item_viewer(
-        self, item_dto: ItemDto, app_explorer_instance: RecoExplorerApp | None = None
+        self, item_dto: ItemDto, app_explorer_instance: "RecoExplorerApp | None" = None
     ):
         class_ = self._get_class_from_config(item_dto.viewer)
         return class_(self.config, app_explorer_instance)
