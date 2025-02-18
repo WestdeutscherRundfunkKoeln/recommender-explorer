@@ -19,15 +19,11 @@ TEST_CONFIG = {
 }
 
 TEST_MODEL_CONFIG_C2C = {
-    "display_name": "PA-Service - WDR",
-    "handler": "NnSeekerPaServiceWDR@model.rest.nn_seeker_paservice_wdr",
     "endpoint": "https://test.io/recos",
-    "content_type": "WDRContentItemDto",
     "properties": {
         "auth_header": "test",
         "auth_header_value": "test",
     },
-    "default": False,
 }
 
 

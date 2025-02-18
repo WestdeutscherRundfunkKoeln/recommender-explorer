@@ -25,26 +25,17 @@ TEST_CONFIG = {
 }
 
 TEST_MODEL_CONFIG_C2C = {
-    "display_name": "PA-Service-DistilBase-B",
-    "handler": "NnSeekerPaService@model.rest.nn_seeker_paservice",
     "endpoint": "https://test.io/recos",
-    "content_type": "ContentItemDto",
     "properties": {
         "auth_header": "test",
         "auth_header_value": "test",
         "param_similarityType": "content",
         "param_abGroup": "B",
     },
-    "default": False,
 }
 
 TEST_MODEL_CONFIG_U2C = {
-    "display_name": "PA-Service-Episode-Var-I",
-    "handler": "NnSeekerPaService@model.rest.nn_seeker_paservice",
     "endpoint": "https://test.io/recos",
-    "start_color": "#EC9006",
-    "reco_color": "#F1B04C",
-    "content_type": "ContentItemDto",
     "properties": {
         "auth_header": "test",
         "auth_header_value": "test",
@@ -52,7 +43,6 @@ TEST_MODEL_CONFIG_U2C = {
         "param_assetReturnType": "episode",
         "user_type": "UserItemDto",
     },
-    "default": True,
 }
 
 
