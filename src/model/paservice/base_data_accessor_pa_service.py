@@ -10,7 +10,16 @@ from exceptions.endpoint_error import EndpointError
 from model.base_data_accessor import BaseDataAccessor
 from util.dto_utils import update_from_props
 
+#loggin preference
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 WEIGHTS = (
@@ -133,6 +142,13 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :param filter: not used for now
         :return: Start Item and Recommendations in the given Item DTO
         """
+        if filter['empfehlungstyp'] == 'Ähnlichkeit':
+            self.endpoint = 'v1/br/similar-content'
+        elif filter['empfehlungstyp'] == 'Diversität':
+            self.endpoint = 'v1/br/diverse-content'
+        elif filter['empfehlungstyp'] == 'Aktualität':
+            self.endpoint = 'v1/br/recent-content'
+
         try:
             response = self.client.post(
                 self.endpoint, json=build_request(external_id, filter)

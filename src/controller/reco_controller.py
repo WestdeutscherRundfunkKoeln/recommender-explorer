@@ -1,12 +1,16 @@
 import collections
 import logging
 import copy
+import collections
 
 import datetime
 import math
 import re
 import importlib
+from traceback import print_tb
+
 import constants
+import pprint
 
 from model.sagemaker.clustering_model_client import ClusteringModelClient
 from model.opensearch.base_data_accessor_opensearch import BaseDataAccessorOpenSearch
@@ -69,6 +73,9 @@ class RecommendationController:
         self.model_config = ""
         self.user_cluster = []  # refactor once clustering endpoint is better
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
+
+        self.external_ids = []  # Store external IDs globally within the instance
+        self.count = 0
 
         if not isinstance(self.num_NN, int):
             raise ConfigError(
@@ -295,6 +302,7 @@ class RecommendationController:
 
                 # Find all filters
                 all_chosen_filters = self._get_current_filter_state("reco_filter")
+
                 if len(all_chosen_filters["remove_duplicate"]) > 0:
                     chosen_param = []
                     for item in all_chosen_filters["remove_duplicate"]:
@@ -357,8 +365,35 @@ class RecommendationController:
         logger.info(
             "calling " + accessor_method + " with values " + str(accessor_values)
         )
+
+        # can the widget be used by other LARs ? if yes keep the code, if not then add a condition
+
+        # If external_ids is not empty, add it to the existing dictionary inside accessor_values
+        if self.external_ids:
+            accessor_values[-1]["previous_external_ids"] = self.external_ids.copy()
+
         function_pointer = getattr(self.item_accessor, accessor_method)
+
+        # Store old external IDs before fetching new ones
+        old_external_ids = set(self.external_ids)
+
+        # Fetch new results
         search_result, total_hits = function_pointer(*accessor_values)
+
+        # Update external_ids with new values
+        self.external_ids = [item.externalid for item in search_result]
+        new_external_ids = set(self.external_ids)
+
+        # Compare old and new IDs
+        if old_external_ids == new_external_ids:
+            print("No change in external IDs")
+            # we disable the button
+        else:
+            print("External IDs have changed")
+
+        print("**************************************************")
+        pprint.pprint(accessor_values)
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
         return total_hits, search_result
 
     ## - refactor once we have proper user clustering/sampling
@@ -542,7 +577,7 @@ class RecommendationController:
     def _get_data_accessor_method(self, active_components):
         """Gets a accessor method from the active components.
 
-        Every component should contain a accessor_method in params but
+        Every component should contain an accessor_method in params but
         for an active component there should be no different accessor methods
 
         :param active_components:
@@ -655,10 +690,20 @@ class RecommendationController:
         else:
             raise TypeError("Unknown model type [" + self.model_type + "]")
 
+    #def _get_current_filter_state(self, filter_group):
+        #filter_state = collections.defaultdict(dict)
+        #for component in self.components[filter_group].values():
+            #filter_state[component.params["label"]] = component.value
+        #return filter_state
+
     def _get_current_filter_state(self, filter_group):
         filter_state = collections.defaultdict(dict)
         for component in self.components[filter_group].values():
             filter_state[component.params["label"]] = component.value
+            # For the "empfehlungstyp" label, also add the direction attribute
+            if component.params["label"] == "empfehlungstyp":
+                filter_state["empfehlungstyp_direction"] = component.params["direction"]
+
         return filter_state
 
     def _get_model_type_by_model_key(self, model_key):
