@@ -75,7 +75,7 @@ class RecommendationController:
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
 
         self.external_ids = []  # Store external IDs globally within the instance
-        self.count = 0
+        self.previous_emp_value = None
 
         if not isinstance(self.num_NN, int):
             raise ConfigError(
@@ -366,35 +366,50 @@ class RecommendationController:
             "calling " + accessor_method + " with values " + str(accessor_values)
         )
 
-        # can the widget be used by other LARs ? if yes keep the code, if not then add a condition
+        # check if the empfehlungstyp widget is mentioned
+        accessor_dict = accessor_values[2]
+        emp_value = accessor_dict.get("empfehlungstyp", None)
 
-        # If external_ids is not empty, add it to the existing dictionary inside accessor_values
-        if self.external_ids:
-            accessor_values[-1]["previous_external_ids"] = self.external_ids.copy()
+        # if it does, check if it has changed since the last call, if it didn't, don't reset the Ids. If it did then reset the ids.
+        if emp_value:
+            if emp_value == self.previous_emp_value:
+                accessor_values[-1]["previous_external_ids"] = self.external_ids.copy()
+                # Store old external IDs before fetching new ones
+                old_external_ids = set(self.external_ids)
+            else:
+                self.external_ids = ""
+                self.previous_emp_value = emp_value
+                old_external_ids = ""
 
+        print("***************************************")
+        print("this is the values")
+        pprint.pprint(accessor_values)
+        print("*****************************")
+
+        # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
-
-        # Store old external IDs before fetching new ones
-        old_external_ids = set(self.external_ids)
-
-        # Fetch new results
         search_result, total_hits = function_pointer(*accessor_values)
 
-        # Update external_ids with new values
-        self.external_ids = [item.externalid for item in search_result]
-        new_external_ids = set(self.external_ids)
+        if emp_value:
+            # set the ids
+            self.external_ids = [item.externalid for item in search_result]
+            new_external_ids = set(self.external_ids)
 
-        # Compare old and new IDs
-        if old_external_ids == new_external_ids:
-            print("No change in external IDs")
-            # we disable the button
-        else:
-            print("External IDs have changed")
+            # Compare old and new IDs
+            if old_external_ids == new_external_ids:
+                print("No change in external IDs")
+                # we disable the button
+                # Retrieve the radio box group from the registered components
+                radio_box_group = self.components["item_filter"]["empfehlungstyp"]
+                if radio_box_group:
+                    emp_widget = radio_box_group._widget_instance  # Access the parent widget instance
+                    emp_widget.disable_active_button()  # Call the method to disable the button
+            else:
+                print("External IDs have changed")
 
-        print("**************************************************")
-        pprint.pprint(accessor_values)
-        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
         return total_hits, search_result
+
+
 
     ## - refactor once we have proper user clustering/sampling
     def _get_start_users_u2c(self, model: dict) -> tuple[int, list]:

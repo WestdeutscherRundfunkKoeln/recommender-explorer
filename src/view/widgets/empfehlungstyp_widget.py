@@ -26,6 +26,9 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
             name = 'empfehlungstyp',
         )
 
+        # Store a reference to the current widget in the radio_box_group
+        self.radio_box_group._widget_instance = self  # Storing the reference to the widget instance
+
         self.radio_box_group.params = {
             "label": 'empfehlungstyp',
             "reset_to": 'Ähnlichkeit',
@@ -79,6 +82,12 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
         # Add the row of buttons to the main column
         self.col.append(self.row_btn)
+
+        self.alert = pn.pane.Alert("<b> ⚠️ No more presses possible! ⚠️ </b>",
+        alert_type="danger", styles={"font-size": "11px", "padding_top": "0px","padding_bottom": "0px"
+        ,"text-align": "center"},visible=False,)
+        self.col.append(self.alert)  # Add the alert to the UI but keep it hidden
+
         # Add the main column to the accordion
         self.accordion.append(('Empfehlungs-Typ', self.col))
 
@@ -108,6 +117,9 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
             "reset_to": 'Ähnlichkeit',
         }
 
+        #hide the alert if visible
+        self.alert.visible = False
+
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
 
@@ -122,5 +134,23 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
+
+    def disable_active_button(self):
+        """Disable the active button based on the selected radio option."""
+        selected_type = self.radio_box_group.value
+        direction = self.radio_box_group.params["direction"]
+
+        button_map = {
+            "Ähnlichkeit": {"Ähnlicher": self.btn1, "Aktueller": self.btn2},
+            "Aktualität": {"Weniger Aktualität": self.btn5, "Mehr Aktualität": self.btn6},
+            "Diversität": {"Weniger Diversität": self.btn3, "Mehr Diversität": self.btn4},
+        }
+
+        if selected_type in button_map and direction in button_map[selected_type]:
+            button_to_disable = button_map[selected_type][direction]
+            button_to_disable.disabled = True
+            print(f"Disabled button: {direction}")
+            self.alert.visible = True  # Show the alert
+
 
 
