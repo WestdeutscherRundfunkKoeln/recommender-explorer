@@ -60,7 +60,7 @@ def test_get_k_NN_WDR(mocker):
     mock_request.assert_called_once_with(
         "POST",
         "https://test.io/recos",
-        fields={
+        json={
             "referenceId": "test",
             "excludedIds": ["test_blacklist_id1", "test_blacklist_id2"],
             "maxDurationFactor": 100,
@@ -114,7 +114,7 @@ def test_get_k_NN_BR(mocker):
     mock_request.assert_called_once_with(
         "POST",
         "https://test.io/recos",
-        fields={
+        json={
             "referenceId": "test",
             "reco": False,
             "utilities": {

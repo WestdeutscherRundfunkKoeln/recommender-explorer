@@ -75,7 +75,7 @@ def test_get_k_NN(mocker):
     mock_request.assert_called_once_with(
         "POST",
         "https://test.io/recos",
-        fields={
+        json={
             "configuration": "relatedItems",
             "assetId": "test",
             "limit": 16,
@@ -117,7 +117,7 @@ def test_get_recos_user(mocker):
     mock_request.assert_called_once_with(
         "POST",
         "https://test.io/recos",
-        fields={
+        json={
             "configuration": "forYou",
             "explain": True,
             "userId": "test",
@@ -167,7 +167,7 @@ def test_nn_seeker_pa_service_show_get_recos_user(mocker):
     mock_request.assert_called_once_with(
         "POST",
         "https://test.io/recos",
-        fields={
+        json={
             "configuration": "forYou",
             "explain": True,
             "userId": "test",

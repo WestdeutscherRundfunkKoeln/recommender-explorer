@@ -97,7 +97,7 @@ class NnSeekerRest(NnSeeker):
         )
 
         response = http.request(
-            "POST", self._endpoint, fields=post_params, headers=self._get_headers()
+            "POST", self._endpoint, json=post_params, headers=self._get_headers()
         )
         status_code = response.status
         data = json.loads(response.data.decode("utf-8"))
@@ -133,7 +133,7 @@ class NnSeekerRest(NnSeeker):
         if not self._model_props:
             raise ValueError("Model properties not set")
         return {
-            self._model_props["auth_header"]: self._model_props["auth_header_value"]
+            self._model_props["auth_header"]: self._model_props["auth_header_value"],
         }
 
     @staticmethod
