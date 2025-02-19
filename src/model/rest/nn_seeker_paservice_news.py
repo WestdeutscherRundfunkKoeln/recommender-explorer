@@ -1,6 +1,6 @@
 from typing import Any
 from dto.item import ItemDto
-from src.model.rest.nn_seeker_rest import NnSeekerRest
+from model.rest.nn_seeker_rest import NnSeekerRest
 
 
 class NnSeekerPaServiceNews(NnSeekerRest):
