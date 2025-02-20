@@ -2,13 +2,11 @@ import logging
 import sys
 
 import panel as pn
-from envyaml import EnvYAML
 
 from exceptions.config_error import ConfigError
 from util.file_utils import (
     get_config_from_search,
     get_configs_from_arg,
-    load_ui_config,
     load_config,
     load_deployment_version_config,
 )
@@ -17,6 +15,7 @@ from view.RecoExplorerApp import RecoExplorerApp
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
+
 
 def getExplorerInstance(
     config_full_paths: dict[str, str], config: dict[str, str], client: str
