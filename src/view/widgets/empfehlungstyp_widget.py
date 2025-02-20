@@ -100,6 +100,7 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         """
         # Clear the old buttons
         self.row_btn.clear()
+
         if event.new == 'Diversität':
             self.row_btn.append(self.btn3)
             self.row_btn.append(self.btn4)
@@ -122,6 +123,8 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
+
+
 
 
     async def button_clicked(self, event):
