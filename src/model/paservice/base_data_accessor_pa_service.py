@@ -1,5 +1,6 @@
 import copy
 import logging
+import pprint
 from typing import Any
 
 import httpx
@@ -150,11 +151,15 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         elif filter['empfehlungstyp'] == 'Aktualität':
             self.endpoint = 'v1/br/recent-content'
 
+        json = build_request(external_id, filter)
+        pprint.pprint(json)
+
         try:
             response = self.client.post(
                 self.endpoint, json=build_request(external_id, filter)
             )
             response.raise_for_status()
+            pprint.pprint(response   )
             return self.__get_items_from_response(item, response.json())
         except httpx.HTTPStatusError as e:
             logging.error(e, exc_info=True)
@@ -207,6 +212,17 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
         request_body["excludedIds"] = (
             filter["blacklist_externalid"].replace(" ", "").split(",")
         )
+
+    if "empfehlungstyp" in filter:
+        request_body["empfehlungstyp"] = filter["empfehlungstyp"]
+
+    if "empfehlungstyp_direction" in filter:
+        request_body["empfehlungstyp_direction"] = filter["empfehlungstyp_direction"]
+
+    if "previous_external_ids" in filter:
+        request_body["previous_external_ids"] = filter["previous_external_ids"]
+
+
     weights = [
         {"type": w.removeprefix("weight_"), "weight": filter[w]}
         for w in WEIGHTS
