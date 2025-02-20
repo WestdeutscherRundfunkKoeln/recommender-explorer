@@ -7,7 +7,7 @@ class ItemDto(ABC):
     _position: str
     _item_type: str
     _provenance: str
-    id: str
+    id: str = ""
     _is_draft: bool = False
 
     @property
