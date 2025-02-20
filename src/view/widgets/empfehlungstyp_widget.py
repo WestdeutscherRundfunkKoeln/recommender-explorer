@@ -3,9 +3,6 @@ from view.widgets.widget import UIWidget
 from view import ui_constants as c
 
 
-
-
-
 class EmpfehlungstypWidget(pn.Column, UIWidget):
 
     def __init__(self, reco_explorer_app_instance, controller_instance):
@@ -19,15 +16,15 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         Create and return a panel containing the radio buttons and corresponding buttons for the selected option.
         """
 
-        # Create radio buttons (this will be the same each time)
+        # Create radio buttons
         self.radio_box_group = pn.widgets.RadioBoxGroup(
             options=['Ähnlichkeit', 'Diversität', 'Aktualität'],
-            value='Ähnlichkeit',  # Default value as a list,
+            value='Ähnlichkeit',  # Default value
             name = 'empfehlungstyp',
         )
 
         # Store a reference to the current widget in the radio_box_group
-        self.radio_box_group._widget_instance = self  # Storing the reference to the widget instance
+        self.radio_box_group._widget_instance = self
 
         self.radio_box_group.params = {
             "label": 'empfehlungstyp',
@@ -57,17 +54,9 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         self.btn5 = pn.widgets.Button(name='Weniger Aktualität', width=120)
         self.btn6 = pn.widgets.Button(name='Mehr Aktualität', width=120)
 
-        self.btn1.on_click(self.button_clicked)
-        self.btn2.on_click(self.button_clicked)
-        self.btn3.on_click(self.button_clicked)
-        self.btn4.on_click(self.button_clicked)
-        self.btn5.on_click(self.button_clicked)
-        self.btn6.on_click(self.button_clicked)
-
         # Create the accordion layout
         self.accordion = pn.layout.Accordion()
         self.accordion_with_width = pn.Column(self.accordion, width=285)
-
 
         # The main column to be added into the accordion
         self.col = pn.Column()
@@ -82,8 +71,8 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
         # Add the row of buttons to the main column
         self.col.append(self.row_btn)
-
-        self.alert = pn.pane.Alert("<b> ⚠️ No more presses possible! ⚠️ </b>",
+        # Create an alert when the button is disabled
+        self.alert = pn.pane.Alert("<b> ⚠️ Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>",
         alert_type="danger", styles={"font-size": "11px", "padding_top": "0px","padding_bottom": "0px"
         ,"text-align": "center"},visible=False,)
         self.col.append(self.alert)  # Add the alert to the UI but keep it hidden
@@ -96,20 +85,17 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
     async def update_buttons(self, event):
         """
-        Updates the visible buttons based on the selected radio option.
+        Updates the buttons based on the selected radio option.
         """
-        # Clear the old buttons
-        self.row_btn.clear()
-
         if event.new == 'Diversität':
-            self.row_btn.append(self.btn3)
-            self.row_btn.append(self.btn4)
+            self.btn1.name = "Weniger Diversität"
+            self.btn2.name = "Mehr Diversität"
         elif event.new == 'Aktualität':
-            self.row_btn.append(self.btn5)
-            self.row_btn.append(self.btn6)
+            self.btn1.name = "Weniger Aktualität"
+            self.btn2.name = "Mehr Aktualität"
         else:
-            self.row_btn.append(self.btn1)
-            self.row_btn.append(self.btn2)
+            self.btn1.name = "Ähnlicher"
+            self.btn2.name = "Aktueller"
 
          # reset the direction
         self.radio_box_group.params = {
@@ -133,7 +119,6 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
             "label": 'empfehlungstyp',
             "reset_to": 'Ähnlichkeit',
         }
-        print(self.radio_box_group.params)
 
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
@@ -145,8 +130,8 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
         button_map = {
             "Ähnlichkeit": {"Ähnlicher": self.btn1, "Aktueller": self.btn2},
-            "Aktualität": {"Weniger Aktualität": self.btn5, "Mehr Aktualität": self.btn6},
-            "Diversität": {"Weniger Diversität": self.btn3, "Mehr Diversität": self.btn4},
+            "Aktualität": {"Weniger Aktualität": self.btn1, "Mehr Aktualität": self.btn2},
+            "Diversität": {"Weniger Diversität": self.btn1, "Mehr Diversität": self.btn2},
         }
 
         if selected_type in button_map and direction in button_map[selected_type]:

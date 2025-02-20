@@ -142,7 +142,8 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :param filter: not used for now
         :return: Start Item and Recommendations in the given Item DTO
         """
-        if filter['empfehlungstyp'] == 'Ähnlichkeit':
+        # Distinguish which endpoint to triger
+        if filter['empfehlungstyp'] == 'Ähnlichkeit' or filter['empfehlungstyp'] is None :
             self.endpoint = 'v1/br/similar-content'
         elif filter['empfehlungstyp'] == 'Diversität':
             self.endpoint = 'v1/br/diverse-content'

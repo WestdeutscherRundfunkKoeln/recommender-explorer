@@ -390,6 +390,7 @@ class RecommendationController:
         function_pointer = getattr(self.item_accessor, accessor_method)
         search_result, total_hits = function_pointer(*accessor_values)
 
+        #  # check if the empfehlungstyp widget is mentioned, if so then update the ids and compare.
         if emp_value:
             # set the ids
             self.external_ids = [item.externalid for item in search_result]
