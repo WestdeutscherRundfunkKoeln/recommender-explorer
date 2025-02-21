@@ -381,19 +381,25 @@ class RecommendationController:
                 self.previous_emp_value = emp_value
                 old_external_ids = ""
 
-        print("***************************************")
-        print("this is the values")
-        pprint.pprint(accessor_values)
-        print("*****************************")
 
         # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
         search_result, total_hits = function_pointer(*accessor_values)
 
+        print("***************************************")
+        print("this is the values")
+        pprint.pprint(accessor_values)
+        print("*****************************")
+
         #  # check if the empfehlungstyp widget is mentioned, if so then update the ids and compare.
         if emp_value:
-            # set the ids
-            self.external_ids = [item.externalid for item in search_result]
+            # set the ids and exclude start item/items
+            self.external_ids = [
+                item.externalid
+                for item in search_result
+                if item._position != "start"
+            ]
+
             new_external_ids = set(self.external_ids)
 
             # Compare old and new IDs

@@ -71,8 +71,8 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         # Add the row of buttons to the main column
         self.col.append(self.row_btn)
         # Create an alert when the button is disabled
-        self.alert = pn.pane.Alert("<b> ⚠️ Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>",
-        alert_type="danger", styles={"font-size": "11px", "padding_top": "0px","padding_bottom": "0px"
+        self.alert = pn.pane.Alert("<b> Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>",
+        alert_type="light", styles={"font-size": "11px", "padding_top": "0px","padding_bottom": "0px"
         ,"text-align": "center"},visible=False,)
         self.col.append(self.alert)  # Add the alert to the UI but keep it hidden
 
