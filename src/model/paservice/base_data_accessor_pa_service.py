@@ -31,13 +31,6 @@ WEIGHTS = (
     "weight_link",
 )
 
-UTILITIES = (
-    "weight_similar_semantic",
-    "weight_similar_tags",
-    "weight_similar_temporal",
-    "weight_similar_popular",
-)
-
 
 class BaseDataAccessorPaService(BaseDataAccessor):
     def __init__(self, config):
@@ -222,20 +215,4 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
     if "previous_external_ids" in filter:
         request_body["previous_external_ids"] = filter["previous_external_ids"]
 
-
-    weights = [
-        {"type": w.removeprefix("weight_"), "weight": filter[w]}
-        for w in WEIGHTS
-        if w in filter and filter[w] > 0
-    ]
-    if weights:
-        request_body["weights"] = weights
-
-    utilities = {
-        w.removeprefix("weight_similar_"): filter[w]
-        for w in UTILITIES
-        if w in filter and filter[w] > 0
-    }
-    if utilities:
-        request_body["utilities"] = utilities
     return request_body

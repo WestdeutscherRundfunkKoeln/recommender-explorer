@@ -372,6 +372,10 @@ class RecommendationController:
 
         # if it does, check if it has changed since the last call, if it didn't, don't reset the Ids. If it did then reset the ids.
         if emp_value:
+            print("this is the previous")
+            print(self.previous_emp_value)
+            print("this the current")
+            print(emp_value)
             if emp_value == self.previous_emp_value:
                 accessor_values[-1]["previous_external_ids"] = self.external_ids.copy()
                 # Store old external IDs before fetching new ones

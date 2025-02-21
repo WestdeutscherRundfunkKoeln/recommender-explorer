@@ -42,7 +42,7 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
             self.reco_explorer_app_instance.trigger_reco_filter_choice,
         )
 
-        self.radio_box_group.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
+        self.radio_box_group.reset_identifier = c.RESET_IDENTIFIER_ITEM_FILTER
 
         self.radio_box_group.is_leaf_widget = True
 
@@ -108,8 +108,6 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
-
-
 
 
     async def button_clicked(self, event):
