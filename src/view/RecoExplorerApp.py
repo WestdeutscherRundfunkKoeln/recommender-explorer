@@ -43,6 +43,8 @@ logger.addHandler(console_handler)
 # Main App
 #
 class RecoExplorerApp:
+    __in_flight_counter = 0
+
     def __init__(
         self, config_full_paths: dict[str, str], config: dict[str, str], client: str
     ) -> None:
@@ -748,13 +750,31 @@ class RecoExplorerApp:
         """
         Calls the actual search function in controller to get results for query
         """
-        self.main_content[:] = []
+        self.main_content[:] = [
+            pn.Row(
+                pn.indicators.LoadingSpinner(
+                    value=True,
+                    width=25,
+                    height=25,
+                    align="center",
+                    margin=(5, 0, 5, 10),
+                )
+            )
+        ]
         self.pagination_top[:] = []
         try:
+            self.__in_flight_counter += 1
             models, items, config = await asyncio.to_thread(self.controller.get_items)
-            for idx, row in enumerate(items):
+            self.__in_flight_counter -= 1
+
+            if self.__in_flight_counter:
+                return
+
+            self.main_content[:] = [
                 self.add_cards_row(models, config, idx, row)
-                self.draw_pagination()
+                for idx, row in enumerate(items)
+            ]
+            self.draw_pagination()
 
         except (EmptySearchError, ModelValidationError) as e:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="warning"))
@@ -765,8 +785,9 @@ class RecoExplorerApp:
             logger.warning(traceback.print_exc())
         self.disablePageButtons()
 
-    def add_cards_row(self, models: list[any], config: str, idx: int, row: list[any]):
-        """ """
+    def add_cards_row(
+        self, models: list[Any], config: str, idx: int, row: list[Any]
+    ) -> pn.Row:
         start_card = None
         reco_cards = []
         for idz, item_dto in enumerate(row):
@@ -787,9 +808,7 @@ class RecoExplorerApp:
         row_with_navigation_buttons = self.create_navigation_elements_for_cards_row(
             cards_row, start_card, reco_cards
         )
-        self.main_content.append(
-            pn.Row(pn.Column(cards_row, row_with_navigation_buttons))
-        )
+        return pn.Row(pn.Column(cards_row, row_with_navigation_buttons))
 
     def create_navigation_elements_for_cards_row(
         self, cards_row: pn.Row, start_card: pn.layout.card.Card, reco_cards: list
