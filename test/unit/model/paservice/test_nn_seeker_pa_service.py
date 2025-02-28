@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from urllib3 import HTTPResponse
 
 from src.constants import ITEM_POSITION_START
@@ -105,7 +106,7 @@ def test_get_recos_user(mocker):
     nn_seeker.set_model_config(TEST_MODEL_CONFIG_U2C)
 
     ids, scores, oss_field = nn_seeker.get_recos_user(
-        UserItemDto(ITEM_POSITION_START, "test", "test", "test"),
+        UserItemDto(ITEM_POSITION_START, "test", "test", id="test"),
         3,
         {"editorialCategories": ["test1", "test2"]},
     )
@@ -113,6 +114,46 @@ def test_get_recos_user(mocker):
     assert ids == ["test2", "test1"]
     assert scores == [0.2, 0.1]
     assert oss_field == "externalid"
+
+    mock_request.assert_called_once_with(
+        "POST",
+        "https://test.io/recos",
+        json={
+            "configuration": "forYou",
+            "explain": True,
+            "userId": "test",
+            "modelType": "collab_matrix_model_episode_var1",
+            "assetReturnType": "episode",
+            "includedCategories": "test1,test2",
+        },
+        headers={"test": "test"},
+    )
+
+
+def test_get_recos_user__exception(mocker):
+    mock_request = mocker.patch(
+        "urllib3.PoolManager.request",
+        return_value=HTTPResponse(
+            body=json.dumps(
+                {
+                    "recommendations": [
+                        {"score": 0.2, "asset": {"assetId": "test2"}},
+                        {"score": 0.1, "asset": {"assetId": "test1"}},
+                    ]
+                }
+            ).encode(),
+            status=404,
+        ),
+    )
+    nn_seeker = NnSeekerPaService(TEST_CONFIG)
+    nn_seeker.set_model_config(TEST_MODEL_CONFIG_U2C)
+
+    with pytest.raises(Exception):
+        ids, scores, oss_field = nn_seeker.get_recos_user(
+            UserItemDto(ITEM_POSITION_START, "test", "test", id="test"),
+            3,
+            {"editorialCategories": ["test1", "test2"]},
+        )
 
     mock_request.assert_called_once_with(
         "POST",
