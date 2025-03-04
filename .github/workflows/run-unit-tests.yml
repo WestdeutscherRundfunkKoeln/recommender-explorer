@@ -27,6 +27,14 @@ jobs:
           cd microservices/${{ inputs.service-name }}service
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+      - name: Inject Secret Service Account Key into Config
+        if: secrets.EMBEDDING_SERVICE_GCS_SERVICE_ACCOUNT_KEY != '' &&
+          hashFiles('microservices/${{ inputs.service-name }}service/tests/update_config.py') != ''
+        env:
+          EMBEDDING_SERVICE_GCS_SERVICE_ACCOUNT_KEY: ${{ secrets.EMBEDDING_SERVICE_GCS_SERVICE_ACCOUNT_KEY }}
+        run: |
+          cd microservices/${{ inputs.service-name }}service/tests
+          python update_config.py
       - name: Run tests
         run: |
           cd microservices/${{ inputs.service-name }}service
