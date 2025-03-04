@@ -9,6 +9,32 @@ logger = logging.getLogger(__name__)
 class WDRContentStartCard(WDRContentCard):
 
     def draw(self, content_dto: WDRContentItemDto, nr, model, model_config, modal_viewer):
+        def create_float_panel():
+            teaserimage_card = pn.Card(
+                teaserimage,
+                styles={
+                    'background': self.config[model_config][content_dto.provenance][model]["reco_color"],
+                },
+            )
+
+            float_panel = pn.layout.FloatPanel(
+                pn.Column(
+                    teaserimage_card,
+                    super(WDRContentStartCard, self).draw(content_dto, pn.Card(
+                        styles={'background': self.config[model_config][content_dto.provenance][model]["reco_color"]})),
+                    truncated_description
+                ),
+                config={"headerControls": {"maximize": "remove", "collapse": "remove",
+                                           "minimize": "remove", "smallify": "remove",},
+                        "panelSize": "800 1100",
+                        "position": "center 10 -500"
+                        },
+                styles={ "panelSize": "900 1100",
+                        "z-index": "1000",
+                        "background": self.config[model_config][content_dto.provenance][model]['start_color']},
+            )
+
+            return float_panel
 
         stylesheet_image = """
                          .img_wrapper {
@@ -73,9 +99,6 @@ class WDRContentStartCard(WDRContentCard):
                          }     
                          
                      """
-
-        pn.extension(raw_css=[stylesheet_image])
-
         teaserimage = pn.pane.HTML(f"""
                      <div class="img_wrapper">
                          <img class="blurred_background" src={content_dto.teaserimage}>
@@ -85,11 +108,20 @@ class WDRContentStartCard(WDRContentCard):
                          </div>
                      </div>
                      """)
-
         teaserimage.stylesheets = [stylesheet_image]
         teaserimage.margin = (0, 0, 0, 0)
 
+        pn.extension(raw_css=[stylesheet_image])
+
         button = pn.widgets.Button(name="Details öffnen", button_type="primary", width_policy="fit")
+
+        panel_container = pn.Column()
+
+        def toggle_float_panel(event):
+            panel_container.clear()  # Clear the entire container (remove panel)
+            panel_container.append(create_float_panel())  # Add the new panel
+
+        button.on_click(toggle_float_panel)
 
         truncated_description = pn.Card(
             pn.pane.Markdown(f"""
@@ -100,47 +132,6 @@ class WDRContentStartCard(WDRContentCard):
                              styles={
                                  'background': self.config[model_config][content_dto.provenance][model]["reco_color"], }
                              ))
-
-        teaserimage_card = pn.Card(
-            teaserimage,
-            styles={
-                'background': self.config[model_config][content_dto.provenance][model]["reco_color"],
-            },
-        )
-
-        config = {
-            "headerControls": {"maximize": "remove", "collapse": "remove", "minimize": "remove", "smallify": "remove"}}
-
-        float_panel = pn.layout.FloatPanel(
-            pn.Column(
-                teaserimage_card,
-                super().draw(content_dto, pn.Card(
-                    styles={'background': self.config[model_config][content_dto.provenance][model]["reco_color"]})),
-                truncated_description
-            ),
-            sizing_mode="stretch_width",
-            min_width=450,
-            max_width=700,
-            height=330,
-            config=config,
-            visible=False,
-            contained=True,
-            styles={"position": "absolute", "top": "50%", "left": "50%", "transform": "translate(-50%, -50%)",
-                    "z-index": "1000",
-                    "background": self.config[model_config][content_dto.provenance][model]['start_color']},
-        )
-
-        float_panel_container = pn.bind(lambda visible: float_panel if visible else None, float_panel.param.visible)
-
-        def toggle_float_panel(event):
-            if float_panel.visible:
-                float_panel.css_classes = ["float-panel"]
-            else:
-                float_panel.css_classes = ["float-panel", "visible"]
-            float_panel.visible = not float_panel.visible
-
-        button.on_click(toggle_float_panel)
-
         child_objects = [
             teaserimage,
             pn.pane.Markdown(f""" ### Modell: {model} """)
@@ -158,4 +149,4 @@ class WDRContentStartCard(WDRContentCard):
 
         card = super().draw(content_dto, card, button)
 
-        return pn.Column(card, float_panel_container)
+        return pn.Column(card, panel_container)
