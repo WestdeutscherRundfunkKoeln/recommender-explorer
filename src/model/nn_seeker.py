@@ -12,13 +12,10 @@ class NnSeeker(ABC):
     @abstractmethod
     def get_k_NN(
         self, item: ItemDto, k: int, nn_filter: dict[str, Any]
-    ) -> tuple[list[str], list]:
-        pass
+    ) -> tuple[list[str], list, str]: ...
 
     @abstractmethod
-    def get_max_num_neighbours(self, content_idx):
-        pass
+    def get_max_num_neighbours(self, content_idx) -> int: ...
 
     @abstractmethod
-    def set_model_config(self, model_config):
-        pass
+    def set_model_config(self, model_config): ...
