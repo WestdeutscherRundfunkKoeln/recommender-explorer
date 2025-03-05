@@ -23,4 +23,5 @@ models:
         model_name: "pa-service-var-III"
 local_model_path: test_dl
 bucket_path: sentence_transformers
+bucket_name: zdf-d01-g-pa-dp-wdr-0-ml-models
 
