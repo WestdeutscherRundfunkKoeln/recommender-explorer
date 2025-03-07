@@ -3,7 +3,9 @@ import logging
 import os
 import re
 from pathlib import Path
+from typing import Any
 
+import httpx
 from envyaml import EnvYAML
 
 import constants
@@ -114,3 +116,123 @@ def load_deployment_version_config(config: dict[str, str]) -> dict[str, str]:
 
     config.update(version_config)
     return config
+
+def _construct_endpoint_url(base_url: str, model_config_key: str | None) -> str:
+    """
+    Constructs a complete endpoint URL for fetching model configuration. The URL
+    constructed depends on the presence of a specific model configuration key. If
+    the key is provided, the function includes it in the endpoint URL. Otherwise,
+    it defaults to the URL for retrieving all model configurations.
+
+    :param base_url: The base URL of the API.
+    :type base_url: str
+    :param model_config_key: The key identifying the specific model configuration.
+        If None, fetches all configurations.
+    :type model_config_key: str | None
+    :return: The complete endpoint URL.
+    :rtype: str
+    """
+    if model_config_key:
+        logger.info(f"Fetching model configuration for specified key:{model_config_key}")
+        return f"{base_url}/model_config/{model_config_key}"
+    else:
+        logger.info("Fetching all model configurations.")
+        return f"{base_url}/model_config"
+
+
+def _get_model_config_from_endpoint(config: dict[str, str]) -> dict[str, Any]:
+    """
+    Fetches the model configuration from a remote API endpoint using the provided
+    configuration dictionary. This function verifies the input configuration for
+    required keys, constructs the endpoint URL, and performs an HTTP GET request
+    to retrieve the model configuration. Any issues during the HTTP request or
+    JSON parsing will result in a custom `ConfigError` being raised with specific
+    details.
+
+    :param config: A dictionary containing configuration data, primarily including
+        keys related to the API such as "ingest" with sub-keys "base_url_embedding"
+        for the base URL and "api_key" for the authentication key.
+    :type config: dict[str, str]
+
+    :return: A dictionary representing the JSON response of the API, containing the
+        model configuration details.
+    :rtype: dict[str, Any]
+
+    :raises ConfigError: Raises a `ConfigError` if mandatory keys ("base_url_embedding",
+        "api_key") are missing in the provided configuration or if any error occurs
+        during the HTTP request to the endpoint (e.g., timeout, HTTP error, or
+        JSON decoding failure).
+    """
+    ingest_config = config.get("ingest", {})
+    base_url = ingest_config.get("base_url_embedding")
+    api_key = ingest_config.get("api_key")
+    if not base_url or not api_key:
+        raise ConfigError("Missing base URL or API key in configuration.",{})
+
+    endpoint_url = _construct_endpoint_url(base_url, config.get("model_config_key"))
+
+    try:
+        response = httpx.get(
+            endpoint_url,
+            timeout=10,
+            headers={"x-api-key": api_key}
+        )
+        return response.json()
+    except httpx.TimeoutException:
+        raise ConfigError(
+            "Request to endpoint timed out. Check the network or server status.",
+            {"timeout": True}
+        )
+    except httpx.HTTPError as e:
+        raise ConfigError(
+            f"Request failed with status code {e.response.status_code}: {e.response.text}",
+            {"status_code": e.response.status_code, "details": e.response.text}
+        )
+    except ValueError as e:
+        raise ConfigError(
+            f"Failed to parse the JSON response: {str(e)}",
+            {"response_text": response.text}
+        )
+
+
+def load_model_configuration(config: dict[str, str]) -> dict[str, str | None] | Any:
+    """
+    Parses the model configuration from the input configuration dictionary or requests configuration
+    from an external endpoint. Returns a dictionary containing model-specific configurations if found.
+    Logs the loading process for debugging purposes.
+
+    :param config: A dictionary containing configuration details.
+    :type config: dict[str, str]
+
+    :return: A dictionary containing parsed model-specific configurations or the result of an
+        external endpoint response. Each entry may include `c2c_config` or `u2c_config` keys.
+    :rtype: dict[str, str | None] | Any
+    """
+    result = {}
+    if "c2c_config" in config:
+        result["c2c_config"] = config["c2c_config"]
+        logger.info("Load c2c model configuration from config yaml file.")
+        logger.info(f"c2c_config:{result['c2c_config']}")
+    if "u2c_config" in config:
+        result["u2c_config"] = config["u2c_config"]
+        logger.info("Load u2c model configuration from config yaml file.")
+        logger.info(f"u2c_config:{result['u2c_config']}")
+
+    if result:
+        return result
+
+    response_from_endpoint = _get_model_config_from_endpoint(config)
+
+    if "c2c_models" in response_from_endpoint:
+        result["c2c_config"] = {"c2c_models": response_from_endpoint["c2c_models"]}
+        logger.info("Load c2c model configuration from embedding microservice.")
+        logger.info(f"c2c_config:{result['c2c_config']}")
+    if "u2c_models" in response_from_endpoint:
+        result["u2c_config"] = {"u2c_models": response_from_endpoint["u2c_models"]}
+        logger.info("Load u2c model configuration from embedding microservice.")
+        logger.info(f"u2c_config:{result['u2c_config']}")
+
+    return result
+
+
+

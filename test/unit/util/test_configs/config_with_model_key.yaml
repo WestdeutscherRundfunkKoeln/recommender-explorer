@@ -1,0 +1,4 @@
+ingest:
+  base_url_embedding: https://example.com
+  api_key: test_api_key
+model_config_key: test_key
