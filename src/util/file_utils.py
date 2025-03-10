@@ -133,7 +133,7 @@ def _construct_endpoint_url(base_url: str, model_config_key: str | None) -> str:
     :rtype: str
     """
     if model_config_key:
-        logger.info(f"Fetching model configuration for specified key:{model_config_key}")
+        logger.info("Fetching model configuration for specified key: %s", model_config_key)
         return f"{base_url}/model_config/{model_config_key}"
     else:
         logger.info("Fetching all model configurations.")
@@ -212,11 +212,11 @@ def load_model_configuration(config: dict[str, str]) -> dict[str, str | None] | 
     if "c2c_config" in config:
         result["c2c_config"] = config["c2c_config"]
         logger.info("Load c2c model configuration from config yaml file.")
-        logger.info(f"c2c_config:{result['c2c_config']}")
+        logger.info("c2c_config: %s", result['c2c_config'])
     if "u2c_config" in config:
         result["u2c_config"] = config["u2c_config"]
         logger.info("Load u2c model configuration from config yaml file.")
-        logger.info(f"u2c_config:{result['u2c_config']}")
+        logger.info("u2c_config: %s", result['u2c_config'])
 
     if result:
         return result
@@ -226,11 +226,11 @@ def load_model_configuration(config: dict[str, str]) -> dict[str, str | None] | 
     if "c2c_models" in response_from_endpoint:
         result["c2c_config"] = {"c2c_models": response_from_endpoint["c2c_models"]}
         logger.info("Load c2c model configuration from embedding microservice.")
-        logger.info(f"c2c_config:{result['c2c_config']}")
+        logger.info("c2c_config: %s", result['c2c_config'])
     if "u2c_models" in response_from_endpoint:
         result["u2c_config"] = {"u2c_models": response_from_endpoint["u2c_models"]}
         logger.info("Load u2c model configuration from embedding microservice.")
-        logger.info(f"u2c_config:{result['u2c_config']}")
+        logger.info("u2c_config: %s", result['u2c_config'])
 
     return result
 
