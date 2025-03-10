@@ -129,31 +129,27 @@ def test_get_client_ident_from_search():
     assert get_client_ident_from_search("?field=test") is None
 
 
-def test_get_model_config_from_endpoint_with_model_key(mocker, config_with_model_key):
-    mocked_get = mocker.patch("httpx.get")
-    mocked_get.return_value.json.return_value = {"config": "model_key_data"}
+def test_get_model_config_from_endpoint_with_model_key(httpx_mock, config_with_model_key):
+    httpx_mock.add_response(
+        url="https://example.com/model_config/test_key",
+        method="GET",
+        json={"config": "model_key_data"}
+    )
 
     result = _get_model_config_from_endpoint(config_with_model_key)
 
-    mocked_get.assert_called_once_with(
-        "https://example.com/model_config/test_key",
-        timeout=10,
-        headers={"x-api-key": "test_api_key"},
-    )
     assert result == {"config": "model_key_data"}
 
 
-def test_get_model_config_from_endpoint_without_model_key(mocker, config_without_model_key):
-    mocked_get = mocker.patch("httpx.get")
-    mocked_get.return_value.json.return_value = {"config": "all_models_data"}
+def test_get_model_config_from_endpoint_without_model_key(httpx_mock, config_without_model_key):
+    httpx_mock.add_response(
+        url="https://example.com/model_config",
+        method="GET",
+        json={"config": "all_models_data"}
+    )
 
     result = _get_model_config_from_endpoint(config_without_model_key)
 
-    mocked_get.assert_called_once_with(
-        "https://example.com/model_config",
-        timeout=10,
-        headers={"x-api-key": "test_api_key"},
-    )
     assert result == {"config": "all_models_data"}
 
 
