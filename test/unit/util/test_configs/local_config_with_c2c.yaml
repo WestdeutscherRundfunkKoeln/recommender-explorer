@@ -1,0 +1,4 @@
+c2c_config:
+  c2c_models:
+    - model1
+    - model2
