@@ -4,7 +4,8 @@ import logging
 from src.constants import (
     MODELS_KEY,
     C2C_MODELS_KEY,
-    U2C_MODELS_KEY
+    U2C_MODELS_KEY,
+    CLUSTERING_MODELS_KEY
 )
 
 logger = logging.getLogger(__name__)
@@ -108,15 +109,19 @@ def get_full_model_config(config: dict) -> dict:
     full_model_config = {}
     aggregated_c2c_models = {}
     aggregated_u2c_models = {}
+    aggregated_cluster_models = {}
 
     for key, value in config[MODELS_KEY].items():
         _aggregate_models(value, C2C_MODELS_KEY, aggregated_c2c_models)
         _aggregate_models(value, U2C_MODELS_KEY, aggregated_u2c_models)
+        _aggregate_models(value, CLUSTERING_MODELS_KEY, aggregated_cluster_models)
 
     if aggregated_c2c_models:
         full_model_config[C2C_MODELS_KEY] = aggregated_c2c_models
     if aggregated_u2c_models:
         full_model_config[U2C_MODELS_KEY] = aggregated_u2c_models
+    if aggregated_cluster_models:
+        full_model_config[CLUSTERING_MODELS_KEY] = aggregated_cluster_models
 
     return full_model_config
 
