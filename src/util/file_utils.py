@@ -217,6 +217,13 @@ def load_model_configuration(config: dict[str, str]) -> dict[str, str | None] | 
         result["u2c_config"] = config["u2c_config"]
         logger.info("Load u2c model configuration from config yaml file.")
         logger.info("u2c_config: %s", result['u2c_config'])
+    if "clustering_models" in config:
+        result["u2c_config"] = result.get("u2c_config", {})
+        if isinstance(result["u2c_config"], dict):
+            result["u2c_config"]["clustering_models"] = config["clustering_models"]
+        logger.info("Load clustering models from config yaml file.")
+        logger.info("clustering_models: %s", config["clustering_models"])
+
 
     if result:
         return result
@@ -231,6 +238,12 @@ def load_model_configuration(config: dict[str, str]) -> dict[str, str | None] | 
         result["u2c_config"] = {"u2c_models": response_from_endpoint["u2c_models"]}
         logger.info("Load u2c model configuration from embedding microservice.")
         logger.info("u2c_config: %s", result['u2c_config'])
+    if "clustering_models" in response_from_endpoint:
+        result["u2c_config"] = result.get("u2c_config", {})
+        if isinstance(result["u2c_config"], dict):
+            result["u2c_config"]["clustering_models"] = response_from_endpoint["clustering_models"]
+        logger.info("Load clustering models from embedding microservice.")
+        logger.info("clustering_models: %s", response_from_endpoint["clustering_models"])
 
     return result
 

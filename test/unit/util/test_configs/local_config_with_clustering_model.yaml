@@ -1,0 +1,4 @@
+u2c_config:
+  clustering_models:
+    - model5
+    - model6

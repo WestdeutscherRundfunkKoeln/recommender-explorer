@@ -61,6 +61,11 @@ def local_config_with_u2c():
     return load_yaml_config("local_config_with_u2c.yaml")
 
 
+@pytest.fixture
+def local_config_with_clustering_model():
+    return load_yaml_config("local_config_with_clustering_model.yaml")
+
+
 def test_load_ui_config__valid_config(full_path):
     config = {
         "test": "test",
@@ -169,12 +174,18 @@ def test_load_model_configuration__local_u2c_config(local_config_with_u2c):
 
     assert result == {"u2c_config": {"u2c_models": ["model3", "model4"]}}
 
+def test_load_model_configuration__local_clustering_model_config(local_config_with_clustering_model):
+    result = load_model_configuration(local_config_with_clustering_model)
+
+    assert result == {"u2c_config": {"clustering_models": ["model5", "model6"]}}
+
 
 def test_load_model_configuration__fetch_from_endpoint(mocker, config_without_model_key):
     mocked_get_model_config = mocker.patch("src.util.file_utils._get_model_config_from_endpoint")
     mocked_get_model_config.return_value = {
         "c2c_models": ["remote_model1"],
         "u2c_models": ["remote_model2"],
+        "clustering_models": ["remote_model3"],
     }
 
     result = load_model_configuration(config_without_model_key)
@@ -182,5 +193,5 @@ def test_load_model_configuration__fetch_from_endpoint(mocker, config_without_mo
     mocked_get_model_config.assert_called_once_with(config_without_model_key)
     assert result == {
         "c2c_config": {"c2c_models": ["remote_model1"]},
-        "u2c_config": {"u2c_models": ["remote_model2"]},
+        "u2c_config": {"u2c_models": ["remote_model2"], "clustering_models": ["remote_model3"]},
     }
