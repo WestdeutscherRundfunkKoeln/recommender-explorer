@@ -137,13 +137,15 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :return: Start Item and Recommendations in the given Item DTO
         """
         # Distinguish which endpoint to triger
-        if filter['empfehlungstyp'] == 'Ähnlichkeit' or filter['empfehlungstyp'] is None :
-            self.endpoint = 'v1/br/similar-content'
-        elif filter['empfehlungstyp'] == 'Diversität':
-            self.endpoint = 'v1/br/diverse-content'
-        elif filter['empfehlungstyp'] == 'Aktualität':
-            self.endpoint = 'v1/br/recent-content'
+        endpoint_map = {
+            "Ähnlichkeit": "v1/br/similar-content",
+            "Diversität": "v1/br/diverse-content",
+            "Aktualität": "v1/br/recent-content",
+        }
 
+        self.endpoint = endpoint_map.get(filter['empfehlungstyp'], "v1/br/similar-content")
+
+        print("000000000000000000000000000000000000000000000000000000000000000000")
         json = build_request(external_id, filter)
         pprint.pprint(json)
         print("000000000000000000000000000000000000000000000000000000000000000000")

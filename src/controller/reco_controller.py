@@ -74,16 +74,9 @@ class RecommendationController:
         self.user_cluster = []  # refactor once clustering endpoint is better
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
 
-        self.external_ids = []  # Store external IDs globally within the instance
+        self.previous_external_ids = []  # Store external IDs globally within the instance
         self.previous_emp_value = None
-
-        self.latestWeights = {
-            "semantic": 0,
-            "temporal": 0,
-            "diverse": 0,
-            "recency": 0,
-        }
-
+        self.latestWeights = []
 
 
         if not isinstance(self.num_NN, int):
@@ -348,16 +341,13 @@ class RecommendationController:
 
 
     def checkThershold(self):
-
         # check if the weights has reached their limits.
-        # what is the situation with the reco type that has two parameters.
-
-        # Retrieve the radio box group from the registered components
-        radio_box_group = self.components["item_filter"]["empfehlungstyp"]
-        if radio_box_group:
-            emp_widget = radio_box_group._widget_instance  # Access the parent widget instance
-            emp_widget.disable_active_button()  # Call the method to disable the button
-        pass
+        if 1 in self.latestWeights.values():
+            # Retrieve the radio box group from the registered components
+            radio_box_group = self.components["item_filter"]["empfehlungstyp"]
+            if radio_box_group:
+                emp_widget = radio_box_group._widget_instance  # Access the parent widget instance
+                emp_widget.disable_active_button()  # Call the method to disable the button
 
 
 
@@ -400,7 +390,6 @@ class RecommendationController:
         # check if the empfehlungstyp widget is mentioned and if we have a direction.
         accessor_dict = accessor_values[2]
         emp_value = accessor_dict.get("empfehlungstyp", None)
-        emp_dic = accessor_dict.get("empfehlungstyp_direction", None)
 
         # if it does, check if it has changed since the last call
         # if it didn't, don't reset, add/update the fields.
@@ -413,31 +402,25 @@ class RecommendationController:
                 self.checkThershold()
 
                 #Add the previous ids and store them as old ones
-                accessor_values[-1]["previous_external_ids"] = self.external_ids.copy()
-                old_external_ids = set(self.external_ids)
+                accessor_values[-1]["previous_external_ids"] = self.previous_external_ids
+
+                # Add the weights
+                weights_map = {
+                    "Ähnlichkeit": ["semantic", "temporal"],
+                    "Diversität": ["diverse"],
+                    "Aktualität": ["recency"]
+                }
+
+                accessor_values[-1]["latestWeights"] = {k: v for k, v in self.latestWeights.items() if
+                                                        k in weights_map.get(emp_value, ["semantic", "temporal"])}
 
             # If it did then reset everything
             else:
                 self.previous_emp_value = emp_value
-                old_external_ids = ""
-                self.external_ids = ""
+                self.previous_external_ids = []
+                self.latestWeights = []
 
-                self.old_weights = {
-                    "semantic": 0,
-                    "temporal": 0,
-                    "diverse": 0,
-                    "recency": 0,
-                }
 
-        # Add the weights
-        weights_map = {
-            "Ähnlichkeit": ["semantic", "temporal"],
-            "Diversität": ["diverse"],
-            "Aktualität": ["recency"]
-        }
-
-        accessor_values[-1]["latestWeights"] = {k: v for k, v in self.latestWeights.items() if
-                                                k in weights_map.get(emp_value, ["semantic", "temporal"])}
 
         # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
@@ -446,12 +429,11 @@ class RecommendationController:
         # check if the empfehlungstyp widget is mentioned, if so then update the ids and compare.
         if emp_value:
             # Fetch the Ids from response
-            self.external_ids = [
+            self.previous_external_ids = [
                 item.externalid
                 for item in search_result
                 if item._position != "start"
             ]
-
             # extract the weights that were used for the fetch
             self.latestWeights = {
                 "semantic": 100,
