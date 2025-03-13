@@ -77,6 +77,15 @@ class RecommendationController:
         self.external_ids = []  # Store external IDs globally within the instance
         self.previous_emp_value = None
 
+        self.latestWeights = {
+            "semantic": 0,
+            "temporal": 0,
+            "diverse": 0,
+            "recency": 0,
+        }
+
+
+
         if not isinstance(self.num_NN, int):
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. RecommendationController needs correctly configured Service, "
@@ -330,6 +339,28 @@ class RecommendationController:
                 continue
         return [model_info["display_name"]], all_items, self.model_config
 
+
+
+
+
+
+
+
+
+    def checkThershold(self):
+
+        # check if the weights has reached their limits.
+        # what is the situation with the reco type that has two parameters.
+
+        # Retrieve the radio box group from the registered components
+        radio_box_group = self.components["item_filter"]["empfehlungstyp"]
+        if radio_box_group:
+            emp_widget = radio_box_group._widget_instance  # Access the parent widget instance
+            emp_widget.disable_active_button()  # Call the method to disable the button
+        pass
+
+
+
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
 
@@ -366,59 +397,81 @@ class RecommendationController:
             "calling " + accessor_method + " with values " + str(accessor_values)
         )
 
-        # check if the empfehlungstyp widget is mentioned
+        # check if the empfehlungstyp widget is mentioned and if we have a direction.
         accessor_dict = accessor_values[2]
         emp_value = accessor_dict.get("empfehlungstyp", None)
+        emp_dic = accessor_dict.get("empfehlungstyp_direction", None)
 
-        # if it does, check if it has changed since the last call, if it didn't, don't reset the Ids. If it did then reset the ids.
+        # if it does, check if it has changed since the last call
+        # if it didn't, don't reset, add/update the fields.
         if emp_value:
-            print("this is the previous")
-            print(self.previous_emp_value)
-            print("this the current")
-            print(emp_value)
+
             if emp_value == self.previous_emp_value:
+
+                # examine the weights and see if we reached a threshold
+                # if we did, then disable the button.
+                self.checkThershold()
+
+                #Add the previous ids and store them as old ones
                 accessor_values[-1]["previous_external_ids"] = self.external_ids.copy()
-                # Store old external IDs before fetching new ones
                 old_external_ids = set(self.external_ids)
+
+            # If it did then reset everything
             else:
-                self.external_ids = ""
                 self.previous_emp_value = emp_value
                 old_external_ids = ""
+                self.external_ids = ""
 
+                self.old_weights = {
+                    "semantic": 0,
+                    "temporal": 0,
+                    "diverse": 0,
+                    "recency": 0,
+                }
+
+        # Add the weights
+        weights_map = {
+            "Ähnlichkeit": ["semantic", "temporal"],
+            "Diversität": ["diverse"],
+            "Aktualität": ["recency"]
+        }
+
+        accessor_values[-1]["latestWeights"] = {k: v for k, v in self.latestWeights.items() if
+                                                k in weights_map.get(emp_value, ["semantic", "temporal"])}
 
         # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
         search_result, total_hits = function_pointer(*accessor_values)
 
-        print("***************************************")
-        print("this is the values")
-        pprint.pprint(accessor_values)
-        print("*****************************")
-
-        #  # check if the empfehlungstyp widget is mentioned, if so then update the ids and compare.
+        # check if the empfehlungstyp widget is mentioned, if so then update the ids and compare.
         if emp_value:
-            # set the ids and exclude start item/items
+            # Fetch the Ids from response
             self.external_ids = [
                 item.externalid
                 for item in search_result
                 if item._position != "start"
             ]
 
-            new_external_ids = set(self.external_ids)
-
-            # Compare old and new IDs
-            if old_external_ids == new_external_ids:
-                print("No change in external IDs")
-                # we disable the button
-                # Retrieve the radio box group from the registered components
-                radio_box_group = self.components["item_filter"]["empfehlungstyp"]
-                if radio_box_group:
-                    emp_widget = radio_box_group._widget_instance  # Access the parent widget instance
-                    emp_widget.disable_active_button()  # Call the method to disable the button
-            else:
-                print("External IDs have changed")
+            # extract the weights that were used for the fetch
+            self.latestWeights = {
+                "semantic": 100,
+                "temporal": 200,
+                "diverse": 300,
+                "recency": 400,
+            }
 
         return total_hits, search_result
+
+
+
+
+
+
+
+
+
+
+
 
 
 

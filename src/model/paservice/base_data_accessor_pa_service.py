@@ -146,6 +146,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
 
         json = build_request(external_id, filter)
         pprint.pprint(json)
+        print("000000000000000000000000000000000000000000000000000000000000000000")
 
         try:
             response = self.client.post(
@@ -210,9 +211,13 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
         request_body["empfehlungstyp"] = filter["empfehlungstyp"]
 
     if "empfehlungstyp_direction" in filter:
-        request_body["empfehlungstyp_direction"] = filter["empfehlungstyp_direction"]
+        request_body["empfehlungstypDirection"] = filter["empfehlungstyp_direction"]
 
     if "previous_external_ids" in filter:
-        request_body["previous_external_ids"] = filter["previous_external_ids"]
+        request_body["previousExternalIds"] = filter["previous_external_ids"]
+
+
+    if "latestWeights" in filter:
+        request_body["latestWeights"] = filter["latestWeights"]
 
     return request_body
