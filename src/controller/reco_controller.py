@@ -27,7 +27,7 @@ from util.dto_utils import (
 from dto.user_item import UserItemDto
 from dto.item import ItemDto
 from envyaml import EnvYAML
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from view.RecoExplorerApp import RecoExplorerApp
@@ -59,7 +59,9 @@ class RecommendationController:
         #
         # TODO - refactor this into model code
         #
-        self.num_NN = self.config.get('opensearch.number_of_recommendations', 5)  # num start items to fetch from backend per call
+        self.num_NN = self.config.get(
+            "opensearch.number_of_recommendations", 5
+        )  # num start items to fetch from backend per call
         self.num_items = 0  # num start items to fetch from backend per call
         self.num_items_single_view = 4
         self.num_items_multi_view = 4
@@ -93,6 +95,7 @@ class RecommendationController:
 
     def get_user_cluster(self):
         # TODO: improve the model config pass
+        assert self.user_cluster_accessor is not None
         self.user_cluster_accessor.set_model_config(
             self.config[constants.MODEL_CONFIG_U2C]["clustering_models"][
                 "U2C-Knn-Model"
@@ -156,11 +159,19 @@ class RecommendationController:
     #
     # TODO - refactor this into a factory class or similar
     #
-    def get_item_viewer(self, item_dto: ItemDto, app_explorer_instance: "RecoExplorerApp" or None = None):
-        matches = re.search("^(.*)@(.*)$", item_dto.viewer)
+    @staticmethod
+    def _get_class_from_config(field: str):
+        matches = re.search("^(.*)@(.*)$", field)
+        if not matches:
+            raise ValueError(f"Class specifier in field: {field} cannot be matched.")
         viewer_name, viewer_dir = matches.group(1), matches.group(2)
         module = importlib.import_module(viewer_dir)
-        class_ = getattr(module, viewer_name)
+        return getattr(module, viewer_name)
+
+    def get_item_viewer(
+        self, item_dto: ItemDto, app_explorer_instance: "RecoExplorerApp | None" = None
+    ):
+        class_ = self._get_class_from_config(item_dto.viewer)
         return class_(self.config, app_explorer_instance)
 
     def set_model_and_strategy(self, model_info):
@@ -171,10 +182,7 @@ class RecommendationController:
         :param model_info: model config from config yaml (should contain handler and model info)
         :return: Boolean True if successful
         """
-        matches = re.search("^(.*)@(.*)$", model_info["handler"])
-        handler_name, handler_dir = matches.group(1), matches.group(2)
-        module = importlib.import_module(handler_dir)
-        class_ = getattr(module, handler_name)
+        class_ = self._get_class_from_config(model_info["handler"])
         self.reco_accessor = (
             class_(self.config)
             if not getattr(class_, "from_config", None)
@@ -191,28 +199,21 @@ class RecommendationController:
 
         :param model_info: model config from config yaml
         """
-        item_accessor_key = model_info.get('item_accessor', None)
-        if item_accessor_key:
-            matches = re.search('^(.*)@(.*)$', model_info['item_accessor'])
-            item_accessor_name, item_accessor_dir = matches.group(1), matches.group(2)
-            module = importlib.import_module(item_accessor_dir)
-            class_ = getattr(module, item_accessor_name)
+        if item_accessor := model_info.get("item_accessor"):
+            class_ = self._get_class_from_config(item_accessor)
             self.item_accessor = class_(self.config)
-
 
     def get_items_by_field(self, item_dto: ItemDto, ids: list):
         ids_prim = []
-        ident, db_ident = get_primary_idents(self.config)
+        _, db_ident = get_primary_idents(self.config)
         try:
             for id in ids:
                 ids_prim.append(
                     self.item_accessor.get_primary_key_by_field(id, db_ident)
                 )
-            item_dtos, num_items = self.item_accessor.get_items_by_ids(
-                item_dto, ids_prim
-            )
+            item_dtos, _ = self.item_accessor.get_items_by_ids(item_dto, ids_prim)
             return item_dtos
-        except EmptySearchError as e:
+        except EmptySearchError:
             logger.warning("couldn't find item from user history")
 
     def get_items(self) -> tuple[list, list[list], str]:
@@ -239,13 +240,13 @@ class RecommendationController:
             for model in selected_models:
                 model_info = self.config[self.model_config][self.model_type][model]
                 self.set_model_and_strategy(model_info)
-                hits, items, model_config = self.get_items_by_strategy_and_model(
-                    model_info
-                )
+                _, items, _ = self.get_items_by_strategy_and_model(model_info)
                 res.append(items[0])
             return list(selected_models), res, self.model_config
 
-    def get_items_by_strategy_and_model(self, model_info: dict) -> tuple[list, list[list], str]:
+    def get_items_by_strategy_and_model(
+        self, model_info: dict
+    ) -> tuple[list, list[list], str]:
         """
         Gets start item(s) based on model info and already set strategy. If model is configured as
         recos_in_same_response, function will not only return start items but also all recommended
@@ -256,29 +257,14 @@ class RecommendationController:
         """
         item_hits, start_items = self._get_start_items(model_info)
 
-        if model_info.get('recos_in_same_response', False):
-            return self.get_items_from_response_with_recommendations_included(model_info, start_items)
-        else:
-            self.set_num_pages(item_hits)
-            return self.get_reco_items_for_start_items_from_response(model_info, start_items)
+        self.set_num_pages(item_hits)
+        return self.get_reco_items_for_start_items_from_response(
+            model_info, start_items
+        )
 
-    def get_items_from_response_with_recommendations_included(self, model_info: dict, returned_items) -> tuple[list, list[list], str]:
-        """
-        Returns the items from the response. Here Recommendations are already part of the response, so mostly
-        just iterate over results and return list of items.
-
-        :param model_info: selected model info dictionary
-        :param returned_items: items returned in response - here already contains recommendations
-        :return: Final List of Item DTOs for this search
-        """
-        all_items = []
-        item_row = []
-        for index, start_item in enumerate(returned_items):
-            item_row.append(start_item)
-        all_items.append(item_row)
-        return [model_info['display_name']], all_items, self.model_config
-
-    def get_reco_items_for_start_items_from_response(self, model_info: dict, start_items) -> tuple[list, list[list], str]:
+    def get_reco_items_for_start_items_from_response(
+        self, model_info: dict, start_items
+    ) -> tuple[list, list[list], str]:
         """
         Returns the items from the response. Here Recommendations are not part of the response, so they need to be requeted
         from service for each start item from response.
@@ -288,7 +274,7 @@ class RecommendationController:
         :return: Final List of Item DTOs for this search
         """
         all_items = []
-        for index, start_item in enumerate(start_items):
+        for start_item in start_items:
             item_row = [start_item]
             try:
                 nn_items, nn_dists = self._get_reco_items(start_item, model_info)
@@ -310,7 +296,7 @@ class RecommendationController:
                     item_row.append(reco_item)
 
                 all_items.append(item_row)
-            except (UnknownUserError, UnknownItemError, UnknownItemEmbeddingError) as e:
+            except (UnknownUserError, UnknownItemError, UnknownItemEmbeddingError):
                 not_found_item = dto_from_classname(
                     class_name="NotFoundDto",
                     position=constants.ITEM_POSITION_START,
@@ -365,7 +351,7 @@ class RecommendationController:
     def _get_start_users_u2c(self, model: dict) -> tuple[int, list]:
         active_components = self._get_active_start_components()
         has_paging = [x.params.get("has_paging", False) for x in active_components]
-        #self._validate_input_data(active_components)
+        # self._validate_input_data(active_components)
         start_idx, end_idx = (0, 0)
         if any(has_paging):
             start_idx = (self.get_page_number() - 1) * self.get_num_items()
@@ -401,6 +387,7 @@ class RecommendationController:
         self, user_dto: UserItemDto, genre_widget, start_idx, end_idx
     ) -> tuple[int, list[UserItemDto]]:
         # TODO: improve the model config pass
+        assert self.user_cluster_accessor is not None
         self.user_cluster_accessor.set_model_config(
             self.config[constants.MODEL_CONFIG_U2C]["clustering_models"][
                 "U2C-Knn-Model"
@@ -467,6 +454,7 @@ class RecommendationController:
         :param model: Config of models from the configuration yaml
         :return:
         """
+        assert self.reco_accessor is not None
         reco_filter = self._get_current_filter_state("reco_filter")
         logger.warning("calling " + str(self.reco_accessor))
 
@@ -474,8 +462,8 @@ class RecommendationController:
             start_item, (self.num_NN + 1), reco_filter
         )
 
-        if oss_field != 'id':
-            ident, db_ident = get_primary_idents(self.config)
+        if oss_field != "id":
+            _, db_ident = get_primary_idents(self.config)
             kidxs_prim = []
             try:
                 for kidx in kidxs:
@@ -483,7 +471,7 @@ class RecommendationController:
                         self.item_accessor.get_primary_key_by_field(kidx, db_ident)
                     )
             except EmptySearchError as e:
-                    logger.warning(str(e))
+                logger.warning(str(e))
             kidxs = kidxs_prim
         else:
             kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
@@ -503,14 +491,14 @@ class RecommendationController:
         )
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
-
         reco_filter = self._get_current_filter_state("reco_filter_u2c")
 
+        assert self.reco_accessor is not None
         kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
             start_item, (self.num_NN + 1), reco_filter
         )
 
-        ident, db_ident = get_primary_idents(self.config)
+        _, db_ident = get_primary_idents(self.config)
         kidxs_prim = []
         try:
             for kidx in kidxs:
@@ -625,7 +613,9 @@ class RecommendationController:
 
     def _check_editorial_category(self, editorial_categ):
         if editorial_categ.value not in self.get_item_defaults("editorialCategories"):
-            raise ValueError("Unknown editorial category [" + editorial_categ.value + "]")
+            raise ValueError(
+                "Unknown editorial category [" + editorial_categ.value + "]"
+            )
 
     #
     def _get_active_start_components(self) -> list:
@@ -638,19 +628,16 @@ class RecommendationController:
         :return: list of active start components
         """
 
-
         if self.model_type == constants.MODEL_TYPE_U2C:
             return list(
                 filter(
-                    lambda x: x.visible == True,
+                    lambda x: x.visible,
                     self.components["user_choice"].values(),
                 )
             )
         elif self.model_type == constants.MODEL_TYPE_C2C:
             return list(
-                filter(
-                    lambda x: x.visible == True, self.components["item_choice"].values()
-                )
+                filter(lambda x: x.visible, self.components["item_choice"].values())
             )
         else:
             raise TypeError("Unknown model type [" + self.model_type + "]")
@@ -692,10 +679,10 @@ class RecommendationController:
             )
 
     def import_filter_rules(self):
-        1
+        pass
 
     def export_filter_rules(self):
-        1
+        pass
 
     def get_genres_and_subgenres_from_upper_category(
         self, selected_upper_categories, category
