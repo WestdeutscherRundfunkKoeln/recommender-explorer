@@ -9,6 +9,7 @@ from controller.reco_controller import RecommendationController
 from exceptions.date_validation_error import DateValidationError
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
+from src.view.widgets.widget import UIWidget
 from util.ui_utils import retrieve_default_model_accordion
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
@@ -55,7 +56,7 @@ class RecoExplorerApp:
         self.config_full_path = config_full_paths[client]
         self.controller = RecommendationController(self.config)
 
-        self.widgets = {
+        self.widgets: dict[str, UIWidget] = {
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
                 self, self.controller
             ),
