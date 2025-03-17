@@ -1,10 +1,10 @@
-from cProfile import label
 from typing import Any
 
 import panel as pn
 from view import ui_constants as c
 from view.widgets.widget import UIWidget
 from view.util.view_utils import find_widget_by_name
+
 
 class MultiSelectionWidget(UIWidget):
     def get_multi_select_options(
@@ -44,7 +44,7 @@ class MultiSelectionWidget(UIWidget):
                     lambda item: item != "n/a",
                     self.controller_instance.get_item_defaults(
                         multi_select_config[c.MULTI_SELECT_OPTIONS_DEFAULT_FUNCTION_KEY]
-                    )
+                    ),
                 )
             )
             return modified_list, [] if modified_list else []
@@ -81,7 +81,7 @@ class MultiSelectionWidget(UIWidget):
         multi_select_widget.params = {
             "label": multi_select_label,
             "reset_to": default,
-            "has_paging": multi_select_paging
+            "has_paging": multi_select_paging,
         }
         return multi_select_widget
 
@@ -104,8 +104,8 @@ class MultiSelectionWidget(UIWidget):
             "upper_item_filter": UpperItemFilterWidget,
             "reco_filter": RecoFilterWidget,
             "model_choice": ModelChoiceWidget,
-            "user_choice": UserChoiceWidget, # you have to build a class for this
-            "reco_filter_u2c": RecoFilter_U2C_Widget
+            "user_choice": UserChoiceWidget,  # you have to build a class for this
+            "reco_filter_u2c": RecoFilter_U2C_Widget,
         }.get(multi_select_register_value)
 
         if multi_select_register_value is None:
@@ -135,7 +135,7 @@ class MultiSelectionWidget(UIWidget):
             return pn.Row(multi_select_widget)
 
     def set_action_parameter(
-            self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect
+        self, config: dict[str, Any], multi_select_widget: pn.widgets.MultiSelect
     ) -> pn.widgets.MultiSelect | None:
         """
         Sets action option parameter on the multi-select widget based on the provided configuration.
@@ -150,7 +150,10 @@ class MultiSelectionWidget(UIWidget):
                 multi_select_widget.action_parameter = action_parameter
 
                 # Initialize visibility of target widgets to False
-                for action_option_value, action_target_widget_label in action_parameter.items():
+                for (
+                    action_option_value,
+                    action_target_widget_label,
+                ) in action_parameter.items():
                     action_target_widget = find_widget_by_name(
                         self.reco_explorer_app_instance.config_based_nav_controls,
                         action_target_widget_label,
@@ -163,16 +166,24 @@ class MultiSelectionWidget(UIWidget):
                 self.update_visibility_based_on_selection(multi_select_widget)
 
                 # Force re-evaluation of visibility
-                multi_select_widget.param.trigger('value')  # Trigger update of visibility
+                multi_select_widget.param.trigger(
+                    "value"
+                )  # Trigger update of visibility
         return multi_select_widget
+
     # checks if the target widget should be visible based on the selected value and sets visible accordingly.
-    def update_visibility_based_on_selection(self, multi_select_widget: pn.widgets.MultiSelect):
+    def update_visibility_based_on_selection(
+        self, multi_select_widget: pn.widgets.MultiSelect
+    ):
         """
         Update the visibility of the target widgets based on the current selection in the multi-select widget.
         """
         if hasattr(multi_select_widget, "action_parameter"):
             # Ensure that all targets are checked against the current selection
-            for action_option_value, action_target_widget_label in multi_select_widget.action_parameter.items():
+            for (
+                action_option_value,
+                action_target_widget_label,
+            ) in multi_select_widget.action_parameter.items():
                 action_target_widget = find_widget_by_name(
                     self.reco_explorer_app_instance.config_based_nav_controls,
                     action_target_widget_label,
@@ -180,7 +191,9 @@ class MultiSelectionWidget(UIWidget):
                 )
                 if action_target_widget:
                     # Show target widget if its corresponding action option is selected
-                    action_target_widget.visible = action_option_value in multi_select_widget.value
+                    action_target_widget.visible = (
+                        action_option_value in multi_select_widget.value
+                    )
 
     async def trigger_multi_select_reco_filter_choice(self, event):
         """
@@ -188,9 +201,13 @@ class MultiSelectionWidget(UIWidget):
         After that, runs the usual get items function to search for items with given filters and parameters.
         """
         if hasattr(event.obj, "action_parameter"):
-
-            for action_option_value, action_target_widget_label in event.obj.action_parameter.items():
-                print(f"Processing action option: {action_option_value}, target: {action_target_widget_label}")
+            for (
+                action_option_value,
+                action_target_widget_label,
+            ) in event.obj.action_parameter.items():
+                print(
+                    f"Processing action option: {action_option_value}, target: {action_target_widget_label}"
+                )
 
                 action_target_widget = find_widget_by_name(
                     self.reco_explorer_app_instance.config_based_nav_controls,
@@ -238,7 +255,6 @@ class ItemFilterWidget(MultiSelectionWidget):
         return item_filter_widget
 
 
-
 class UserChoiceWidget(MultiSelectionWidget):
     def create(self, config: dict[str, Any]) -> pn.widgets.MultiSelect | None:
         """
@@ -252,7 +268,6 @@ class UserChoiceWidget(MultiSelectionWidget):
         """
         user_choice_widget = self.build_multi_select_widget(config)
         user_choice_widget.value = [user_choice_widget.options[0]]
-
 
         if not user_choice_widget:
             return
@@ -272,7 +287,6 @@ class UserChoiceWidget(MultiSelectionWidget):
         user_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
 
         return user_choice_widget
-
 
 
 class RecoFilter_U2C_Widget(MultiSelectionWidget):
@@ -328,7 +342,6 @@ class ModelChoiceWidget(MultiSelectionWidget):
             self.reco_explorer_app_instance.trigger_model_choice,
             "value",
             onlychanged=True,
-
         )
         self.controller_instance.register(
             "model_choice",
@@ -420,9 +433,9 @@ class UpperItemFilterWidget(MultiSelectionWidget):
             target_widget_name,
         )
 
-
         target_widget.value = (
             self.controller_instance.get_genres_and_subgenres_from_upper_category(
                 filter_widget.value, category
             )
         )
+
