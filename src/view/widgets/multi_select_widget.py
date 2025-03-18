@@ -103,7 +103,8 @@ class MultiSelectionWidget(UIWidget):
             "item_filter": ItemFilterWidget,
             "upper_item_filter": UpperItemFilterWidget,
             "reco_filter": RecoFilterWidget,
-            "model_choice": ModelChoiceWidget,
+            "model_choice_c2c": ModelChoiceWidget,
+            "model_choice_u2c": ModelChoiceWidgetU2C,
             "user_choice": UserChoiceWidget,  # you have to build a class for this
             "reco_filter_u2c": RecoFilter_U2C_Widget,
         }.get(multi_select_register_value)
@@ -322,6 +323,8 @@ class RecoFilter_U2C_Widget(MultiSelectionWidget):
 
 
 class ModelChoiceWidget(MultiSelectionWidget):
+    MODEL_CONFIG_KEY = ("c2c_config", "c2c_models")
+
     def create(self, config: dict[str, Any]) -> pn.widgets.MultiSelect | None:
         """
         Builds a multi select model choice widget based on the given config from config yaml.
@@ -333,7 +336,26 @@ class ModelChoiceWidget(MultiSelectionWidget):
         Returns:
             multi_select_widget (widget): final model choice multi select widget built from given config
         """
-        model_choice_widget = self.build_multi_select_widget(config)
+        model_config = self.reco_explorer_app_instance.config.get(
+            self.MODEL_CONFIG_KEY[0], {}
+        ).get(self.MODEL_CONFIG_KEY[1], {})
+        if not model_config:
+            return
+
+        print(config)
+        print(self.MODEL_CONFIG_KEY)
+        print(model_config)
+
+        options = []
+        for name, params in model_config.items():
+            option = {"display_name": name}
+            if params.get("default", False):
+                option["default"] = True
+            options.append(option)
+
+        model_choice_widget = self.build_multi_select_widget(
+            {**config, "options": options}
+        )
 
         if not model_choice_widget:
             return
@@ -353,6 +375,10 @@ class ModelChoiceWidget(MultiSelectionWidget):
         model_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
 
         return model_choice_widget
+
+
+class ModelChoiceWidgetU2C(ModelChoiceWidget):
+    MODEL_CONFIG_KEY = ("u2c_config", "u2c_models")
 
 
 class RecoFilterWidget(MultiSelectionWidget):
