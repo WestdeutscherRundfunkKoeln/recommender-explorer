@@ -505,35 +505,19 @@ class RecoExplorerApp:
 
     def build_widgets(self, widgets_config):
         widgets_list = []
-        if widgets_config is not None:
-            for widget_config in widgets_config:
-                component_type = widget_config.get(ui_constants.WIDGET_TYPE_KEY, "")
-                component_from_dispatcher = self.build_common_ui_widget_dispatcher(
-                    component_type, widget_config
-                )
-                if component_from_dispatcher is not None:
-                    widgets_list.append(component_from_dispatcher)
-
-                elif ui_constants.ACCORDION_TYPE_VALUE == component_type:
-                    accordion_widget = self.widgets[
-                        ui_constants.ACCORDION_TYPE_VALUE
-                    ].create(widget_config)
-                    widgets_list.append(accordion_widget)
-
-            if widget_config.get(ui_constants.ACCORDION_RESET_BUTTON_KEY):
-                widgets_list.append(
-                    self.widgets[
-                        ui_constants.ACCORDION_TYPE_VALUE
-                    ].create_accordion_reset_buttons(widget_config)
-                )
-
-            else:
-                logger.error("Unknown UI Config Type: " + component_type)
-
-        else:
+        if not widgets_config:
             logger.error(
                 "No UI Widgets are defined in Config File, or key name is wrong"
             )
+            return widgets_list
+
+        for widget_config in widgets_config:
+            component_type: str = widget_config.get(ui_constants.WIDGET_TYPE_KEY, "")
+            component_from_dispatcher = self.build_common_ui_widget_dispatcher(
+                component_type, widget_config
+            )
+            if component_from_dispatcher is not None:
+                widgets_list.append(component_from_dispatcher)
 
         return widgets_list
 
