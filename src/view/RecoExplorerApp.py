@@ -1,22 +1,23 @@
 import asyncio
+import functools
 import logging
 import traceback
-import functools
 from typing import Any
-import constants
+
 import panel as pn
+
+import constants
 from controller.reco_controller import RecommendationController
 from exceptions.date_validation_error import DateValidationError
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
-from src.view.widgets.widget import UIWidget
-from util.ui_utils import retrieve_default_model_accordion
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
     get_client_options,
 )
+from util.ui_utils import retrieve_default_model_accordion
 from view import ui_constants
-from view.widgets.accordion_widget import AccordionWidget
+from view.widgets.accordion_widget import AccordionWidget, AccordionWidgetWithCards
 from view.widgets.date_time_picker_widget import DateTimePickerWidget
 from view.widgets.date_time_quick_select_widget import DateTimeQuickSelectWidget
 from view.widgets.multi_select_widget import MultiSelectionWidget
@@ -25,8 +26,7 @@ from view.widgets.reset_button import ResetButtonWidget
 from view.widgets.slider_widget import SliderWidget
 from view.widgets.text_area_input_widget import TextAreaInputWidget
 from view.widgets.text_field_widget import TextFieldWidget
-from view.widgets.accordion_widget import AccordionWidgetWithCards
-
+from view.widgets.widget import UIWidget
 
 # loggin preference
 logger = logging.getLogger(__name__)
