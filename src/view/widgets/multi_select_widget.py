@@ -336,26 +336,14 @@ class ModelChoiceWidget(MultiSelectionWidget):
         Returns:
             multi_select_widget (widget): final model choice multi select widget built from given config
         """
-        model_config = self.reco_explorer_app_instance.config.get(
-            self.MODEL_CONFIG_KEY[0], {}
-        ).get(self.MODEL_CONFIG_KEY[1], {})
-        if not model_config:
+
+        _config = (
+            config if "options" in config else self._read_options_from_config(config)
+        )
+        if not _config:
             return
 
-        print(config)
-        print(self.MODEL_CONFIG_KEY)
-        print(model_config)
-
-        options = []
-        for name, params in model_config.items():
-            option = {"display_name": name}
-            if params.get("default", False):
-                option["default"] = True
-            options.append(option)
-
-        model_choice_widget = self.build_multi_select_widget(
-            {**config, "options": options}
-        )
+        model_choice_widget = self.build_multi_select_widget(_config)
 
         if not model_choice_widget:
             return
@@ -375,6 +363,23 @@ class ModelChoiceWidget(MultiSelectionWidget):
         model_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
 
         return model_choice_widget
+
+    def _read_options_from_config(self, config) -> dict[str, Any] | None:
+        model_config = self.reco_explorer_app_instance.config.get(
+            self.MODEL_CONFIG_KEY[0], {}
+        ).get(self.MODEL_CONFIG_KEY[1], {})
+        if not model_config:
+            return
+
+        options = []
+        for name, params in model_config.items():
+            option = {"display_name": name}
+            if params.get("default", False):
+                option["default"] = True
+            options.append(option)
+        if not options:
+            return
+        return {**config, "options": options}
 
 
 class ModelChoiceWidgetU2C(ModelChoiceWidget):

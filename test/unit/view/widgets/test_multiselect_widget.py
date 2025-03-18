@@ -134,7 +134,7 @@ def mock_view(mocker):
     return mock
 
 
-def test_model_select_widget_c2c(
+def test_model_select_widget_c2c__no_options(
     mock_view: RecoExplorerApp, mock_controller: RecommendationController
 ):
     widget = MultiSelectionWidget(
@@ -153,7 +153,33 @@ def test_model_select_widget_c2c(
     assert result[0].value[0] == "PA-Service-Collaborative-Var-I"
 
 
-def test_model_select_widget_u2c(
+def test_model_select_widget_c2c__with_options(
+    mock_view: RecoExplorerApp, mock_controller: RecommendationController
+):
+    widget = MultiSelectionWidget(
+        reco_explorer_app_instance=mock_view, controller_instance=mock_controller
+    )
+    result = widget.create(
+        {
+            **TEST_UI_CONFIG_C2C,
+            "options": [
+                {
+                    "display_name": "PA-Service-Collaborative-Var-I",
+                    "default": True,
+                }
+            ],
+        }
+    )
+    assert result is not None
+    assert isinstance(result, Row)
+    assert isinstance(result[0], MultiSelect)
+    assert result[0].values == [
+        "PA-Service-Collaborative-Var-I",
+    ]
+    assert result[0].value[0] == "PA-Service-Collaborative-Var-I"
+
+
+def test_model_select_widget_u2c__no_options(
     mock_view: RecoExplorerApp, mock_controller: RecommendationController
 ):
     widget = MultiSelectionWidget(
@@ -169,4 +195,32 @@ def test_model_select_widget_u2c(
     ]
     assert result[0].value == [
         "PA-Service-Episode-Var-I",
+    ]
+
+
+def test_model_select_widget_u2c__with_options(
+    mock_view: RecoExplorerApp, mock_controller: RecommendationController
+):
+    widget = MultiSelectionWidget(
+        reco_explorer_app_instance=mock_view, controller_instance=mock_controller
+    )
+    result = widget.create(
+        {
+            **TEST_UI_CONFIG_C2C,
+            "options": [
+                {
+                    "display_name": "PA-Service-Collaborative-Var-I",
+                    "default": True,
+                }
+            ],
+        }
+    )
+    assert result is not None
+    assert isinstance(result, Row)
+    assert isinstance(result[0], MultiSelect)
+    assert result[0].values == [
+        "PA-Service-Collaborative-Var-I",
+    ]
+    assert result[0].value == [
+        "PA-Service-Collaborative-Var-I",
     ]
