@@ -47,7 +47,7 @@ class RecoExplorerApp:
     __in_flight_counter = 0
 
     def __init__(
-        self, config_full_paths: dict[str, str], config: dict[str, str], client: str
+        self, config_full_paths: dict[str, str], config: dict[str, Any], client: str
     ) -> None:
         # basic setup
         self.config = config
