@@ -762,27 +762,32 @@ class RecoExplorerApp:
             )
         ]
         self.pagination_top[:] = []
+
+        self.__in_flight_counter += 1
         try:
-            self.__in_flight_counter += 1
             models, items, config = await asyncio.to_thread(self.controller.get_items)
-            self.__in_flight_counter -= 1
-
-            if self.__in_flight_counter:
-                return
-
-            self.main_content[:] = [
-                self.add_cards_row(models, config, idx, row)
-                for idx, row in enumerate(items)
-            ]
-            self.draw_pagination()
 
         except (EmptySearchError, ModelValidationError) as e:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="warning"))
+            return
         except DateValidationError as e:
             logger.info(str(e))
+            return
         except Exception as e:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="danger"))
             logger.warning(traceback.print_exc())
+            return
+        finally:
+            self.__in_flight_counter -= 1
+
+        if self.__in_flight_counter:
+            return
+
+        self.main_content[:] = [
+            self.add_cards_row(models, config, idx, row)
+            for idx, row in enumerate(items)
+        ]
+        self.draw_pagination()
         self.disablePageButtons()
 
     def add_cards_row(
