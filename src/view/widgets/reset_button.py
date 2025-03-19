@@ -15,11 +15,10 @@ class ResetButtonWidget(UIWidget):
         )
 
     def create(self, block) -> pn.widgets.Button:
-
         reset_button_widget = pn.widgets.Button(
             name=c.RESET_BUTTON_LABEL,
             margin=10,
-            button_type='primary',
+            button_type="primary",
         )
 
         widgets_to_reset = self.get_widgets_to_reset(block)
