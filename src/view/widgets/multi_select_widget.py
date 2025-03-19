@@ -103,7 +103,7 @@ class MultiSelectionWidget(UIWidget):
             "item_filter": ItemFilterWidget,
             "upper_item_filter": UpperItemFilterWidget,
             "reco_filter": RecoFilterWidget,
-            "model_choice_c2c": ModelChoiceWidget,
+            "model_choice_c2c": ModelChoiceWidgetC2C,
             "model_choice_u2c": ModelChoiceWidgetU2C,
             "user_choice": UserChoiceWidget,  # you have to build a class for this
             "reco_filter_u2c": RecoFilter_U2C_Widget,
@@ -322,7 +322,7 @@ class RecoFilter_U2C_Widget(MultiSelectionWidget):
         return Reco_Filter_U2C
 
 
-class ModelChoiceWidget(MultiSelectionWidget):
+class ModelChoiceWidgetC2C(MultiSelectionWidget):
     MODEL_CONFIG_KEY = ("c2c_config", "c2c_models")
 
     def create(self, config: dict[str, Any]) -> pn.widgets.MultiSelect | None:
@@ -382,7 +382,7 @@ class ModelChoiceWidget(MultiSelectionWidget):
         return {**config, "options": options}
 
 
-class ModelChoiceWidgetU2C(ModelChoiceWidget):
+class ModelChoiceWidgetU2C(ModelChoiceWidgetC2C):
     MODEL_CONFIG_KEY = ("u2c_config", "u2c_models")
 
 
@@ -469,4 +469,3 @@ class UpperItemFilterWidget(MultiSelectionWidget):
                 filter_widget.value, category
             )
         )
-
