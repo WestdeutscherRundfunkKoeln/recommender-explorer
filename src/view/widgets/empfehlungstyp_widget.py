@@ -27,7 +27,7 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         self.radio_box_group._widget_instance = self
 
         self.radio_box_group.params = {
-            "label": 'empfehlungstyp',
+            "label": 'refinementType',
             "reset_to": 'Ähnlichkeit',
             "direction": ""
         }
@@ -99,7 +99,7 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
          # reset the direction
         self.radio_box_group.params = {
             "direction": '',
-            "label": 'empfehlungstyp',
+            "label": 'refinementType',
             "reset_to": 'Ähnlichkeit',
         }
 
@@ -113,7 +113,7 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
     async def button_clicked(self, event):
         self.radio_box_group.params = {
             "direction": event.obj.name,
-            "label": 'empfehlungstyp',
+            "label": 'refinementType',
             "reset_to": 'Ähnlichkeit',
         }
 

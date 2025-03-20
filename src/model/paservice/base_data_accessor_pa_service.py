@@ -143,7 +143,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             "Aktualität": "v1/br/recent-content",
         }
 
-        self.endpoint = endpoint_map.get(filter['empfehlungstyp'], "v1/br/similar-content")
+        self.endpoint = endpoint_map.get(filter['refinementType'], "v1/br/similar-content")
 
         print("000000000000000000000000000000000000000000000000000000000000000000")
         json = build_request(external_id, filter)
@@ -209,15 +209,14 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
             filter["blacklist_externalid"].replace(" ", "").split(",")
         )
 
-    if "empfehlungstyp" in filter:
-        request_body["empfehlungstyp"] = filter["empfehlungstyp"]
+    if "refinementType" in filter:
+        request_body["refinementType"] = filter["refinementType"]
 
-    if "empfehlungstyp_direction" in filter:
-        request_body["empfehlungstypDirection"] = filter["empfehlungstyp_direction"]
+    if "refinementDirection" in filter:
+        request_body["refinementDirection"] = filter["refinementDirection"]
 
     if "previous_external_ids" in filter:
         request_body["previousExternalIds"] = filter["previous_external_ids"]
-
 
     if "latestWeights" in filter:
         request_body["latestWeights"] = filter["latestWeights"]

@@ -350,6 +350,71 @@ class RecommendationController:
                 emp_widget.disable_active_button()  # Call the method to disable the button
 
 
+    def refinementTypeWidget_request_builder(self,accessor_dict, accessor_values):
+
+
+        mapping_type = {"Ähnlichkeit": "Semantic", "Diversität": "Diverse", "Aktualität": "Temporal"}
+        mapping_direction = {
+            "Ähnlicher": "more similar", "Aktueller": "more recent",
+            "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
+            "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"
+        }
+
+        accessor_dict["refinementType"] = mapping_type.get(accessor_dict["refinementType"],
+                                                           accessor_dict["refinementType"])
+
+        accessor_dict["refinementDirection"] = mapping_direction.get(accessor_dict["refinementDirection"],
+                                                                     accessor_dict["refinementDirection"])
+
+        refinementType = accessor_dict.get("refinementType", None)
+
+        if refinementType == self.previous_emp_value:
+
+            # examine the weights and see if we reached a threshold
+            # if we did, then disable the button.
+            self.checkThershold()
+
+            # Add the previous ids and store them as old ones
+            accessor_values[-1]["previous_external_ids"] = self.previous_external_ids
+
+            # Add the weights
+            weights_map = {
+                "Ähnlichkeit": ["semantic", "temporal"],
+                "Diversität": ["diverse"],
+                "Aktualität": ["recency"]
+            }
+
+            accessor_values[-1]["latestWeights"] = {k: v for k, v in self.latestWeights.items() if
+                                                    k in weights_map.get(refinementType, ["semantic", "temporal"])}
+
+        # If it did then reset everything
+        else:
+            self.previous_emp_value = refinementType
+            self.previous_external_ids = []
+            self.latestWeights = []
+
+
+        return accessor_dict, accessor_values
+
+
+
+    def refinementTypeWidget_response_builder(self,search_result):
+
+        # Fetch the Ids from response
+        self.previous_external_ids = [
+            item.externalid
+            for item in search_result
+            if item._position != "start"
+        ]
+        # extract the weights that were used for the fetch
+        self.latestWeights = {
+            "semantic": 100,
+            "temporal": 200,
+            "diverse": 300,
+            "recency": 400,
+        }
+
+
 
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
@@ -386,61 +451,21 @@ class RecommendationController:
         logger.info(
             "calling " + accessor_method + " with values " + str(accessor_values)
         )
-
-        # check if the empfehlungstyp widget is mentioned and if we have a direction.
         accessor_dict = accessor_values[2]
-        emp_value = accessor_dict.get("empfehlungstyp", None)
 
-        # if it does, check if it has changed since the last call
-        # if it didn't, don't reset, add/update the fields.
-        if emp_value:
-
-            if emp_value == self.previous_emp_value:
-
-                # examine the weights and see if we reached a threshold
-                # if we did, then disable the button.
-                self.checkThershold()
-
-                #Add the previous ids and store them as old ones
-                accessor_values[-1]["previous_external_ids"] = self.previous_external_ids
-
-                # Add the weights
-                weights_map = {
-                    "Ähnlichkeit": ["semantic", "temporal"],
-                    "Diversität": ["diverse"],
-                    "Aktualität": ["recency"]
-                }
-
-                accessor_values[-1]["latestWeights"] = {k: v for k, v in self.latestWeights.items() if
-                                                        k in weights_map.get(emp_value, ["semantic", "temporal"])}
-
-            # If it did then reset everything
-            else:
-                self.previous_emp_value = emp_value
-                self.previous_external_ids = []
-                self.latestWeights = []
-
+        # Shall we alter the request?
+        if "refinementType" in accessor_dict and  "refinementDirection" in accessor_dict:
+            accessor_dict, accessor_values =  self.refinementTypeWidget_request_builder(accessor_dict, accessor_values)
 
 
         # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
         search_result, total_hits = function_pointer(*accessor_values)
 
-        # check if the empfehlungstyp widget is mentioned, if so then update the ids and compare.
-        if emp_value:
-            # Fetch the Ids from response
-            self.previous_external_ids = [
-                item.externalid
-                for item in search_result
-                if item._position != "start"
-            ]
-            # extract the weights that were used for the fetch
-            self.latestWeights = {
-                "semantic": 100,
-                "temporal": 200,
-                "diverse": 300,
-                "recency": 400,
-            }
+        # Shall we update ids from the response?
+        if "refinementType" in accessor_dict and "refinementDirection" in accessor_dict:
+            self.refinementTypeWidget_response_builder(search_result)
+
 
         return total_hits, search_result
 
@@ -761,9 +786,9 @@ class RecommendationController:
         filter_state = collections.defaultdict(dict)
         for component in self.components[filter_group].values():
             filter_state[component.params["label"]] = component.value
-            # For the "empfehlungstyp" label, also add the direction attribute
-            if component.params["label"] == "empfehlungstyp":
-                filter_state["empfehlungstyp_direction"] = component.params["direction"]
+            # For the "refinementType" label, also add the refinementDirection attribute
+            if component.params["label"] == "refinementType":
+                filter_state["refinementDirection"] = component.params["direction"]
 
         return filter_state
 
