@@ -76,7 +76,7 @@ class RecommendationController:
 
         self.previous_external_ids = []  # Store external IDs globally within the instance
         self.previous_emp_value = None
-        self.latestWeights = []
+        self.utilities = []
 
 
         if not isinstance(self.num_NN, int):
@@ -335,16 +335,10 @@ class RecommendationController:
 
 
 
-
-
-
-
-
     def checkThershold(self):
-        # check if the weights has reached their limits.
-        if 1 in self.latestWeights.values():
+        if (self.utilities['semantic'] + self.utilities['tag'] == 1) or (self.utilities['temporal'] in [0, 1]) or (self.utilities['diverse'] in [0, 1]):
             # Retrieve the radio box group from the registered components
-            radio_box_group = self.components["item_filter"]["empfehlungstyp"]
+            radio_box_group = self.components["item_filter"]["refinementType"]
             if radio_box_group:
                 emp_widget = radio_box_group._widget_instance  # Access the parent widget instance
                 emp_widget.disable_active_button()  # Call the method to disable the button
@@ -370,35 +364,32 @@ class RecommendationController:
 
         if refinementType == self.previous_emp_value:
 
-            # examine the weights and see if we reached a threshold
-            # if we did, then disable the button.
-            self.checkThershold()
 
             # Add the previous ids and store them as old ones
             accessor_values[-1]["previous_external_ids"] = self.previous_external_ids
 
-            # Add the weights
+            # Define weights map with direction-based filtering
             weights_map = {
-                "Ähnlichkeit": ["semantic", "temporal"],
-                "Diversität": ["diverse"],
-                "Aktualität": ["recency"]
+                "Semantic": ["semantic", "tag","popular","temporal"],
+                "Diverse": ["diverse"],
+                "Temporal": ["temporal"]
             }
 
-            accessor_values[-1]["latestWeights"] = {k: v for k, v in self.latestWeights.items() if
-                                                    k in weights_map.get(refinementType, ["semantic", "temporal"])}
+            # Filter utilities based on refinementType
+            accessor_values[-1]["utilities"] = {k: v for k, v in self.utilities.items() if
+                                                k in weights_map.get(refinementType, weights_map["Semantic"])}
+
 
         # If it did then reset everything
         else:
             self.previous_emp_value = refinementType
             self.previous_external_ids = []
-            self.latestWeights = []
+            self.utilities = []
 
 
         return accessor_dict, accessor_values
 
-
-
-    def refinementTypeWidget_response_builder(self,search_result):
+    def refinementTypeWidget_response_builder(self,search_result, utilities):
 
         # Fetch the Ids from response
         self.previous_external_ids = [
@@ -406,13 +397,9 @@ class RecommendationController:
             for item in search_result
             if item._position != "start"
         ]
-        # extract the weights that were used for the fetch
-        self.latestWeights = {
-            "semantic": 100,
-            "temporal": 200,
-            "diverse": 300,
-            "recency": 400,
-        }
+
+        # Convert list to dictionary
+        self.utilities = {item["utility"]: item["weight"] for item in utilities.get("utilities", [])}
 
 
 
@@ -460,12 +447,22 @@ class RecommendationController:
 
         # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
-        search_result, total_hits = function_pointer(*accessor_values)
-
+        search_result, total_hits, utilities = function_pointer(*accessor_values)
+        utilities = { "utilities": [
+        {"utility": "semantic", "weight": 0.5},
+        {"utility": "tag", "weight": 0.5},
+        {"utility": "temporal", "weight": 0.3},
+        {"utility": "popular", "weight": 0.267},
+        {"utility": "diverse", "weight": 0.267}
+    ]
+}
         # Shall we update ids from the response?
         if "refinementType" in accessor_dict and "refinementDirection" in accessor_dict:
-            self.refinementTypeWidget_response_builder(search_result)
+            self.refinementTypeWidget_response_builder(search_result, utilities)
 
+        # Shall something be disabled?
+
+        self.checkThershold()
 
         return total_hits, search_result
 

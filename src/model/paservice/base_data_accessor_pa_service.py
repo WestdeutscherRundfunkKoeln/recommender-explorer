@@ -155,7 +155,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 self.endpoint, json=build_request(external_id, filter)
             )
             response.raise_for_status()
-            pprint.pprint(response   )
+            pprint.pprint(f"Response JSON: {response.json()}")  # This prints the JSON body of the response
             return self.__get_items_from_response(item, response.json())
         except httpx.HTTPStatusError as e:
             logging.error(e, exc_info=True)
@@ -172,7 +172,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
 
     def __get_items_from_response(
         self, item_dto: ItemDto, response: dict[str, Any]
-    ) -> tuple[list, int]:
+    ) -> tuple[list, int, list]:
         """
         Gets the resulting items from the pa service response in json
         Gets total items count from search response and iterates over result items and map
@@ -184,6 +184,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :return: List of item dtos, total items count
         """
         items = response["items"]
+        utilities = response.get("utilities", {})
         total_items = len(items)
 
         if total_items < 1 or not len(items):
@@ -197,8 +198,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             new_item_dto._position = "start" if index == 0 else "reco"
             item_dtos.append(new_item_dto)
 
-        return item_dtos[: self.number_of_recommendations + 1], total_items
-
+        return item_dtos[: self.number_of_recommendations + 1], total_items, utilities
 
 def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
     request_body: dict[str, Any] = {"referenceId": external_id, "reco": "true"}
@@ -218,7 +218,7 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
     if "previous_external_ids" in filter:
         request_body["previousExternalIds"] = filter["previous_external_ids"]
 
-    if "latestWeights" in filter:
-        request_body["latestWeights"] = filter["latestWeights"]
+    if "utilities" in filter:
+        request_body["utilities"] = filter["utilities"]
 
     return request_body
