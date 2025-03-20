@@ -304,44 +304,49 @@
             ]
           }
         },
-      "dictionary_options": {
-        "type": "array",
-        "description": "Array of options which can be selected.",
-        "items": {
-          "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "array",
-                "items": {
+        "dictionary_options": {
+          "type": "array",
+          "description": "Array of options which can be selected.",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
                   "type": "string"
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "duration": {
-                    "type": "object",
-                    "properties": {
-                      "gte": {
-                        "type": ["integer", "number"]
-                      }
-                    },
-                    "required": ["gte"]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
                   }
                 },
-                "additionalProperties": true
-              },
-              {
-                "type": "number"
-              }
-            ]
+                {
+                  "type": "object",
+                  "properties": {
+                    "duration": {
+                      "type": "object",
+                      "properties": {
+                        "gte": {
+                          "type": [
+                            "integer",
+                            "number"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "gte"
+                      ]
+                    }
+                  },
+                  "additionalProperties": true
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
           }
-        }
-      },
+        },
         "option_default": {
           "type": "string",
           "description": "Key of the default option."
@@ -354,23 +359,45 @@
       "required": [
         "type"
       ],
-      "anyOf": [
-        {
-          "required": [
-            "options"
-          ]
-        },
-        {
-          "required": [
-            "dictionary_options"
-          ]
-        },
-        {
-          "required": [
-            "option_default"
+      "if": {
+        "not": {
+          "anyOf": [
+            {
+              "properties": {
+                "register_as": {
+                  "const": "model_choice_c2c"
+                }
+              }
+            },
+            {
+              "properties": {
+                "register_as": {
+                  "const": "model_choice_u2c"
+                }
+              }
+            }
           ]
         }
-      ],
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": [
+              "options"
+            ]
+          },
+          {
+            "required": [
+              "dictionary_options"
+            ]
+          },
+          {
+            "required": [
+              "option_default"
+            ]
+          }
+        ]
+      },
       "action_option": {
         "type": "array",
         "description": "Array of action options which can be configured.",
@@ -392,7 +419,6 @@
         }
       }
     },
-
     "accordion": {
       "type": "object",
       "properties": {
@@ -475,14 +501,6 @@
         "content"
       ]
     },
-
-
-
-
-
-
-
-
     "radio_box": {
       "type": "object",
       "properties": {
