@@ -401,7 +401,7 @@ class RecommendationController:
         elif self.previous_emp_value is not "":
             self.reset_refinement_state()
             self.previous_emp_value = refinementType
-            self.enable_all_refienment_button()
+            self.enable_all_refinement_button()
 
 
         # return the new filters and dic

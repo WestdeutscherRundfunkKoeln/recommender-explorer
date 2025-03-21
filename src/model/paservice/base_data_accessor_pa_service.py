@@ -143,7 +143,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             "Aktualität": "v1/br/recent-content",
         }
 
-        self.endpoint = endpoint_map.get(filter['refinementType'], "v1/br/similar-content")
+        self.endpoint = endpoint_map.get(filter.get("refinementType"), "wdrRecommendations")
 
         print("000000000000000000000000000000000000000000000000000000000000000000")
         json = build_request(external_id, filter)
@@ -155,6 +155,8 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 self.endpoint, json=build_request(external_id, filter)
             )
             response.raise_for_status()
+            parsed_response = self.__get_items_from_response(item, response.json())
+            print(f"Parsed Response 🍎🍎🍎🍎🍎🍎🍎: {parsed_response}")  # Debugging print
             return self.__get_items_from_response(item, response.json())
         except httpx.HTTPStatusError as e:
             logging.error(e, exc_info=True)
