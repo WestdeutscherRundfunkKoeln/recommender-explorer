@@ -74,9 +74,9 @@ class RecommendationController:
         self.user_cluster = []  # refactor once clustering endpoint is better
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
 
-        self.previous_external_ids = []  # Store external IDs globally within the instance
-        self.previous_emp_value = None
-        self.utilities = []
+        self.previous_external_ids = []  # previous external IDs globally within the instance
+        self.previous_emp_value = None # the previous refinement type
+        self.utilities = [] # the weights that were fetched from the PA-response
 
 
         if not isinstance(self.num_NN, int):
@@ -333,18 +333,38 @@ class RecommendationController:
         return [model_info["display_name"]], all_items, self.model_config
 
 
+    def enable_all_refinement_button(self):
+        radio_box_group = self.components["item_filter"]["refinementType"]
+        if radio_box_group:
+            emp_widget = radio_box_group._widget_instance
+            emp_widget.enable_all_buttons()
+
+
+    def enable_disable_refinement_button(self):
+        radio_box_group = self.components["item_filter"]["refinementType"]
+        if radio_box_group:
+            emp_widget = radio_box_group._widget_instance
+            emp_widget.disable_active_button()  # Call the method to disable the button
+
+    def reset_refinement_state(self):
+        self.previous_external_ids = []
+        self.previous_emp_value = ""
+        self.utilities = {}
 
 
     def checkThershold(self):
+        # Thresholds validation function that will disable the refinement button when there are no more possible results
+        # are possible.
+
         if (self.utilities['semantic'] + self.utilities['tag'] == 1) or (self.utilities['temporal'] in [0, 1]) or (self.utilities['diverse'] in [0, 1]):
-            # Retrieve the radio box group from the registered components
-            radio_box_group = self.components["item_filter"]["refinementType"]
-            if radio_box_group:
-                emp_widget = radio_box_group._widget_instance  # Access the parent widget instance
-                emp_widget.disable_active_button()  # Call the method to disable the button
+           self.enable_disable_refinement_button()
 
 
-    def refinementTypeWidget_request_builder(self,accessor_dict, accessor_values):
+    def refinement_type_widget_request_builder(self,accessor_dict, accessor_values):
+
+        # function to add additional fields to the filter when the Empfehlungstyp Widget is being used.
+        # this includes adding - older ids "if possible" - weights "if possible"
+        # - refinement type - refinement direction
 
 
         mapping_type = {"Ähnlichkeit": "Semantic", "Diversität": "Diverse", "Aktualität": "Temporal"}
@@ -362,46 +382,43 @@ class RecommendationController:
 
         refinementType = accessor_dict.get("refinementType", None)
 
+        # if the old type matches the new one "we didn't switch the refinementType"
+        # add the previous ids from the last request
+        # add the previous weights based on the used type
         if refinementType == self.previous_emp_value:
-
-
-            # Add the previous ids and store them as old ones
             accessor_values[-1]["previous_external_ids"] = self.previous_external_ids
-
-            # Define weights map with direction-based filtering
             weights_map = {
                 "Semantic": ["semantic", "tag","popular","temporal"],
                 "Diverse": ["diverse"],
                 "Temporal": ["temporal"]
             }
-
-            # Filter utilities based on refinementType
             accessor_values[-1]["utilities"] = {k: v for k, v in self.utilities.items() if
                                                 k in weights_map.get(refinementType, weights_map["Semantic"])}
 
 
-        # If it did then reset everything
-        else:
+        # if the old type doesn't match the new one "we did switch the refinementType"
+        # we reset the defaults
+        elif self.previous_emp_value is not "":
+            self.reset_refinement_state()
             self.previous_emp_value = refinementType
-            self.previous_external_ids = []
-            self.utilities = []
+            self.enable_all_refienment_button()
 
 
+        # return the new filters and dic
         return accessor_dict, accessor_values
 
-    def refinementTypeWidget_response_builder(self,search_result, utilities):
+    def refinement_type_widget_response_processor(self,search_result, utilities):
+        # function to process the results from the PA response.
+        # we fetch the ids and store them as old ones.
+        # we fetch the weights from the utilities field in the response.
 
-        # Fetch the Ids from response
         self.previous_external_ids = [
             item.externalid
             for item in search_result
             if item._position != "start"
         ]
 
-        # Convert list to dictionary
         self.utilities = {item["utility"]: item["weight"] for item in utilities.get("utilities", [])}
-
-
 
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
@@ -440,9 +457,9 @@ class RecommendationController:
         )
         accessor_dict = accessor_values[2]
 
-        # Shall we alter the request?
+        # Are we using a Empfehlungstyp Widget? if so then add more filters
         if "refinementType" in accessor_dict and  "refinementDirection" in accessor_dict:
-            accessor_dict, accessor_values =  self.refinementTypeWidget_request_builder(accessor_dict, accessor_values)
+            accessor_dict, accessor_values =  self.refinement_type_widget_request_builder(accessor_dict, accessor_values)
 
 
         # make the call
@@ -456,13 +473,11 @@ class RecommendationController:
         {"utility": "diverse", "weight": 0.267}
     ]
 }
-        # Shall we update ids from the response?
+        # update the filters if we are using Empfehlungstyp Widget.
+        # Check if the received weights have reached a threshold value, if so, disable the corresponding button
         if "refinementType" in accessor_dict and "refinementDirection" in accessor_dict:
-            self.refinementTypeWidget_response_builder(search_result, utilities)
-
-        # Shall something be disabled?
-
-        self.checkThershold()
+            self.refinement_type_widget_response_processor(search_result, utilities)
+            self.checkThershold()
 
         return total_hits, search_result
 
@@ -783,10 +798,9 @@ class RecommendationController:
         filter_state = collections.defaultdict(dict)
         for component in self.components[filter_group].values():
             filter_state[component.params["label"]] = component.value
-            # For the "refinementType" label, also add the refinementDirection attribute
+            # if the "refinementType" label exists, then also add the refinementDirection attribute
             if component.params["label"] == "refinementType":
                 filter_state["refinementDirection"] = component.params["direction"]
-
         return filter_state
 
     def _get_model_type_by_model_key(self, model_key):

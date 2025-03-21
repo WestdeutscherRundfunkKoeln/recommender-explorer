@@ -155,7 +155,6 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 self.endpoint, json=build_request(external_id, filter)
             )
             response.raise_for_status()
-            pprint.pprint(f"Response JSON: {response.json()}")  # This prints the JSON body of the response
             return self.__get_items_from_response(item, response.json())
         except httpx.HTTPStatusError as e:
             logging.error(e, exc_info=True)

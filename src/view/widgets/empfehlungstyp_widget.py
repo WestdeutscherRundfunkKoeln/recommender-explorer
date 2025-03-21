@@ -27,7 +27,7 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         self.radio_box_group._widget_instance = self
 
         self.radio_box_group.params = {
-            "label": 'refinementType',
+            "label": 'refinementType', # must always be named like this to avoid errors in other parts of the code.
             "reset_to": 'Ähnlichkeit',
             "direction": ""
         }
@@ -133,9 +133,13 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
         if selected_type in button_map and direction in button_map[selected_type]:
             button_to_disable = button_map[selected_type][direction]
-            button_to_disable.disabled = True
+            button_to_disable.disabled = not button_to_disable.disabled
             print(f"Disabled button: {direction}")
-            self.alert.visible = True  # Show the alert
+            self.alert.visible = not self.alert.visible  # Show the alert
 
 
 
+    def enable_all_buttons(self):
+        self.btn1.disabled = False
+        self.btn2.disabled = False
+        self.alert.visible = False
