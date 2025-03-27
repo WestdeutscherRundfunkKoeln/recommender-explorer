@@ -10,6 +10,8 @@ RUN python -m pip install wheel &&\
 
 COPY src/main.py src/main.py
 COPY src/embed_text.py src/embed_text.py
+COPY src/model_config_utils.py src/model_config_utils.py
+COPY src/constants.py src/constants.py
 COPY dto/embed_data.py dto/embed_data.py
 
 COPY config/config.yaml config.yaml

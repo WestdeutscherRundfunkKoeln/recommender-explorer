@@ -187,7 +187,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
                 "max_date": {"max": {"field": self.field_mapping["created"]}},
             },
         }
-
+        logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         min_date = response["aggregations"]["min_date"]["value_as_string"]
         max_date = response["aggregations"]["max_date"]["value_as_string"]
@@ -211,6 +211,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             "query": {"match_all": {}},
             "aggs": {"mydata_agg": {"terms": {"field": oss_col, "size": k}}},
         }
+        logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         buckets = response["aggregations"]["mydata_agg"]["buckets"]
         vals = [bucket["key"] for bucket in buckets]

@@ -30,8 +30,7 @@
         "base_data_bucket",
         "base_data_file",
         "subgenre_lut_file",
-        "thematic_lut_file",
-        "models_to_index"
+        "thematic_lut_file"
       ]
     },
     "databackend": {
@@ -170,10 +169,7 @@
             ]
           }
         }
-      },
-      "required": [
-        "c2c_models"
-      ]
+      }
     },
     "u2c_config": {
       "type": "object",
@@ -291,6 +287,9 @@
         }
       }
     },
+    "model_config_key": {
+      "type": "string"
+    },
     "ui_config": {
       "oneOf": [
         {
@@ -304,7 +303,5 @@
     }
   },
   "required": [
-    "opensearch",
-    "c2c_config"
-  ]
+    "opensearch"]
 }

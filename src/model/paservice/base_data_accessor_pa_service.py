@@ -1,6 +1,5 @@
 import copy
 import logging
-import pprint
 from typing import Any
 
 import httpx
@@ -11,16 +10,7 @@ from exceptions.endpoint_error import EndpointError
 from model.base_data_accessor import BaseDataAccessor
 from util.dto_utils import update_from_props
 
-#loggin preference
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter(
-    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
 
 
 WEIGHTS = (
@@ -29,6 +19,13 @@ WEIGHTS = (
     "weight_beitrag",
     "weight_fotostrecke",
     "weight_link",
+)
+
+UTILITIES = (
+    "weight_similar_semantic",
+    "weight_similar_tags",
+    "weight_similar_temporal",
+    "weight_similar_popular",
 )
 
 
@@ -136,29 +133,11 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :param filter: not used for now
         :return: Start Item and Recommendations in the given Item DTO
         """
-        # Distinguish which endpoint to trigger
-        if self.endpoint != "wdrRecommendations":
-            endpoint_map = {
-                "Semantic": "v1/br/similar-content",
-                "Diverse": "v1/br/diverse-content",
-                "Temporal": "v1/br/recent-content",
-            }
-            self.endpoint = endpoint_map.get(filter.get("refinementType"), "wdrRecommendations")
-
-        print("000000000000000000000000000000000000000000000000000000000000000000")
-        json = build_request(external_id, filter)
-        pprint.pprint(json)
-        pprint.pprint("this is the used endpoint")
-        pprint.pprint(self.endpoint)
-        print("000000000000000000000000000000000000000000000000000000000000000000")
-
         try:
             response = self.client.post(
                 self.endpoint, json=build_request(external_id, filter)
             )
             response.raise_for_status()
-            #parsed_response = self.__get_items_from_response(item, response.json())
-            #print(f"Parsed Response 🍎🍎🍎🍎🍎🍎🍎: {parsed_response}")  # Debugging print
             return self.__get_items_from_response(item, response.json())
         except httpx.HTTPStatusError as e:
             logging.error(e, exc_info=True)
@@ -175,7 +154,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
 
     def __get_items_from_response(
         self, item_dto: ItemDto, response: dict[str, Any]
-    ) -> tuple[list[Any], int, dict[Any, Any]]:
+    ) -> tuple[list, int]:
         """
         Gets the resulting items from the pa service response in json
         Gets total items count from search response and iterates over result items and map
@@ -187,7 +166,6 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :return: List of item dtos, total items count
         """
         items = response["items"]
-        utilities = response.get("utilities", {})
         total_items = len(items)
 
         if total_items < 1 or not len(items):
@@ -201,7 +179,8 @@ class BaseDataAccessorPaService(BaseDataAccessor):
             new_item_dto._position = "start" if index == 0 else "reco"
             item_dtos.append(new_item_dto)
 
-        return item_dtos[: self.number_of_recommendations + 1], total_items, utilities
+        return item_dtos[: self.number_of_recommendations + 1], total_items
+
 
 def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
     request_body: dict[str, Any] = {"referenceId": external_id, "reco": "true"}
@@ -211,17 +190,19 @@ def build_request(external_id: str, filter: dict[str, Any]) -> dict[str, Any]:
         request_body["excludedIds"] = (
             filter["blacklist_externalid"].replace(" ", "").split(",")
         )
+    weights = [
+        {"type": w.removeprefix("weight_"), "weight": filter[w]}
+        for w in WEIGHTS
+        if w in filter and filter[w] > 0
+    ]
+    if weights:
+        request_body["weights"] = weights
 
-    if "refinementType" in filter:
-        request_body["refinementType"] = filter["refinementType"]
-
-    if "refinementDirection" in filter:
-        request_body["refinementDirection"] = filter["refinementDirection"]
-
-    if "previous_external_ids" in filter:
-        request_body["previousExternalIds"] = filter["previous_external_ids"]
-
-    if "utilities" in filter:
-        request_body["utilities"] = filter["utilities"]
-
+    utilities = {
+        w.removeprefix("weight_similar_"): filter[w]
+        for w in UTILITIES
+        if w in filter and filter[w] > 0
+    }
+    if utilities:
+        request_body["utilities"] = utilities
     return request_body

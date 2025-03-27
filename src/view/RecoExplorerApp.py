@@ -27,6 +27,7 @@ from view.widgets.text_field_widget import TextFieldWidget
 from view.widgets.accordion_widget import AccordionWidgetWithCards
 from view.widgets.empfehlungstyp_widget import EmpfehlungstypWidget
 
+from view.widgets.widget import UIWidget
 
 #loggin preference
 logger = logging.getLogger(__name__)
@@ -460,6 +461,8 @@ class RecoExplorerApp:
     def put_navigational_block(self, position, block):
         self.navigational_components[position] = block
 
+
+
     def update_widgets_from_url_parameter(self):
         """
         Gets called by onload and iterate over dictionary: {Key: <parameter_name_from_config> Value: <widget_from_config>, ...}
@@ -505,9 +508,6 @@ class RecoExplorerApp:
         if common_ui_widget_type == ui_constants.RADIO_BOX_TYPE_VALUE:
             radio_box_widget = RadioBoxWidget(self, self.controller)
             return radio_box_widget.create(common_ui_widget_config)
-        elif common_ui_widget_type == ui_constants.EMPFEHLUNGSTYP_TYPE_VALUE:
-            empfehlungstyp_widget = EmpfehlungstypWidget(self, self.controller)
-            return empfehlungstyp_widget.create()
         else:
             widget = self.widgets.get(common_ui_widget_type)
             if not widget:

@@ -2,21 +2,21 @@ import logging
 import sys
 
 import panel as pn
-from envyaml import EnvYAML
 
 from exceptions.config_error import ConfigError
 from util.file_utils import (
     get_config_from_search,
     get_configs_from_arg,
-    load_ui_config,
     load_config,
     load_deployment_version_config,
+    load_model_configuration,
 )
 from view.RecoExplorerApp import RecoExplorerApp
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
+
 
 def getExplorerInstance(
     config_full_paths: dict[str, str], config: dict[str, str], client: str
@@ -44,6 +44,12 @@ try:
     config["reco_explorer_url_base"] = pn.state.location.href.replace(
         pn.state.location.search, ""
     )
+
+    model_configuration = load_model_configuration(config)
+    if model_configuration.get("c2c_config"):
+        config["c2c_config"] = model_configuration.get("c2c_config")
+    if model_configuration.get("u2c_config"):
+        config["u2c_config"] = model_configuration.get("u2c_config")
 
     getExplorerInstance(config_full_paths, config, client).server_doc()
 

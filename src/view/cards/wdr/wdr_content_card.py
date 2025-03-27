@@ -38,19 +38,23 @@ class WDRContentCard:
         extra_data: pn.widgets.Button | None = None,
     ):
         try:
-            formatted_date = datetime.fromisoformat(content_dto.availableFrom).strftime("%d-%b-%Y %H:%M")
+            formatted_date = datetime.fromisoformat(content_dto.availableFrom).strftime(
+                "%d-%b-%Y %H:%M"
+            )
         except ValueError:
             formatted_date = content_dto.availableFrom
         base_card_objects: list[pn.viewable.Viewable] = [
-            pn.pane.Markdown(f"""
-                       #### {content_dto.title}
-                       **Datentyp:** {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} 
-                       **Datum:** {formatted_date}
-                       **Strukturpfad:** {content_dto.structurePath}
-                       **External ID:** {content_dto.externalid}
-                       **Themen:** {', '.join(set(content_dto.thematicCategories))}
-                       **Keywords:** {', '.join(set(content_dto.keywords))}
-                       **Sophora ID:** [{content_dto.cmsId}](https://{content_dto.domain}{content_dto.structurePath}/{content_dto.cmsId}.html)
+            pn.pane.HTML(f"""
+                        <h4>{content_dto.title}</h4>
+                        <p>
+                       <strong>Datentyp:</strong> {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} <br>
+                       <strong>Datum:</strong> {formatted_date}<br>
+                       <strong>Strukturpfad:</strong> {content_dto.structurePath}<br>
+                       <strong>External ID:</strong> {content_dto.externalid}<br>
+                       <strong>Themen:</strong> {", ".join(set(content_dto.thematicCategories))}<br>
+                       <strong>Keywords:</strong> {", ".join(set(content_dto.keywords))}<br>
+                       <strong>Sophora ID:</strong> <a href=https://{content_dto.domain}{content_dto.structurePath}/{content_dto.cmsId}.html>{content_dto.cmsId}</a><br>
+                        </p>
                 """),
         ]
 

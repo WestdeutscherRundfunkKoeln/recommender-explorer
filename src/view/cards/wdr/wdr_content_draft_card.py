@@ -86,19 +86,21 @@ class WDRContentDraftCard:
             pn.pane.Markdown(f"""
             ***
             ##### DRAFT
-            {" ".join(content_dto.description.split(" ")[:500]).strip()}{'...' if len(content_dto.description) > 500 else ""}
+            {" ".join(content_dto.description.split(" ")[:500]).strip()}{"..." if len(content_dto.description) > 500 else ""}
             """),
         ]
 
-        return pn.Card(
-            styles={
-                "background": self.config[model_config][content_dto.provenance][model][
-                    "start_color"
-                ],
-                "overflow": "auto",
-            },
-            margin=5,
-            height=self.CARD_HEIGHT,
-            hide_header=True,
-            objects=child_objects,
+        return pn.Column(
+            pn.Card(
+                styles={
+                    "background": self.config[model_config][content_dto.provenance][
+                        model
+                    ]["start_color"],
+                    "overflow": "auto",
+                },
+                margin=5,
+                height=self.CARD_HEIGHT,
+                hide_header=True,
+                objects=child_objects,
+            )
         )
