@@ -356,8 +356,14 @@ class RecommendationController:
         # Thresholds validation function that will disable the refinement button when there are no more possible results
         # are possible.
 
-        if (self.utilities['semantic'] + self.utilities['tag'] == 1) or (self.utilities['temporal'] in [0, 1]) or (self.utilities['diverse'] in [0, 1]):
-           self.enable_disable_refinement_button()
+        if (
+                (self.utilities.get('semantic', None) + self.utilities.get('tag', 0) == 1) or
+                (self.utilities.get('temporal', None) in [0, 1]) or
+                (self.utilities.get('diverse', None) in [0, 1])
+        ):
+            # Your code here
+
+            self.enable_disable_refinement_button()
 
 
     def refinement_type_widget_request_builder(self,accessor_dict, accessor_values):
@@ -418,7 +424,10 @@ class RecommendationController:
             if item._position != "start"
         ]
 
-        self.utilities = {item["utility"]: item["weight"] for item in utilities.get("utilities", [])}
+        self.utilities = {item["utility"]: item["weight"] for item in utilities}
+        print("These are the weights recieved 🍎🍎🍎")
+        print(self.utilities)
+        print("These are the weights recieved 🍎🍎🍎")
 
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
@@ -465,14 +474,7 @@ class RecommendationController:
         # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
         search_result, total_hits, utilities = function_pointer(*accessor_values)
-        utilities = { "utilities": [
-        {"utility": "semantic", "weight": 0.5},
-        {"utility": "tag", "weight": 0.5},
-        {"utility": "temporal", "weight": 0.3},
-        {"utility": "popular", "weight": 0.267},
-        {"utility": "diverse", "weight": 0.267}
-    ]
-}
+
         # update the filters if we are using Empfehlungstyp Widget.
         # Check if the received weights have reached a threshold value, if so, disable the corresponding button
         if "refinementType" in accessor_dict and "refinementDirection" in accessor_dict:

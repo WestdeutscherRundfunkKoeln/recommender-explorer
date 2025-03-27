@@ -136,18 +136,20 @@ class BaseDataAccessorPaService(BaseDataAccessor):
         :param filter: not used for now
         :return: Start Item and Recommendations in the given Item DTO
         """
-        # Distinguish which endpoint to triger
-        endpoint_map = {
-            "Ähnlichkeit": "v1/br/similar-content",
-            "Diversität": "v1/br/diverse-content",
-            "Aktualität": "v1/br/recent-content",
-        }
-
-        self.endpoint = endpoint_map.get(filter.get("refinementType"), "wdrRecommendations")
+        # Distinguish which endpoint to trigger
+        if self.endpoint != "wdrRecommendations":
+            endpoint_map = {
+                "Semantic": "v1/br/similar-content",
+                "Diverse": "v1/br/diverse-content",
+                "Temporal": "v1/br/recent-content",
+            }
+            self.endpoint = endpoint_map.get(filter.get("refinementType"), "wdrRecommendations")
 
         print("000000000000000000000000000000000000000000000000000000000000000000")
         json = build_request(external_id, filter)
         pprint.pprint(json)
+        pprint.pprint("this is the used endpoint")
+        pprint.pprint(self.endpoint)
         print("000000000000000000000000000000000000000000000000000000000000000000")
 
         try:
@@ -155,8 +157,8 @@ class BaseDataAccessorPaService(BaseDataAccessor):
                 self.endpoint, json=build_request(external_id, filter)
             )
             response.raise_for_status()
-            parsed_response = self.__get_items_from_response(item, response.json())
-            print(f"Parsed Response 🍎🍎🍎🍎🍎🍎🍎: {parsed_response}")  # Debugging print
+            #parsed_response = self.__get_items_from_response(item, response.json())
+            #print(f"Parsed Response 🍎🍎🍎🍎🍎🍎🍎: {parsed_response}")  # Debugging print
             return self.__get_items_from_response(item, response.json())
         except httpx.HTTPStatusError as e:
             logging.error(e, exc_info=True)
@@ -173,7 +175,7 @@ class BaseDataAccessorPaService(BaseDataAccessor):
 
     def __get_items_from_response(
         self, item_dto: ItemDto, response: dict[str, Any]
-    ) -> tuple[list, int, list]:
+    ) -> tuple[list[Any], int, dict[Any, Any]]:
         """
         Gets the resulting items from the pa service response in json
         Gets total items count from search response and iterates over result items and map
