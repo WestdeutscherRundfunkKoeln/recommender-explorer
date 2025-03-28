@@ -176,6 +176,9 @@ class NnSeekerRest(NnSeeker):
 
     def set_model_config(self, model_config):
         self._endpoint = model_config["endpoint"]
+        print("This is the endpoint 🌼🌼🌼")
+        print(self._endpoint)
+        print("🌼🌼🌼")
         self._model_props = model_config["properties"]
 
     @staticmethod

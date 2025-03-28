@@ -36,7 +36,16 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from view.RecoExplorerApp import RecoExplorerApp
 
+#loggin preference
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 class RecommendationController:
@@ -319,12 +328,14 @@ class RecommendationController:
         return [model_info["display_name"]], all_items, self.model_config
 
 
+
+
+
     def enable_all_refinement_button(self):
         radio_box_group = self.components["item_filter"]["refinementType"]
         if radio_box_group:
             emp_widget = radio_box_group._widget_instance
             emp_widget.enable_all_buttons()
-
 
     def enable_disable_refinement_button(self):
         radio_box_group = self.components["item_filter"]["refinementType"]
@@ -415,6 +426,8 @@ class RecommendationController:
         print(self.utilities)
         print("These are the weights recieved 🍎🍎🍎")
 
+
+
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
 
@@ -459,7 +472,12 @@ class RecommendationController:
 
         # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
-        search_result, total_hits, utilities = function_pointer(*accessor_values)
+        search_result, total_hits = function_pointer(*accessor_values)
+
+        print("🍎🍎🍎🍎🍎🍎")
+        print(search_result)
+        print("🍎🍎🍎🍎🍎🍎")
+
 
         # update the filters if we are using Empfehlungstyp Widget.
         # Check if the received weights have reached a threshold value, if so, disable the corresponding button

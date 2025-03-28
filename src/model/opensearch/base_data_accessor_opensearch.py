@@ -13,7 +13,16 @@ from exceptions.empty_search_error import EmptySearchError
 from dto.item import ItemDto
 from util.dto_utils import update_from_props, get_primary_idents
 
+#loggin preference
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 class BaseDataAccessorOpenSearch(BaseDataAccessor):
@@ -111,6 +120,8 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         }
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
+        parsed_response = self.__get_items_from_response(item, response)
+        print(f"Parsed Response 🍏🍏🍏: {parsed_response}")  # Debugging print
         return self.__get_items_from_response(item, response)
 
     def get_item_by_urn(self, item: ItemDto, urn, filter=None):

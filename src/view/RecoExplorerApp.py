@@ -508,6 +508,11 @@ class RecoExplorerApp:
         if common_ui_widget_type == ui_constants.RADIO_BOX_TYPE_VALUE:
             radio_box_widget = RadioBoxWidget(self, self.controller)
             return radio_box_widget.create(common_ui_widget_config)
+
+        elif common_ui_widget_type == ui_constants.EMPFEHLUNGSTYP_TYPE_VALUE:
+             empfehlungstyp_widget = EmpfehlungstypWidget(self, self.controller)
+             return empfehlungstyp_widget.create()
+        
         else:
             widget = self.widgets.get(common_ui_widget_type)
             if not widget:
