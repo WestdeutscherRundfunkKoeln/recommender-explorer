@@ -25,7 +25,7 @@ from view.widgets.slider_widget import SliderWidget
 from view.widgets.text_area_input_widget import TextAreaInputWidget
 from view.widgets.text_field_widget import TextFieldWidget
 from view.widgets.accordion_widget import AccordionWidgetWithCards
-from view.widgets.empfehlungstyp_widget import EmpfehlungstypWidget
+from view.widgets.refinement_widget import RefinementWidget
 
 from view.widgets.widget import UIWidget
 
@@ -55,7 +55,7 @@ class RecoExplorerApp:
         self.controller = RecommendationController(self.config)
 
         self.widgets = {
-            ui_constants.EMPFEHLUNGSTYP_TYPE_VALUE: EmpfehlungstypWidget(
+            ui_constants.REFINEMENT_WIDGET_TYPE_VALUE: RefinementWidget(
                 self, self.controller
             ),
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
@@ -509,9 +509,9 @@ class RecoExplorerApp:
             radio_box_widget = RadioBoxWidget(self, self.controller)
             return radio_box_widget.create(common_ui_widget_config)
 
-        elif common_ui_widget_type == ui_constants.EMPFEHLUNGSTYP_TYPE_VALUE:
-             empfehlungstyp_widget = EmpfehlungstypWidget(self, self.controller)
-             return empfehlungstyp_widget.create()
+        elif common_ui_widget_type == ui_constants.REFINEMENT_WIDGET_TYPE_VALUE:
+             refinement_widget = RefinementWidget(self, self.controller)
+             return refinement_widget.create()
         
         else:
             widget = self.widgets.get(common_ui_widget_type)

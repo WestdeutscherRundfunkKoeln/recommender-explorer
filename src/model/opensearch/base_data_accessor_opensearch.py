@@ -121,7 +121,6 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
         parsed_response = self.__get_items_from_response(item, response)
-        print(f"Parsed Response 🍏🍏🍏: {parsed_response}")  # Debugging print
         return self.__get_items_from_response(item, response)
 
     def get_item_by_urn(self, item: ItemDto, urn, filter=None):

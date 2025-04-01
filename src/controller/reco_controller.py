@@ -1,17 +1,12 @@
-import collections
 import logging
 import copy
 import collections
-
 import datetime
 import math
 import re
 import importlib
-from traceback import print_tb
-
 import constants
 import pprint
-
 from model.sagemaker.clustering_model_client import ClusteringModelClient
 from model.opensearch.base_data_accessor_opensearch import BaseDataAccessorOpenSearch
 from exceptions.config_error import ConfigError
@@ -32,20 +27,10 @@ from dto.user_item import UserItemDto
 from dto.item import ItemDto
 from envyaml import EnvYAML
 from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from view.RecoExplorerApp import RecoExplorerApp
 
-#loggin preference
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter(
-    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
 
 
 class RecommendationController:
@@ -85,8 +70,15 @@ class RecommendationController:
         self.user_cluster = []  # refactor once clustering endpoint is better
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
 
+
+        self.mapping_type = {"Ähnlichkeit": "Semantic", "Diversität": "Diverse", "Aktualität": "Temporal"}
+        self.mapping_direction = {
+            "Ähnlicher": "more similar", "Aktueller": "more recent",
+            "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
+            "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"
+        }
         self.previous_external_ids = []  # previous external IDs globally within the instance
-        self.previous_emp_value = None # the previous refinement type
+        self.previous_ref_value = None # the previous refinement type
         self.utilities = [] # the weights that were fetched from the PA-response
 
 
@@ -328,106 +320,6 @@ class RecommendationController:
         return [model_info["display_name"]], all_items, self.model_config
 
 
-
-
-
-    def enable_all_refinement_button(self):
-        radio_box_group = self.components["item_filter"]["refinementType"]
-        if radio_box_group:
-            emp_widget = radio_box_group._widget_instance
-            emp_widget.enable_all_buttons()
-
-    def enable_disable_refinement_button(self):
-        radio_box_group = self.components["item_filter"]["refinementType"]
-        if radio_box_group:
-            emp_widget = radio_box_group._widget_instance
-            emp_widget.disable_active_button()  # Call the method to disable the button
-
-    def reset_refinement_state(self):
-        self.previous_external_ids = []
-        self.previous_emp_value = ""
-        self.utilities = {}
-
-
-    def checkThershold(self):
-        # Thresholds validation function that will disable the refinement button when there are no more possible results
-        # are possible.
-
-        if (
-                (self.utilities.get('semantic', None) + self.utilities.get('tag', 0) == 1) or
-                (self.utilities.get('temporal', None) in [0, 1]) or
-                (self.utilities.get('diverse', None) in [0, 1])
-        ):
-            # Your code here
-
-            self.enable_disable_refinement_button()
-
-
-    def refinement_type_widget_request_builder(self,accessor_dict, accessor_values):
-
-        # function to add additional fields to the filter when the Empfehlungstyp Widget is being used.
-        # this includes adding - older ids "if possible" - weights "if possible"
-        # - refinement type - refinement direction
-
-
-        mapping_type = {"Ähnlichkeit": "Semantic", "Diversität": "Diverse", "Aktualität": "Temporal"}
-        mapping_direction = {
-            "Ähnlicher": "more similar", "Aktueller": "more recent",
-            "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
-            "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"
-        }
-
-        accessor_dict["refinementType"] = mapping_type.get(accessor_dict["refinementType"],
-                                                           accessor_dict["refinementType"])
-
-        accessor_dict["refinementDirection"] = mapping_direction.get(accessor_dict["refinementDirection"],
-                                                                     accessor_dict["refinementDirection"])
-
-        refinementType = accessor_dict.get("refinementType", None)
-
-        # if the old type matches the new one "we didn't switch the refinementType"
-        # add the previous ids from the last request
-        # add the previous weights based on the used type
-        if refinementType == self.previous_emp_value:
-            accessor_values[-1]["previous_external_ids"] = self.previous_external_ids
-            weights_map = {
-                "Semantic": ["semantic", "tag","popular","temporal"],
-                "Diverse": ["diverse"],
-                "Temporal": ["temporal"]
-            }
-            accessor_values[-1]["utilities"] = {k: v for k, v in self.utilities.items() if
-                                                k in weights_map.get(refinementType, weights_map["Semantic"])}
-
-
-        # if the old type doesn't match the new one "we did switch the refinementType"
-        # we reset the defaults
-        elif self.previous_emp_value is not "":
-            self.reset_refinement_state()
-            self.previous_emp_value = refinementType
-            self.enable_all_refinement_button()
-
-
-        # return the new filters and dic
-        return accessor_dict, accessor_values
-
-    def refinement_type_widget_response_processor(self,search_result, utilities):
-        # function to process the results from the PA response.
-        # we fetch the ids and store them as old ones.
-        # we fetch the weights from the utilities field in the response.
-
-        self.previous_external_ids = [
-            item.externalid
-            for item in search_result
-            if item._position != "start"
-        ]
-
-        self.utilities = {item["utility"]: item["weight"] for item in utilities}
-        print("These are the weights recieved 🍎🍎🍎")
-        print(self.utilities)
-        print("These are the weights recieved 🍎🍎🍎")
-
-
-
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
 
@@ -451,7 +343,7 @@ class RecommendationController:
             provenance=constants.ITEM_PROVENANCE_C2C,
         )
         accessor_values.insert(0, item_dto)
-        accessor_values.append(self._get_current_filter_state("item_filter"))
+        accessor_values.append(self._get_current_filter_state("reco_filter"))
         has_paging = [x.params.get("has_paging", False) for x in active_components]
         if any(has_paging):
             accessor_values.extend(
@@ -461,44 +353,15 @@ class RecommendationController:
                 ]
             )
         logger.info(
-            "calling " + accessor_method + " with values " + str(accessor_values)
+            "calling" + accessor_method + " with values " + str(accessor_values)
         )
         accessor_dict = accessor_values[2]
-
-        # Are we using a Empfehlungstyp Widget? if so then add more filters
-        if "refinementType" in accessor_dict and  "refinementDirection" in accessor_dict:
-            accessor_dict, accessor_values =  self.refinement_type_widget_request_builder(accessor_dict, accessor_values)
-
 
         # make the call
         function_pointer = getattr(self.item_accessor, accessor_method)
         search_result, total_hits = function_pointer(*accessor_values)
 
-        print("🍎🍎🍎🍎🍎🍎")
-        print(search_result)
-        print("🍎🍎🍎🍎🍎🍎")
-
-
-        # update the filters if we are using Empfehlungstyp Widget.
-        # Check if the received weights have reached a threshold value, if so, disable the corresponding button
-        if "refinementType" in accessor_dict and "refinementDirection" in accessor_dict:
-            self.refinement_type_widget_response_processor(search_result, utilities)
-            self.checkThershold()
-
         return total_hits, search_result
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     ## - refactor once we have proper user clustering/sampling
     def _get_start_users_u2c(self, model: dict) -> tuple[int, list]:
@@ -600,6 +463,93 @@ class RecommendationController:
         else:
             return self._get_reco_items_u2c(start_item, model)
 
+
+    ######################################################################################################
+    def enable_all_refinement_button(self):
+        radio_box_group = self.components["reco_filter"]["refinementType"]
+        if radio_box_group:
+            refinement_widget = radio_box_group._widget_instance
+            refinement_widget.enable_all_buttons()
+
+    def enable_disable_refinement_button(self):
+        radio_box_group = self.components["reco_filter"]["refinementType"]
+        if radio_box_group:
+            refinement_widget = radio_box_group._widget_instance
+            refinement_widget.disable_active_button()
+
+    def reset_refinement_state(self):
+        self.previous_external_ids = []
+        self.previous_ref_value = ""
+        self.utilities = {}
+
+    def checkThershold(self):
+        # Thresholds validation function that will disable the refinement button when there are no more possible results
+        # are possible.
+
+        semantic, tag = self.utilities.get('semantic'), self.utilities.get('tag')
+        temporal, diverse = self.utilities.get('temporal'), self.utilities.get('diverse')
+        popular = self.utilities.get('popular')
+
+        weights = [semantic, tag, temporal, diverse, popular]
+
+        if (
+                any(weight == 0 for weight in weights if weight is not None) or
+                any(weight == 1 for weight in weights if weight is not None) or
+                (semantic is not None and tag is not None and semantic + tag == 1)
+        ):
+            self.enable_disable_refinement_button()
+
+    def refinement_type_widget_request_builder(self, reco_filter):
+
+        # function to add additional fields to the filter when the refinementType Widget is being used.
+        # this includes adding - older ids "if possible" - weights "if possible"
+        # - refinement type - refinement direction
+
+        reco_filter["refinementType"] = self.mapping_type.get(reco_filter["refinementType"],
+                                                         reco_filter["refinementType"])
+
+        reco_filter["refinementDirection"] = self.mapping_direction.get(reco_filter["refinementDirection"],
+                                                                   reco_filter["refinementDirection"])
+
+        refinementType = reco_filter.get("refinementType", None)
+
+        # if the old type matches the new one "we didn't switch the refinementType"
+        # add the previous ids from the last request
+        # add the previous weights based on the used type
+        if refinementType == self.previous_ref_value:
+            reco_filter["previous_external_ids"] = self.previous_external_ids
+            weights_map = {
+                "Semantic": ["semantic", "tag", "popular", "temporal"],
+                "Diverse": ["diverse"],
+                "Temporal": ["temporal"]
+            }
+
+            reco_filter["utilities"] = self.utilities
+
+        # if the old type doesn't match the new one "we did switch the refinementType"
+        # we reset the defaults
+        elif self.previous_ref_value is not "":
+            self.reset_refinement_state()
+            self.previous_ref_value = refinementType
+            self.enable_all_refinement_button()
+
+        # return the new filters
+        return reco_filter, refinementType
+
+    def refinement_type_widget_response_processor(self, ids, utilities):
+        # function to process the results from the PA response.
+        # we fetch the weights from the utilities field in the response.
+
+        if ids != self.previous_external_ids:
+            print("THE IDS HAVE CHNAGED 💥💥💥💥💥💥💥💥💥💥 ")
+
+        self.previous_external_ids = ids
+
+        self.utilities = utilities
+        print("These are the weights recieved 🍎🍎🍎")
+        print(self.utilities)
+        print("These are the weights recieved 🍎🍎🍎")
+
     def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
         """Gets recommended items based on the start item and filters
 
@@ -609,11 +559,24 @@ class RecommendationController:
         """
         assert self.reco_accessor is not None
         reco_filter = self._get_current_filter_state("reco_filter")
-        logger.warning("calling " + str(self.reco_accessor))
+        logger.warning("calling" + str(self.reco_accessor))
 
-        kidxs, nn_dists, oss_field = self.reco_accessor.get_k_NN(
+
+        # Are we using a refinementType Widget? if so then add more filters
+        if "refinementType" in reco_filter and "refinementDirection" in reco_filter:
+            reco_filter, selected_endpoint = self.refinement_type_widget_request_builder(reco_filter)
+            # set up the endpoint
+            self.reco_accessor.set_model_config(model, selected_endpoint)
+
+
+        kidxs, nn_dists, oss_field, utilities = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
+
+        if "refinementType" in reco_filter and "refinementDirection" in reco_filter:
+            self.refinement_type_widget_response_processor(kidxs, utilities)
+            self.enable_all_refinement_button()
+            self.checkThershold()
 
         if oss_field != "id":
             _, db_ident = get_primary_idents(self.config)

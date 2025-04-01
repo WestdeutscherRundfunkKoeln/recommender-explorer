@@ -137,8 +137,11 @@ RADIO_BOX_TYPE_VALUE = "radio_box"
 TEXT_AREA_INPUT_TYPE_VALUE = "text_area_input"
 ACCORDION_RESET_BUTTON_TYPE_VALUE = "accordion-reset-button"
 ACCORDION_WITH_CARDS_TYPE_VALUE = "accordion_with_cards"
-EMPFEHLUNGSTYP_TYPE_VALUE = "empfehlungstyp"
 
+#Refeinement widget
+REFINEMENT_WIDGET_TYPE_VALUE = "refinement_widget"
+REFINEMENT_WIDGET_TOOLTIP = "Sie können zwischen verschiedenen Arten der Empfehlungsgenerierung für einen bestimmten Artikel wechseln und die Dimension des jeweiligen Typs verstärken."
+REFINEMENT_WIDGET_ACCORDION_LABEL = "Empfehlungs-Typ"
 
 # Fallbacks (if no key and value was given in the config yaml)
 FALLBACK_UI_CONFIG_TITLE_VALUE = "Recommender Explorer"

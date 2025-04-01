@@ -11,6 +11,8 @@ from src.model.opensearch.base_data_accessor_opensearch import (
 )
 from src.model.rest.nn_seeker_paservice import NnSeekerPaService
 from src.model.rest.nn_seeker_paservice_show import NnSeekerPaServiceShow
+import logging
+
 
 TEST_CONFIG = {
     "opensearch": {
@@ -65,13 +67,14 @@ def test_get_k_NN(mocker):
     nn_seeker = NnSeekerPaService(TEST_CONFIG)
     nn_seeker.set_model_config(TEST_MODEL_CONFIG_C2C)
 
-    ids, scores, oss_field = nn_seeker.get_k_NN(
+    ids, scores, oss_field, utilities = nn_seeker.get_k_NN(
         ContentItemDto("test", "test", "test", externalid="test"), 3, {}
     )
 
     assert ids == ["test2", "test1"]
     assert scores == [0.2, 0.1]
     assert oss_field == "externalid"
+    assert utilities is None
 
     mock_request.assert_called_once_with(
         "POST",
@@ -105,12 +108,15 @@ def test_get_recos_user(mocker):
     nn_seeker = NnSeekerPaService(TEST_CONFIG)
     nn_seeker.set_model_config(TEST_MODEL_CONFIG_U2C)
 
-    ids, scores, oss_field = nn_seeker.get_recos_user(
+    result = nn_seeker.get_recos_user(
         UserItemDto(ITEM_POSITION_START, "test", "test", id="test"),
         3,
         {"editorialCategories": ["test1", "test2"]},
     )
 
+    ids, scores, oss_field, utilities = result
+
+    assert utilities is None
     assert ids == ["test2", "test1"]
     assert scores == [0.2, 0.1]
     assert oss_field == "externalid"
@@ -195,7 +201,7 @@ def test_nn_seeker_pa_service_show_get_recos_user(mocker):
     nn_seeker = NnSeekerPaServiceShow(TEST_CONFIG, mock_item_accessor)
     nn_seeker.set_model_config(TEST_MODEL_CONFIG_U2C)
 
-    ids, scores, oss_field = nn_seeker.get_recos_user(
+    ids, scores, oss_field, utilities = nn_seeker.get_recos_user(
         UserItemDto(ITEM_POSITION_START, "test", "test", "test"),
         3,
         {"editorialCategories": ["test1", "test2"]},
@@ -204,6 +210,7 @@ def test_nn_seeker_pa_service_show_get_recos_user(mocker):
     assert ids == ["test2_1", "test1_1"]
     assert scores == [0.2, 0.1]
     assert oss_field == "externalid"
+    assert utilities is None
 
     mock_request.assert_called_once_with(
         "POST",
@@ -218,3 +225,5 @@ def test_nn_seeker_pa_service_show_get_recos_user(mocker):
         },
         headers={"test": "test"},
     )
+
+

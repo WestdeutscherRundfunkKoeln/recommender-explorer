@@ -3,24 +3,19 @@ from view.widgets.widget import UIWidget
 from view import ui_constants as c
 
 
-class EmpfehlungstypWidget(pn.Column, UIWidget):
+class RefinementWidget(pn.Column, UIWidget):
 
     def __init__(self, reco_explorer_app_instance, controller_instance):
         # Initialize parent classes
         pn.Column.__init__(self)
         UIWidget.__init__(self, reco_explorer_app_instance, controller_instance)
-
-
-    def create(self) -> pn.Column:
-        """
-        Create and return a panel containing the radio buttons and corresponding buttons for the selected option.
-        """
+        self.loading_spinner = pn.indicators.LoadingSpinner(value=False, width=30, height=30, visible=True)
 
         # Create radio buttons
         self.radio_box_group = pn.widgets.RadioBoxGroup(
             options=['Ähnlichkeit', 'Diversität', 'Aktualität'],
             value='Ähnlichkeit',  # Default value
-            name = 'empfehlungstyp',
+            name = 'refinement_widget',
         )
 
         # Store a reference to the current widget in the radio_box_group
@@ -36,7 +31,7 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         radio_box_group_watcher = self.radio_box_group.param.watch(self.update_buttons, 'value', onlychanged=True,)
         # Register the widget with the controller
         self.controller_instance.register(
-            "item_filter",
+            "reco_filter",
             self.radio_box_group,
             radio_box_group_watcher,
             self.reco_explorer_app_instance.trigger_reco_filter_choice,
@@ -53,39 +48,48 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         self.btn1.on_click(self.button_clicked)
         self.btn2.on_click(self.button_clicked)
 
+        self.tooltip_widget = pn.widgets.TooltipIcon(value=c.REFINEMENT_WIDGET_TOOLTIP)
+
+        # Create an alert when the button is disabled
+        self.alert = pn.pane.Alert("<b> Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>",
+        alert_type="light", styles={"font-size": "11px", "padding_top": "0px","padding_bottom": "0px"
+        ,"text-align": "center"},visible=False,)
+
         # Create the accordion layout
         self.accordion = pn.layout.Accordion()
         self.accordion_with_width = pn.Column(self.accordion, width=285)
 
         # The main column to be added into the accordion
         self.col = pn.Column()
-        self.col.append(self.radio_box_group)
 
         # The row that holds the buttons "Ähnlichkeit buttons by default"
         self.row_btn = pn.Row()
+
+    def create(self) -> pn.Column:
+        """
+        Create and return a panel containing the radio buttons and corresponding buttons for the selected option.
+        """
+        self.col.append(self.radio_box_group)
         self.row_btn.append(self.btn1)
         self.row_btn.append(self.btn2)
-
-        tooltip_widget = pn.widgets.TooltipIcon(value="Sie können zwischen verschiedenen Arten der Empfehlungsgenerierung für einen bestimmten Artikel wechseln und die Dimension des jeweiligen Typs verstärken.")
+        self.row_btn.append(self.loading_spinner)
 
         # Add the row of buttons to the main column
         self.col.append(self.row_btn)
-        # Create an alert when the button is disabled
-        self.alert = pn.pane.Alert("<b> Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>",
-        alert_type="light", styles={"font-size": "11px", "padding_top": "0px","padding_bottom": "0px"
-        ,"text-align": "center"},visible=False,)
         self.col.append(self.alert)  # Add the alert to the UI but keep it hidden
-
         # Add the main column to the accordion
-        self.accordion.append(('Empfehlungs-Typ', self.col))
+        self.accordion.append((c.REFINEMENT_WIDGET_ACCORDION_LABEL, self.col))
 
-        return pn.Row(self.accordion_with_width,tooltip_widget)
+        return pn.Row(self.accordion_with_width,self.tooltip_widget)
 
 
     async def update_buttons(self, event):
         """
         Updates the buttons based on the selected radio option.
         """
+
+        self.loading_spinner.value = True
+
         if event.new == 'Diversität':
             self.btn1.name = "Weniger Diversität"
             self.btn2.name = "Mehr Diversität"
@@ -109,8 +113,11 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
 
+        self.loading_spinner.value = False
 
     async def button_clicked(self, event):
+        self.loading_spinner.value = True
+
         self.radio_box_group.params = {
             "direction": event.obj.name,
             "label": 'refinementType',
@@ -119,6 +126,8 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
 
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
+
+        self.loading_spinner.value = False
 
     def disable_active_button(self):
         """Disable the active button based on the selected radio option."""
@@ -136,8 +145,6 @@ class EmpfehlungstypWidget(pn.Column, UIWidget):
             button_to_disable.disabled = not button_to_disable.disabled
             print(f"Disabled button: {direction}")
             self.alert.visible = not self.alert.visible  # Show the alert
-
-
 
     def enable_all_buttons(self):
         self.btn1.disabled = False
