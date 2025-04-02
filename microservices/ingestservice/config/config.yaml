@@ -1,0 +1,18 @@
+api_prefix: $API_PREFIX
+api_key: $API_KEY
+base_url_search: $BASE_URL_SEARCH
+base_url_ingest: $BASE_URL_INGEST
+base_url_embedding: $BASE_URL_EMBEDDING
+mapping_definition: $MAPPING_DEFINITION
+dead_letter_bucket: wdr-recommender-exporter-dead-letter
+storage_service_account: $STORAGE_SERVICE_ACCOUNT
+task_cleaner_interval: $TASK_CLEANER_INTERVAL|"0 2 * * *"
+reembed_interval: $REEMBED_INTERVAL|"* * * * *"
+delta_load_interval: $DELTA_LOAD_INTERVAL|"0 2 * * *"
+delete_interval: $DELETE_INTERVAL|"0 2 * * *"
+gcs_url: $GCS_URL|
+bucket: $BUCKET
+bucket_prefix: $BUCKET_PREFIX
+log_bucket: $LOG_BUCKET
+models:
+  - all-MiniLM-L6-v2: sentence-transformers/all-MiniLM-L6-v2

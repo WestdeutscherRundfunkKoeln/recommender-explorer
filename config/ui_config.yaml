@@ -1,0 +1,231 @@
+ui_config:
+  title: Sophora Recommender Explorer
+  logo: https://www1.wdr.de/resources/img/wdr/logo/wdr_logo.svg
+  header_background: '#194569'
+  blocks:
+    - label: Modelle wählen
+      components:
+        - type: accordion
+          label: Content-2-Content
+          active: 0
+          toggle: True
+          content:
+            - type: multi_select
+              label: c2c_config
+              register_as: model_choice
+              options:
+                - display_name: All-Mini-LM-en
+                  default: True
+                - display_name: T-Systems-Roberta
+                - display_name: MSMarco-Distilbert
+                - display_name: PA-Service
+          accordion-reset-button:
+            - label: Auswahl zurücksetzen
+              button-style: primary
+              margin: 10
+    - label: Start-Video bestimmen
+      components:
+        - type: radio_box
+          label: Radio Box
+          options:
+            Crid:
+              - type: text_field
+                placeholder: crid
+                url_parameter: crid
+                validator_function: _check_crid
+                accessor_function: get_item_by_crid
+            URL:
+              - type: text_field
+                label: urlinput
+                placeholder: https://
+                url_parameter: url
+                validator_function: _check_url
+                accessor_function: get_item_by_url
+            Datum:
+              - name: Startdatum
+                type: date_time_picker
+                label: startdateinput
+                validator: _check_date
+                accessor_function: get_items_by_date
+              - name: Enddatum
+                type: date_time_picker
+                label: enddateinput
+                validator: _check_date
+                accessor_function: get_items_by_date
+        - type: accordion
+          label: Genre wählen
+          content:
+            - type: radio_box
+              label: Genre Radio Box
+              options:
+                Erzählweise:
+                  - type: multi_select
+                    register_as: upper_item_filter
+                    linked_filter_name: genreCategory
+                    filter_category: genres
+                    label: erzaehlweiseCategory
+                    dictionary_options:
+                      - Genres Doku: categories_documentation
+                      - Genres Fiktion: categories_fiction
+                      - Genres Show: categories_show
+                      - Genres Information: categories_information
+                      - Genres Live: categories_live
+                Genre:
+                  - type: multi_select
+                    register_as: item_filter
+                    label: genreCategory
+                    option_default: genreCategory
+        - type: accordion
+          label: Subgenre wählen
+          content:
+            - type: radio_box
+              label: Subgenre Radio Box
+              options:
+                Inhalt:
+                  - type: multi_select
+                    label: inhaltCategory
+                    register_as: upper_item_filter
+                    linked_filter_name: subgenreCategories
+                    filter_category: subgenres
+                    dictionary_options:
+                      - Subgenres Doku: categories_documentation
+                      - Subgenres Fiktion: categories_fiction
+                      - Subgenres Show: categories_show
+                      - Subgenres Information: categories_information
+                      - Subgenres Live: categories_live
+                Subgenres:
+                  - type: multi_select
+                    label: subgenreCategories
+                    register_as: item_filter
+                    option_default: subgenreCategories
+        - type: accordion
+          label: Thema wählen
+          content:
+            - type: multi_select
+              label: thematicCategories
+              register_as: item_filter
+              option_default: thematicCategories
+        - type: accordion
+          label: Sendereihe wählen
+          content:
+            - type: multi_select
+              label: showTitle
+              register_as: item_filter
+              option_default: showTitle
+        - type: accordion
+          label: Sendereihe wählen
+          content:
+            - type: multi_select
+              label: showTitle
+              register_as: item_filter
+              option_default: showTitle
+    - label: Empfehlungen beeinflussen
+      components:
+        - type: accordion
+          label: Duplikatfilterung
+          content:
+            - type: multi_select
+              name: Duplikatfilter
+              label: remove_duplicate
+              register_as: reco_filter
+              dictionary_options:
+                - Doppelte Crid:
+                    - filterDuplicateCrid
+                    - crid
+                - Identische Description:
+                    - filterDuplicateDescription
+                    - description
+                - Identische ImageUrl:
+                    - filterDuplicateImageUrl
+                    - teaserimage
+        - type: accordion
+          label: Sortierung
+          content:
+            - type: multi_select
+              name: Sortieren
+              label: sort_recos
+              register_as: reco_filter
+              dictionary_options:
+                - Aktualität: desc
+                - Longtail: asc
+        - type: accordion
+          label: Fehlende Daten ausblenden
+          content:
+            - type: multi_select
+              name: 'Nur ausgefüllte Daten für:'
+              label: clean_incomplete
+              register_as: reco_filter
+              dictionary_options:
+                - Subgenre: subgenreCategories
+                - Thema: thematicCategories
+        - type: accordion
+          label: Länge-Filter
+          content:
+            - type: multi_select
+              name: Länge-Filter
+              label: rangefilter_duration
+              register_as: reco_filter
+              dictionary_options:
+                - Alle: []
+        - type: accordion
+          label: Genre Filter
+          content:
+            - type: multi_select
+              name: Genre-Filterauswahl
+              label: termfilter_genre
+              register_as: reco_filter
+              visible_action:
+                - action_name: choose_genre
+                - action_name: genreSelect
+              visible_action_2:
+                - action_name: choose_erzählweise
+                - action_name: erzaehlweiseSelect
+              dictionary_options:
+                - Nur gleiches Genre: same_genre
+                - Nur andere Genres: different_genre
+                - Erzählweise auswählen: choose_erzählweise
+                - Genres auswählen: choose_genre
+        - type: accordion
+          label: Subgenre Filter
+          content:
+            - type: multi_select
+              label: termfilter_subgenre
+              register_as: reco_filter
+              visible_action:
+                - action_name: choose_subgenre
+                - action_name: subgenreSelect
+              visible_action_2:
+                - action_name: choose_inhalt
+                - action_name: inhaltSelect
+              dictionary_options:
+                - Nur gleiche Subgenres: same_subgenre
+                - Nur andere Subgenres: different_subgenre
+                - Inhalt auswählen: choose_inhalt
+                - Subgenres auswählen: choose_subgenre
+        - type: accordion
+          label: Themen Filter
+          content:
+            - type: multi_select
+              label: termfilter_theme
+              register_as: reco_filter
+              visible_action:
+                - action_name: choose_theme
+                - action_name: themeSelect
+              dictionary_options:
+                - Nur gleiche Themen: same_theme
+                - Nur andere Themen: different_theme
+                - Themen auswählen: choose_theme
+        - type: accordion
+          label: Sendereihen Filter
+          content:
+            - type: multi_select
+              label: termfilter_show
+              register_as: reco_filter
+              visible_action:
+                - action_name: choose_show
+                - action_name: showSelect
+              dictionary_options:
+                - Nur gleiche Sendereihe: same_theme
+                - Nur andere Sendereihen: different_theme
+                - Sendereihen auswählen: choose_show
+  custom_css: '"" #header .app-header .title { padding-left: 0; } a.navbar-brand { margin-right: 0 } a.navbar-brand img.app-logo { padding-right: 0 } ""'

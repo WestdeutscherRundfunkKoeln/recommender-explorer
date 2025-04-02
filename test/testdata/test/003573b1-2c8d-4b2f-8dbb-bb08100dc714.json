@@ -1,0 +1,90 @@
+{
+  "externalId": "003573b1-2c8d-4b2f-8dbb-bb08100dc714",
+  "uuid": "003573b1-2c8d-4b2f-8dbb-bb08100dc714",
+  "sophoraId": "startup-wuppertal-kunststoff-aus-fliegen-110",
+  "type": "beitrag",
+  "typeDef": [
+    "link",
+    "video",
+    "fotostrecke",
+    "audio",
+    "beitrag"
+  ],
+  "title": "Start-up aus Wuppertal: Bio-Kunststoff aus Fliegen",
+  "description": "Fliegen können ein wichtiger Baustein in Sachen Nachhaltigkeit sein. Das Wuppertaler Startup \"ChitoNext\" will aus den Larven der Soldatenfliegen Bio-Kunststoff machen.",
+  "longDescription": " Fliegen sind für die meisten eher lästig: Sie schwirren überall herum, sitzen auf ekeligen Dingen und nerven… Aber manche Fliegen können ein wichtiger Baustein in Sachen Nachhaltigkeit sein. Bei dem Startup-Unternehmen \"ChitoNext\" der Bergischen Universität Wuppertal ist das jedenfalls so.  Konkret geht es um die schwarze Soldatenfliege. Sie wird bereits wegen ihres hohen Protein- und Fettanteils und der weichen Konsistenz der Larven in der Futterindustrie als Ersatz etwa für Fischmehl eingesetzt. Der Solinger Jung-Unternehmer Marius Anger geht aber etliche Schritte weiter. Er veredelt das preiswerte Proteinmehl der Soldatenfliege und macht daraus unter anderem hochwertigen Bio-Kunststoff. Und das mit wenig Energie, Wasser oder giftigem Abfall. Landesförderung für neue Idee Eigentlich wollte der 33-Jährige Maschinenbauingenieur Hundefutter herstellen. Aber er musste feststellen, dass er in diesem Segment viel Konkurrenz und einem unübersichtlichen Markt gibt.  Bei der Recherche stieß er dann auf Proteine aus Insekten: \"Das faszinierte mich und ich fuchste mich in die Materie ein\", erzählt Anger. Mit Erfolg: Das NRW-Wirtschaftsministerium fördert das Startup \"ChitoNext\" in den nächsten zwei Jahren mit bis zu 270.000 Euro, damit aus der neuen Idee marktreife Produkte werden können. Biotechnik statt Chemie Der wesentliche Unterschied zur herkömmlichen Nutzung von Proteinen aus Insekten liegt in der Methode, erklärt Marius Anger: \"Wir haben einen bio-technologischen Prozess entwickelt, der sehr klima- und umweltfreundlich ist.  Im Vergleich zum konventionellen, also dem chemischen Prozess, der teuer ist, sehr hohe Energie- und Ressourcenbedarfe hat und sehr viel Chemie benötigt, brauchen wir das eben nicht.\"  Durch die Veredelung des Proteinmehls entstehen das so genannte \"Chitosan\", ein hochwertiger Bio-Kunststoff, der in der Medizintechnik genutzt werden kann, und der Kunststoff Melanin, der etwa in der Halbleiterproduktion benötigt wird. Und übrig bleibt Protein für die Futterindustrie. Abfall gibt es kaum noch.   In wenigen Jahren marktreif Mit der Landesförderung kann Marius Anger seine Ideen jetzt perfektionieren, um sie nutzbar zu machen. Dafür braucht er fertige Produkte und Investoren. Dabei wird er von einer Unternehmensberaterin unterstützt, die das betriebswirtschaftliche Wissen einbringt und weiß, wie man Märkte erschließt.  In spätestens fünf Jahren will der Jung-Unternehmer jedenfalls alles in trockenen Tüchern haben: \"Da sehe ich mich mit einem kleinen Team in einer überschaubaren Produktionsstätte, die wirtschaftlich sehr gut läuft und auch nachhaltig einen signifikanten Mehrwert leistet.\"    ",
+  "availableFrom": "2023-10-04T15:10:00+02:00",
+  "availableTo": "2026-04-07T22:56:58.074+02:00",
+  "firstPublicationDate": "2023-10-04T15:10:24.883+02:00",
+  "keywords": [
+    "Regio-Beitrag",
+    "02.10.2023",
+    "Wuppertal",
+    "Studio",
+    "Wuppertal",
+    "Wirtschaft",
+    "Forschung",
+    "Bio-Kunststoff",
+    "Insekten",
+    "Fliegen",
+    "Soldatenfliege",
+    "Startup"
+  ],
+  "language": "de-DE",
+  "durationSeconds": 89,
+  "thematicCategories": [
+    {
+      "id": "wdr:themenKategorien:umwelt",
+      "title": "Umwelt"
+    },
+    {
+      "id": "wdr:themenKategorien:nachrichten",
+      "title": "Nachrichten"
+    },
+    {
+      "id": "wdr:themenKategorien:wdr",
+      "title": "WDR"
+    },
+    {
+      "id": "wdr:themenKategorien:forschung",
+      "title": "Forschung"
+    },
+    {
+      "id": "wdr:themenKategorien:weitere Nachrichtenkategorien",
+      "title": "weitere Nachrichtenkategorien"
+    },
+    {
+      "id": "wdr:themenKategorien:wuppertal",
+      "title": "Wuppertal"
+    },
+    {
+      "id": "wdr:themenKategorien:kreiseundstaedte",
+      "title": "Kreise und Städte"
+    },
+    {
+      "id": "wdr:themenKategorien:hochschulen",
+      "title": "Hochschulen"
+    },
+    {
+      "id": "wdr:themenKategorien:wirtschaft",
+      "title": "Wirtschaft"
+    },
+    {
+      "id": "wdr:themenKategorien:rheinland",
+      "title": "Rheinland"
+    }
+  ],
+  "genreCategory": null,
+  "subgenreCategories": [],
+  "filterCategory": [],
+  "structurePath": "/wdr/nachrichten/rheinland",
+  "site": "wdr",
+  "domain": "www1.wdr.de",
+  "teaserImage": {
+    "ratio": "16x9",
+    "url": "https://www1.wdr.de/nachrichten/rheinland/startup-wuppertal-kunststoff-aus-fliegen-100~_v-TeaserAufmacher.jpg"
+  },
+  "fskAgeRating": "NOT_RATED",
+  "contentRatings": "fsk",
+  "geoAvailability": "GLOBAL"
+}
