@@ -46,7 +46,7 @@ def test_get_k_NN_WDR(mocker):
     )
     nn_seeker = NnSeekerPaServiceNews(TEST_CONFIG)
     nn_seeker.set_model_config(TEST_MODEL_CONFIG_C2C)
-    ids, scores, oss_field = nn_seeker.get_k_NN(
+    ids, scores, oss_field, utilities = nn_seeker.get_k_NN(
         item=ContentItemDto("test", "test", "test", externalid="test"),
         k=3,
         nn_filter={
@@ -143,7 +143,7 @@ def test_get_k_NN_BR(mocker):
     )
     nn_seeker = NnSeekerPaServiceNews(TEST_CONFIG)
     nn_seeker.set_model_config(TEST_MODEL_CONFIG_C2C)
-    ids, scores, oss_field = nn_seeker.get_k_NN(
+    ids, scores, oss_field, utilities = nn_seeker.get_k_NN(
         item=ContentItemDto("test", "test", "test", externalid="test"),
         k=3,
         nn_filter={

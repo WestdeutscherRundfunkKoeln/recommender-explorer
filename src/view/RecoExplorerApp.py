@@ -1,21 +1,19 @@
 import asyncio
-import functools
 import logging
 import traceback
+import functools
 from typing import Any
-
-import panel as pn
-
 import constants
+import panel as pn
 from controller.reco_controller import RecommendationController
 from exceptions.date_validation_error import DateValidationError
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
+from util.ui_utils import retrieve_default_model_accordion
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
     get_client_options,
 )
-from util.ui_utils import retrieve_default_model_accordion
 from view import ui_constants
 from view.widgets.accordion_widget import AccordionWidget, AccordionWidgetWithCards
 from view.widgets.date_time_picker_widget import DateTimePickerWidget
@@ -26,6 +24,8 @@ from view.widgets.reset_button import ResetButtonWidget
 from view.widgets.slider_widget import SliderWidget
 from view.widgets.text_area_input_widget import TextAreaInputWidget
 from view.widgets.text_field_widget import TextFieldWidget
+from view.widgets.refinement_widget import RefinementWidget
+
 from view.widgets.widget import UIWidget
 
 # loggin preference
@@ -33,12 +33,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 console_handler = logging.StreamHandler()
 formatter = logging.Formatter(
-    fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
 )
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
-
 
 #
 # Main App
@@ -56,17 +55,28 @@ class RecoExplorerApp:
         self.config_full_path = config_full_paths[client]
         self.controller = RecommendationController(self.config)
 
-        self.widgets: dict[str, UIWidget] = {
+        self.widgets = {
+            ui_constants.REFINEMENT_WIDGET_TYPE_VALUE: RefinementWidget(
+                self, self.controller
+            ),
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
                 self, self.controller
             ),
             ui_constants.DATE_TIME_PICKER_TYPE_VALUE: DateTimePickerWidget(
                 self, self.controller
             ),
-            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(self, self.controller),
-            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(self, self.controller),
-            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
-            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
+            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(
+                self, self.controller
+            ),
+            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(
+                self, self.controller
+            ),
+            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(
+                self, self.controller
+            ),
+            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(
+                self, self.controller
+            ),
             ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(
                 self, self.controller
             ),
@@ -482,8 +492,7 @@ class RecoExplorerApp:
         return self.config.get(ui_constants.UI_CONFIG_KEY + "." + key, fallback)
 
     def build_common_ui_widget_dispatcher(
-        self, common_ui_widget_type: str, common_ui_widget_config: dict[str, Any]
-    ):
+        self, common_ui_widget_type: str, common_ui_widget_config: dict[str, Any]):
         """
         Decides which common ui widget should be build based on the given ui type. If no type matches returns None
 
@@ -497,6 +506,11 @@ class RecoExplorerApp:
         if common_ui_widget_type == ui_constants.RADIO_BOX_TYPE_VALUE:
             radio_box_widget = RadioBoxWidget(self, self.controller)
             return radio_box_widget.create(common_ui_widget_config)
+
+        elif common_ui_widget_type == ui_constants.REFINEMENT_WIDGET_TYPE_VALUE:
+             refinement_widget = RefinementWidget(self, self.controller)
+             return refinement_widget.create()
+
         else:
             widget = self.widgets.get(common_ui_widget_type)
             if not widget:
@@ -505,19 +519,31 @@ class RecoExplorerApp:
 
     def build_widgets(self, widgets_config):
         widgets_list = []
-        if not widgets_config:
-            logger.error(
-                "No UI Widgets are defined in Config File, or key name is wrong"
-            )
-            return widgets_list
+        if widgets_config is not None:
+            for widget_config in widgets_config:
+                component_type = widget_config.get(ui_constants.WIDGET_TYPE_KEY, "")
+                component_from_dispatcher = self.build_common_ui_widget_dispatcher(
+                    component_type, widget_config
+                )
+                if component_from_dispatcher is not None:
+                    widgets_list.append(component_from_dispatcher)
 
-        for widget_config in widgets_config:
-            component_type: str = widget_config.get(ui_constants.WIDGET_TYPE_KEY, "")
-            component_from_dispatcher = self.build_common_ui_widget_dispatcher(
-                component_type, widget_config
-            )
-            if component_from_dispatcher is not None:
-                widgets_list.append(component_from_dispatcher)
+                elif ui_constants.ACCORDION_TYPE_VALUE == component_type:
+                    accordion_widget = self.widgets[ui_constants.ACCORDION_TYPE_VALUE].create(widget_config)
+                    widgets_list.append(accordion_widget)
+
+            if widget_config.get(ui_constants.ACCORDION_RESET_BUTTON_KEY):
+                widgets_list.append(
+                    self.widgets[ui_constants.ACCORDION_TYPE_VALUE].create_accordion_reset_buttons(
+                        widget_config)
+                )
+
+            else:
+                logger.error("UI Config Type: " + component_type)
+
+        else:
+            logger.error("No UI Widgets are defined in Config File, or key name is wrong")
+
 
         return widgets_list
 
@@ -532,6 +558,7 @@ class RecoExplorerApp:
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
 
         for block_config in blocks_config:
+
             list_of_widgets_in_block = self.build_widgets(
                 block_config.get(ui_constants.BLOCK_CONFIG_WIDGETS_KEY)
             )
@@ -600,14 +627,12 @@ class RecoExplorerApp:
         if ActiveAccordion == "":
             blocks = self.build_blocks()
             block_list2 = blocks
-            choosen_accordion = retrieve_default_model_accordion(
-                self.config["ui_config"]
-            )
+            choosen_accordion = retrieve_default_model_accordion(self.config["ui_config"])
 
         # then it's an index sent by the accordion_widget class
         if ActiveAccordion != "":
             choosen_accordion = ActiveAccordion
-            self.build_ui()  # reset the nav bar before doing modifications
+            self.build_ui() #reset the nav bar before doing modifications
 
         # Create a dictionary to group blocks by their linkto value
         grouped_blocks = {}
@@ -681,7 +706,7 @@ class RecoExplorerApp:
 
             # previous button
             self.previousPage = pn.widgets.Button(
-                name=ui_constants.LEFT_ARROW,
+                name= ui_constants.LEFT_ARROW,
                 button_type="primary",
                 margin=10,
                 width=50,
@@ -697,7 +722,7 @@ class RecoExplorerApp:
 
             # next button
             self.nextPage = pn.widgets.Button(
-                name=ui_constants.RIGHT_ARROW,
+                name= ui_constants.RIGHT_ARROW,
                 button_type="primary",
                 width=50,
                 margin=10,
@@ -827,12 +852,8 @@ class RecoExplorerApp:
             "next_button": next_button,
         }
 
-        prev_button.on_click(
-            functools.partial(self._update_prev, widgets=widgets_in_row)
-        )
-        next_button.on_click(
-            functools.partial(self._update_next, widgets=widgets_in_row)
-        )
+        prev_button.on_click(functools.partial(self._update_prev, widgets=widgets_in_row))
+        next_button.on_click(functools.partial(self._update_next, widgets=widgets_in_row))
 
         return row_with_navigation_buttons
 
@@ -917,12 +938,7 @@ class RecoExplorerApp:
             title=title,
             logo=logo,
             sidebar=[sidebar],
-            main=[
-                self.floating_elements,
-                self.pagination_top,
-                self.main_content,
-                self.pagination,
-            ],
+            main=[self.floating_elements, self.pagination_top, self.main_content, self.pagination],
             header_background=header_background,
         )
 

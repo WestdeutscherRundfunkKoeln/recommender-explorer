@@ -67,6 +67,15 @@ class ResetButtonWidget(UIWidget):
         for widget in block:
             widget.value = widget.params.get("reset_to")
 
+        # Check if the widget is the radio box group and trigger the button enabling function
+        if isinstance(widget, pn.widgets.RadioBoxGroup) and hasattr(widget, "_widget_instance"):
+            widget._widget_instance.alert.visible = False  # Hide the alert
+            widget._widget_instance.btn1.disabled = False  # Re-enable first button
+            widget._widget_instance.btn2.disabled = False  # Re-enable second button
+            self.controller_instance.reset_refinement_state()
+
+
+
         self.controller_instance.reset_defaults(event.obj.params["resets"])
         self.controller_instance.reset_page_number()
 
