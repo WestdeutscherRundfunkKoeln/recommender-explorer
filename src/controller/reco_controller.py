@@ -80,7 +80,8 @@ class RecommendationController:
             "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"
         }
         self.previous_external_ids = []  # previous external IDs globally within the instance
-        self.previous_ref_value = None # the previous refinement type
+        self.previous_ref_value = '' # the previous refinement type
+        self.previous_ref_id = '' # the previous ref id
         self.utilities = [] # the weights that were fetched from the PA-response
 
 
@@ -497,24 +498,22 @@ class RecommendationController:
         ):
             self.enable_disable_refinement_button()
 
-    def refinement_type_widget_request_builder(self, reco_filter):
+    def refinement_type_widget_request_builder(self, reco_filter, current_ref_id):
 
         # function to add additional fields to the filter when the refinementType Widget is being used.
         # this includes adding - older ids "if possible" - weights "if possible"
         # - refinement type - refinement direction
+        reco_filter["refinementType"] = self.mapping_type.get(reco_filter.get("refinementType"),
+                                                              reco_filter.get("refinementType"))
+        reco_filter["refinementDirection"] = self.mapping_direction.get(reco_filter.get("refinementDirection"),
+                                                                        reco_filter.get("refinementDirection"))
 
-        reco_filter["refinementType"] = self.mapping_type.get(reco_filter["refinementType"],
-                                                         reco_filter["refinementType"])
+        refinementType = reco_filter["refinementType"]
 
-        reco_filter["refinementDirection"] = self.mapping_direction.get(reco_filter["refinementDirection"],
-                                                                   reco_filter["refinementDirection"])
-
-        refinementType = reco_filter.get("refinementType", None)
-
-        # if the old type matches the new one "we didn't switch the refinementType"
+        # if the old type matches the new one "we didn't switch the refinementType" and we still use the same ref_id
         # add the previous ids from the last request
         # add the previous weights based on the used type
-        if refinementType == self.previous_ref_value:
+        if refinementType == self.previous_ref_value and current_ref_id == self.previous_ref_id:
             reco_filter["previous_external_ids"] = self.previous_external_ids
             weights_map = {
                 "Semantic": ["semantic", "tag", "popular", "temporal"],
@@ -525,12 +524,13 @@ class RecommendationController:
             reco_filter["utilities"] = self.utilities
 
         # if the old type doesn't match the new one "we did switch the refinementType"
-        # we reset the defaults
-        elif self.previous_ref_value is not "":
+        # of if we're making the first request
+        else:
             self.reset_refinement_state()
-            self.previous_ref_value = refinementType
             self.enable_all_refinement_button()
 
+        self.previous_ref_value = refinementType
+        self.previous_ref_id = current_ref_id
         # return the new filters
         return reco_filter, refinementType
 
@@ -538,15 +538,17 @@ class RecommendationController:
         # function to process the results from the PA response.
         # we fetch the weights from the utilities field in the response.
 
-        if ids != self.previous_external_ids:
-            print("THE IDS HAVE CHNAGED 💥💥💥💥💥💥💥💥💥💥 ")
+        if set(ids) == set(self.previous_external_ids):
+            print("No change in Ids 💥💥💥💥💥💥💥💥💥💥💥💥 ")
+        else:
+            print("Ids Changed 💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
+
 
         self.previous_external_ids = ids
 
         self.utilities = utilities
         print("These are the weights recieved 🍎🍎🍎")
         print(self.utilities)
-        print("These are the weights recieved 🍎🍎🍎")
 
     def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
         """Gets recommended items based on the start item and filters
@@ -562,12 +564,12 @@ class RecommendationController:
 
         # Are we using a refinementType Widget? if so then add more filters
         if "refinementType" in reco_filter and "refinementDirection" in reco_filter:
-            reco_filter, selected_endpoint = self.refinement_type_widget_request_builder(reco_filter)
+            reco_filter, selected_endpoint = self.refinement_type_widget_request_builder(reco_filter, start_item.id)
             # set up the endpoint
             self.reco_accessor.set_model_config(model, selected_endpoint)
 
 
-        kidxs, nn_dists, oss_field = self.reco_accessor.get_k_NN(
+        kidxs, nn_dists, oss_field, utilities = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
 

@@ -89,6 +89,10 @@ class NnSeekerRest(NnSeeker):
         return recomm_content_ids, nn_dists, oss_field , utilities
 
     def _post_2_endpoint(self, post_params):
+        print("🦊🦊🦊🦊🦊🦊🦊🦊🦊🦊")
+        pprint.pprint(post_params)
+        print("🦊🦊🦊🦊🦊🦊🦊🦊🦊🦊")
+
         retries = Retry(
             connect=self.__retry_connection,
             read=self.__retry_reads,
@@ -190,10 +194,6 @@ class NnSeekerRest(NnSeeker):
         }
         if utilities:
             selected_params["utilities"] = utilities
-
-        print("💙💙💙💙💙💙💙💙💙💙")
-        pprint.pprint(selected_params)
-        print("💙💙💙💙💙💙💙💙💙💙")
 
         return selected_params
 

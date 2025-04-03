@@ -9,7 +9,6 @@ class RefinementWidget(pn.Column, UIWidget):
         # Initialize parent classes
         pn.Column.__init__(self)
         UIWidget.__init__(self, reco_explorer_app_instance, controller_instance)
-        self.loading_spinner = pn.indicators.LoadingSpinner(value=False, width=30, height=30, visible=True)
 
         # Create radio buttons
         self.radio_box_group = pn.widgets.RadioBoxGroup(
@@ -72,7 +71,6 @@ class RefinementWidget(pn.Column, UIWidget):
         self.col.append(self.radio_box_group)
         self.row_btn.append(self.btn1)
         self.row_btn.append(self.btn2)
-        self.row_btn.append(self.loading_spinner)
 
         # Add the row of buttons to the main column
         self.col.append(self.row_btn)
@@ -87,8 +85,6 @@ class RefinementWidget(pn.Column, UIWidget):
         """
         Updates the buttons based on the selected radio option.
         """
-
-        self.loading_spinner.value = True
 
         if event.new == 'Diversität':
             self.btn1.name = "Weniger Diversität"
@@ -113,10 +109,7 @@ class RefinementWidget(pn.Column, UIWidget):
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
 
-        self.loading_spinner.value = False
-
     async def button_clicked(self, event):
-        self.loading_spinner.value = True
 
         self.radio_box_group.params = {
             "direction": event.obj.name,
@@ -127,7 +120,6 @@ class RefinementWidget(pn.Column, UIWidget):
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
 
-        self.loading_spinner.value = False
 
     def disable_active_button(self):
         """Disable the active button based on the selected radio option."""
