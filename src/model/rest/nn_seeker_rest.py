@@ -199,22 +199,26 @@ class NnSeekerRest(NnSeeker):
 
     def set_model_config(self, model_config, selected_endpoint=None):
         self._endpoint = model_config["endpoint"].split("|")
-        if selected_endpoint is None:
-            self._endpoint = self._endpoint[0]
-            self._model_props = model_config["properties"]
-        if selected_endpoint:
-            endpoint_mapping = {}
+        #if selected_endpoint is None:
+        self._endpoint = self._endpoint[0]
+        print("🦊")
+        print(self._endpoint)
+        self._model_props = model_config["properties"]
+        #if selected_endpoint:
+            #endpoint_mapping = {}
             # Dynamically assign endpoints based on their content
-            for endpoint in  self._endpoint:
-                if "similar" in endpoint:
-                    endpoint_mapping["Semantic"] = endpoint
-                elif "diverse" in endpoint:
-                    endpoint_mapping["Diverse"] = endpoint
-                elif "recent" in endpoint:
-                    endpoint_mapping["Temporal"] = endpoint
+            #for endpoint in  self._endpoint:
+                #if "similar" in endpoint:
+                    #endpoint_mapping["Semantic"] = endpoint
+                #elif "diverse" in endpoint:
+                    #endpoint_mapping["Diverse"] = endpoint
+                #elif "recent" in endpoint:
+                    #endpoint_mapping["Temporal"] = endpoint
 
             # Assign the correct endpoint based on selected_endpoint
-            self._endpoint = endpoint_mapping.get(selected_endpoint, None)
+            #self._endpoint = endpoint_mapping.get(selected_endpoint, None)
+
+
 
 
     @staticmethod

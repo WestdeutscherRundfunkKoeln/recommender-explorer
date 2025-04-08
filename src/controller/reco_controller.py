@@ -7,7 +7,6 @@ import math
 import re
 import importlib
 import constants
-import pprint
 from model.sagemaker.clustering_model_client import ClusteringModelClient
 from model.opensearch.base_data_accessor_opensearch import BaseDataAccessorOpenSearch
 from exceptions.config_error import ConfigError
@@ -465,13 +464,13 @@ class RecommendationController:
 
     ######################################################################################################
     def enable_all_refinement_button(self):
-        radio_box_group = self.components["reco_filter"]["refinementType"]
+        radio_box_group = self.components["item_filter"]["refinementType"]
         if radio_box_group:
             refinement_widget = radio_box_group._widget_instance
             refinement_widget.enable_all_buttons()
 
     def enable_disable_refinement_button(self):
-        radio_box_group = self.components["reco_filter"]["refinementType"]
+        radio_box_group = self.components["item_filter"]["refinementType"]
         if radio_box_group:
             refinement_widget = radio_box_group._widget_instance
             refinement_widget.disable_active_button()
@@ -558,12 +557,13 @@ class RecommendationController:
         :return:
         """
         assert self.reco_accessor is not None
-        reco_filter = self._get_current_filter_state("reco_filter")
+        reco_filter = self._get_current_filter_state("item_filter")
         logger.warning("calling " + str(self.reco_accessor))
 
 
         # Are we using a refinementType Widget? if so then add more filters
         if "refinementType" in reco_filter and "refinementDirection" in reco_filter:
+            print("I found the widget 💙💙💙💙")
             reco_filter, selected_endpoint = self.refinement_type_widget_request_builder(reco_filter, start_item.id)
             # set up the endpoint
             self.reco_accessor.set_model_config(model, selected_endpoint)
@@ -763,7 +763,7 @@ class RecommendationController:
         for component in self.components[filter_group].values():
             filter_state[component.params["label"]] = component.value
             # if the "refinementType" label exists, then also add the refinementDirection attribute
-            if component.params["label"] == "refinementType":
+            if component.params["label"] is "refinementType":
                 filter_state["refinementDirection"] = component.params["direction"]
         return filter_state
 

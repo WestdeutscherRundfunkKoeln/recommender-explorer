@@ -30,7 +30,7 @@ class RefinementWidget(pn.Column, UIWidget):
         radio_box_group_watcher = self.radio_box_group.param.watch(self.update_buttons, 'value', onlychanged=True,)
         # Register the widget with the controller
         self.controller_instance.register(
-            "reco_filter",
+            "item_filter",
             self.radio_box_group,
             radio_box_group_watcher,
             self.reco_explorer_app_instance.trigger_reco_filter_choice,
