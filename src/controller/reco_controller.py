@@ -485,9 +485,9 @@ class RecommendationController:
         # Thresholds validation function that will disable the refinement button when there are no more possible results
         # are possible.
 
-        semantic, tag = self.utilities.get('semantic'), self.utilities.get('tag')
-        temporal, diverse = self.utilities.get('temporal'), self.utilities.get('diverse')
-        popular = self.utilities.get('popular')
+        semantic, tag = self.utilities.get('wSem'), self.utilities.get('wTag')
+        temporal, diverse = self.utilities.get('wTime'), self.utilities.get('wDiv')
+        popular = self.utilities.get('wTrendLocal')
 
         weights = [semantic, tag, temporal, diverse, popular]
 
@@ -515,12 +515,6 @@ class RecommendationController:
         # add the previous weights based on the used type
         if refinementType == self.previous_ref_value and current_ref_id == self.previous_ref_id:
             reco_filter["previous_external_ids"] = self.previous_external_ids
-            weights_map = {
-                "Semantic": ["semantic", "tag", "popular", "temporal"],
-                "Diverse": ["diverse"],
-                "Temporal": ["temporal"]
-            }
-
             reco_filter["utilities"] = self.utilities
 
         # if the old type doesn't match the new one "we did switch the refinementType"
@@ -780,8 +774,8 @@ class RecommendationController:
             for label, component in self.components[widget_group].items():
                 if self.watchers[widget_group].get(label):
                     component.param.unwatch(self.watchers[widget_group][label])
-                component.value = component.params["reset_to"]
             for label, component in self.components[widget_group].items():
+                component.value = component.params["reset_to"]
                 if self.callbacks[widget_group].get(label):
                     component.param.watch(self.callbacks[widget_group][label], "value")
 

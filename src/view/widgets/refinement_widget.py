@@ -36,7 +36,7 @@ class RefinementWidget(pn.Column, UIWidget):
             self.reco_explorer_app_instance.trigger_reco_filter_choice,
         )
 
-        self.radio_box_group.reset_identifier = c.RESET_IDENTIFIER_ITEM_FILTER
+        self.radio_box_group.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
 
         self.radio_box_group.is_leaf_widget = True
 
