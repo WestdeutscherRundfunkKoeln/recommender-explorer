@@ -345,7 +345,7 @@ class RecommendationController:
             provenance=constants.ITEM_PROVENANCE_C2C,
         )
         accessor_values.insert(0, item_dto)
-        accessor_values.append(self._get_current_filter_state("item_filter"))
+        print(accessor_values)
         has_paging = [x.params.get("has_paging", False) for x in active_components]
         if any(has_paging):
             accessor_values.extend(
@@ -464,13 +464,13 @@ class RecommendationController:
 
     ######################################################################################################
     def enable_all_refinement_button(self):
-        radio_box_group = self.components["item_filter"]["refinementType"]
+        radio_box_group = self.components["reco_filter"]["refinementType"]
         if radio_box_group:
             refinement_widget = radio_box_group._widget_instance
             refinement_widget.enable_all_buttons()
 
     def enable_disable_refinement_button(self):
-        radio_box_group = self.components["item_filter"]["refinementType"]
+        radio_box_group = self.components["reco_filter"]["refinementType"]
         if radio_box_group:
             refinement_widget = radio_box_group._widget_instance
             refinement_widget.disable_active_button()
@@ -557,7 +557,7 @@ class RecommendationController:
         :return:
         """
         assert self.reco_accessor is not None
-        reco_filter = self._get_current_filter_state("item_filter")
+        reco_filter = self._get_current_filter_state("reco_filter")
         logger.warning("calling " + str(self.reco_accessor))
 
 
@@ -780,8 +780,8 @@ class RecommendationController:
             for label, component in self.components[widget_group].items():
                 if self.watchers[widget_group].get(label):
                     component.param.unwatch(self.watchers[widget_group][label])
-                component.value = component.params["reset_to"]
             for label, component in self.components[widget_group].items():
+                component.value = component.params["reset_to"]
                 if self.callbacks[widget_group].get(label):
                     component.param.watch(self.callbacks[widget_group][label], "value")
 

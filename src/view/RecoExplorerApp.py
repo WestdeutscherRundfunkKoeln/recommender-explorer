@@ -508,9 +508,9 @@ class RecoExplorerApp:
             radio_box_widget = RadioBoxWidget(self, self.controller)
             return radio_box_widget.create(common_ui_widget_config)
 
-        #elif common_ui_widget_type == ui_constants.REFINEMENT_WIDGET_TYPE_VALUE:
-             #refinement_widget = RefinementWidget(self, self.controller)
-             #return refinement_widget.create()
+        elif common_ui_widget_type == ui_constants.REFINEMENT_WIDGET_TYPE_VALUE:
+             refinement_widget = RefinementWidget(self, self.controller)
+             return refinement_widget.create()
 
         else:
             widget = self.widgets.get(common_ui_widget_type)
@@ -563,6 +563,7 @@ class RecoExplorerApp:
             list_of_widgets_in_block = self.build_widgets(
                 block_config.get(ui_constants.BLOCK_CONFIG_WIDGETS_KEY)
             )
+
 
             if block_config.get("show_reset_button", True):
                 list_of_widgets_in_block.append(
@@ -761,6 +762,9 @@ class RecoExplorerApp:
         """
         Calls the actual search function in controller to get results for query
         """
+
+        print("🐥🐥🐥🐥🐥🐥🐥")
+
         self.main_content[:] = [
             pn.Row(
                 pn.indicators.LoadingSpinner(

@@ -1,6 +1,18 @@
 import panel as pn
 from view.widgets.widget import UIWidget
 from view import ui_constants as c
+import logging
+
+# loggin preference
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 class RefinementWidget(pn.Column, UIWidget):
@@ -30,13 +42,13 @@ class RefinementWidget(pn.Column, UIWidget):
         radio_box_group_watcher = self.radio_box_group.param.watch(self.update_buttons, 'value', onlychanged=True,)
         # Register the widget with the controller
         self.controller_instance.register(
-            "item_filter",
+            "reco_filter",
             self.radio_box_group,
             radio_box_group_watcher,
             self.reco_explorer_app_instance.trigger_reco_filter_choice,
         )
 
-        self.radio_box_group.reset_identifier = c.RESET_IDENTIFIER_ITEM_FILTER
+        self.radio_box_group.reset_identifier = c.RESET_IDENTIFIER_RECO_FILTER
 
         self.radio_box_group.is_leaf_widget = True
 
@@ -85,7 +97,6 @@ class RefinementWidget(pn.Column, UIWidget):
         """
         Updates the buttons based on the selected radio option.
         """
-
         if event.new == 'Diversität':
             self.btn1.name = "Weniger Diversität"
             self.btn2.name = "Mehr Diversität"
@@ -108,6 +119,7 @@ class RefinementWidget(pn.Column, UIWidget):
 
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
+
 
     async def button_clicked(self, event):
 
