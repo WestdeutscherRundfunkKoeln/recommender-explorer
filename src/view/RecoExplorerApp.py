@@ -56,9 +56,7 @@ class RecoExplorerApp:
         self.controller = RecommendationController(self.config)
 
         self.widgets = {
-            ui_constants.REFINEMENT_WIDGET_TYPE_VALUE: RefinementWidget(
-                self, self.controller
-            ),
+
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
                 self, self.controller
             ),

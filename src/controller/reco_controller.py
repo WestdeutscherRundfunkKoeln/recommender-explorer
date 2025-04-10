@@ -461,8 +461,6 @@ class RecommendationController:
         else:
             return self._get_reco_items_u2c(start_item, model)
 
-
-    ######################################################################################################
     def enable_all_refinement_button(self):
         radio_box_group = self.components["reco_filter"]["refinementType"]
         if radio_box_group:
@@ -484,9 +482,9 @@ class RecommendationController:
         # Thresholds validation function that will disable the refinement button when there are no more possible results
         # are possible.
 
-        semantic, tag = self.utilities.get('semantic'), self.utilities.get('tag')
-        temporal, diverse = self.utilities.get('temporal'), self.utilities.get('diverse')
-        popular = self.utilities.get('popular')
+        semantic, tag = self.utilities.get('wSem'), self.utilities.get('wTag')
+        temporal, diverse = self.utilities.get('wTime'), self.utilities.get('wDiv')
+        popular = self.utilities.get('wTrendLocal')
 
         weights = [semantic, tag, temporal, diverse, popular]
 
@@ -514,12 +512,6 @@ class RecommendationController:
         # add the previous weights based on the used type
         if refinementType == self.previous_ref_value and current_ref_id == self.previous_ref_id:
             reco_filter["previous_external_ids"] = self.previous_external_ids
-            weights_map = {
-                "Semantic": ["semantic", "tag", "popular", "temporal"],
-                "Diverse": ["diverse"],
-                "Temporal": ["temporal"]
-            }
-
             reco_filter["utilities"] = self.utilities
 
         # if the old type doesn't match the new one "we did switch the refinementType"
@@ -536,18 +528,8 @@ class RecommendationController:
     def refinement_type_widget_response_processor(self, ids, utilities):
         # function to process the results from the PA response.
         # we fetch the weights from the utilities field in the response.
-
-        if set(ids) == set(self.previous_external_ids):
-            print("No change in Ids 💥💥💥💥💥💥💥💥💥💥💥💥 ")
-        else:
-            print("Ids Changed 💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
-
-
         self.previous_external_ids = ids
-
         self.utilities = utilities
-        print("These are the weights recieved 🍎🍎🍎")
-        print(self.utilities)
 
     def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
         """Gets recommended items based on the start item and filters
