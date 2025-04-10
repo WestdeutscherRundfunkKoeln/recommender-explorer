@@ -13,6 +13,7 @@ from exceptions.empty_search_error import EmptySearchError
 from dto.item import ItemDto
 from util.dto_utils import update_from_props, get_primary_idents
 
+#loggin preference
 logger = logging.getLogger(__name__)
 
 

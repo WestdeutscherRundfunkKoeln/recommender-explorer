@@ -1,5 +1,4 @@
 from typing import Any
-
 from dto.item import ItemDto
 from model.rest.nn_seeker_rest import NnSeekerRest
 
@@ -27,13 +26,16 @@ class NnSeekerPaService(NnSeekerRest):
         }
 
     @staticmethod
-    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float]]:
+    def _parse_response(response: dict[str, Any]) -> tuple[list[Any], list[Any], None]:
         recomm_content_ids = []
         nn_dists = []
         for reco in response["recommendations"]:
             nn_dists.append(reco["score"])
             recomm_content_ids.append(reco["asset"]["assetId"])
-        return recomm_content_ids, nn_dists
+
+        utilities = None
+
+        return recomm_content_ids, nn_dists, utilities
 
     def get_max_num_neighbours(self, content_id):
         return self.__max_num_neighbours
