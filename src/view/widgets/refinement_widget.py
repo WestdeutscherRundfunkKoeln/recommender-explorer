@@ -64,6 +64,7 @@ class RefinementWidget(pn.Column, UIWidget):
         # Create the accordion layout
         self.accordion = pn.layout.Accordion()
         self.accordion_with_width = pn.Column(self.accordion, width=285)
+        self.accordion.active = [0]
 
         # The main column to be added into the accordion
         self.col = pn.Column()
