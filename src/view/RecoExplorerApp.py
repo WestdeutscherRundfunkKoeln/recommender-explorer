@@ -1,21 +1,23 @@
 import asyncio
+import functools
 import logging
 import traceback
-import functools
 from typing import Any
-import constants
+
 import panel as pn
+
+import constants
 from controller.reco_controller import RecommendationController
 from exceptions.date_validation_error import DateValidationError
 from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
-from util.ui_utils import retrieve_default_model_accordion
 from util.dto_utils import dto_from_classname
 from util.file_utils import (
     get_client_options,
 )
+from util.ui_utils import retrieve_default_model_accordion
 from view import ui_constants
-from view.widgets.accordion_widget import AccordionWidget
+from view.widgets.accordion_widget import AccordionWidget, AccordionWidgetWithCards
 from view.widgets.date_time_picker_widget import DateTimePickerWidget
 from view.widgets.date_time_quick_select_widget import DateTimeQuickSelectWidget
 from view.widgets.multi_select_widget import MultiSelectionWidget
@@ -24,8 +26,7 @@ from view.widgets.reset_button import ResetButtonWidget
 from view.widgets.slider_widget import SliderWidget
 from view.widgets.text_area_input_widget import TextAreaInputWidget
 from view.widgets.text_field_widget import TextFieldWidget
-from view.widgets.accordion_widget import AccordionWidgetWithCards
-
+from view.widgets.widget import UIWidget
 
 # loggin preference
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ class RecoExplorerApp:
     __in_flight_counter = 0
 
     def __init__(
-        self, config_full_paths: dict[str, str], config: dict[str, str], client: str
+        self, config_full_paths: dict[str, str], config: dict[str, Any], client: str
     ) -> None:
         # basic setup
         self.config = config
@@ -55,7 +56,7 @@ class RecoExplorerApp:
         self.config_full_path = config_full_paths[client]
         self.controller = RecommendationController(self.config)
 
-        self.widgets = {
+        self.widgets: dict[str, UIWidget] = {
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
                 self, self.controller
             ),
@@ -504,35 +505,19 @@ class RecoExplorerApp:
 
     def build_widgets(self, widgets_config):
         widgets_list = []
-        if widgets_config is not None:
-            for widget_config in widgets_config:
-                component_type = widget_config.get(ui_constants.WIDGET_TYPE_KEY, "")
-                component_from_dispatcher = self.build_common_ui_widget_dispatcher(
-                    component_type, widget_config
-                )
-                if component_from_dispatcher is not None:
-                    widgets_list.append(component_from_dispatcher)
-
-                elif ui_constants.ACCORDION_TYPE_VALUE == component_type:
-                    accordion_widget = self.widgets[
-                        ui_constants.ACCORDION_TYPE_VALUE
-                    ].create(widget_config)
-                    widgets_list.append(accordion_widget)
-
-            if widget_config.get(ui_constants.ACCORDION_RESET_BUTTON_KEY):
-                widgets_list.append(
-                    self.widgets[
-                        ui_constants.ACCORDION_TYPE_VALUE
-                    ].create_accordion_reset_buttons(widget_config)
-                )
-
-            else:
-                logger.error("Unknown UI Config Type: " + component_type)
-
-        else:
+        if not widgets_config:
             logger.error(
                 "No UI Widgets are defined in Config File, or key name is wrong"
             )
+            return widgets_list
+
+        for widget_config in widgets_config:
+            component_type: str = widget_config.get(ui_constants.WIDGET_TYPE_KEY, "")
+            component_from_dispatcher = self.build_common_ui_widget_dispatcher(
+                component_type, widget_config
+            )
+            if component_from_dispatcher is not None:
+                widgets_list.append(component_from_dispatcher)
 
         return widgets_list
 
@@ -762,27 +747,32 @@ class RecoExplorerApp:
             )
         ]
         self.pagination_top[:] = []
+
+        self.__in_flight_counter += 1
         try:
-            self.__in_flight_counter += 1
             models, items, config = await asyncio.to_thread(self.controller.get_items)
-            self.__in_flight_counter -= 1
-
-            if self.__in_flight_counter:
-                return
-
-            self.main_content[:] = [
-                self.add_cards_row(models, config, idx, row)
-                for idx, row in enumerate(items)
-            ]
-            self.draw_pagination()
 
         except (EmptySearchError, ModelValidationError) as e:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="warning"))
+            return
         except DateValidationError as e:
             logger.info(str(e))
+            return
         except Exception as e:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="danger"))
             logger.warning(traceback.print_exc())
+            return
+        finally:
+            self.__in_flight_counter -= 1
+
+        if self.__in_flight_counter:
+            return
+
+        self.main_content[:] = [
+            self.add_cards_row(models, config, idx, row)
+            for idx, row in enumerate(items)
+        ]
+        self.draw_pagination()
         self.disablePageButtons()
 
     def add_cards_row(
