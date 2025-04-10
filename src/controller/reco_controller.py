@@ -462,8 +462,6 @@ class RecommendationController:
         else:
             return self._get_reco_items_u2c(start_item, model)
 
-
-    ######################################################################################################
     def enable_all_refinement_button(self):
         radio_box_group = self.components["reco_filter"]["refinementType"]
         if radio_box_group:
