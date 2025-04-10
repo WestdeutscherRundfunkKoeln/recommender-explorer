@@ -56,9 +56,7 @@ class RecoExplorerApp:
         self.controller = RecommendationController(self.config)
 
         self.widgets = {
-            ui_constants.REFINEMENT_WIDGET_TYPE_VALUE: RefinementWidget(
-                self, self.controller
-            ),
+
             ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
                 self, self.controller
             ),
@@ -503,6 +501,7 @@ class RecoExplorerApp:
         Returns:
             widget of common ui widget type, built based on given config
         """
+
         if common_ui_widget_type == ui_constants.RADIO_BOX_TYPE_VALUE:
             radio_box_widget = RadioBoxWidget(self, self.controller)
             return radio_box_widget.create(common_ui_widget_config)

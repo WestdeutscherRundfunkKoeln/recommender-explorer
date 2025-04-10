@@ -3,6 +3,7 @@ from view.widgets.widget import UIWidget
 from view import ui_constants as c
 
 
+
 class RefinementWidget(pn.Column, UIWidget):
 
     def __init__(self, reco_explorer_app_instance, controller_instance):
@@ -10,24 +11,30 @@ class RefinementWidget(pn.Column, UIWidget):
         pn.Column.__init__(self)
         UIWidget.__init__(self, reco_explorer_app_instance, controller_instance)
 
+
+    def create(self) -> pn.Column:
+        """
+        Create and return a panel containing the radio buttons and corresponding buttons for the selected option.
+        """
         # Create radio buttons
         self.radio_box_group = pn.widgets.RadioBoxGroup(
             options=['Ähnlichkeit', 'Diversität', 'Aktualität'],
             value='Ähnlichkeit',  # Default value
-            name = 'refinement_widget',
+            name='refinement_widget',
         )
 
         # Store a reference to the current widget in the radio_box_group
         self.radio_box_group._widget_instance = self
 
         self.radio_box_group.params = {
-            "label": 'refinementType', # must always be named like this to avoid errors in other parts of the code.
+            "label": 'refinementType',  # must always be named like this to avoid errors in other parts of the code.
             "reset_to": 'Ähnlichkeit',
             "direction": ""
         }
 
         # Watch the value change
-        radio_box_group_watcher = self.radio_box_group.param.watch(self.update_buttons, 'value', onlychanged=True,)
+        radio_box_group_watcher = self.radio_box_group.param.watch(self.update_buttons, 'value', onlychanged=True, )
+
         # Register the widget with the controller
         self.controller_instance.register(
             "reco_filter",
@@ -40,7 +47,6 @@ class RefinementWidget(pn.Column, UIWidget):
 
         self.radio_box_group.is_leaf_widget = True
 
-
         self.btn1 = pn.widgets.Button(name='Ähnlicher', width=120)
         self.btn2 = pn.widgets.Button(name='Aktueller', width=120)
 
@@ -51,8 +57,9 @@ class RefinementWidget(pn.Column, UIWidget):
 
         # Create an alert when the button is disabled
         self.alert = pn.pane.Alert("<b> Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>",
-        alert_type="light", styles={"font-size": "11px", "padding_top": "0px","padding_bottom": "0px"
-        ,"text-align": "center"},visible=False,)
+                                   alert_type="light",
+                                   styles={"font-size": "11px", "padding_top": "0px", "padding_bottom": "0px"
+                                       , "text-align": "center"}, visible=False, )
 
         # Create the accordion layout
         self.accordion = pn.layout.Accordion()
@@ -64,10 +71,8 @@ class RefinementWidget(pn.Column, UIWidget):
         # The row that holds the buttons "Ähnlichkeit buttons by default"
         self.row_btn = pn.Row()
 
-    def create(self) -> pn.Column:
-        """
-        Create and return a panel containing the radio buttons and corresponding buttons for the selected option.
-        """
+
+
         self.col.append(self.radio_box_group)
         self.row_btn.append(self.btn1)
         self.row_btn.append(self.btn2)
