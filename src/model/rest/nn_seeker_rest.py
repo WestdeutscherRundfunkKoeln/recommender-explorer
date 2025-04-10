@@ -89,9 +89,9 @@ class NnSeekerRest(NnSeeker):
         return recomm_content_ids, nn_dists, oss_field , utilities
 
     def _post_2_endpoint(self, post_params):
-        print("🦊🦊🦊🦊🦊🦊🦊🦊🦊🦊")
+        print("🦊")
         pprint.pprint(post_params)
-        print("🦊🦊🦊🦊🦊🦊🦊🦊🦊🦊")
+        print("🦊")
 
         retries = Retry(
             connect=self.__retry_connection,

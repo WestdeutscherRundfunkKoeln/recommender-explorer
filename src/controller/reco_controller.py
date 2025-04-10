@@ -529,18 +529,8 @@ class RecommendationController:
     def refinement_type_widget_response_processor(self, ids, utilities):
         # function to process the results from the PA response.
         # we fetch the weights from the utilities field in the response.
-
-        if set(ids) == set(self.previous_external_ids):
-            print("No change in Ids 💥💥💥💥💥💥💥💥💥💥💥💥 ")
-        else:
-            print("Ids Changed 💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
-
-
         self.previous_external_ids = ids
-
         self.utilities = utilities
-        print("These are the weights recieved 🍎🍎🍎")
-        print(self.utilities)
 
     def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
         """Gets recommended items based on the start item and filters
