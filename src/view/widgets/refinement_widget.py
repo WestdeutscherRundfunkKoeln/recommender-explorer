@@ -2,7 +2,13 @@ import panel as pn
 from view.widgets.widget import UIWidget
 from view import ui_constants as c
 
-
+#Refeinement widget
+REFINEMENT_WIDGET_TYPE_VALUE = "refinement_widget"
+REFINEMENT_WIDGET_TOOLTIP = "Sie können zwischen verschiedenen Arten der Empfehlungsgenerierung für einen bestimmten Artikel wechseln und die Dimension des jeweiligen Typs verstärken."
+REFINEMENT_WIDGET_ACCORDION_LABEL = "Empfehlungs-Typ"
+REFINEMENT_WIDGET_ALERT = "<b> Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>"
+DIVERSITY = "Diversität"
+SIMILARITY = "Aktualität"
 
 class RefinementWidget(pn.Column, UIWidget):
 
@@ -53,10 +59,10 @@ class RefinementWidget(pn.Column, UIWidget):
         self.btn1.on_click(self.button_clicked)
         self.btn2.on_click(self.button_clicked)
 
-        self.tooltip_widget = pn.widgets.TooltipIcon(value=c.REFINEMENT_WIDGET_TOOLTIP)
+        self.tooltip_widget = pn.widgets.TooltipIcon(value=REFINEMENT_WIDGET_TOOLTIP)
 
         # Create an alert when the button is disabled
-        self.alert = pn.pane.Alert("<b> Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>",
+        self.alert = pn.pane.Alert(REFINEMENT_WIDGET_ALERT,
                                    alert_type="light",
                                    styles={"font-size": "11px", "padding_top": "0px", "padding_bottom": "0px"
                                        , "text-align": "center"}, visible=False, )
@@ -82,7 +88,7 @@ class RefinementWidget(pn.Column, UIWidget):
         self.col.append(self.row_btn)
         self.col.append(self.alert)  # Add the alert to the UI but keep it hidden
         # Add the main column to the accordion
-        self.accordion.append((c.REFINEMENT_WIDGET_ACCORDION_LABEL, self.col))
+        self.accordion.append((REFINEMENT_WIDGET_ACCORDION_LABEL, self.col))
 
         return pn.Row(self.accordion_with_width,self.tooltip_widget)
 
@@ -92,17 +98,17 @@ class RefinementWidget(pn.Column, UIWidget):
         Updates the buttons based on the selected radio option.
         """
 
-        if event.new == 'Diversität':
-            self.btn1.name = "Weniger Diversität"
-            self.btn2.name = "Mehr Diversität"
-        elif event.new == 'Aktualität':
-            self.btn1.name = "Weniger Aktualität"
-            self.btn2.name = "Mehr Aktualität"
-        else:
-            self.btn1.name = "Ähnlicher"
-            self.btn2.name = "Aktueller"
+        label_map = {
+            DIVERSITY: ("Weniger Diversität", "Mehr Diversität"),
+            SIMILARITY: ("Weniger Aktualität", "Mehr Aktualität")
+        }
 
-         # reset the direction
+        self.btn1.name, self.btn2.name = label_map.get(
+            event.new,
+            ("Ähnlicher", "Aktueller")
+        )
+
+        # reset the direction
         self.radio_box_group.params = {
             "direction": '',
             "label": 'refinementType',

@@ -7,7 +7,6 @@ import math
 import re
 import importlib
 import constants
-import pprint
 from model.sagemaker.clustering_model_client import ClusteringModelClient
 from model.opensearch.base_data_accessor_opensearch import BaseDataAccessorOpenSearch
 from exceptions.config_error import ConfigError

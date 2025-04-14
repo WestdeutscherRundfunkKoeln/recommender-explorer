@@ -1,6 +1,5 @@
 import json
 import logging
-import pprint
 from typing import Any, Callable
 
 from urllib3 import PoolManager, Retry
@@ -89,10 +88,6 @@ class NnSeekerRest(NnSeeker):
         return recomm_content_ids, nn_dists, oss_field , utilities
 
     def _post_2_endpoint(self, post_params):
-        print("🦊")
-        pprint.pprint(post_params)
-        print("🦊")
-
         retries = Retry(
             connect=self.__retry_connection,
             read=self.__retry_reads,
