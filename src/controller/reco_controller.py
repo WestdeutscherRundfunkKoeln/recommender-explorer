@@ -1,13 +1,12 @@
 import collections
 import logging
 import copy
-
+import collections
 import datetime
 import math
 import re
 import importlib
 import constants
-
 from model.sagemaker.clustering_model_client import ClusteringModelClient
 from model.opensearch.base_data_accessor_opensearch import BaseDataAccessorOpenSearch
 from exceptions.config_error import ConfigError
@@ -71,6 +70,19 @@ class RecommendationController:
         self.model_config = ""
         self.user_cluster = []  # refactor once clustering endpoint is better
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
+
+
+        self.mapping_type = {"Ähnlichkeit": "Semantic", "Diversität": "Diverse", "Aktualität": "Temporal"}
+        self.mapping_direction = {
+            "Ähnlicher": "more similar", "Aktueller": "more recent",
+            "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
+            "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"
+        }
+        self.previous_external_ids = []  # previous external IDs globally within the instance
+        self.previous_ref_value = '' # the previous refinement type
+        self.previous_ref_id = '' # the previous ref id
+        self.utilities = [] # the weights that were fetched from the PA-response
+
 
         if not isinstance(self.num_NN, int):
             raise ConfigError(
@@ -281,6 +293,7 @@ class RecommendationController:
 
                 # Find all filters
                 all_chosen_filters = self._get_current_filter_state("reco_filter")
+
                 if len(all_chosen_filters["remove_duplicate"]) > 0:
                     chosen_param = []
                     for item in all_chosen_filters["remove_duplicate"]:
@@ -307,6 +320,7 @@ class RecommendationController:
                 all_items.append(item_row)
                 continue
         return [model_info["display_name"]], all_items, self.model_config
+
 
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
@@ -447,6 +461,76 @@ class RecommendationController:
         else:
             return self._get_reco_items_u2c(start_item, model)
 
+    def enable_all_refinement_button(self):
+        radio_box_group = self.components["reco_filter"]["refinementType"]
+        if radio_box_group:
+            refinement_widget = radio_box_group._widget_instance
+            refinement_widget.enable_all_buttons()
+
+    def enable_disable_refinement_button(self):
+        radio_box_group = self.components["reco_filter"]["refinementType"]
+        if radio_box_group:
+            refinement_widget = radio_box_group._widget_instance
+            refinement_widget.disable_active_button()
+
+    def reset_refinement_state(self):
+        self.previous_external_ids = []
+        self.previous_ref_value = ""
+        self.utilities = {}
+
+    def checkThershold(self):
+        # Thresholds validation function that will disable the refinement button when there are no more possible results
+        # are possible.
+
+        semantic, tag = self.utilities.get('wSem'), self.utilities.get('wTag')
+        temporal, diverse = self.utilities.get('wTime'), self.utilities.get('wDiv')
+        popular = self.utilities.get('wTrendLocal')
+
+        weights = [semantic, tag, temporal, diverse, popular]
+
+        if (
+                any(weight == 0 for weight in weights if weight is not None) or
+                any(weight == 1 for weight in weights if weight is not None) or
+                (semantic is not None and tag is not None and semantic + tag == 1)
+        ):
+            self.enable_disable_refinement_button()
+
+    def refinement_type_widget_request_builder(self, reco_filter, current_ref_id):
+
+        # function to add additional fields to the filter when the refinementType Widget is being used.
+        # this includes adding - older ids "if possible" - weights "if possible"
+        # - refinement type - refinement direction
+        reco_filter["refinementType"] = self.mapping_type.get(reco_filter.get("refinementType"),
+                                                              reco_filter.get("refinementType"))
+        reco_filter["refinementDirection"] = self.mapping_direction.get(reco_filter.get("refinementDirection"),
+                                                                        reco_filter.get("refinementDirection"))
+
+        refinementType = reco_filter["refinementType"]
+
+        # if the old type matches the new one "we didn't switch the refinementType" and we still use the same ref_id
+        # add the previous ids from the last request
+        # add the previous weights based on the used type
+        if refinementType == self.previous_ref_value and current_ref_id == self.previous_ref_id:
+            reco_filter["previous_external_ids"] = self.previous_external_ids
+            reco_filter["utilities"] = self.utilities
+
+        # if the old type doesn't match the new one "we did switch the refinementType"
+        # of if we're making the first request
+        else:
+            self.reset_refinement_state()
+            self.enable_all_refinement_button()
+
+        self.previous_ref_value = refinementType
+        self.previous_ref_id = current_ref_id
+        # return the new filters
+        return reco_filter, refinementType
+
+    def refinement_type_widget_response_processor(self, ids, utilities):
+        # function to process the results from the PA response.
+        # we fetch the weights from the utilities field in the response.
+        self.previous_external_ids = ids
+        self.utilities = utilities
+
     def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
         """Gets recommended items based on the start item and filters
 
@@ -458,9 +542,22 @@ class RecommendationController:
         reco_filter = self._get_current_filter_state("reco_filter")
         logger.warning("calling " + str(self.reco_accessor))
 
-        kidxs, nn_dists, oss_field = self.reco_accessor.get_k_NN(
+
+        # Are we using a refinementType Widget? if so then add more filters
+        if "refinementType" in reco_filter and "refinementDirection" in reco_filter:
+            reco_filter, selected_endpoint = self.refinement_type_widget_request_builder(reco_filter, start_item.id)
+            # set up the endpoint
+            self.reco_accessor.set_model_config(model, selected_endpoint)
+
+
+        kidxs, nn_dists, oss_field, utilities = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
+
+        if "refinementType" in reco_filter and "refinementDirection" in reco_filter:
+            self.refinement_type_widget_response_processor(kidxs, utilities)
+            self.enable_all_refinement_button()
+            self.checkThershold()
 
         if oss_field != "id":
             _, db_ident = get_primary_idents(self.config)
@@ -530,7 +627,7 @@ class RecommendationController:
     def _get_data_accessor_method(self, active_components):
         """Gets a accessor method from the active components.
 
-        Every component should contain a accessor_method in params but
+        Every component should contain an accessor_method in params but
         for an active component there should be no different accessor methods
 
         :param active_components:
@@ -646,6 +743,9 @@ class RecommendationController:
         filter_state = collections.defaultdict(dict)
         for component in self.components[filter_group].values():
             filter_state[component.params["label"]] = component.value
+            # if the "refinementType" label exists, then also add the refinementDirection attribute
+            if component.params["label"] == "refinementType":
+                filter_state["refinementDirection"] = component.params["direction"]
         return filter_state
 
     def _get_model_type_by_model_key(self, model_key):
@@ -661,8 +761,8 @@ class RecommendationController:
             for label, component in self.components[widget_group].items():
                 if self.watchers[widget_group].get(label):
                     component.param.unwatch(self.watchers[widget_group][label])
-                component.value = component.params["reset_to"]
             for label, component in self.components[widget_group].items():
+                component.value = component.params["reset_to"]
                 if self.callbacks[widget_group].get(label):
                     component.param.watch(self.callbacks[widget_group][label], "value")
 

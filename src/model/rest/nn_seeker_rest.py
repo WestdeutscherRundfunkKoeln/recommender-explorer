@@ -45,14 +45,14 @@ class NnSeekerRest(NnSeeker):
 
     def get_k_NN(
         self, item: ItemDto, k: int, nn_filter: dict[str, Any] | None
-    ) -> tuple[list, list, str]:
+    ) -> tuple[list[str], list[float], Any, dict[Any, Any]]:
         return self._get_recos(
             self._get_request_params_c2c, UnknownItemError, item, k, nn_filter
         )
 
     def get_recos_user(
         self, user: UserItemDto, n_recos: int, nn_filter: dict[str, Any] | None = None
-    ) -> tuple[list, list, str]:
+    ) -> tuple[list[str], list[float], Any, dict[Any, Any]]:
         return self._get_recos(
             self._get_request_params_u2c, UnknownUserError, user, n_recos, nn_filter
         )
@@ -67,7 +67,7 @@ class NnSeekerRest(NnSeeker):
         item: ItemDto,
         k: int,
         nn_filter: dict[str, Any] | None,
-    ) -> tuple[list, list, str]:
+    ) -> tuple[list[str], list[float], Any, dict[Any, Any]]:
         _, oss_field = get_primary_idents(self.__config)
 
         params = self._build_request(request_params_builder, item, oss_field, nn_filter)
@@ -80,8 +80,12 @@ class NnSeekerRest(NnSeeker):
                 {},
             )
 
-        recomm_content_ids, nn_dists = self._parse_response(pa_recos)
-        return recomm_content_ids, nn_dists, oss_field
+
+        result = self._parse_response(pa_recos)
+
+        recomm_content_ids, nn_dists, utilities = result
+
+        return recomm_content_ids, nn_dists, oss_field , utilities
 
     def _post_2_endpoint(self, post_params):
         retries = Retry(
@@ -157,6 +161,19 @@ class NnSeekerRest(NnSeeker):
             selected_params["excludedIds"] = (
                 nn_filter["blacklist_externalid"].replace(" ", "").split(",")
             )
+
+        if "refinementDirection" in nn_filter:
+            selected_params["refinementDirection"] = nn_filter["refinementDirection"]
+
+        if "refinementType" in nn_filter:
+            selected_params["refinementType"] = nn_filter["refinementType"]
+
+        if "previous_external_ids" in nn_filter:
+            selected_params["previousExternalIds"] = nn_filter["previous_external_ids"]
+
+        if "utilities" in nn_filter:
+            selected_params["utilities"] = nn_filter["utilities"]
+
         weights = [
             {"type": w.removeprefix("weight_"), "weight": nn_filter[w]}
             for w in WEIGHTS
@@ -172,14 +189,31 @@ class NnSeekerRest(NnSeeker):
         }
         if utilities:
             selected_params["utilities"] = utilities
+
         return selected_params
 
-    def set_model_config(self, model_config):
-        self._endpoint = model_config["endpoint"]
-        self._model_props = model_config["properties"]
+    def set_model_config(self, model_config, selected_endpoint=None):
+        self._endpoint = model_config["endpoint"].split("|")
+        if selected_endpoint is None:
+            self._endpoint = self._endpoint[0]
+            self._model_props = model_config["properties"]
+        if selected_endpoint:
+            endpoint_mapping = {}
+            # Dynamically assign endpoints based on their content
+            for endpoint in  self._endpoint:
+                if "similar" in endpoint:
+                    endpoint_mapping["Semantic"] = endpoint
+                elif "diverse" in endpoint:
+                    endpoint_mapping["Diverse"] = endpoint
+                elif "recent" in endpoint:
+                    endpoint_mapping["Temporal"] = endpoint
+
+            # Assign the correct endpoint based on selected_endpoint
+            self._endpoint = endpoint_mapping.get(selected_endpoint, None)
+
 
     @staticmethod
-    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float]]:
+    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float], dict[Any, Any]]:
         raise NotImplementedError()
 
     def _get_request_params_c2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
