@@ -601,16 +601,15 @@
         "type"
       ],
       "additionalProperties": false
-    }
-  },
-  "refinement_widget": {
-    "type": "object",
-    "properties": {
-      "type": {
-        "const": "refinement_widget"
-      }
     },
-    "required": ["type"],
-    "additionalProperties": false
-  }
-}
+    "refinement_widget": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "refinement_widget"
+        }
+      },
+      "required": ["type"],
+      "additionalProperties": false
+    }
+}}
