@@ -550,9 +550,10 @@ class RecommendationController:
             self.reco_accessor.set_model_config(model, selected_endpoint)
 
 
-        kidxs, nn_dists, oss_field, utilities = self.reco_accessor.get_k_NN(
+        kidxs, nn_dists, oss_field, *rest = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
+        utilities = rest[0] if rest else None
 
         if "refinementType" in reco_filter and "refinementDirection" in reco_filter:
             self.refinement_type_widget_response_processor(kidxs, utilities)
