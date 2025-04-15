@@ -63,6 +63,9 @@
                     },
                     {
                       "$ref": "#/$defs/slider"
+                    },
+                    {
+                      "$ref": "#/$defs/refinement_widget"
                     }
                   ]
                 }
@@ -599,5 +602,15 @@
       ],
       "additionalProperties": false
     }
+  },
+  "refinement_widget": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "const": "refinement_widget"
+      }
+    },
+    "required": ["type"],
+    "additionalProperties": false
   }
 }
