@@ -58,7 +58,7 @@ class EmbedText:
                     If no key is provided, all models across all keys will be loaded.
         """
         self.config = config
-        self.model_configs = None
+        self.model_configs = {}
         self.models = {}
         self.bucket = None
 
@@ -78,10 +78,10 @@ class EmbedText:
 
         for key, configuration in self.config[MODELS_KEY].items():
             if C2C_MODELS_KEY in configuration:
-                self.model_configs = (configuration[C2C_MODELS_KEY])
+                self.model_configs.update(configuration[C2C_MODELS_KEY])
 
         for model, model_config in self.model_configs.items():
-            if model_config["endpoint"].startswith("opensearch://"):
+            if "model_path" in model_config and model_config["model_path"] not in [None, ""]:
                 bucket_path = f'{self.config["bucket_path"]}/{model_config["model_path"].split("/")[-1]}.zip'
                 local_path = (
                     (pathlib.Path(self.config["local_model_path"]) / bucket_path)
