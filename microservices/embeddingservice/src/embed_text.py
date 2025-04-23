@@ -81,37 +81,39 @@ class EmbedText:
                 self.model_configs.update(configuration[C2C_MODELS_KEY])
 
         for model, model_config in self.model_configs.items():
-            if "model_path" in model_config and model_config["model_path"] not in [None, ""]:
-                bucket_path = f'{self.config["bucket_path"]}/{model_config["model_path"].split("/")[-1]}.zip'
-                local_path = (
-                    (pathlib.Path(self.config["local_model_path"]) / bucket_path)
-                    .as_posix()
-                    .split(".")[0]
-                )
-                if not os.path.exists(local_path):
-                    logger.info(
-                        "Model %s not found at %s",
-                        model_config["model_path"],
-                        local_path,
-                    )
-                    if self.bucket:
-                        download_model(
-                            bucket=self.bucket,
-                            model_zip=bucket_path,
-                            local_path=local_path,
-                        )
-                load_path = (
-                    local_path
-                    if os.path.exists(local_path)
-                    else model_config["model_path"]
-                )
+            if not model_config.get("model_path"):
+                continue
 
-                self.models[model_config["model_name"]] = SentenceTransformer(
-                    load_path,
-                    device="cpu",
-                    cache_folder=self.config["local_model_path"],
-                    trust_remote_code=True,
+            bucket_path = f'{self.config["bucket_path"]}/{model_config["model_path"].split("/")[-1]}.zip'
+            local_path = (
+                (pathlib.Path(self.config["local_model_path"]) / bucket_path)
+                .as_posix()
+                .split(".")[0]
+            )
+            if not os.path.exists(local_path):
+                logger.info(
+                    "Model %s not found at %s",
+                    model_config["model_path"],
+                    local_path,
                 )
+                if self.bucket:
+                    download_model(
+                        bucket=self.bucket,
+                        model_zip=bucket_path,
+                        local_path=local_path,
+                    )
+            load_path = (
+                local_path
+                if os.path.exists(local_path)
+                else model_config["model_path"]
+            )
+
+            self.models[model_config["model_name"]] = SentenceTransformer(
+                load_path,
+                device="cpu",
+                cache_folder=self.config["local_model_path"],
+                trust_remote_code=True,
+            )
 
     def embed_text(self, embed_text: str, models_to_use: list[str] | None):
         response: dict[str, str | list[float]] = {
