@@ -89,18 +89,7 @@ class RecommendationController():
             }
         }
 
-
         self.reset_refinement_state()
-
-
-
-
-
-
-
-
-
-
 
         if not isinstance(self.num_NN, int):
             raise ConfigError(
@@ -479,12 +468,6 @@ class RecommendationController():
         else:
             return self._get_reco_items_u2c(start_item, model)
 
-
-
-
-
-
-
     def enable_all_refinement_button(self):
         radio_box_group = self.components["reco_filter"]["refinementType"]
         if radio_box_group:
@@ -520,11 +503,8 @@ class RecommendationController():
             self.enable_disable_refinement_button()
 
     def refinement_type_widget_request_builder(self, reco_filter, current_ref_id):
-
         # function to add additional fields to the filter when the refinementType Widget is being used.
         # this includes adding - older ids "if possible" - default weights"
-        # - refinement direction
-
         refinementType = reco_filter['refinementType']
         reco_filter["utilities"] = [{"utility": key, "weight": value}
                                      for key, value in self.weights_by_type.get(refinementType, {}).items()]
@@ -548,20 +528,16 @@ class RecommendationController():
         self.previous_ref_value = refinementType
         self.previous_ref_id = current_ref_id
 
-
         # return the new filters
         return reco_filter
 
     def refinement_type_widget_response_processor(self, ids, utilities):
         # function to process the results from the PA response.
-        # we fetch the weights from the utilities field in the response.
         self.previous_external_ids = ids
         self.utilities = utilities
 
-
     def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
         """Gets recommended items based on the start item and filters
-
         :param start_item: The start item (reference item) for which reco items are searched
         :param model: Config of models from the configuration yaml
         :return:

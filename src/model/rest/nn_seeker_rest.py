@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 RequestParamsBuilder = Callable[[ItemDto, str], dict[str, Any]]
 
-
 class NnSeekerRest(NnSeeker):
     def __init__(self, config, max_num_neighbours=16):
         self.__max_num_neighbours = max_num_neighbours
@@ -64,7 +63,6 @@ class NnSeekerRest(NnSeeker):
                 {},
             )
 
-
         result = self._parse_response(pa_recos)
 
         recomm_content_ids, nn_dists, utilities = result
@@ -79,10 +77,6 @@ class NnSeekerRest(NnSeeker):
             backoff_factor=self.__backoff_factor,
         )
         http = PoolManager(retries=retries)
-
-        print("🦊🦊🦊🦊🦊🦊🦊")
-        print(json.dumps(post_params, indent=4))
-        print("🦊🦊🦊🦊🦊🦊🦊")
 
         logger.info(
             "calling [" + self._endpoint + "] with params " + json.dumps(post_params)
