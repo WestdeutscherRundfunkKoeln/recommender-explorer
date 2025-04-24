@@ -21,7 +21,7 @@ class SliderWidget(UIWidget):
             width=c.FILTER_WIDTH,
         )
         slider.params = {
-            "label": config.get(c.SLIDER_LABEL_KEY, "relativerangefilter_duration"),
+            "label": config.get(c.SLIDER_LABEL_KEY, "maxDurationFactor_duration"),
             "reset_to": config.get(c.SLIDER_START_KEY, 0),
         }
 

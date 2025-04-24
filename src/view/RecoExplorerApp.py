@@ -53,7 +53,7 @@ class RecoExplorerApp:
         self.client = client
         self.config_full_paths = config_full_paths
         self.config_full_path = config_full_paths[client]
-        self.controller = RecommendationController(self.config)
+        self.controller = RecommendationController(self.config, self.client)
 
         self.widgets = {
 
@@ -774,7 +774,8 @@ class RecoExplorerApp:
 
         self.__in_flight_counter += 1
         try:
-            models, items, config = await asyncio.to_thread(self.controller.get_items)
+            models, items, config = await asyncio.to_thread(lambda: self.controller.get_items())
+
 
         except (EmptySearchError, ModelValidationError) as e:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="warning"))
