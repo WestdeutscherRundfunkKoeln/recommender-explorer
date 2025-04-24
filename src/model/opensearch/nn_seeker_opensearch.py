@@ -253,6 +253,9 @@ class NnSeekerOpenSearch(NnSeeker):
 
             if isinstance(value, list):
                 value = value[0]
+            print("🪽🪽🪽🪽🪽🪽🪽🪽🪽")
+            print(label)
+            print("🪽🪽🪽🪽🪽🪽🪽🪽🪽")
             action, actor = label.split("_")
 
 

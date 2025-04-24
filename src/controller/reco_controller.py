@@ -786,7 +786,7 @@ class RecommendationController():
                 filter_state[component.params["label"]] = component.value
 
         # Apply the restructuring step
-        if self.used_client == "wdr_pa" or "br":
+        if self.used_client in ("wdr_pa", "br"):
             filter_state = self._restructure_filter_state(filter_state)
 
         return filter_state
