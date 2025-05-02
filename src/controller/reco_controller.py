@@ -38,7 +38,7 @@ class RecommendationController():
         "show": "showId",
     }
 
-    def __init__(self, config, current_client):
+    def __init__(self, config, current_client: str):
         self.config = config
         self.used_client = current_client
         self.item_accessor = BaseDataAccessorOpenSearch(config)
@@ -492,14 +492,13 @@ class RecommendationController():
     def checkThershold(self):
         # Thresholds validation function that will disable the refinement button when there are no more possible results
         # are possible.
+        weights = [(u["utility"], u["weight"]) for u in self.utilities]
+        # Extract weights for "semanticWeight" and "tagWeight"
+        semantic_weight = next((weight for utility, weight in weights if utility == "semanticWeight"), 0)
+        tag_weight = next((weight for utility, weight in weights if utility == "tagWeight"), 0)
 
-        utility_map = {u["utility"]: u["weight"] for u in self.utilities or []}
-        weights = [utility_map.get(key) for key in
-                   ["semanticWeight", "tagWeight", "timeWeight", "diverseWeight", "localTrendWeight"]]
-
-        if any(weight in {0, 1} for weight in weights if weight is not None) or (
-                utility_map.get("semanticWeight") and utility_map.get("tagWeight") and utility_map["semanticWeight"] +
-                utility_map["tagWeight"] == 1):
+        # Check if any weight is 0 or 1, or if the sum of "semanticWeight" and "tagWeight" is 1
+        if any(weight in {0, 1} for _, weight in weights) or (semantic_weight + tag_weight == 1):
             self.enable_disable_refinement_button()
 
     def refinement_type_widget_request_builder(self, reco_filter, current_ref_id):
@@ -773,7 +772,7 @@ class RecommendationController():
         keywords = ["beitrag", "audio", "video"]
 
         for key in list(filter_state.keys()):
-            if any(word in key.lower() for word in keywords):
+            if key in keywords:
                 value = filter_state.pop(key)
                 if value != 0:  # Only add non-zero values
                     weights.append({
@@ -787,8 +786,7 @@ class RecommendationController():
 
         # Move valid flat keys into "filter", excluding "refinementType"
         flat_keys = {}
-        for key in list(filter_state.keys()):
-            value = filter_state[key]
+        for key, value in filter_state.items():
             if key != "refinementType" and not isinstance(value, (dict, list)) and value not in (0, ""):
                 flat_keys[key] = filter_state.pop(key)
 

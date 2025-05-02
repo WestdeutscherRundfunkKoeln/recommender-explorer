@@ -127,17 +127,13 @@ class NnSeekerRest(NnSeeker):
         if not nn_filter:
             return {}
 
-        selected_params = {
-            "includedCategories": ",".join(nn_filter["editorialCategories"])
-            if nn_filter.get("editorialCategories")
-            else None,
-            "filter": nn_filter.get("filter"),
-            "refinement": nn_filter.get("refinement"),
-            "utilities": nn_filter.get("utilities"),
-            "weights": nn_filter.get("weights"),
-        }
+        result = nn_filter.copy()
 
-        return {k: v for k, v in selected_params.items() if v is not None}
+        editorial = result.pop("editorialCategories", None)
+        if editorial:
+            result["includedCategories"] = ",".join(editorial)
+
+        return result
 
     def set_model_config(self, model_config):
         self._endpoint = model_config["endpoint"]

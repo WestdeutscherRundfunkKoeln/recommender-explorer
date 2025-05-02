@@ -774,7 +774,7 @@ class RecoExplorerApp:
 
         self.__in_flight_counter += 1
         try:
-            models, items, config = await asyncio.to_thread(lambda: self.controller.get_items())
+            models, items, config = await asyncio.to_thread(self.controller.get_items)
 
 
         except (EmptySearchError, ModelValidationError) as e:
