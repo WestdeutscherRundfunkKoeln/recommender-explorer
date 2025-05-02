@@ -743,22 +743,21 @@ class RecommendationController():
     def _get_current_filter_state(self, filter_group):
         filter_state = collections.defaultdict(dict)
         for component in self.components[filter_group].values():
-            # if the "refinementType" label exists, then also add the refinementDirection attribute
-            if component.params["label"] == "refinementType":
-                # Translate refinement type using the mapping dictionary
-                refinement_type = self.mapping_type.get(component.value, component.value)
-                filter_state["refinementType"] = refinement_type  # Always added to top-level
-
-                direction = component.params.get("direction")
-                if direction:
-                    refinement_direction = self.mapping_direction.get(direction, direction)
-                    if refinement_direction == "more similar" and self.used_client == "wdr_pa":
-                        refinement_direction = "more similar embeddings"
-                    filter_state["refinement"] = {"direction": refinement_direction}
-
-
-            else:
+            # Skip non-refinementType components early
+            if component.params["label"] != "refinementType":
                 filter_state[component.params["label"]] = component.value
+                continue
+
+            # Handle refinementType
+            refinement_type = self.mapping_type.get(component.value, component.value)
+            filter_state["refinementType"] = refinement_type  # Always added to top-level
+
+            direction = component.params.get("direction")
+            if direction:
+                refinement_direction = self.mapping_direction.get(direction, direction)
+                if refinement_direction == "more similar" and self.used_client == "wdr_pa":
+                    refinement_direction = "more similar embeddings"
+                filter_state["refinement"] = {"direction": refinement_direction}
 
         # Apply the restructuring step
         if self.used_client in ("wdr_pa", "br"):
