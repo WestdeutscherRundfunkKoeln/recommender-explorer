@@ -47,6 +47,18 @@ def download_model(
     shutil.unpack_archive(zip_path, local_path)
     logging.info("Download model %s to %s -> sucessfull", model_zip, local_path)
 
+def delete_special_tokens(
+        text: str,
+        special_tokens: dict
+) -> str:
+    """
+    Remove tokenizers' special tokens from the output text.
+    """
+    for purpose, token in special_tokens.items():
+        if purpose in ['bos_token', 'eos_token', 'sep_token', 'pad_token', 'cls_token', 'mask_token']:
+            if token in text:
+                text = text.replace(token, "")
+    return text[:text.rfind(".")+1].strip() if text.rfind(".") != -1 else text.strip()
 
 class EmbedText:
     def __init__(self, config):
@@ -61,6 +73,7 @@ class EmbedText:
         self.model_configs = {}
         self.models = {}
         self.bucket = None
+        self.models_max_length = {}
 
         # Initialize the bucket for downloading models, if needed
         if sa := self.config.get("service_account"):
@@ -115,7 +128,10 @@ class EmbedText:
                 trust_remote_code=True,
             )
 
-    def embed_text(self, embed_text: str, models_to_use: list[str] | None):
+            self.models_max_length[model_config["model_name"]] = self.models[model_config["model_name"]].tokenizer.model_max_length
+
+
+    def embed_text(self, embed_text: str, return_embed_text: bool, models_to_use: list[str] | None):
         response: dict[str, str | list[float]] = {
             "embedTextHash": sha256(embed_text.encode("utf-8")).hexdigest()
         }
@@ -127,9 +143,23 @@ class EmbedText:
             if model in self.models:
                 logger.info("Embedding text with model %s", model)
                 start_encode = datetime.datetime.now()
-                response[model] = cast(
-                    ndarray, self.models[model].encode(embed_text)
-                ).tolist()
+                
+                if return_embed_text:
+                    response[model] = dict()
+                    response[model]["embedded_text"] = delete_special_tokens(
+                        text = self.models[model].tokenizer.decode(
+                            self.models[model].tokenizer.encode(embed_text)[:self.models_max_length[model]]
+                        ),
+                        special_tokens = self.models[model].tokenizer.special_tokens_map
+                    )
+                    response[model]["embedding"] = cast(
+                        ndarray, self.models[model].encode(embed_text)
+                    ).tolist()
+                else:
+                    response[model] = cast(
+                        ndarray, self.models[model].encode(embed_text)
+                    ).tolist()
+
                 end_encode = datetime.datetime.now()
                 call_duration_encode = (
                     end_encode - start_encode

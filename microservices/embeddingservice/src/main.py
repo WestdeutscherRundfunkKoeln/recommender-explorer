@@ -38,7 +38,7 @@ def health_check():
 
 @router.post("/embedding")
 def get_embedding(data: EmbeddingRequest):
-    return text_embedder.embed_text(data.embedText, data.models)
+    return text_embedder.embed_text(data.embedText, data.return_embed_text, data.models)
 
 
 @router.post("/add-embedding-to-doc")
