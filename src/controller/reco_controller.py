@@ -1,4 +1,6 @@
-import collections
+from controller.strategy.BrClientStrategy import BrClientStrategy
+from controller.strategy.WdrPaClientStrategy import WdrPaClientStrategy
+from controller.strategy.DefaultClientStrategy import DefaultClientStrategy
 import logging
 import copy
 import collections
@@ -40,7 +42,11 @@ class RecommendationController():
 
     def __init__(self, config, current_client: str):
         self.config = config
-        self.used_client = current_client
+        self.strategy = {
+            "br": BrClientStrategy(),
+            "wdr_pa": WdrPaClientStrategy()
+        }.get(current_client, DefaultClientStrategy())
+
         self.item_accessor = BaseDataAccessorOpenSearch(config)
         if constants.MODEL_CONFIG_U2C in config:
             self.user_cluster_accessor = ClusteringModelClient(config)
@@ -73,20 +79,6 @@ class RecommendationController():
             "Ähnlicher": "more similar", "Aktueller": "more recent",
             "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
             "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"
-        }
-
-        # Define all weights by type and client
-        self.weights_options = {
-            "wdr_pa": {
-                "Semantic": {"semanticWeight": 0.35, "timeWeight": 0.2},
-                "Diverse": {"diversityWeight": 0.7, "timeWeight": 0.2},
-                "Temporal": {"timeWeight": 0.5}
-            },
-            "default": {
-                "Semantic": {"semanticWeight": 0.35, "tagWeight": 0.35, "timeWeight": 0.2, "localTrendWeight": 0.1},
-                "Diverse": {"diversityWeight": 0.7, "timeWeight": 0.2, "localTrendWeight": 0.1},
-                "Temporal": {"timeWeight": 0.5, "localTrendWeight": 0.5}
-            }
         }
 
         self.reset_refinement_state()
@@ -482,8 +474,7 @@ class RecommendationController():
 
     def reset_refinement_state(self):
         # Choose based on client
-        client_key = "wdr_pa" if self.used_client == "wdr_pa" else "default"
-        self.weights_by_type = self.weights_options[client_key]
+        self.weights_by_type = self.strategy.get_weights_by_type()
         self.previous_external_ids = []  # previous external IDs globally within the instance
         self.previous_ref_value = '' # the previous refinement type
         self.previous_ref_id = '' # the previous ref id
@@ -492,13 +483,13 @@ class RecommendationController():
     def checkThershold(self):
         # Thresholds validation function that will disable the refinement button when there are no more possible results
         # are possible.
-        weights = [(u["utility"], u["weight"]) for u in self.utilities]
+        weights = {u["utility"]: u["weight"] for u in self.utilities}
         # Extract weights for "semanticWeight" and "tagWeight"
-        semantic_weight = next((weight for utility, weight in weights if utility == "semanticWeight"), 0)
-        tag_weight = next((weight for utility, weight in weights if utility == "tagWeight"), 0)
+        semantic_weight = weights.get("semanticWeight", 0)
+        tag_weight = weights.get("tagWeight", 0)
 
         # Check if any weight is 0 or 1, or if the sum of "semanticWeight" and "tagWeight" is 1
-        if any(weight in {0, 1} for _, weight in weights) or (semantic_weight + tag_weight == 1):
+        if any(weight in {0, 1} for weight in weights.values()) or (semantic_weight + tag_weight == 1):
             self.enable_disable_refinement_button()
 
     def refinement_type_widget_request_builder(self, reco_filter, current_ref_id):
@@ -549,6 +540,7 @@ class RecommendationController():
         if "refinementType" in reco_filter:
             self.refinement_type_widget_request_builder(reco_filter, start_item.id)
             self.reco_accessor.set_model_config(model)
+
 
         kidxs, nn_dists, oss_field, *rest = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
@@ -754,14 +746,12 @@ class RecommendationController():
 
             direction = component.params.get("direction")
             if direction:
-                refinement_direction = self.mapping_direction.get(direction, direction)
-                if refinement_direction == "more similar" and self.used_client == "wdr_pa":
-                    refinement_direction = "more similar embeddings"
+                mapped_direction = self.mapping_direction.get(direction,direction)
+                refinement_direction = self.strategy.map_refinement_direction(mapped_direction)
                 filter_state["refinement"] = {"direction": refinement_direction}
 
         # Apply the restructuring step
-        if self.used_client in ("wdr_pa", "br"):
-            filter_state = self._restructure_filter_state(filter_state)
+        filter_state = self.strategy.restructure_filter_state(filter_state)
 
         return filter_state
 
