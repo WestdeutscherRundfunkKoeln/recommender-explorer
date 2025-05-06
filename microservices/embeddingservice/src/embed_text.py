@@ -131,7 +131,7 @@ class EmbedText:
             self.models_max_length[model_config["model_name"]] = self.models[model_config["model_name"]].tokenizer.model_max_length
 
 
-    def embed_text(self, embed_text: str, return_embed_text: bool, models_to_use: list[str] | None):
+    def embed_text(self, embed_text: str, models_to_use: list[str] | None, return_embed_text = False):
         response: dict[str, str | list[float]] = {
             "embedTextHash": sha256(embed_text.encode("utf-8")).hexdigest()
         }
