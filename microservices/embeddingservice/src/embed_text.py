@@ -47,17 +47,12 @@ def download_model(
     shutil.unpack_archive(zip_path, local_path)
     logging.info("Download model %s to %s -> sucessfull", model_zip, local_path)
 
-def delete_special_tokens(
+def cut_to_full_sentence(
         text: str,
-        special_tokens: dict
 ) -> str:
     """
-    Remove tokenizers' special tokens from the output text.
+    Cut off the text at the last full sentence.
     """
-    for purpose, token in special_tokens.items():
-        if purpose in ['bos_token', 'eos_token', 'sep_token', 'pad_token', 'cls_token', 'mask_token']:
-            if token in text:
-                text = text.replace(token, "")
     return text[:text.rfind(".")+1].strip() if text.rfind(".") != -1 else text.strip()
 
 class EmbedText:
@@ -146,12 +141,16 @@ class EmbedText:
                 
                 if return_embed_text:
                     response[model] = dict()
-                    response[model]["embedded_text"] = delete_special_tokens(
-                        text = self.models[model].tokenizer.decode(
-                            self.models[model].tokenizer.encode(embed_text)[:self.models_max_length[model]]
-                        ),
-                        special_tokens = self.models[model].tokenizer.special_tokens_map
-                    )
+                    response[model]["embedded_text"] = cut_to_full_sentence(
+                            self.models[model].tokenizer.decode(
+                                self.models[model].tokenizer(
+                                    embed_text,
+                                    max_length=self.models_max_length[model],
+                                    truncation=True,
+                                    add_special_tokens=False
+                                )['input_ids']
+                            )
+                        )
                     response[model]["embedding"] = cast(
                         ndarray, self.models[model].encode(embed_text)
                     ).tolist()
