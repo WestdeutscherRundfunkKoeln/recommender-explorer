@@ -1,4 +1,14 @@
 u2c_config:
   clustering_models:
-    - model5
-    - model6
+    model5:
+      display_name: "Model 5"
+      handler: "handler5"
+      endpoint: "endpoint5"
+      content_type: "type5"
+      display_in_reco_explorer: true
+    model6:
+      display_name: "Model 6"
+      handler: "handler6"
+      endpoint: "endpoint6"
+      content_type: "type6"
+      display_in_reco_explorer: true

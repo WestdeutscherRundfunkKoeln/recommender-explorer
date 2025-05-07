@@ -1,4 +1,14 @@
 c2c_config:
   c2c_models:
-    - model1
-    - model2
+    model1:
+      display_name: "Model 1"
+      handler: "handler1"
+      endpoint: "endpoint1"
+      content_type: "type1"
+      display_in_reco_explorer: true
+    model2:
+      display_name: "Model 2"
+      handler: "handler2"
+      endpoint: "endpoint2"
+      content_type: "type2"
+      display_in_reco_explorer: true

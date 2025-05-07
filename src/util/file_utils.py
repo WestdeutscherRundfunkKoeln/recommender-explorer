@@ -11,6 +11,9 @@ from envyaml import EnvYAML
 import constants
 from exceptions.config_error import ConfigError
 from view import ui_constants
+from src.util.dataclasses.setup_configuration_data_class import SetupConfiguration
+from src.util.dataclasses.model_configuration_data_class import ModelConfiguration
+from src.util.dataclasses.opensearch_configuration_data_class import OpenSearchConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -194,58 +197,49 @@ def _get_model_config_from_endpoint(config: dict[str, str]) -> dict[str, Any]:
             {"response_text": response.text}
         )
 
+def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
+    local_setup_config = SetupConfiguration.from_dict(config)
+    logger.info(f"Model Configuration and Opensearch Index from local config: ",local_setup_config)
 
-def load_model_configuration(config: dict[str, str]) -> dict[str, str | None] | Any:
-    """
-    Parses the model configuration from the input configuration dictionary or requests configuration
-    from an external endpoint. Returns a dictionary containing model-specific configurations if found.
-    Logs the loading process for debugging purposes.
+    try:
+        endpoint_response = _get_model_config_from_endpoint(config)
+        endpoint_config = {}
 
-    :param config: A dictionary containing configuration details.
-    :type config: dict[str, str]
+        if "oss_index" in endpoint_response:
+            endpoint_config["opensearch"] = {"index": endpoint_response["oss_index"]}
 
-    :return: A dictionary containing parsed model-specific configurations or the result of an
-        external endpoint response. Each entry may include `c2c_config` or `u2c_config` keys.
-    :rtype: dict[str, str | None] | Any
-    """
-    result = {}
-    if "c2c_config" in config:
-        result["c2c_config"] = config["c2c_config"]
-        logger.info("Load c2c model configuration from config yaml file.")
-        logger.info("c2c_config: %s", result['c2c_config'])
-    if "u2c_config" in config:
-        result["u2c_config"] = config["u2c_config"]
-        logger.info("Load u2c model configuration from config yaml file.")
-        logger.info("u2c_config: %s", result['u2c_config'])
-    if "clustering_models" in config:
-        result["u2c_config"] = result.get("u2c_config", {})
-        if isinstance(result["u2c_config"], dict):
-            result["u2c_config"]["clustering_models"] = config["clustering_models"]
-        logger.info("Load clustering models from config yaml file.")
-        logger.info("clustering_models: %s", config["clustering_models"])
+        if "c2c_models" in endpoint_response:
+            endpoint_config["c2c_config"] = {"c2c_models": endpoint_response["c2c_models"]}
 
+        if "u2c_models" in endpoint_response:
+            endpoint_config["u2c_config"] = {"u2c_models": endpoint_response["u2c_models"]}
 
-    if result:
-        return result
+        if "clustering_models" in endpoint_response:
+            endpoint_config["u2c_config"] = endpoint_config.get("u2c_config", {})
+            endpoint_config["u2c_config"]["clustering_models"] = endpoint_response["clustering_models"]
 
-    response_from_endpoint = _get_model_config_from_endpoint(config)
+        remote_setup_config = SetupConfiguration.from_dict(endpoint_config)
+        logger.info(f"Model Configuration and Opensearch Index from remote config: ",remote_setup_config)
 
-    if "c2c_models" in response_from_endpoint:
-        result["c2c_config"] = {"c2c_models": response_from_endpoint["c2c_models"]}
-        logger.info("Load c2c model configuration from embedding microservice.")
-        logger.info("c2c_config: %s", result['c2c_config'])
-    if "u2c_models" in response_from_endpoint:
-        result["u2c_config"] = {"u2c_models": response_from_endpoint["u2c_models"]}
-        logger.info("Load u2c model configuration from embedding microservice.")
-        logger.info("u2c_config: %s", result['u2c_config'])
-    if "clustering_models" in response_from_endpoint:
-        result["u2c_config"] = result.get("u2c_config", {})
-        if isinstance(result["u2c_config"], dict):
-            result["u2c_config"]["clustering_models"] = response_from_endpoint["clustering_models"]
-        logger.info("Load clustering models from embedding microservice.")
-        logger.info("clustering_models: %s", response_from_endpoint["clustering_models"])
+        merged_config = SetupConfiguration(
+            model_config=ModelConfiguration(
+                c2c_config=local_setup_config.model_config.c2c_config or remote_setup_config.model_config.c2c_config,
+                u2c_config=local_setup_config.model_config.u2c_config or remote_setup_config.model_config.u2c_config
+            ),
+            open_search_config=OpenSearchConfiguration(
+                index=local_setup_config.open_search_config.index or remote_setup_config.open_search_config.index
+            )
+        )
+        logger.info(f"Model Configuration and Opensearch Index from merged config: ",merged_config)
 
-    return result
+        return merged_config
+
+    except ConfigError as e:
+        logger.warning(f"Failed to fetch configuration from endpoint: {e.message}. Using local configuration only.")
+        return local_setup_config
+    except Exception as e:
+        logger.warning(f"Unexpected error while fetching remote configuration: {str(e)}. Using local configuration only.")
+        return local_setup_config
 
 
 

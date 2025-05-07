@@ -1,4 +1,14 @@
 u2c_config:
   u2c_models:
-    - model3
-    - model4
+    model3:
+      display_name: "Model 3"
+      handler: "handler3"
+      endpoint: "endpoint3"
+      content_type: "type3"
+      display_in_reco_explorer: true
+    model4:
+      display_name: "Model 4"
+      handler: "handler4"
+      endpoint: "endpoint4"
+      content_type: "type4"
+      display_in_reco_explorer: true
