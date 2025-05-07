@@ -12,6 +12,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 from numpy import ndarray
 from sentence_transformers import SentenceTransformer
+import re
 
 from src.constants import (
     MODELS_KEY,
@@ -53,7 +54,8 @@ def cut_to_full_sentence(
     """
     Cut off the text at the last full sentence.
     """
-    return text[:text.rfind(".")+1].strip() if text.rfind(".") != -1 else text.strip()
+    match = re.search(r'[\.!?](?!.*[\.!?])', text)
+    return text[:match.end()].strip() if match else text.strip()
 
 class EmbedText:
     def __init__(self, config):
