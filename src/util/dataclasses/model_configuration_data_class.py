@@ -54,7 +54,7 @@ class ModelDetails:
             return value if value and value.strip() else None
 
         return cls(
-            display_name=data.get('display_name', ''),
+            display_name=data.get('display_name', 'Unknown Model Name'),
             handler=data.get('handler', ''),
             endpoint=data.get('endpoint', ''),
             content_type=data.get('content_type', ''),

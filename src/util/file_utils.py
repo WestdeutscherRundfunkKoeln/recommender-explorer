@@ -199,6 +199,7 @@ def _get_model_config_from_endpoint(config: dict[str, str]) -> dict[str, Any]:
 
 def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
     local_setup_config = SetupConfiguration.from_dict(config)
+    logger.info(f"Model Configuration and Opensearch Index from local config: ",local_setup_config)
 
     try:
         endpoint_response = _get_model_config_from_endpoint(config)
@@ -218,6 +219,7 @@ def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
             endpoint_config["u2c_config"]["clustering_models"] = endpoint_response["clustering_models"]
 
         remote_setup_config = SetupConfiguration.from_dict(endpoint_config)
+        logger.info(f"Model Configuration and Opensearch Index from remote config: ",remote_setup_config)
 
         merged_config = SetupConfiguration(
             model_config=ModelConfiguration(
@@ -228,7 +230,8 @@ def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
                 index=local_setup_config.open_search_config.index or remote_setup_config.open_search_config.index
             )
         )
-        logger.info("Merged model configuration from local config file and remote endpoints.")
+        logger.info(f"Model Configuration and Opensearch Index from merged config: ",merged_config)
+
         return merged_config
 
     except ConfigError as e:
