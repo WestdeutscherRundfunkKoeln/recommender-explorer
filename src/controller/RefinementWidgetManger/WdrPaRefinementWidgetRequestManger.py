@@ -1,8 +1,9 @@
 from controller.RefinementWidgetManger.RefinementWidgetStatefulManger import RefinementWidgetStatefulManger
 
 class WdrPaRefinementWidgetRequestManger(RefinementWidgetStatefulManger):
-    def get_weights_by_type(self):
-        return {
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.weights = {
             "Semantic": {"semanticWeight": 0.35, "timeWeight": 0.2},
             "Diverse": {"diversityWeight": 0.7, "timeWeight": 0.2},
             "Temporal": {"timeWeight": 0.5}

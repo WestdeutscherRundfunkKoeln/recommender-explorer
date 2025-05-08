@@ -11,7 +11,7 @@ class NnSeekerPaServiceNews(NnSeekerRest):
         }
 
     @staticmethod
-    def _parse_response(response: dict[str, Any]) -> tuple[list[Any], list[Any], list[Any]]:
+    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float], list[Any]]:
         recomm_content_ids = []
         nn_dists = []
         for reco in response["items"]:

@@ -9,7 +9,7 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
         refinement_type = reco_filter.pop("refinementType", "")
         reco_filter["utilities"] = [
             {"utility": key, "weight": value}
-            for key, value in self.get_weights_by_type().get(refinement_type, {}).items()
+            for key, value in self.weights.get(refinement_type, {}).items()
         ]
 
         if (refinement_type == self.previous_ref_value and
@@ -19,7 +19,7 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
 
 
         elif (refinement_type == self.previous_ref_value and
-            current_ref_id == self.previous_ref_id and self.utilities != ""):
+            current_ref_id == self.previous_ref_id and self.utilities):
             reco_filter["utilities"] = self.utilities
 
 
@@ -37,27 +37,23 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
         self.utilities = utilities
 
     def reset(self):
-        self.previous_external_ids = ""
+        self.previous_external_ids = []
         self.previous_ref_value = ""
         self.previous_ref_id = ""
-        self.utilities = ""
+        self.utilities = []
 
     def get_weights_by_type(self):
         raise NotImplementedError
 
     def restructure_filter_state(self, filter_state):
         # Move weights (only add non-zero)
-        weights = []
-        for key in list(filter_state.keys()):
-            if key == "beitrag" or key == "audio" or key == "video":
-                value = filter_state.pop(key)
-                if value != 0 and value != "":
-                    weights.append({
-                        "type": key,
-                        "weight": value
-                    })
+        weights = [
+            {"type": key, "weight": value}
+            for key, value in filter_state.items()
+            if key in ["beitrag", "audio", "video"] and value not in [0, ""]
+        ]
 
-        # Add valid weights to filter_state
+        # Only add weights to filter_state if there are valid weights
         if weights:
             filter_state["weights"] = weights
 
@@ -68,7 +64,7 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
 
         # Move remaining valid flat keys into "filter", removing them from top level
         flat_keys = {}
-        for key in list(filter_state.keys()):
+        for key in filter_state:
             if key != "refinementType" and not isinstance(filter_state[key], (dict, list)):
                 value = filter_state.pop(key)
                 flat_keys[key] = value
