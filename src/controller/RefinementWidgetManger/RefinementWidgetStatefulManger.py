@@ -6,7 +6,7 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
         self.reset()
 
     def prepare_request(self, reco_filter, current_ref_id):
-        refinement_type = reco_filter.get("refinementType", "")
+        refinement_type = reco_filter.pop("refinementType", "")
         reco_filter["utilities"] = [
             {"utility": key, "weight": value}
             for key, value in self.get_weights_by_type().get(refinement_type, {}).items()
@@ -29,6 +29,7 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
         # Update
         self.previous_ref_value = refinement_type
         self.previous_ref_id = current_ref_id
+
         return reco_filter
 
     def process_response(self, ids, utilities):
