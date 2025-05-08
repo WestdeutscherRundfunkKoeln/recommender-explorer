@@ -16,7 +16,7 @@ def widget():
 def get_widget_instance(widget):
     # Get radio group from layout
     radio = widget[0][0][0][0]
-    return radio._widget_instance  # Properly attached
+    return radio.widget_instance  # Properly attached
 
 
 

@@ -1,6 +1,6 @@
-from controller.strategy.BrClientStrategy import BrClientStrategy
-from controller.strategy.WdrPaClientStrategy import WdrPaClientStrategy
-from controller.strategy.DefaultClientStrategy import DefaultClientStrategy
+from controller.RefinementWidgetManger.BrRefinementWidgetRequestManger import BrRefinementWidgetRequestManger
+from controller.RefinementWidgetManger.WdrPaRefinementWidgetRequestManger import WdrPaRefinementWidgetRequestManger
+from controller.RefinementWidgetManger.NoRefinementWidgetRequestManger import NoRefinementWidgetRequestManger
 import logging
 import copy
 import collections
@@ -42,10 +42,11 @@ class RecommendationController():
 
     def __init__(self, config, current_client: str):
         self.config = config
-        self.strategy = {
-            "br": BrClientStrategy(),
-            "wdr_pa": WdrPaClientStrategy()
-        }.get(current_client, DefaultClientStrategy())
+        # Choose the appropriate builder based on the current client
+        self.refinement_widget = {
+            "br": BrRefinementWidgetRequestManger(),
+            "wdr_pa": WdrPaRefinementWidgetRequestManger()
+        }.get(current_client, NoRefinementWidgetRequestManger())
 
         self.item_accessor = BaseDataAccessorOpenSearch(config)
         if constants.MODEL_CONFIG_U2C in config:
@@ -80,8 +81,6 @@ class RecommendationController():
             "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
             "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"
         }
-
-        self.reset_refinement_state()
 
         if not isinstance(self.num_NN, int):
             raise ConfigError(
@@ -461,70 +460,20 @@ class RecommendationController():
             return self._get_reco_items_u2c(start_item, model)
 
     def enable_all_refinement_button(self):
-        radio_box_group = self.components["reco_filter"]["refinementType"]
-        if radio_box_group:
-            refinement_widget = radio_box_group._widget_instance
-            refinement_widget.enable_all_buttons()
+        widget = self._get_refinement_widget()
+        if widget is not None:
+            self.refinement_widget.enable_all_buttons(widget)
 
     def enable_disable_refinement_button(self):
-        radio_box_group = self.components["reco_filter"]["refinementType"]
+        widget = self._get_refinement_widget()
+        if widget is not None:
+            self.refinement_widget.check_threshold(widget)
+
+    def _get_refinement_widget(self):
+        radio_box_group = self.components["reco_filter"].get("refinementType")
         if radio_box_group:
-            refinement_widget = radio_box_group._widget_instance
-            refinement_widget.disable_active_button()
-
-    def reset_refinement_state(self):
-        # Choose based on client
-        self.weights_by_type = self.strategy.get_weights_by_type()
-        self.previous_external_ids = []  # previous external IDs globally within the instance
-        self.previous_ref_value = '' # the previous refinement type
-        self.previous_ref_id = '' # the previous ref id
-        self.utilities = [] # the weights that were fetched from the PA-response
-
-    def checkThershold(self):
-        # Thresholds validation function that will disable the refinement button when there are no more possible results
-        # are possible.
-        weights = {u["utility"]: u["weight"] for u in self.utilities}
-        # Extract weights for "semanticWeight" and "tagWeight"
-        semantic_weight = weights.get("semanticWeight", 0)
-        tag_weight = weights.get("tagWeight", 0)
-
-        # Check if any weight is 0 or 1, or if the sum of "semanticWeight" and "tagWeight" is 1
-        if any(weight in {0, 1} for weight in weights.values()) or (semantic_weight + tag_weight == 1):
-            self.enable_disable_refinement_button()
-
-    def refinement_type_widget_request_builder(self, reco_filter, current_ref_id):
-        # function to add additional fields to the filter when the refinementType Widget is being used.
-        # this includes adding - older ids "if possible" - default weights"
-        refinementType = reco_filter['refinementType']
-        reco_filter["utilities"] = [{"utility": key, "weight": value}
-                                     for key, value in self.weights_by_type.get(refinementType, {}).items()]
-
-        # if the old type matches the new one "we didn't switch the refinementType" and we still use the same ref_id
-        # add the previous ids from the last request
-        # add the previous weights based on the used type
-
-        if (refinementType == self.previous_ref_value and current_ref_id == self.previous_ref_id
-                and "refinement" in reco_filter):
-
-            reco_filter["refinement"]["previous_external_ids"] = self.previous_external_ids
-            reco_filter["utilities"] = self.utilities
-
-        # if the old type doesn't match the new one "we did switch the refinementType"
-        # of if we're making the first request
-        else:
-            self.reset_refinement_state()
-            self.enable_all_refinement_button()
-
-        self.previous_ref_value = refinementType
-        self.previous_ref_id = current_ref_id
-
-        # return the new filters
-        return reco_filter
-
-    def refinement_type_widget_response_processor(self, ids, utilities):
-        # function to process the results from the PA response.
-        self.previous_external_ids = ids
-        self.utilities = utilities
+            return radio_box_group.widget_instance
+        return None
 
     def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
         """Gets recommended items based on the start item and filters
@@ -536,21 +485,17 @@ class RecommendationController():
         reco_filter = self._get_current_filter_state("reco_filter")
         logger.warning("calling " + str(self.reco_accessor))
 
-        # Are we using a refinementType Widget?
-        if "refinementType" in reco_filter:
-            self.refinement_type_widget_request_builder(reco_filter, start_item.id)
-            self.reco_accessor.set_model_config(model)
-
+        self.refinement_widget.prepare_request(reco_filter, start_item.id)
+        self.reco_accessor.set_model_config(model)
 
         kidxs, nn_dists, oss_field, *rest = self.reco_accessor.get_k_NN(
             start_item, (self.num_NN + 1), reco_filter
         )
         utilities = rest[0] if rest else None
 
-        if "refinementType" in reco_filter:
-            self.refinement_type_widget_response_processor(kidxs, utilities)
-            self.enable_all_refinement_button()
-            self.checkThershold()
+        self.refinement_widget.process_response(kidxs, utilities)
+        self.enable_all_refinement_button()
+        self.enable_disable_refinement_button()
 
         if oss_field != "id":
             _, db_ident = get_primary_idents(self.config)
@@ -744,43 +689,15 @@ class RecommendationController():
             refinement_type = self.mapping_type.get(component.value, component.value)
             filter_state["refinementType"] = refinement_type  # Always added to top-level
 
-            direction = component.params.get("direction")
+            direction = component.params.get("direction","")
             if direction:
                 mapped_direction = self.mapping_direction.get(direction,direction)
-                refinement_direction = self.strategy.map_refinement_direction(mapped_direction)
+                refinement_direction = self.refinement_widget.map_refinement_direction(mapped_direction)
                 filter_state["refinement"] = {"direction": refinement_direction}
 
-        # Apply the restructuring step
-        filter_state = self.strategy.restructure_filter_state(filter_state)
+        # Use the strategy to restructure the filter state
+        filter_state = self.refinement_widget.restructure_filter_state(filter_state)
 
-        return filter_state
-
-    def _restructure_filter_state(self, filter_state):
-        # Move weights
-        weights = []
-        keywords = ["beitrag", "audio", "video"]
-
-        for key in list(filter_state.keys()):
-            if key in keywords:
-                value = filter_state.pop(key)
-                if value != 0:  # Only add non-zero values
-                    weights.append({
-                        "type": key,
-                        "weight": value
-                    })
-
-        # Only add weights if there are any non-zero weights
-        if weights:
-            filter_state["weights"] = weights
-
-        # Move valid flat keys into "filter", excluding "refinementType"
-        flat_keys = {}
-        for key, value in filter_state.items():
-            if key != "refinementType" and not isinstance(value, (dict, list)) and value not in (0, ""):
-                flat_keys[key] = filter_state.pop(key)
-
-        if flat_keys:
-            filter_state["filter"] = flat_keys
         return filter_state
 
     def _get_model_type_by_model_key(self, model_key):
@@ -802,16 +719,18 @@ class RecommendationController():
                     component.param.watch(self.callbacks[widget_group][label], "value")
 
     def reset_component(self, component_group, component_label, to_value="default"):
+        component_group = next(
+            (group for group in component_group if component_label in self.components.get(group, {})))
         component = self.components[component_group][component_label]
-        if self.watchers[component_group].get(component_label):
-            component.param.unwatch(self.watchers[component_group][component_label])
-            if to_value == "default":
-                component.value = component.params["reset_to"]
-            else:
-                component.value = to_value
-            component.param.watch(
-                self.callbacks[component_group][component_label], "value"
-            )
+        if component_label == "refinementType":
+            builder = self.refinement_widget
+            if hasattr(builder, "reset_refinement_widget"):
+                widget = self._get_refinement_widget()
+                builder.reset_refinement_widget(widget)
+        if to_value == "default":
+            component.value = component.params["reset_to"]
+        else:
+            component.value = to_value
 
     def import_filter_rules(self):
         pass

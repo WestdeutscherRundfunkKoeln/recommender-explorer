@@ -1,9 +1,7 @@
 import json
 import logging
 from typing import Any, Callable
-
 from urllib3 import PoolManager, Retry
-
 from dto.item import ItemDto
 from dto.user_item import UserItemDto
 from exceptions.item_not_found_error import UnknownItemError
@@ -79,7 +77,7 @@ class NnSeekerRest(NnSeeker):
         http = PoolManager(retries=retries)
 
         logger.info(
-            "calling [" + self._endpoint + "] with params " + json.dumps(post_params)
+            "calling [" + self._endpoint + "] with params " + json.dumps(post_params, indent=4)
         )
 
         response = http.request(

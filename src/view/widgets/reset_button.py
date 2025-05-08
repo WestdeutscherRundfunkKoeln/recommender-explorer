@@ -64,17 +64,12 @@ class ResetButtonWidget(UIWidget):
         :param block: The block containing the widgets to be reset
         :return: None
         """
+
         for widget in block:
-            # Check if the widget is the radio box group and trigger the button enabling function
-            if isinstance(widget, pn.widgets.RadioBoxGroup) and hasattr(widget, "_widget_instance"):
-                widget._widget_instance.alert.visible = False  # Hide the alert
-                widget._widget_instance.btn1.disabled = False  # Re-enable first button
-                widget._widget_instance.btn2.disabled = False  # Re-enable second button
-                self.controller_instance.reset_refinement_state()
+            component_label = widget.params.get("label","")
+            component_group = event.obj.params["resets"]
+            self.controller_instance.reset_component(component_group, component_label)
 
-
-
-        self.controller_instance.reset_defaults(event.obj.params["resets"])
         self.controller_instance.reset_page_number()
 
         reset_identifiers_item = [
