@@ -724,6 +724,8 @@ class RecommendationController():
             if component_label in self.components.get(group, {}):
                 component_group = group
                 break
+        else:
+            raise ValueError(f"Component '{component_label}' not found in any of the provided groups.")
         component = self.components[component_group][component_label]
         if component_label == "refinementType":
             self.refinement_widget.reset_refinement_widget(self._get_refinement_widget())
