@@ -40,7 +40,7 @@ class RecommendationController():
         "show": "showId",
     }
 
-    def __init__(self, config, current_client: str):
+    def __init__(self, config, current_client: str = ""):
         self.config = config
         # Choose the appropriate builder based on the current client
         self.refinement_widget = {
