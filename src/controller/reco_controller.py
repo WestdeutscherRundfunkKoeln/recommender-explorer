@@ -719,14 +719,14 @@ class RecommendationController():
                     component.param.watch(self.callbacks[widget_group][label], "value")
 
     def reset_component(self, component_group, component_label, to_value="default"):
-        component_group = next(
-            (group for group in component_group if component_label in self.components.get(group, {})))
+        # Find the group that contains the component label
+        for group in component_group:
+            if component_label in self.components.get(group, {}):
+                component_group = group
+                break
         component = self.components[component_group][component_label]
         if component_label == "refinementType":
-            builder = self.refinement_widget
-            if hasattr(builder, "reset_refinement_widget"):
-                widget = self._get_refinement_widget()
-                builder.reset_refinement_widget(widget)
+            self.refinement_widget.reset_refinement_widget(self._get_refinement_widget())
         if to_value == "default":
             component.value = component.params["reset_to"]
         else:

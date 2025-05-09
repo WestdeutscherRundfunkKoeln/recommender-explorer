@@ -64,7 +64,7 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
 
         # Move remaining valid flat keys into "filter", removing them from top level
         flat_keys = {}
-        for key in filter_state:
+        for key in list(filter_state.keys()):
             if key != "refinementType" and not isinstance(filter_state[key], (dict, list)):
                 value = filter_state.pop(key)
                 flat_keys[key] = value
