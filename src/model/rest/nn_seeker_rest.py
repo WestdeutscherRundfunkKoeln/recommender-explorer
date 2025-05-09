@@ -1,9 +1,7 @@
 import json
 import logging
 from typing import Any, Callable
-
 from urllib3 import PoolManager, Retry
-
 from dto.item import ItemDto
 from dto.user_item import UserItemDto
 from exceptions.item_not_found_error import UnknownItemError
@@ -14,23 +12,6 @@ from util.dto_utils import get_primary_idents
 logger = logging.getLogger(__name__)
 
 RequestParamsBuilder = Callable[[ItemDto, str], dict[str, Any]]
-
-WEIGHTS = (
-    "weight_audio",
-    "weight_video",
-    "weight_beitrag",
-    "weight_fotostrecke",
-    "weight_link",
-)
-
-UTILITIES = (
-    "weight_similar_semantic",
-    "weight_similar_tags",
-    "weight_similar_temporal",
-    "weight_similar_popular",
-    "weight_similar_diverse",
-)
-
 
 class NnSeekerRest(NnSeeker):
     def __init__(self, config, max_num_neighbours=16):
@@ -80,7 +61,6 @@ class NnSeekerRest(NnSeeker):
                 {},
             )
 
-
         result = self._parse_response(pa_recos)
 
         recomm_content_ids, nn_dists, utilities = result
@@ -97,7 +77,7 @@ class NnSeekerRest(NnSeeker):
         http = PoolManager(retries=retries)
 
         logger.info(
-            "calling [" + self._endpoint + "] with params " + json.dumps(post_params)
+            "calling [" + self._endpoint + "] with params " + json.dumps(post_params, indent=4)
         )
 
         response = http.request(
@@ -142,74 +122,20 @@ class NnSeekerRest(NnSeeker):
 
     @staticmethod
     def _get_filters(nn_filter: dict[str, Any] | None) -> dict[str, Any]:
-        selected_params = {}
         if not nn_filter:
-            return selected_params
+            return {}
 
-        if (
-            "editorialCategories" in nn_filter
-            and len(nn_filter["editorialCategories"]) > 0
-        ):
-            selected_params["includedCategories"] = ",".join(
-                nn_filter["editorialCategories"]
-            )
-        if "relativerangefilter_duration" in nn_filter:
-            selected_params["maxDurationFactor"] = nn_filter[
-                "relativerangefilter_duration"
-            ]
-        if "blacklist_externalid" in nn_filter:
-            selected_params["excludedIds"] = (
-                nn_filter["blacklist_externalid"].replace(" ", "").split(",")
-            )
+        result = nn_filter.copy()
 
-        if "refinementDirection" in nn_filter:
-            selected_params["refinementDirection"] = nn_filter["refinementDirection"]
+        editorial = result.pop("editorialCategories", None)
+        if editorial:
+            result["includedCategories"] = ",".join(editorial)
 
-        if "refinementType" in nn_filter:
-            selected_params["refinementType"] = nn_filter["refinementType"]
+        return result
 
-        if "previous_external_ids" in nn_filter:
-            selected_params["previousExternalIds"] = nn_filter["previous_external_ids"]
-
-        if "utilities" in nn_filter:
-            selected_params["utilities"] = nn_filter["utilities"]
-
-        weights = [
-            {"type": w.removeprefix("weight_"), "weight": nn_filter[w]}
-            for w in WEIGHTS
-            if w in nn_filter and nn_filter[w] > 0
-        ]
-        if weights:
-            selected_params["weights"] = weights
-
-        utilities = {
-            w.removeprefix("weight_similar_"): nn_filter[w]
-            for w in UTILITIES
-            if w in nn_filter and nn_filter[w] > 0
-        }
-        if utilities:
-            selected_params["utilities"] = utilities
-
-        return selected_params
-
-    def set_model_config(self, model_config, selected_endpoint=None):
-        self._endpoint = model_config["endpoint"].split("|")
-        if selected_endpoint is None:
-            self._endpoint = self._endpoint[0]
-            self._model_props = model_config["properties"]
-        if selected_endpoint:
-            endpoint_mapping = {}
-            # Dynamically assign endpoints based on their content
-            for endpoint in  self._endpoint:
-                if "similar" in endpoint:
-                    endpoint_mapping["Semantic"] = endpoint
-                elif "diverse" in endpoint:
-                    endpoint_mapping["Diverse"] = endpoint
-                elif "recent" in endpoint:
-                    endpoint_mapping["Temporal"] = endpoint
-
-            # Assign the correct endpoint based on selected_endpoint
-            self._endpoint = endpoint_mapping.get(selected_endpoint, None)
+    def set_model_config(self, model_config):
+        self._endpoint = model_config["endpoint"]
+        self._model_props = model_config["properties"]
 
 
     @staticmethod

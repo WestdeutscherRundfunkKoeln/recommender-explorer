@@ -1,6 +1,6 @@
 import pytest
 import panel as pn
-from view.widgets.refinement_widget import RefinementWidget, DIVERSITY, SIMILARITY
+from view.widgets.refinement_widget import RefinementWidget, DIVERSITY, RECENCY
 
 class MockApp:
     async def trigger_item_selection(self, event): pass
@@ -16,7 +16,7 @@ def widget():
 def get_widget_instance(widget):
     # Get radio group from layout
     radio = widget[0][0][0][0]
-    return radio._widget_instance  # Properly attached
+    return radio.widget_instance  # Properly attached
 
 
 
@@ -35,7 +35,7 @@ async def test_button_label_update(widget):
     assert refinement.btn1.name == "Weniger Diversität"
     assert refinement.btn2.name == "Mehr Diversität"
 
-    await refinement.update_buttons(type('Event', (object,), {'new': SIMILARITY}))
+    await refinement.update_buttons(type('Event', (object,), {'new': RECENCY}))
     assert refinement.btn1.name == "Weniger Aktualität"
     assert refinement.btn2.name == "Mehr Aktualität"
 

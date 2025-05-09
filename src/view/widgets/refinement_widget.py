@@ -8,7 +8,7 @@ REFINEMENT_WIDGET_TOOLTIP = "Sie können zwischen verschiedenen Arten der Empfeh
 REFINEMENT_WIDGET_ACCORDION_LABEL = "Empfehlungs-Typ"
 REFINEMENT_WIDGET_ALERT = "<b> Die Ergebnisse können nicht weiter geändert werden! ⚠️ </b>"
 DIVERSITY = "Diversität"
-SIMILARITY = "Aktualität"
+RECENCY = "Aktualität"
 
 class RefinementWidget(pn.Column, UIWidget):
 
@@ -16,7 +16,6 @@ class RefinementWidget(pn.Column, UIWidget):
         # Initialize parent classes
         pn.Column.__init__(self)
         UIWidget.__init__(self, reco_explorer_app_instance, controller_instance)
-
 
     def create(self) -> pn.Column:
         """
@@ -30,12 +29,13 @@ class RefinementWidget(pn.Column, UIWidget):
         )
 
         # Store a reference to the current widget in the radio_box_group
-        self.radio_box_group._widget_instance = self
+        self.radio_box_group.widget_instance = self
 
         self.radio_box_group.params = {
             "label": 'refinementType',  # must always be named like this to avoid errors in other parts of the code.
             "reset_to": 'Ähnlichkeit',
-            "direction": ""
+            "direction": "",
+            "switch_weights" : False
         }
 
         # Watch the value change
@@ -92,15 +92,13 @@ class RefinementWidget(pn.Column, UIWidget):
 
         return pn.Row(self.accordion_with_width,self.tooltip_widget)
 
-
     async def update_buttons(self, event):
         """
         Updates the buttons based on the selected radio option.
         """
-
         label_map = {
             DIVERSITY: ("Weniger Diversität", "Mehr Diversität"),
-            SIMILARITY: ("Weniger Aktualität", "Mehr Aktualität")
+            RECENCY: ("Weniger Aktualität", "Mehr Aktualität")
         }
 
         self.btn1.name, self.btn2.name = label_map.get(
@@ -109,10 +107,11 @@ class RefinementWidget(pn.Column, UIWidget):
         )
 
         # reset the direction
+        self.radio_box_group.params["direction"] = ""
         self.radio_box_group.params = {
-            "direction": '',
             "label": 'refinementType',
             "reset_to": 'Ähnlichkeit',
+            "direction": "",
         }
 
         #hide the alert if visible
@@ -122,16 +121,11 @@ class RefinementWidget(pn.Column, UIWidget):
         await self.reco_explorer_app_instance.trigger_item_selection(event)
 
     async def button_clicked(self, event):
+        self.radio_box_group.params["direction"] = event.obj.name
 
-        self.radio_box_group.params = {
-            "direction": event.obj.name,
-            "label": 'refinementType',
-            "reset_to": 'Ähnlichkeit',
-        }
-
-        # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
 
+        self.radio_box_group.params["direction"] = ""
 
     def disable_active_button(self):
         """Disable the active button based on the selected radio option."""
