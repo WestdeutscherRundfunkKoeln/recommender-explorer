@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Any
 
-from src.util.dataclasses.model_configuration_data_class import ModelConfiguration
-from src.util.dataclasses.opensearch_configuration_data_class import OpenSearchConfiguration
+from util.dataclasses.model_configuration_data_class import ModelConfiguration
+from util.dataclasses.opensearch_configuration_data_class import OpenSearchConfiguration
 
 
 @dataclass
