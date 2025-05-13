@@ -19,7 +19,7 @@ class NnSeekerPaServiceShow(NnSeekerPaService):
         return cls(config, BaseDataAccessorOpenSearch(config))
 
     def get_recos_user(self, user, n_recos, nn_filter=False):
-        reco_ids, nn_dists, oss_field = super().get_recos_user(user, n_recos, nn_filter)
+        reco_ids, nn_dists, oss_field, utilities = super().get_recos_user(user, n_recos, nn_filter)
         for idx, show_id in enumerate(reco_ids):
             item_dto = dto_from_classname(
                 class_name="ShowItemDto",
@@ -39,4 +39,6 @@ class NnSeekerPaServiceShow(NnSeekerPaService):
             )
             reco_ids[idx] = lookup_res[0][0].episode
 
-        return reco_ids, nn_dists, oss_field
+        utilities = None
+
+        return reco_ids, nn_dists, oss_field, utilities

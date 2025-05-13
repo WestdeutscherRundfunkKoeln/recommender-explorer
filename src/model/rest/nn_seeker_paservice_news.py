@@ -11,10 +11,13 @@ class NnSeekerPaServiceNews(NnSeekerRest):
         }
 
     @staticmethod
-    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float]]:
+    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float], list[Any]]:
         recomm_content_ids = []
         nn_dists = []
         for reco in response["items"]:
             nn_dists.append(reco["score"])
             recomm_content_ids.append(reco["id"])
-        return recomm_content_ids, nn_dists
+
+        utilities = response.get("utilities", [])
+
+        return recomm_content_ids, nn_dists, utilities

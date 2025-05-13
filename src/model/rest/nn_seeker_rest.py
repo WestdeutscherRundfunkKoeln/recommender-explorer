@@ -1,9 +1,7 @@
 import json
 import logging
 from typing import Any, Callable
-
 from urllib3 import PoolManager, Retry
-
 from dto.item import ItemDto
 from dto.user_item import UserItemDto
 from exceptions.item_not_found_error import UnknownItemError
@@ -14,23 +12,6 @@ from util.dto_utils import get_primary_idents
 logger = logging.getLogger(__name__)
 
 RequestParamsBuilder = Callable[[ItemDto, str], dict[str, Any]]
-
-WEIGHTS = (
-    "weight_audio",
-    "weight_video",
-    "weight_beitrag",
-    "weight_fotostrecke",
-    "weight_link",
-)
-
-UTILITIES = (
-    "weight_similar_semantic",
-    "weight_similar_tags",
-    "weight_similar_temporal",
-    "weight_similar_popular",
-    "weight_similar_diverse",
-)
-
 
 class NnSeekerRest(NnSeeker):
     def __init__(self, config, max_num_neighbours=16):
@@ -45,14 +26,14 @@ class NnSeekerRest(NnSeeker):
 
     def get_k_NN(
         self, item: ItemDto, k: int, nn_filter: dict[str, Any] | None
-    ) -> tuple[list, list, str]:
+    ) -> tuple[list[str], list[float], Any, dict[Any, Any]]:
         return self._get_recos(
             self._get_request_params_c2c, UnknownItemError, item, k, nn_filter
         )
 
     def get_recos_user(
         self, user: UserItemDto, n_recos: int, nn_filter: dict[str, Any] | None = None
-    ) -> tuple[list, list, str]:
+    ) -> tuple[list[str], list[float], Any, dict[Any, Any]]:
         return self._get_recos(
             self._get_request_params_u2c, UnknownUserError, user, n_recos, nn_filter
         )
@@ -67,7 +48,7 @@ class NnSeekerRest(NnSeeker):
         item: ItemDto,
         k: int,
         nn_filter: dict[str, Any] | None,
-    ) -> tuple[list, list, str]:
+    ) -> tuple[list[str], list[float], Any, dict[Any, Any]]:
         _, oss_field = get_primary_idents(self.__config)
 
         params = self._build_request(request_params_builder, item, oss_field, nn_filter)
@@ -80,8 +61,11 @@ class NnSeekerRest(NnSeeker):
                 {},
             )
 
-        recomm_content_ids, nn_dists = self._parse_response(pa_recos)
-        return recomm_content_ids, nn_dists, oss_field
+        result = self._parse_response(pa_recos)
+
+        recomm_content_ids, nn_dists, utilities = result
+
+        return recomm_content_ids, nn_dists, oss_field , utilities
 
     def _post_2_endpoint(self, post_params):
         retries = Retry(
@@ -93,7 +77,7 @@ class NnSeekerRest(NnSeeker):
         http = PoolManager(retries=retries)
 
         logger.info(
-            "calling [" + self._endpoint + "] with params " + json.dumps(post_params)
+            "calling [" + self._endpoint + "] with params " + json.dumps(post_params, indent=4)
         )
 
         response = http.request(
@@ -138,48 +122,24 @@ class NnSeekerRest(NnSeeker):
 
     @staticmethod
     def _get_filters(nn_filter: dict[str, Any] | None) -> dict[str, Any]:
-        selected_params = {}
         if not nn_filter:
-            return selected_params
+            return {}
 
-        if (
-            "editorialCategories" in nn_filter
-            and len(nn_filter["editorialCategories"]) > 0
-        ):
-            selected_params["includedCategories"] = ",".join(
-                nn_filter["editorialCategories"]
-            )
-        if "relativerangefilter_duration" in nn_filter:
-            selected_params["maxDurationFactor"] = nn_filter[
-                "relativerangefilter_duration"
-            ]
-        if "blacklist_externalid" in nn_filter:
-            selected_params["excludedIds"] = (
-                nn_filter["blacklist_externalid"].replace(" ", "").split(",")
-            )
-        weights = [
-            {"type": w.removeprefix("weight_"), "weight": nn_filter[w]}
-            for w in WEIGHTS
-            if w in nn_filter and nn_filter[w] > 0
-        ]
-        if weights:
-            selected_params["weights"] = weights
+        result = nn_filter.copy()
 
-        utilities = {
-            w.removeprefix("weight_similar_"): nn_filter[w]
-            for w in UTILITIES
-            if w in nn_filter and nn_filter[w] > 0
-        }
-        if utilities:
-            selected_params["utilities"] = utilities
-        return selected_params
+        editorial = result.pop("editorialCategories", None)
+        if editorial:
+            result["includedCategories"] = ",".join(editorial)
+
+        return result
 
     def set_model_config(self, model_config):
         self._endpoint = model_config["endpoint"]
         self._model_props = model_config["properties"]
 
+
     @staticmethod
-    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float]]:
+    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float], dict[Any, Any]]:
         raise NotImplementedError()
 
     def _get_request_params_c2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:

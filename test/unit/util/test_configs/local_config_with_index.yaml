@@ -1,0 +1,2 @@
+opensearch:
+  index: "local_index"

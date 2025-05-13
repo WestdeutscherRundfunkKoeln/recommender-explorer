@@ -45,11 +45,15 @@ try:
         pn.state.location.search, ""
     )
 
-    model_configuration = load_model_configuration(config)
-    if model_configuration.get("c2c_config"):
-        config["c2c_config"] = model_configuration.get("c2c_config")
-    if model_configuration.get("u2c_config"):
-        config["u2c_config"] = model_configuration.get("u2c_config")
+    setup_configuration = load_model_configuration(config)
+
+    if setup_configuration.model_config.c2c_config:
+        print(setup_configuration.model_config.c2c_config.to_dict())
+        config["c2c_config"] = setup_configuration.model_config.c2c_config.to_dict()
+    if setup_configuration.model_config.u2c_config:
+        config["u2c_config"] = setup_configuration.model_config.u2c_config.to_dict()
+    if setup_configuration.open_search_config.index:
+        config["opensearch.index"] = setup_configuration.open_search_config.index
 
     getExplorerInstance(config_full_paths, config, client).server_doc()
 

@@ -64,10 +64,12 @@ class ResetButtonWidget(UIWidget):
         :param block: The block containing the widgets to be reset
         :return: None
         """
-        for widget in block:
-            widget.value = widget.params.get("reset_to")
 
-        self.controller_instance.reset_defaults(event.obj.params["resets"])
+        for widget in block:
+            component_label = widget.params.get("label","")
+            component_group = event.obj.params["resets"]
+            self.controller_instance.reset_component(component_group, component_label)
+
         self.controller_instance.reset_page_number()
 
         reset_identifiers_item = [
@@ -85,7 +87,6 @@ class ResetButtonWidget(UIWidget):
         for reset_type in event.obj.params["resets"]:
             if reset_type in reset_identifiers_item:
                 self.reco_explorer_app_instance.main_content[:] = []
-                self.reco_explorer_app_instance.floating_elements.objects = []
                 self.reco_explorer_app_instance.draw_pagination()
             elif reset_type in reset_identifiers_reco:
                 await self.reco_explorer_app_instance.get_items_with_parameters()

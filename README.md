@@ -609,6 +609,21 @@ This Example would create three radio Buttons with the labels: Option A, Option 
     label: 'relativerangefilter_duration'
     component_group: 'reco_filter'
 
+## Refinement Widget
+In order for this widget to work, we have to include the three endpoints that will be used by it in the config file.
+No need to paas any arguments to this widget as it already handles that internally.
+### Refinement widget Config Overview
+
+| keyword | mandatory | fallback value | description                                                                                                                                                                                                                                                                             |
+|---------|-----------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| type    | yes       | -              | widget type definition: **Rifnement widget accordion**                                                                                                                                                                                                                                                   
+### Example of a Slider Widget Configuration
+        - label: Empfehlungstyp beeinflussen
+          components:
+              - type: refinement_widget
+
+
+
 ## Text Area Input Widget
 
 ### Text Area Input Config Overview
