@@ -11,9 +11,9 @@ from envyaml import EnvYAML
 import constants
 from exceptions.config_error import ConfigError
 from view import ui_constants
-from src.util.dataclasses.setup_configuration_data_class import SetupConfiguration
-from src.util.dataclasses.model_configuration_data_class import ModelConfiguration
-from src.util.dataclasses.opensearch_configuration_data_class import OpenSearchConfiguration
+from util.dataclasses.setup_configuration_data_class import SetupConfiguration
+from util.dataclasses.model_configuration_data_class import ModelConfiguration
+from util.dataclasses.opensearch_configuration_data_class import OpenSearchConfiguration
 
 logger = logging.getLogger(__name__)
 
