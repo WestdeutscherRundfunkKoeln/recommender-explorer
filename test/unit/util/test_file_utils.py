@@ -190,7 +190,7 @@ def test_load_model_configuration__local_index_config(local_config_with_index):
         open_search_config=OpenSearchConfiguration(index="local_index")
     )
 
-    assert result == expected
+    assert result.to_dict() == expected.to_dict()
 
 
 def test_load_model_configuration__local_c2c_config(local_config_with_c2c):
@@ -220,10 +220,7 @@ def test_load_model_configuration__local_c2c_config(local_config_with_c2c):
         open_search_config=OpenSearchConfiguration()
     )
 
-    print(result)
-    print(expected)
-
-    assert result == expected
+    assert result.to_dict() == expected.to_dict()
 
 
 def test_load_model_configuration__local_u2c_config(local_config_with_u2c):
@@ -253,7 +250,7 @@ def test_load_model_configuration__local_u2c_config(local_config_with_u2c):
         open_search_config=OpenSearchConfiguration()
     )
 
-    assert result == expected
+    assert result.to_dict() == expected.to_dict()
 
 def test_load_model_configuration__local_clustering_model_config(local_config_with_clustering_model):
     result = load_model_configuration(local_config_with_clustering_model)
@@ -283,7 +280,7 @@ def test_load_model_configuration__local_clustering_model_config(local_config_wi
         open_search_config=OpenSearchConfiguration()
     )
 
-    assert result == expected
+    assert result.to_dict() == expected.to_dict()
 
 
 def test_load_model_configuration__remote_index_config(mocker, local_config_without_index):
@@ -299,7 +296,7 @@ def test_load_model_configuration__remote_index_config(mocker, local_config_with
         open_search_config=OpenSearchConfiguration(index="remote_index")
     )
 
-    assert result == expected
+    assert result.to_dict() == expected.to_dict()
 
 
 def test_load_model_configuration__fetch_from_endpoint(mocker, config_without_model_key):
@@ -401,7 +398,7 @@ def test_load_model_configuration__fetch_from_endpoint(mocker, config_without_mo
     )
 
     mocked_get_model_config.assert_called_once_with(config_without_model_key)
-    assert result == expected
+    assert result.to_dict() == expected.to_dict()
 
 
 def test_load_model_configuration__merged_configs(mocker):
@@ -445,4 +442,4 @@ def test_load_model_configuration__merged_configs(mocker):
         open_search_config=OpenSearchConfiguration(index="local_index")
     )
 
-    assert result == expected
+    assert result.to_dict() == expected.to_dict()
