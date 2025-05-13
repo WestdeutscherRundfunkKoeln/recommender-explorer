@@ -46,12 +46,13 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
         raise NotImplementedError
 
     def restructure_filter_state(self, filter_state):
-        # Move weights (only add non-zero)
-        weights = [
-            {"type": key, "weight": value}
-            for key, value in filter_state.items()
-            if key in ["beitrag", "audio", "video"] and value not in [0, ""]
-        ]
+        # Move weights (only add non-zero) and remove from top level
+        weights = []
+        for key in ["beitrag", "audio", "video"]:
+            value = filter_state.get(key)
+            if value not in [0, "", None]:
+                weights.append({"type": key, "weight": value})
+                filter_state.pop(key, None)  # Remove after adding to weights
 
         # Only add weights to filter_state if there are valid weights
         if weights:
