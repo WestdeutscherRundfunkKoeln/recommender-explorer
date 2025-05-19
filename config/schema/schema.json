@@ -83,7 +83,6 @@
         "port",
         "user",
         "pass",
-        "index",
         "primary_field"
       ],
       "additionalProperties": false
