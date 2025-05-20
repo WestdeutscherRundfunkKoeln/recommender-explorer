@@ -9,6 +9,8 @@ import httpx
 from envyaml import EnvYAML
 
 import constants
+import dataclasses
+
 from exceptions.config_error import ConfigError
 from view import ui_constants
 from util.dataclasses.setup_configuration_data_class import SetupConfiguration
@@ -199,7 +201,7 @@ def _get_model_config_from_endpoint(config: dict[str, str]) -> dict[str, Any]:
 
 def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
     local_setup_config = SetupConfiguration.from_dict(config)
-    logger.info(f"Model Configuration and Opensearch Index from local config: ",local_setup_config)
+    logger.info(f"Model Configuration and Opensearch Index from local config: ",dataclasses.asdict(local_setup_config))
 
     try:
         endpoint_response = _get_model_config_from_endpoint(config)
@@ -219,7 +221,7 @@ def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
             endpoint_config["u2c_config"]["clustering_models"] = endpoint_response["clustering_models"]
 
         remote_setup_config = SetupConfiguration.from_dict(endpoint_config)
-        logger.info(f"Model Configuration and Opensearch Index from remote config: ",remote_setup_config)
+        logger.info(f"Model Configuration and Opensearch Index from remote config: ", dataclasses.asdict(remote_setup_config))
 
         merged_config = SetupConfiguration(
             model_config=ModelConfiguration(
@@ -230,7 +232,7 @@ def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
                 index=local_setup_config.open_search_config.index or remote_setup_config.open_search_config.index
             )
         )
-        logger.info(f"Model Configuration and Opensearch Index from merged config: ",merged_config)
+        logger.info(f"Model Configuration and Opensearch Index from merged config: ", dataclasses.asdict(merged_config))
 
         return merged_config
 
