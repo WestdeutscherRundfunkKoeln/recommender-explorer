@@ -121,64 +121,6 @@ def test_embedding__with_models(test_client: TestClient):
     assert response_json["unknown-model"] == "unknown model!"
 
 
-def test_embedding__with_text_returned(test_client: TestClient):
-    response = test_client.post(
-        "/embedding",
-        json={
-            "embedText": "This is a test.",
-            "models": [],
-            "return_embed_text": True,
-        },
-    )
-
-    response_json = response.json()
-    assert response.status_code == 200
-    assert (
-        response_json["embedTextHash"]
-        == "a8a2f6ebe286697c527eb35a58b5539532e9b3ae3b64d4eb0a46fb657b41562c"
-    )
-    assert all(
-        isinstance(response_json[key], dict) 
-        for key in response_json.keys() if key != "embedTextHash"
-    )
-    assert all(
-        isinstance(response_json[key]["embedded_text"], str) and len(response_json[key]["embedded_text"]) > 0
-        for key in response_json.keys() if key != "embedTextHash"
-    )
-    assert all(
-        isinstance(elem, float) 
-        for key in response_json.keys() if key != "embedTextHash"
-        for elem in response_json[key]["embedding"]
-    )
-
-
-def test_embedding__no_text_returned(test_client: TestClient):
-    response = test_client.post(
-        "/embedding",
-        json={
-            "embedText": "This is a test.",
-            "models": [],
-            "return_embed_text": False,
-        },
-    )
-
-    response_json = response.json()
-    assert response.status_code == 200
-    assert (
-        response_json["embedTextHash"]
-        == "a8a2f6ebe286697c527eb35a58b5539532e9b3ae3b64d4eb0a46fb657b41562c"
-    )
-    assert all(
-        isinstance(response_json[key], list)
-        for key in response_json.keys() if key != "embedTextHash"
-    )
-    assert all(
-    isinstance(elem, float) 
-    for key in response_json.keys() if key != "embedTextHash"
-    for elem in response_json[key]
-    )
-    
-    
 def test_add_embedding_to_document__malformed_request(test_client: TestClient):
     response = test_client.post(
         "/add-embedding-to-doc",

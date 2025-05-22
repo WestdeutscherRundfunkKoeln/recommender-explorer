@@ -169,6 +169,3 @@ junit/
 
 # VS Code
 *DS_Store
-
-# Models for local testing of embedding service
-microservices/embeddingservice/test_dl
