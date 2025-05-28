@@ -124,9 +124,9 @@ class RecoExplorerApp:
 
         self.url_parameter_text_field_mapping = {}
 
-        # stores the UI elements to avoid building them when the states changes
-        block_list2 = []
-        choosen_accordion = None
+        self.chosen_accordion = ""
+        self.previous_chosen_accordion = ""
+        self.previous_block_list = []
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -232,15 +232,6 @@ class RecoExplorerApp:
 
     async def trigger_model_choice(self, event):
         logger.info(event)
-        global choosen_accordion
-        if choosen_accordion == "0":
-            self.controller.reset_component(
-                "model_choice", constants.MODEL_CONFIG_U2C, []
-            )
-        elif choosen_accordion == "1":
-            self.controller.reset_component(
-                "model_choice", constants.MODEL_CONFIG_C2C, []
-            )
         self.controller.reset_page_number()
         self.disablePageButtons()
         await self.get_items_with_parameters()
@@ -590,7 +581,6 @@ class RecoExplorerApp:
         Args:
             block (block): a ui block which is configured in config yaml and contains widgets
         """
-
         self.config_based_nav_controls.append(
             "### " + block.get(ui_constants.BLOCK_LABEL_LIST_KEY)
         )
@@ -600,6 +590,8 @@ class RecoExplorerApp:
     def build_ui(self):
         # clear the nav controls
         self.config_based_nav_controls.clear()
+        self.controller.reset_all_components()
+        self.main_content.clear()
 
         # Client
         client_title = pn.pane.Markdown("### Mandant wählen")
@@ -617,20 +609,17 @@ class RecoExplorerApp:
             )
             self.config_based_nav_controls.append(client_choice)
 
-    def add_blocks_to_navigation(self, ActiveAccordion: str = ""):
+    def add_blocks_to_navigation(self, active_accordion: str = ""):
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
-        global block_list2
-        global choosen_accordion
-
         # decide if this function was called by an accordion_with_cards widget or by the assembly function
-        if ActiveAccordion == "":
+        if active_accordion == "":
             blocks = self.build_blocks()
-            block_list2 = blocks
-            choosen_accordion = retrieve_default_model_accordion(self.config["ui_config"])
+            self.previous_block_list = blocks
+            self.chosen_accordion = retrieve_default_model_accordion(self.config["ui_config"])
 
         # then it's an index sent by the accordion_widget class
-        if ActiveAccordion != "":
-            choosen_accordion = ActiveAccordion
+        if active_accordion != "":
+            self.chosen_accordion = active_accordion
             self.build_ui() #reset the nav bar before doing modifications
 
         # Create a dictionary to group blocks by their linkto value
@@ -654,7 +643,7 @@ class RecoExplorerApp:
                 # Find the corresponding block from the blocks list
                 corresponding_blocks = [
                     block
-                    for block in block_list2
+                    for block in self.previous_block_list
                     if block.get("label") == Acc_label
                     and block.get("linkto") == linkto_value
                 ]
@@ -665,25 +654,25 @@ class RecoExplorerApp:
                 # If no 'linkto' is found, store the block in no_linkto_blocks
                 corresponding_blocks = [
                     block
-                    for block in block_list2
+                    for block in self.previous_block_list
                     if block.get("label") == block_config["label"]
                 ]
                 no_linkto_blocks.extend(corresponding_blocks)
 
         if grouped_blocks:
-            choosen_blocks = grouped_blocks.get(choosen_accordion, [])
+            choosen_blocks = grouped_blocks.get(self.chosen_accordion, [])
             all_blocks_to_add = no_linkto_blocks + choosen_blocks
 
         else:
             all_blocks_to_add = no_linkto_blocks
 
         # Append blocks to the navigation in the original order
-        for index, block in enumerate(block_list2):
+        for index, block in enumerate(self.previous_block_list):
             # Check if the block is either in the no_linkto_blocks or the first_group_blocks
             if block in all_blocks_to_add:
                 self.append_block_to_navigation(block)
                 # Append a divider if it's not the last block
-                if index + 1 != len(block_list2):
+                if index + 1 != len(self.previous_block_list):
                     self.config_based_nav_controls.append(pn.layout.Divider())
 
     def assemble_components(self):
@@ -691,18 +680,14 @@ class RecoExplorerApp:
         if ui_constants.UI_CONFIG_BLOCKS in self.config:
             # build client choice
             self.build_ui()
-
             # check if particular blocks belong to another ones and then populate the navigation
             self.add_blocks_to_navigation()
-
             # empty screen hinweis
             self.NoModelChossen = pn.pane.Alert(
                 "Wähle ein oder mehrere Modelle, sowie ein Start-Item oder -User",
                 alert_type="warning",
             )
-
             self.pagination_top.append(self.NoModelChossen)
-
             # previous button
             self.previousPage = pn.widgets.Button(
                 name= ui_constants.LEFT_ARROW,

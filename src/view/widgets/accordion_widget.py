@@ -239,3 +239,4 @@ class AccordionWidgetWithCards(AccordionWidget):
         self.reco_explorer_app_instance.add_blocks_to_navigation(State)
 
 
+

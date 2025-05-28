@@ -140,6 +140,7 @@ class RecommendationController():
 
     def set_mode(self):
         # set model type: u2c or c2c
+
         self.model_config = [
             item for item in self.components["model_choice"].items() if item[1].value
         ][0][0]
@@ -724,8 +725,6 @@ class RecommendationController():
             if component_label in self.components.get(group, {}):
                 component_group = group
                 break
-        else:
-            raise ValueError(f"Component '{component_label}' not found in any of the provided groups.")
         component = self.components[component_group][component_label]
         if component_label == "refinementType":
             self.refinement_widget.reset_refinement_widget(self._get_refinement_widget())
@@ -733,6 +732,11 @@ class RecommendationController():
             component.value = component.params["reset_to"]
         else:
             component.value = to_value
+
+    def reset_all_components(self, to_value="default"):
+        for group_name, group_components in self.components.items():
+            for component_label in group_components:
+                self.reset_component([group_name], component_label, to_value)
 
     def import_filter_rules(self):
         pass

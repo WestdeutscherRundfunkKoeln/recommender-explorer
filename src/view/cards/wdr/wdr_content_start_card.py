@@ -122,7 +122,6 @@ class WDRContentStartCard(WDRContentCard):
             panel_container.append(create_float_panel())  # Add the new panel
 
         button.on_click(toggle_float_panel)
-
         truncated_description = pn.Card(
             pn.pane.Markdown(f"""
         ***
