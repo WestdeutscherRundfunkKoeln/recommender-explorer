@@ -11,9 +11,7 @@ from exceptions.empty_search_error import EmptySearchError
 from exceptions.model_validation_error import ModelValidationError
 from util.ui_utils import retrieve_default_model_accordion
 from util.dto_utils import dto_from_classname
-from util.file_utils import (
-    get_client_options,
-)
+from util.file_utils import (get_client_options, )
 from view import ui_constants
 from view.widgets.accordion_widget import AccordionWidget, AccordionWidgetWithCards
 from view.widgets.date_time_picker_widget import DateTimePickerWidget
@@ -32,12 +30,10 @@ from view.widgets.widget import UIWidget
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 console_handler = logging.StreamHandler()
-formatter = logging.Formatter(
-    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+formatter = logging.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
+
 
 #
 # Main App
@@ -45,9 +41,7 @@ logger.addHandler(console_handler)
 class RecoExplorerApp:
     __in_flight_counter = 0
 
-    def __init__(
-        self, config_full_paths: dict[str, str], config: dict[str, Any], client: str
-    ) -> None:
+    def __init__(self, config_full_paths: dict[str, str], config: dict[str, Any], client: str) -> None:
         # basic setup
         self.config = config
         self.client = client
@@ -57,34 +51,15 @@ class RecoExplorerApp:
 
         self.widgets = {
 
-            ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(
-                self, self.controller
-            ),
-            ui_constants.DATE_TIME_PICKER_TYPE_VALUE: DateTimePickerWidget(
-                self, self.controller
-            ),
-            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(
-                self, self.controller
-            ),
-            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(
-                self, self.controller
-            ),
-            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(
-                self, self.controller
-            ),
-            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(
-                self, self.controller
-            ),
-            ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(
-                self, self.controller
-            ),
-            ui_constants.ACCORDION_WITH_CARDS_TYPE_VALUE: AccordionWidgetWithCards(
-                self, self.controller
-            ),
-            ui_constants.DATE_TIME_QUICK_SELECT_TYPE_VALUE: DateTimeQuickSelectWidget(
-                self, self.controller
-            ),
-        }
+            ui_constants.MULTI_SELECT_TYPE_VALUE: MultiSelectionWidget(self, self.controller),
+            ui_constants.DATE_TIME_PICKER_TYPE_VALUE: DateTimePickerWidget(self, self.controller),
+            ui_constants.TEXT_INPUT_TYPE_VALUE: TextFieldWidget(self, self.controller),
+            ui_constants.RADIO_BOX_TYPE_VALUE: RadioBoxWidget(self, self.controller),
+            ui_constants.ACCORDION_TYPE_VALUE: AccordionWidget(self, self.controller),
+            ui_constants.SLIDER_TYPE_VALUE: SliderWidget(self, self.controller),
+            ui_constants.TEXT_AREA_INPUT_TYPE_VALUE: TextAreaInputWidget(self, self.controller),
+            ui_constants.ACCORDION_WITH_CARDS_TYPE_VALUE: AccordionWidgetWithCards(self, self.controller),
+            ui_constants.DATE_TIME_QUICK_SELECT_TYPE_VALUE: DateTimeQuickSelectWidget(self, self.controller), }
 
         pn.extension(sizing_mode="stretch_width")
         pn.extension("floatpanel")
@@ -106,6 +81,8 @@ class RecoExplorerApp:
         self.c2c_model_default = []
         self.u2c_models = []
 
+        self.s2c_models = []
+
         #
         self.navigational_components = {}
         self.config_based_nav_controls = pn.WidgetBox()
@@ -122,11 +99,15 @@ class RecoExplorerApp:
         self.set_c2c_model_definitions()
         self.set_u2c_model_definitions()
 
+        self.set_s2c_model_definitions()
+
         self.url_parameter_text_field_mapping = {}
 
         self.chosen_accordion = ""
         self.previous_chosen_accordion = ""
         self.previous_block_list = []
+
+        self.chosen_model = ""
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -143,6 +124,14 @@ class RecoExplorerApp:
         else:
             logger.error("u2c feature disabled")
 
+    def set_s2c_model_definitions(self):
+        if constants.MODEL_CONFIG_S2C in self.config:
+            models = self.config[constants.MODEL_CONFIG_S2C][constants.MODEL_TYPE_S2C]
+            for model in models.keys():
+                self.s2c_models.append(model)
+        else:
+            logger.error("s2c feature disabled")
+
     # pn component definitions
     def define_item_pagination(self):
         self.pagination_top = pn.Row()
@@ -151,62 +140,39 @@ class RecoExplorerApp:
 
     def define_model_selections(self):
         ## c2c selections
-        self.c2c_choice = pn.widgets.MultiSelect(
-            name="", options=self.c2c_models, value=self.c2c_model_default
-        )
-        self.c2c_choice.params = {
-            "label": constants.MODEL_CONFIG_C2C,
-            "reset_to": self.c2c_model_default,
-        }
-        model_watcher = self.c2c_choice.param.watch(
-            self.trigger_model_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "model_choice", self.c2c_choice, model_watcher, self.trigger_model_choice
-        )
+        self.c2c_choice = pn.widgets.MultiSelect(name="", options=self.c2c_models, value=self.c2c_model_default)
+        self.c2c_choice.params = {"label": constants.MODEL_CONFIG_C2C, "reset_to": self.c2c_model_default, }
+        model_watcher = self.c2c_choice.param.watch(self.trigger_model_choice, "value", onlychanged=True)
+        self.controller.register("model_choice", self.c2c_choice, model_watcher, self.trigger_model_choice)
 
         ## u2c selections
-        self.u2c_model_choice = pn.widgets.MultiSelect(
-            name="",
-            options=self.u2c_models,
-        )
-        self.u2c_model_choice.params = {
-            "label": constants.MODEL_CONFIG_U2C,
-            "reset_to": [],
-        }
-        model_watcher = self.u2c_model_choice.param.watch(
-            self.trigger_model_choice, "value", onlychanged=True
-        )
-        self.controller.register(
-            "model_choice",
-            self.u2c_model_choice,
-            model_watcher,
-            self.trigger_model_choice,
-        )
+        self.u2c_model_choice = pn.widgets.MultiSelect(name="", options=self.u2c_models, )
+        self.u2c_model_choice.params = {"label": constants.MODEL_CONFIG_U2C, "reset_to": [], }
+        model_watcher = self.u2c_model_choice.param.watch(self.trigger_model_choice, "value", onlychanged=True)
+        self.controller.register("model_choice", self.u2c_model_choice, model_watcher, self.trigger_model_choice, )
+
+
+        ## s2c selections
+        self.s2c_model_choice = pn.widgets.MultiSelect(name="", options=self.s2c_models, )
+        self.s2c_model_choice.params = {"label": constants.MODEL_CONFIG_S2C, "reset_to": [], }
+        model_watcher = self.s2c_model_choice.param.watch(self.trigger_model_choice, "value", onlychanged=True)
+        self.controller.register("model_choice", self.s2c_model_choice, model_watcher, self.trigger_model_choice, )
 
         # reset button
-        self.model_resetter = pn.widgets.Button(
-            name="Auswahl zurücksetzen", button_type="primary", margin=10
-        )
+        self.model_resetter = pn.widgets.Button(name="Auswahl zurücksetzen", button_type="primary", margin=10)
 
-        self.model_resetter.params = {
-            "label": "model_resetter",
-            "resets": ["model_choice"],
-        }
+        self.model_resetter.params = {"label": "model_resetter", "resets": ["model_choice"], }
 
         self.model_resetter.on_click(self.trigger_model_reset)
 
     def define_page_size(self):
-        page_size = self.get_ui_config_value(
-            ui_constants.UI_CONFIG_PAGE_SIZE_KEY,
-            ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE,
-        )
+        page_size = self.get_ui_config_value(ui_constants.UI_CONFIG_PAGE_SIZE_KEY,
+            ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE, )
         if isinstance(page_size, int):
             return page_size
         else:
             logger.info(
-                f"{page_size} is not a valid page size. Fallback to default: {ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE}"
-            )
+                f"{page_size} is not a valid page size. Fallback to default: {ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE}")
             return ui_constants.FALLBACK_UI_PAGE_SIZE_VALUE
 
     # event handling
@@ -232,6 +198,7 @@ class RecoExplorerApp:
 
     async def trigger_model_choice(self, event):
         logger.info(event)
+        self.render(self)
         self.controller.reset_page_number()
         self.disablePageButtons()
         await self.get_items_with_parameters()
@@ -291,12 +258,8 @@ class RecoExplorerApp:
 
         if button == "history_button":
             title = "Nutzungshistorie von [" + item.id + "]"
-            item_dto = dto_from_classname(
-                "HistoryItemDto",
-                constants.ITEM_POSITION_START,
-                constants.ITEM_TYPE_CONTENT,
-                constants.ITEM_PROVENANCE_C2C,
-            )
+            item_dto = dto_from_classname("HistoryItemDto", constants.ITEM_POSITION_START, constants.ITEM_TYPE_CONTENT,
+                constants.ITEM_PROVENANCE_C2C, )
             items = self.controller.get_items_by_field(item_dto, item.history)
             item_row_1 = pn.Row()
             item_row_2 = pn.Row()
@@ -307,16 +270,8 @@ class RecoExplorerApp:
                 else:
                     item_row_2.append(card.draw(item_dto, idx + 1, "mediathek"))
             config = {"headerControls": "closeonly xs", "position": "center"}
-            floatpanel = pn.layout.FloatPanel(
-                item_row_1,
-                item_row_2,
-                name=title,
-                margin=2,
-                config=config,
-                height=500,
-                width=1500,
-                contained=False,
-            )
+            floatpanel = pn.layout.FloatPanel(item_row_1, item_row_2, name=title, margin=2, config=config, height=500,
+                width=1500, contained=False, )
             self.floating_elements.append(floatpanel)
 
     # toggling ui components
@@ -326,48 +281,31 @@ class RecoExplorerApp:
         # disable a component depending on the value of another component
         if event.obj.name == "Startvideo" and event.new == "Datum":
             self.startdate.visible = self.enddate.visible = self.genreRadio.visible = (
-                self.erzaehlweise.visible
-            ) = self.subgenreRadio.visible = self.inhalt.visible = (
-                self.themes.visible
-            ) = self.shows.visible = True
-            self.crid_input.visible = self.url_input.visible = (
-                self.text_input.visible
-            ) = False
+                self.erzaehlweise.visible) = self.subgenreRadio.visible = self.inhalt.visible = (
+                self.themes.visible) = self.shows.visible = True
+            self.crid_input.visible = self.url_input.visible = (self.text_input.visible) = False
             self.crid_input.value = self.url_input.value = ""
-        elif (
-            event.obj.name == "Startvideo"
-            and event.new == self.config["opensearch"]["primary_field"].capitalize()
-        ):
+        elif (event.obj.name == "Startvideo" and event.new == self.config["opensearch"]["primary_field"].capitalize()):
             self.startdate.visible = self.enddate.visible = self.url_input.visible = (
-                self.genreRadio.visible
-            ) = self.erzaehlweise.visible = self.genres.visible = (
-                self.subgenreRadio.visible
-            ) = self.inhalt.visible = self.subgenres.visible = self.themes.visible = (
-                self.shows.visible
-            ) = self.text_input.visible = False
+                self.genreRadio.visible) = self.erzaehlweise.visible = self.genres.visible = (
+                self.subgenreRadio.visible) = self.inhalt.visible = self.subgenres.visible = self.themes.visible = (
+                self.shows.visible) = self.text_input.visible = False
             self.crid_input.visible = True
             self.url_input.value = ""
         elif event.obj.name == "Startvideo" and event.new == "URL":
             self.startdate.visible = self.enddate.visible = self.crid_input.visible = (
-                self.genreRadio.visible
-            ) = self.erzaehlweise.visible = self.genres.visible = (
-                self.subgenreRadio.visible
-            ) = self.inhalt.visible = self.subgenres.visible = self.themes.visible = (
-                self.shows.visible
-            ) = self.text_input.visible = False
+                self.genreRadio.visible) = self.erzaehlweise.visible = self.genres.visible = (
+                self.subgenreRadio.visible) = self.inhalt.visible = self.subgenres.visible = self.themes.visible = (
+                self.shows.visible) = self.text_input.visible = False
             self.crid_input.value = ""
             self.url_input.visible = True
         elif event.obj.name == "Startvideo" and event.new == "Text":
             self.startdate.visible = self.enddate.visible = self.crid_input.visible = (
-                self.genreRadio.visible
-            ) = self.erzaehlweise.visible = self.genres.visible = (
-                self.subgenreRadio.visible
-            ) = self.inhalt.visible = self.subgenres.visible = self.themes.visible = (
-                self.shows.visible
-            ) = self.url_input.visible = False
+                self.genreRadio.visible) = self.erzaehlweise.visible = self.genres.visible = (
+                self.subgenreRadio.visible) = self.inhalt.visible = self.subgenres.visible = self.themes.visible = (
+                self.shows.visible) = self.url_input.visible = False
             self.crid_input.value = ""
-            self.text_input.visible = True
-        # shorten this, either combine last two elifs or with dict of widget groups
+            self.text_input.visible = True  # shorten this, either combine last two elifs or with dict of widget groups
 
     def toggle_client_choice(self, event):
         logger.info(event)
@@ -386,26 +324,19 @@ class RecoExplorerApp:
 
     def toggle_genre_selection_by_upper_genre(self, event):
         logger.info(event)
-        if (
-            event.obj.params["label"] == "erzaehlweiseCategory"
-            or event.obj.params["label"] == "value_erzaehlweiseCategory"
-        ):
+        if (event.obj.params["label"] == "erzaehlweiseCategory" or event.obj.params[
+            "label"] == "value_erzaehlweiseCategory"):
             category = "genres"
             if event.obj.params["label"] == "erzaehlweiseCategory":
                 upper_category = self.erzaehlweise
                 widget = self.genres
-        elif (
-            event.obj.params["label"] == "inhaltCategory"
-            or event.obj.params["label"] == "value_inhaltCategory"
-        ):
+        elif (event.obj.params["label"] == "inhaltCategory" or event.obj.params["label"] == "value_inhaltCategory"):
             category = "subgenres"
             if event.obj.params["label"] == "inhaltCategory":
                 upper_category = self.inhalt
                 widget = self.subgenres
         if event.type == "changed":
-            widget.value = self.controller.get_genres_and_subgenres_from_upper_category(
-                upper_category.value, category
-            )
+            widget.value = self.controller.get_genres_and_subgenres_from_upper_category(upper_category.value, category)
 
     def toggle_visibility(self, event):
         for action in ["visible_action", "visible_action_2"]:
@@ -430,9 +361,7 @@ class RecoExplorerApp:
 
     def disablePageButtons(self):
         self.previousPage.disabled = self.controller.get_page_number() == 1
-        self.nextPage.disabled = (
-            self.controller.get_page_number() == self.controller.get_num_pages()
-        )
+        self.nextPage.disabled = (self.controller.get_page_number() == self.controller.get_num_pages())
 
     # assembly & rendering
 
@@ -456,9 +385,7 @@ class RecoExplorerApp:
         Inserts values from given parameter names from url into given widgets, parameter names in Key prevent one parameter name for multiple widgets
         """
         for parameter_name, widget in self.url_parameter_text_field_mapping.items():
-            parameter_value_str = pn.state.location.query_params.get(
-                parameter_name, None
-            )
+            parameter_value_str = pn.state.location.query_params.get(parameter_name, None)
             if parameter_value_str is not None:
                 try:
                     parameter_value = int(parameter_value_str)
@@ -480,8 +407,7 @@ class RecoExplorerApp:
         """
         return self.config.get(ui_constants.UI_CONFIG_KEY + "." + key, fallback)
 
-    def build_common_ui_widget_dispatcher(
-        self, common_ui_widget_type: str, common_ui_widget_config: dict[str, Any]):
+    def build_common_ui_widget_dispatcher(self, common_ui_widget_type: str, common_ui_widget_config: dict[str, Any]):
         """
         Decides which common ui widget should be build based on the given ui type. If no type matches returns None
 
@@ -498,8 +424,8 @@ class RecoExplorerApp:
             return radio_box_widget.create(common_ui_widget_config)
 
         elif common_ui_widget_type == ui_constants.REFINEMENT_WIDGET_TYPE_VALUE:
-             refinement_widget = RefinementWidget(self, self.controller)
-             return refinement_widget.create()
+            refinement_widget = RefinementWidget(self, self.controller)
+            return refinement_widget.create()
 
         else:
             widget = self.widgets.get(common_ui_widget_type)
@@ -512,9 +438,7 @@ class RecoExplorerApp:
         if widgets_config is not None:
             for widget_config in widgets_config:
                 component_type = widget_config.get(ui_constants.WIDGET_TYPE_KEY, "")
-                component_from_dispatcher = self.build_common_ui_widget_dispatcher(
-                    component_type, widget_config
-                )
+                component_from_dispatcher = self.build_common_ui_widget_dispatcher(component_type, widget_config)
                 if component_from_dispatcher is not None:
                     widgets_list.append(component_from_dispatcher)
 
@@ -524,16 +448,13 @@ class RecoExplorerApp:
 
             if widget_config.get(ui_constants.ACCORDION_RESET_BUTTON_KEY):
                 widgets_list.append(
-                    self.widgets[ui_constants.ACCORDION_TYPE_VALUE].create_accordion_reset_buttons(
-                        widget_config)
-                )
+                    self.widgets[ui_constants.ACCORDION_TYPE_VALUE].create_accordion_reset_buttons(widget_config))
 
             else:
                 logger.error("UI Config Type: " + component_type)
 
         else:
             logger.error("No UI Widgets are defined in Config File, or key name is wrong")
-
 
         return widgets_list
 
@@ -548,28 +469,16 @@ class RecoExplorerApp:
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
 
         for block_config in blocks_config:
-
-            list_of_widgets_in_block = self.build_widgets(
-                block_config.get(ui_constants.BLOCK_CONFIG_WIDGETS_KEY)
-            )
+            list_of_widgets_in_block = self.build_widgets(block_config.get(ui_constants.BLOCK_CONFIG_WIDGETS_KEY))
 
             if block_config.get("show_reset_button", True):
                 list_of_widgets_in_block.append(
-                    ResetButtonWidget(self, self.controller).create(
-                        list_of_widgets_in_block
-                    )
-                )
+                    ResetButtonWidget(self, self.controller).create(list_of_widgets_in_block))
 
-            block = {
-                ui_constants.BLOCK_LABEL_LIST_KEY: block_config.get(
-                    ui_constants.BLOCK_CONFIG_LABEL_KEY,
-                    ui_constants.FALLBACK_BLOCK_LABEL_VALUE,
-                ),
-                ui_constants.BLOCKS_CONFIG_LINKTO: block_config.get(
-                    ui_constants.BLOCKS_CONFIG_LINKTO
-                ),
-                ui_constants.BLOCK_WIDGETS_LIST_KEY: list_of_widgets_in_block,
-            }
+            block = {ui_constants.BLOCK_LABEL_LIST_KEY: block_config.get(ui_constants.BLOCK_CONFIG_LABEL_KEY,
+                ui_constants.FALLBACK_BLOCK_LABEL_VALUE, ),
+                ui_constants.BLOCKS_CONFIG_LINKTO: block_config.get(ui_constants.BLOCKS_CONFIG_LINKTO),
+                ui_constants.BLOCK_WIDGETS_LIST_KEY: list_of_widgets_in_block, }
             block_list.append(block)
         return block_list
 
@@ -581,9 +490,7 @@ class RecoExplorerApp:
         Args:
             block (block): a ui block which is configured in config yaml and contains widgets
         """
-        self.config_based_nav_controls.append(
-            "### " + block.get(ui_constants.BLOCK_LABEL_LIST_KEY)
-        )
+        self.config_based_nav_controls.append("### " + block.get(ui_constants.BLOCK_LABEL_LIST_KEY))
         for block_component in block.get(ui_constants.BLOCK_WIDGETS_LIST_KEY):
             self.config_based_nav_controls.append(block_component)
 
@@ -595,18 +502,12 @@ class RecoExplorerApp:
 
         # Client
         client_title = pn.pane.Markdown("### Mandant wählen")
-        client_choice = pn.widgets.RadioBoxGroup(
-            name="Client",
-            options=get_client_options(self.config_full_paths),
-            value=self.client,
-            sizing_mode="scale_width",
-        )
+        client_choice = pn.widgets.RadioBoxGroup(name="Client", options=get_client_options(self.config_full_paths),
+            value=self.client, sizing_mode="scale_width", )
 
         if self.client_choice_visibility:
             self.config_based_nav_controls.append(client_title)
-            client_choice.param.watch(
-                self.toggle_client_choice, "value", onlychanged=True
-            )
+            client_choice.param.watch(self.toggle_client_choice, "value", onlychanged=True)
             self.config_based_nav_controls.append(client_choice)
 
     def add_blocks_to_navigation(self, active_accordion: str = ""):
@@ -620,7 +521,7 @@ class RecoExplorerApp:
         # then it's an index sent by the accordion_widget class
         if active_accordion != "":
             self.chosen_accordion = active_accordion
-            self.build_ui() #reset the nav bar before doing modifications
+            self.build_ui()  # reset the nav bar before doing modifications
 
         # Create a dictionary to group blocks by their linkto value
         grouped_blocks = {}
@@ -638,25 +539,18 @@ class RecoExplorerApp:
                     grouped_blocks[linkto_value] = []
 
                 # Get the label of that accordion
-                Acc_label = block_config.get(ui_constants.BLOCK_LABEL_LIST_KEY)
+                acc_label = block_config.get(ui_constants.BLOCK_LABEL_LIST_KEY)
 
                 # Find the corresponding block from the blocks list
-                corresponding_blocks = [
-                    block
-                    for block in self.previous_block_list
-                    if block.get("label") == Acc_label
-                    and block.get("linkto") == linkto_value
-                ]
+                corresponding_blocks = [block for block in self.previous_block_list if
+                    block.get("label") == acc_label and block.get("linkto") == linkto_value]
 
                 # Append the corresponding blocks to the group
                 grouped_blocks[linkto_value].extend(corresponding_blocks)
             else:
                 # If no 'linkto' is found, store the block in no_linkto_blocks
-                corresponding_blocks = [
-                    block
-                    for block in self.previous_block_list
-                    if block.get("label") == block_config["label"]
-                ]
+                corresponding_blocks = [block for block in self.previous_block_list if
+                    block.get("label") == block_config["label"]]
                 no_linkto_blocks.extend(corresponding_blocks)
 
         if grouped_blocks:
@@ -675,27 +569,20 @@ class RecoExplorerApp:
                 if index + 1 != len(self.previous_block_list):
                     self.config_based_nav_controls.append(pn.layout.Divider())
 
+
     def assemble_components(self):
-        accordion_max_width = ui_constants.ACCORDION_MAX_WIDTH
         if ui_constants.UI_CONFIG_BLOCKS in self.config:
             # build client choice
             self.build_ui()
             # check if particular blocks belong to another ones and then populate the navigation
             self.add_blocks_to_navigation()
             # empty screen hinweis
-            self.NoModelChossen = pn.pane.Alert(
-                "Wähle ein oder mehrere Modelle, sowie ein Start-Item oder -User",
-                alert_type="warning",
-            )
+            self.NoModelChossen = pn.pane.Alert("Wähle ein oder mehrere Modelle, sowie ein Start-Item oder -User",
+                alert_type="warning", )
             self.pagination_top.append(self.NoModelChossen)
             # previous button
-            self.previousPage = pn.widgets.Button(
-                name= ui_constants.LEFT_ARROW,
-                button_type="primary",
-                margin=10,
-                width=50,
-                disabled=True,
-            )
+            self.previousPage = pn.widgets.Button(name=ui_constants.LEFT_ARROW, button_type="primary", margin=10,
+                width=50, disabled=True, )
             self.previousPage.on_click(self.trigger_item_pagination)
             self.pagination.append(self.previousPage)
 
@@ -705,23 +592,15 @@ class RecoExplorerApp:
             self.pagination.append(pn.pane.Markdown("""### - """))
 
             # next button
-            self.nextPage = pn.widgets.Button(
-                name= ui_constants.RIGHT_ARROW,
-                button_type="primary",
-                width=50,
-                margin=10,
-                disabled=True,
-            )
+            self.nextPage = pn.widgets.Button(name=ui_constants.RIGHT_ARROW, button_type="primary", width=50, margin=10,
+                disabled=True, )
             self.nextPage.on_click(self.trigger_item_pagination)
             self.pagination.append(self.nextPage)
 
         ## In case no config file was given
         else:
             # empty screen hinweis
-            self.NoConfig = pn.pane.Alert(
-                "Couldn't find a Config file",
-                alert_type="warning",
-            )
+            self.NoConfig = pn.pane.Alert("Couldn't find a Config file", alert_type="warning", )
             self.pagination.append(self.NoConfig)
 
     def get_version_information_and_append_to_sidebar(self, sidebar):
@@ -744,17 +623,8 @@ class RecoExplorerApp:
         """
         Calls the actual search function in controller to get results for query
         """
-        self.main_content[:] = [
-            pn.Row(
-                pn.indicators.LoadingSpinner(
-                    value=True,
-                    width=25,
-                    height=25,
-                    align="center",
-                    margin=(5, 0, 5, 10),
-                )
-            )
-        ]
+        self.main_content[:] = [pn.Row(
+            pn.indicators.LoadingSpinner(value=True, width=25, height=25, align="center", margin=(5, 0, 5, 10), ))]
         self.pagination_top[:] = []
 
         self.__in_flight_counter += 1
@@ -778,41 +648,29 @@ class RecoExplorerApp:
         if self.__in_flight_counter:
             return
 
-        self.main_content[:] = [
-            self.add_cards_row(models, config, idx, row)
-            for idx, row in enumerate(items)
-        ]
+        self.main_content[:] = [self.add_cards_row(models, config, idx, row) for idx, row in enumerate(items)]
         self.draw_pagination()
         self.disablePageButtons()
 
-    def add_cards_row(
-        self, models: list[Any], config: str, idx: int, row: list[Any]
-    ) -> pn.Row:
+    def add_cards_row(self, models: list[Any], config: str, idx: int, row: list[Any]) -> pn.Row:
         start_card = None
         reco_cards = []
         for idz, item_dto in enumerate(row):
             card = self.controller.get_item_viewer(item_dto, self)
             if self.controller.get_display_mode() == constants.DISPLAY_MODE_SINGLE:
-                displayed_card = card.draw(
-                    item_dto, idz, models[0], config, self.trigger_modal
-                )
+                displayed_card = card.draw(item_dto, idz, models[0], config, self.trigger_modal)
             else:
-                displayed_card = card.draw(
-                    item_dto, idz, models[idx], config, self.trigger_modal
-                )
+                displayed_card = card.draw(item_dto, idz, models[idx], config, self.trigger_modal)
             if idz == 0:
                 start_card = displayed_card
             else:
                 reco_cards.append(displayed_card)
         cards_row = pn.Row(start_card, *reco_cards[: self.page_size])
-        row_with_navigation_buttons = self.create_navigation_elements_for_cards_row(
-            cards_row, start_card, reco_cards
-        )
+        row_with_navigation_buttons = self.create_navigation_elements_for_cards_row(cards_row, start_card, reco_cards)
         return pn.Row(pn.Column(cards_row, row_with_navigation_buttons))
 
-    def create_navigation_elements_for_cards_row(
-        self, cards_row: pn.Row, start_card: pn.layout.card.Card, reco_cards: list
-    ) -> pn.Row:
+    def create_navigation_elements_for_cards_row(self, cards_row: pn.Row, start_card: pn.layout.card.Card,
+            reco_cards: list) -> pn.Row:
         """
         :param cards_row: pn.Row, the parent row containing the card elements to navigate through
         :param start_card: pn.layout.card.Card, the card element at the start
@@ -822,20 +680,10 @@ class RecoExplorerApp:
         prev_button = pn.widgets.Button(name=f"{ui_constants.LEFT_ARROW}", width=100)
         prev_button.disabled = True
         next_button = pn.widgets.Button(name=f"{ui_constants.RIGHT_ARROW}", width=100)
-        row_with_navigation_buttons = pn.Row(
-            prev_button,
-            pn.Spacer(),
-            next_button,
-        )
+        row_with_navigation_buttons = pn.Row(prev_button, pn.Spacer(), next_button, )
 
-        widgets_in_row = {
-            "cards_row": cards_row,
-            "start_card": start_card,
-            "reco_cards": reco_cards,
-            "page_size": self.page_size,
-            "prev_button": prev_button,
-            "next_button": next_button,
-        }
+        widgets_in_row = {"cards_row": cards_row, "start_card": start_card, "reco_cards": reco_cards,
+            "page_size": self.page_size, "prev_button": prev_button, "next_button": next_button, }
 
         prev_button.on_click(functools.partial(self._update_prev, widgets=widgets_in_row))
         next_button.on_click(functools.partial(self._update_next, widgets=widgets_in_row))
@@ -854,16 +702,10 @@ class RecoExplorerApp:
         """
         if widgets["page_size"] < len(widgets["reco_cards"]):
             widgets["page_size"] += self.page_size
-            widgets["cards_row"].objects = [
-                widgets["start_card"],
-                *widgets["reco_cards"][
-                    widgets["page_size"] - self.page_size : widgets["page_size"]
-                ],
-            ]
+            widgets["cards_row"].objects = [widgets["start_card"],
+                *widgets["reco_cards"][widgets["page_size"] - self.page_size: widgets["page_size"]], ]
         widgets["prev_button"].disabled = False
-        widgets["next_button"].disabled = (widgets["page_size"] + self.page_size) > len(
-            widgets["reco_cards"]
-        )
+        widgets["next_button"].disabled = (widgets["page_size"] + self.page_size) > len(widgets["reco_cards"])
 
     def _update_prev(self, event, widgets: dict[any]):
         """
@@ -877,12 +719,8 @@ class RecoExplorerApp:
         """
         if widgets["page_size"] > self.page_size:
             widgets["page_size"] -= self.page_size
-            widgets["cards_row"].objects = [
-                widgets["start_card"],
-                *widgets["reco_cards"][
-                    widgets["page_size"] - self.page_size : widgets["page_size"]
-                ],
-            ]
+            widgets["cards_row"].objects = [widgets["start_card"],
+                *widgets["reco_cards"][widgets["page_size"] - self.page_size: widgets["page_size"]], ]
         widgets["next_button"].disabled = False
         widgets["prev_button"].disabled = widgets["page_size"] <= self.page_size
 
@@ -895,21 +733,13 @@ class RecoExplorerApp:
         self.assemble_components()
         logger.debug("assemble components done")
 
-        title = self.get_ui_config_value(
-            ui_constants.UI_CONFIG_TITLE_KEY,
-            ui_constants.FALLBACK_UI_CONFIG_TITLE_VALUE,
-        )
-        logo = self.get_ui_config_value(
-            ui_constants.UI_CONFIG_LOGO_KEY, ui_constants.FALLBACK_UI_CONFIG_LOGO_VALUE
-        )
-        header_background = self.get_ui_config_value(
-            ui_constants.UI_CONFIG_HEADER_BACKGROUND_COLOR_KEY,
-            ui_constants.FALLBACK_UI_CONFIG_BACKGROUND_COLOR_VALUE,
-        )
+        title = self.get_ui_config_value(ui_constants.UI_CONFIG_TITLE_KEY,
+            ui_constants.FALLBACK_UI_CONFIG_TITLE_VALUE, )
+        logo = self.get_ui_config_value(ui_constants.UI_CONFIG_LOGO_KEY, ui_constants.FALLBACK_UI_CONFIG_LOGO_VALUE)
+        header_background = self.get_ui_config_value(ui_constants.UI_CONFIG_HEADER_BACKGROUND_COLOR_KEY,
+            ui_constants.FALLBACK_UI_CONFIG_BACKGROUND_COLOR_VALUE, )
 
-        pn.config.raw_css.append(
-            self.get_ui_config_value(ui_constants.UI_CONFIG_CUSTOM_CSS_KEY, "")
-        )
+        pn.config.raw_css.append(self.get_ui_config_value(ui_constants.UI_CONFIG_CUSTOM_CSS_KEY, ""))
 
         sidebar = self.config_based_nav_controls
 
@@ -918,13 +748,8 @@ class RecoExplorerApp:
         # finally add onload, check if url parameter are defined in config and link to widgets
         pn.state.onload(self.update_widgets_from_url_parameter)
 
-        self.template = pn.template.BootstrapTemplate(
-            site_url="./",
-            title=title,
-            logo=logo,
-            sidebar=[sidebar],
+        self.template = pn.template.BootstrapTemplate(site_url="./", title=title, logo=logo, sidebar=[sidebar],
             main=[self.floating_elements, self.pagination_top, self.main_content, self.pagination],
-            header_background=header_background,
-        )
+            header_background=header_background, )
 
         return self.template

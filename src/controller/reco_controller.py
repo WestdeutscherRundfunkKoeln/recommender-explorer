@@ -19,12 +19,7 @@ from exceptions.item_not_found_error import UnknownItemError
 from exceptions.embedding_not_found_error import UnknownItemEmbeddingError
 from exceptions.empty_search_error import EmptySearchError
 from util.postprocessing import FilterPostproc
-from util.dto_utils import (
-    update_from_props,
-    dto_from_classname,
-    dto_from_model,
-    get_primary_idents,
-)
+from util.dto_utils import (update_from_props, dto_from_classname, dto_from_model, get_primary_idents, )
 from dto.user_item import UserItemDto
 from dto.item import ItemDto
 from envyaml import EnvYAML
@@ -33,20 +28,14 @@ logger = logging.getLogger(__name__)
 
 
 class RecommendationController():
-    FILTER_FIELD_MATRIX = {
-        "genre": "genreCategory",
-        "subgenre": "subgenreCategories",
-        "theme": "thematicCategories",
-        "show": "showId",
-    }
+    FILTER_FIELD_MATRIX = {"genre": "genreCategory", "subgenre": "subgenreCategories", "theme": "thematicCategories",
+        "show": "showId", }
 
     def __init__(self, config, current_client: str = ""):
         self.config = config
         # Choose the appropriate builder based on the current client
-        self.refinement_widget = {
-            "br": BrRefinementWidgetRequestManger(),
-            "wdr_pa": WdrPaRefinementWidgetRequestManger()
-        }.get(current_client, NoRefinementWidgetRequestManger())
+        self.refinement_widget = {"br": BrRefinementWidgetRequestManger(),
+            "wdr_pa": WdrPaRefinementWidgetRequestManger()}.get(current_client, NoRefinementWidgetRequestManger())
 
         self.item_accessor = BaseDataAccessorOpenSearch(config)
         if constants.MODEL_CONFIG_U2C in config:
@@ -62,9 +51,8 @@ class RecommendationController():
         #
         # TODO - refactor this into model code
         #
-        self.num_NN = self.config.get(
-            "opensearch.number_of_recommendations", 5
-        )  # num start items to fetch from backend per call
+        self.num_NN = self.config.get("opensearch.number_of_recommendations",
+                                      5)  # num start items to fetch from backend per call
         self.num_items = 0  # num start items to fetch from backend per call
         self.num_items_single_view = 4
         self.num_items_multi_view = 4
@@ -76,18 +64,14 @@ class RecommendationController():
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
 
         self.mapping_type = {"Ähnlichkeit": "Semantic", "Diversität": "Diverse", "Aktualität": "Temporal"}
-        self.mapping_direction = {
-            "Ähnlicher": "more similar", "Aktueller": "more recent",
+        self.mapping_direction = {"Ähnlicher": "more similar", "Aktueller": "more recent",
             "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
-            "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"
-        }
+            "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"}
 
         if not isinstance(self.num_NN, int):
             raise ConfigError(
                 "Could not get valid Configuration for Service from config yaml. RecommendationController needs correctly configured Service, "
-                "expect int value in Configuration in Key: opensearch.number_of_recommendations",
-                {},
-            )
+                "expect int value in Configuration in Key: opensearch.number_of_recommendations", {}, )
         else:
             self.num_NN = min(self.num_NN, 20)
 
@@ -99,18 +83,13 @@ class RecommendationController():
             self.callbacks[component_group][component.params["label"]] = callback
 
     def get_item_defaults(self, component_name):
-        return self.item_accessor.get_unique_vals_for_column(
-            column=component_name, sort=True
-        )
+        return self.item_accessor.get_unique_vals_for_column(column=component_name, sort=True)
 
     def get_user_cluster(self):
         # TODO: improve the model config pass
         assert self.user_cluster_accessor is not None
         self.user_cluster_accessor.set_model_config(
-            self.config[constants.MODEL_CONFIG_U2C]["clustering_models"][
-                "U2C-Knn-Model"
-            ]
-        )
+            self.config[constants.MODEL_CONFIG_U2C]["clustering_models"]["U2C-Knn-Model"])
         self.user_cluster = self.user_cluster_accessor.get_user_cluster()
         return list(self.user_cluster.keys())
 
@@ -141,17 +120,11 @@ class RecommendationController():
     def set_mode(self):
         # set model type: u2c or c2c
 
-        self.model_config = [
-            item for item in self.components["model_choice"].items() if item[1].value
-        ][0][0]
+        self.model_config = [item for item in self.components["model_choice"].items() if item[1].value][0][0]
         chosen_model = self.components["model_choice"][self.model_config].value[0]
         # ToDo: Needs refactoring. Gets value 'c2c_config' from configuration file based on position, should be based on key
-        self.model_type = [
-            model_type
-            for model_type in self.config[self.model_config]
-            for model in self.config[self.model_config][model_type]
-            if model == chosen_model
-        ][0]
+        self.model_type = [model_type for model_type in self.config[self.model_config] for model in
+            self.config[self.model_config][model_type] if model == chosen_model][0]
 
         ## set display type, single or multi
         if len(self.components["model_choice"][self.model_config].value) > 1:
@@ -179,9 +152,7 @@ class RecommendationController():
         module = importlib.import_module(viewer_dir)
         return getattr(module, viewer_name)
 
-    def get_item_viewer(
-        self, item_dto: ItemDto, app_explorer_instance: "RecoExplorerApp | None" = None
-    ):
+    def get_item_viewer(self, item_dto: ItemDto, app_explorer_instance: "RecoExplorerApp | None" = None):
         class_ = self._get_class_from_config(item_dto.viewer)
         return class_(self.config, app_explorer_instance)
 
@@ -195,10 +166,7 @@ class RecommendationController():
         """
         class_ = self._get_class_from_config(model_info["handler"])
         self.reco_accessor = (
-            class_(self.config)
-            if not getattr(class_, "from_config", None)
-            else class_.from_config(self.config)
-        )
+            class_(self.config) if not getattr(class_, "from_config", None) else class_.from_config(self.config))
         self.reco_accessor.set_model_config(model_info)
         self.set_item_accessor(model_info)
         return True
@@ -219,9 +187,7 @@ class RecommendationController():
         _, db_ident = get_primary_idents(self.config)
         try:
             for id in ids:
-                ids_prim.append(
-                    self.item_accessor.get_primary_key_by_field(id, db_ident)
-                )
+                ids_prim.append(self.item_accessor.get_primary_key_by_field(id, db_ident))
             item_dtos, _ = self.item_accessor.get_items_by_ids(item_dto, ids_prim)
             return item_dtos
         except EmptySearchError:
@@ -241,9 +207,7 @@ class RecommendationController():
             raise ModelValidationError("Start by selecting one or more models!", {})
 
         if self.get_display_mode() == constants.DISPLAY_MODE_SINGLE:
-            model_info = self.config[self.model_config][self.model_type][
-                selected_models[0]
-            ]
+            model_info = self.config[self.model_config][self.model_type][selected_models[0]]
             self.set_model_and_strategy(model_info)
             return self.get_items_by_strategy_and_model(model_info)
         else:
@@ -255,9 +219,7 @@ class RecommendationController():
                 res.append(items[0])
             return list(selected_models), res, self.model_config
 
-    def get_items_by_strategy_and_model(
-        self, model_info: dict
-    ) -> tuple[list, list[list], str]:
+    def get_items_by_strategy_and_model(self, model_info: dict) -> tuple[list, list[list], str]:
         """
         Gets start item(s) based on model info and already set strategy. If model is configured as
         recos_in_same_response, function will not only return start items but also all recommended
@@ -269,13 +231,10 @@ class RecommendationController():
         item_hits, start_items = self._get_start_items(model_info)
 
         self.set_num_pages(item_hits)
-        return self.get_reco_items_for_start_items_from_response(
-            model_info, start_items
-        )
+        return self.get_reco_items_for_start_items_from_response(model_info, start_items)
 
-    def get_reco_items_for_start_items_from_response(
-        self, model_info: dict, start_items
-    ) -> tuple[list, list[list], str]:
+    def get_reco_items_for_start_items_from_response(self, model_info: dict, start_items) -> tuple[
+        list, list[list], str]:
         """
         Returns the items from the response. Here Recommendations are not part of the response, so they need to be requeted
         from service for each start item from response.
@@ -297,9 +256,7 @@ class RecommendationController():
                     chosen_param = []
                     for item in all_chosen_filters["remove_duplicate"]:
                         chosen_param.append(item[1])
-                    filtered_nn_items = self.postproc.filterDuplicates(
-                        start_item, nn_items, chosen_param
-                    )
+                    filtered_nn_items = self.postproc.filterDuplicates(start_item, nn_items, chosen_param)
                     nn_items = filtered_nn_items
 
                 for idx, reco_item in enumerate(nn_items):
@@ -309,17 +266,13 @@ class RecommendationController():
 
                 all_items.append(item_row)
             except (UnknownUserError, UnknownItemError, UnknownItemEmbeddingError):
-                not_found_item = dto_from_classname(
-                    class_name="NotFoundDto",
-                    position=constants.ITEM_POSITION_START,
-                    item_type=constants.ITEM_TYPE_CONTENT,
-                    provenance=constants.ITEM_PROVENANCE_C2C,
-                )
+                not_found_item = dto_from_classname(class_name="NotFoundDto", position=constants.ITEM_POSITION_START,
+                                                    item_type=constants.ITEM_TYPE_CONTENT,
+                                                    provenance=constants.ITEM_PROVENANCE_C2C, )
                 item_row.append(not_found_item)
                 all_items.append(item_row)
                 continue
         return [model_info["display_name"]], all_items, self.model_config
-
 
     def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
@@ -337,25 +290,14 @@ class RecommendationController():
         self._validate_input_data(active_components)
         accessor_method = self._get_data_accessor_method(active_components)
         accessor_values = [x.value for x in active_components]
-        item_dto = dto_from_model(
-            model=model,
-            position=constants.ITEM_POSITION_START,
-            item_type=constants.ITEM_TYPE_CONTENT,
-            provenance=constants.ITEM_PROVENANCE_C2C,
-        )
+        item_dto = dto_from_model(model=model, position=constants.ITEM_POSITION_START,
+                                  item_type=constants.ITEM_TYPE_CONTENT, provenance=constants.ITEM_PROVENANCE_C2C, )
         accessor_values.insert(0, item_dto)
         accessor_values.append(self._get_current_filter_state("item_filter"))
         has_paging = [x.params.get("has_paging", False) for x in active_components]
         if any(has_paging):
-            accessor_values.extend(
-                [
-                    ((self.get_page_number() - 1) * self.get_num_items()),
-                    self.get_num_items(),
-                ]
-            )
-        logger.info(
-            "calling " + accessor_method + " with values " + str(accessor_values)
-        )
+            accessor_values.extend([((self.get_page_number() - 1) * self.get_num_items()), self.get_num_items(), ])
+        logger.info("calling " + accessor_method + " with values " + str(accessor_values))
         function_pointer = getattr(self.item_accessor, accessor_method)
         search_result, total_hits = function_pointer(*accessor_values)
         return total_hits, search_result
@@ -370,45 +312,25 @@ class RecommendationController():
             start_idx = (self.get_page_number() - 1) * self.get_num_items()
             end_idx = start_idx + self.get_num_items()
         # create the user dto from model info
-        user_dto = dto_from_model(
-            model=model,
-            position=constants.ITEM_POSITION_START,
-            item_type=constants.ITEM_TYPE_USER,
-            provenance=constants.ITEM_PROVENANCE_U2C,
-        )
+        user_dto = dto_from_model(model=model, position=constants.ITEM_POSITION_START,
+                                  item_type=constants.ITEM_TYPE_USER, provenance=constants.ITEM_PROVENANCE_U2C, )
         # only one active user component at this time
         if len(active_components) > 1:
-            raise Exception(
-                "Can't use more than one selection widget for user selection"
-            )
+            raise Exception("Can't use more than one selection widget for user selection")
         if active_components[0].params["label"] == "cluster_users":
-            return self._get_start_users_by_cluster(
-                user_dto, active_components[0], start_idx, end_idx
-            )
+            return self._get_start_users_by_cluster(user_dto, active_components[0], start_idx, end_idx)
         elif active_components[0].params["label"] == "genre_users":
-            return self._get_start_users_by_genre(
-                user_dto, active_components[0], start_idx, end_idx
-            )
+            return self._get_start_users_by_genre(user_dto, active_components[0], start_idx, end_idx)
         else:
-            raise Exception(
-                "Unknown user selection widget ["
-                + active_components[0].params.label
-                + "]"
-            )
+            raise Exception("Unknown user selection widget [" + active_components[0].params.label + "]")
 
-    def _get_start_users_by_genre(
-        self, user_dto: UserItemDto, genre_widget, start_idx, end_idx
-    ) -> tuple[int, list[UserItemDto]]:
+    def _get_start_users_by_genre(self, user_dto: UserItemDto, genre_widget, start_idx, end_idx) -> tuple[
+        int, list[UserItemDto]]:
         # TODO: improve the model config pass
         assert self.user_cluster_accessor is not None
         self.user_cluster_accessor.set_model_config(
-            self.config[constants.MODEL_CONFIG_U2C]["clustering_models"][
-                "U2C-Knn-Model"
-            ]
-        )
-        field_map = self.config[constants.MODEL_CONFIG_U2C]["clustering_models"][
-            "U2C-Knn-Model"
-        ]["field_mapping"]
+            self.config[constants.MODEL_CONFIG_U2C]["clustering_models"]["U2C-Knn-Model"])
+        field_map = self.config[constants.MODEL_CONFIG_U2C]["clustering_models"]["U2C-Knn-Model"]["field_mapping"]
         genre_widget_value = genre_widget.value[0]
         response = self.user_cluster_accessor.get_users_by_category(genre_widget_value)
         num_users = len(response[genre_widget_value])
@@ -423,9 +345,8 @@ class RecommendationController():
 
         return num_users, users
 
-    def _get_start_users_by_cluster(
-        self, user_dto: UserItemDto, cluster_widget, start_idx, end_idx
-    ) -> tuple[int, list[UserItemDto]]:
+    def _get_start_users_by_cluster(self, user_dto: UserItemDto, cluster_widget, start_idx, end_idx) -> tuple[
+        int, list[UserItemDto]]:
         cluster_name = cluster_widget.value
         user_ids = self.user_cluster[cluster_name][start_idx:end_idx]
         users = []
@@ -489,9 +410,7 @@ class RecommendationController():
         self.refinement_widget.prepare_request(reco_filter, start_item.id)
         self.reco_accessor.set_model_config(model)
 
-        kidxs, nn_dists, oss_field, *rest = self.reco_accessor.get_k_NN(
-            start_item, (self.num_NN + 1), reco_filter
-        )
+        kidxs, nn_dists, oss_field, *rest = self.reco_accessor.get_k_NN(start_item, (self.num_NN + 1), reco_filter)
         utilities = rest[0] if rest else None
 
         self.refinement_widget.process_response(kidxs, utilities)
@@ -503,56 +422,37 @@ class RecommendationController():
             kidxs_prim = []
             try:
                 for kidx in kidxs:
-                    kidxs_prim.append(
-                        self.item_accessor.get_primary_key_by_field(kidx, db_ident)
-                    )
+                    kidxs_prim.append(self.item_accessor.get_primary_key_by_field(kidx, db_ident))
             except EmptySearchError as e:
                 logger.warning(str(e))
             kidxs = kidxs_prim
         else:
             kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
 
-        item_dto = dto_from_model(
-            model=model,
-            position=constants.ITEM_POSITION_RECO,
-            item_type=constants.ITEM_TYPE_CONTENT,
-            provenance=constants.ITEM_PROVENANCE_C2C,
-        )
+        item_dto = dto_from_model(model=model, position=constants.ITEM_POSITION_RECO,
+                                  item_type=constants.ITEM_TYPE_CONTENT, provenance=constants.ITEM_PROVENANCE_C2C, )
 
-        return (
-            self.item_accessor.get_items_by_ids(
-                item_dto, kidxs[: self.num_NN], constants.MODEL_TYPE_C2C
-            )[0],
-            nn_dists[: self.num_NN],
-        )
+        return (self.item_accessor.get_items_by_ids(item_dto, kidxs[: self.num_NN], constants.MODEL_TYPE_C2C)[0],
+            nn_dists[: self.num_NN],)
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
         reco_filter = self._get_current_filter_state("reco_filter_u2c")
 
         assert self.reco_accessor is not None
-        kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(
-            start_item, (self.num_NN + 1), reco_filter
-        )
+        kidxs, nn_dists, _ = self.reco_accessor.get_recos_user(start_item, (self.num_NN + 1), reco_filter)
 
         _, db_ident = get_primary_idents(self.config)
         kidxs_prim = []
         try:
             for kidx in kidxs:
-                kidxs_prim.append(
-                    self.item_accessor.get_primary_key_by_field(kidx, db_ident)
-                )
+                kidxs_prim.append(self.item_accessor.get_primary_key_by_field(kidx, db_ident))
         except EmptySearchError as e:
             logger.warning(str(e))
 
-        reco_item = dto_from_model(
-            model=model,
-            position=constants.ITEM_POSITION_RECO,
-            item_type=constants.ITEM_TYPE_CONTENT,
-            provenance=constants.ITEM_PROVENANCE_U2C,
-        )
-        return self.item_accessor.get_items_by_ids(
-            reco_item, kidxs_prim[: self.num_NN], constants.MODEL_TYPE_U2C
-        )[0], nn_dists[: self.num_NN]
+        reco_item = dto_from_model(model=model, position=constants.ITEM_POSITION_RECO,
+                                   item_type=constants.ITEM_TYPE_CONTENT, provenance=constants.ITEM_PROVENANCE_U2C, )
+        return self.item_accessor.get_items_by_ids(reco_item, kidxs_prim[: self.num_NN], constants.MODEL_TYPE_U2C)[
+            0], nn_dists[: self.num_NN]
 
     def _align_kidxs_nn(self, content_id, kidxs, nn_dists):
         try:
@@ -576,9 +476,7 @@ class RecommendationController():
         for component in active_components:
             accessor_method.add(component.params["accessor"])
         if len(accessor_method) > 1:
-            logger.warning(
-                "Can't have different accessors for same active component group"
-            )
+            logger.warning("Can't have different accessors for same active component group")
         return list(accessor_method)[0]
 
     def _validate_input_data(self, active_components):
@@ -594,23 +492,12 @@ class RecommendationController():
             if component.params.get("validator", False):
                 validator = getattr(self, component.params["validator"])
                 if callable(validator):
-                    logger.info(
-                        "calling "
-                        + component.params["validator"]
-                        + " on component "
-                        + component.name
-                    )
+                    logger.info("calling " + component.params["validator"] + " on component " + component.name)
                     validator(component)
                 else:
-                    raise AttributeError(
-                        "Input item ["
-                        + component.name
-                        + "] must provide a validation callback"
-                    )
+                    raise AttributeError("Input item [" + component.name + "] must provide a validation callback")
             else:
-                raise KeyError(
-                    "Input item [" + component.name + "] must provide a validation key"
-                )
+                raise KeyError("Input item [" + component.name + "] must provide a validation key")
 
     def _check_user(self, user_field):
         if not isinstance(user_field.value, str):
@@ -622,9 +509,8 @@ class RecommendationController():
 
     def _check_crid(self, crid_field):
         if not isinstance(crid_field.value.strip(), str):
-            raise ValueError("Crid must be a string")
-        # elif not crid_field.value.strip().startswith("crid://"):
-        #     raise ValueError("Id must be of format crid://")
+            raise ValueError(
+                "Crid must be a string")  # elif not crid_field.value.strip().startswith("crid://"):  #     raise ValueError("Id must be of format crid://")
 
     def _check_urn(self, urn_field):
         if not isinstance(urn_field.value.strip(), str):
@@ -649,9 +535,7 @@ class RecommendationController():
 
     def _check_editorial_category(self, editorial_categ):
         if editorial_categ.value not in self.get_item_defaults("editorialCategories"):
-            raise ValueError(
-                "Unknown editorial category [" + editorial_categ.value + "]"
-            )
+            raise ValueError("Unknown editorial category [" + editorial_categ.value + "]")
 
     #
     def _get_active_start_components(self) -> list:
@@ -665,16 +549,9 @@ class RecommendationController():
         """
 
         if self.model_type == constants.MODEL_TYPE_U2C:
-            return list(
-                filter(
-                    lambda x: x.visible,
-                    self.components["user_choice"].values(),
-                )
-            )
+            return list(filter(lambda x: x.visible, self.components["user_choice"].values(), ))
         elif self.model_type == constants.MODEL_TYPE_C2C:
-            return list(
-                filter(lambda x: x.visible, self.components["item_choice"].values())
-            )
+            return list(filter(lambda x: x.visible, self.components["item_choice"].values()))
         else:
             raise TypeError("Unknown model type [" + self.model_type + "]")
 
@@ -690,9 +567,9 @@ class RecommendationController():
             refinement_type = self.mapping_type.get(component.value, component.value)
             filter_state["refinementType"] = refinement_type  # Always added to top-level
 
-            direction = component.params.get("direction","")
+            direction = component.params.get("direction", "")
             if direction:
-                mapped_direction = self.mapping_direction.get(direction,direction)
+                mapped_direction = self.mapping_direction.get(direction, direction)
                 refinement_direction = self.refinement_widget.map_refinement_direction(mapped_direction)
                 filter_state["refinement"] = {"direction": refinement_direction}
 
@@ -744,9 +621,8 @@ class RecommendationController():
     def export_filter_rules(self):
         pass
 
-    def get_genres_and_subgenres_from_upper_category(
-        self, selected_upper_categories, category
-    ):  # category = 'genres' or 'subgenres'
+    def get_genres_and_subgenres_from_upper_category(self, selected_upper_categories,
+                                                     category):  # category = 'genres' or 'subgenres'
         all_selected = []
         for items in selected_upper_categories:
             all_selected.extend(self.config_MDP2["categories_MDP2"][items][category])
@@ -758,25 +634,15 @@ class RecommendationController():
             for category in self.config_MDP2["categories_MDP2"]:
                 for item in selected:
                     if item in self.config_MDP2["categories_MDP2"][category]["genres"]:
-                        all_categories.append(
-                            self.config_MDP2["categories_MDP2"][category]["Erzählweise"]
-                        )
-                    elif (
-                        item
-                        in self.config_MDP2["categories_MDP2"][category]["subgenres"]
-                    ):
-                        all_categories.append(
-                            self.config_MDP2["categories_MDP2"][category]["Inhalt"]
-                        )
+                        all_categories.append(self.config_MDP2["categories_MDP2"][category]["Erzählweise"])
+                    elif (item in self.config_MDP2["categories_MDP2"][category]["subgenres"]):
+                        all_categories.append(self.config_MDP2["categories_MDP2"][category]["Inhalt"])
             return ", ".join(set(all_categories))
         else:
             for category in self.config_MDP2["categories_MDP2"]:
                 if selected in self.config_MDP2["categories_MDP2"][category]["genres"]:
                     return self.config_MDP2["categories_MDP2"][category]["Erzählweise"]
-                elif (
-                    selected
-                    in self.config_MDP2["categories_MDP2"][category]["subgenres"]
-                ):
+                elif (selected in self.config_MDP2["categories_MDP2"][category]["subgenres"]):
                     return self.config_MDP2["categories_MDP2"][category]["Inhalt"]
                 else:
                     pass
