@@ -1,5 +1,5 @@
 from controller.RefinementWidgetManger.BrRefinementWidgetRequestManger import BrRefinementWidgetRequestManger
-from controller.RefinementWidgetManger.WdrPaRefinementWidgetRequestManger import WdrPaRefinementWidgetRequestManger
+from controller.RefinementWidgetManger.WdrRefinementWidgetRequestManger import WdrRefinementWidgetRequestManger
 from controller.RefinementWidgetManger.NoRefinementWidgetRequestManger import NoRefinementWidgetRequestManger
 import logging
 import copy
@@ -36,7 +36,7 @@ class RecommendationController():
         self.current_client = current_client
         # Choose the appropriate builder based on the current client
         self.refinement_widget = {"br": BrRefinementWidgetRequestManger(),
-            "wdr_pa": WdrPaRefinementWidgetRequestManger()}.get(current_client, NoRefinementWidgetRequestManger())
+            "wdr": WdrRefinementWidgetRequestManger()}.get(current_client, NoRefinementWidgetRequestManger())
 
         self.item_accessor = BaseDataAccessorOpenSearch(config)
         if constants.MODEL_CONFIG_U2C in config:
@@ -419,7 +419,7 @@ class RecommendationController():
         self.reco_accessor.set_model_config(model)
 
         #Add the client and make it WDR if it's WDR_PA
-        start_item.client = "WDR" if self.current_client == "wdr_pa" else self.current_client.upper()
+        start_item.client = self.current_client.upper()
 
         kidxs, nn_dists, oss_field, *rest = self.reco_accessor.get_k_NN(start_item, (self.num_NN + 1), reco_filter)
         utilities = rest[0] if rest else None

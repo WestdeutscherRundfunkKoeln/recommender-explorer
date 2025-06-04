@@ -1,6 +1,6 @@
 from controller.RefinementWidgetManger.RefinementWidgetStatefulManger import RefinementWidgetStatefulManger
 
-class WdrPaRefinementWidgetRequestManger(RefinementWidgetStatefulManger):
+class WdrRefinementWidgetRequestManger(RefinementWidgetStatefulManger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.weights = {

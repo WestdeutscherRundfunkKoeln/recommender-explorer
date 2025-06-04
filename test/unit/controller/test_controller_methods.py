@@ -16,7 +16,7 @@ def controller() -> RecommendationController:
             "opensearch.use_ssl": True,
             "opensearch.field_mapping": {},
         },
-        current_client = "wdr_pa"
+        current_client = "wdr"
     )
     controller.model_type = constants.MODEL_TYPE_C2C
     MockComponent = namedtuple("component", ["visible"])
