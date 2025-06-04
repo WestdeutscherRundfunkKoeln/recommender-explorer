@@ -32,6 +32,10 @@ def dto_from_classname(class_name: str, position: str, item_type: str, provenanc
 
 def dto_from_model(model: dict, position: str, item_type: str, provenance: str) -> ItemDto:
     i_type = item_type + '_type'
+    print("🌼")
+    print(model)
+    print(i_type)
+    print("🌼")
     class_ = getattr(sys.modules[__name__], model[i_type])
     return class_(position, item_type, provenance)
 

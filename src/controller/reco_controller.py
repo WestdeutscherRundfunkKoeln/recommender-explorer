@@ -33,6 +33,7 @@ class RecommendationController():
 
     def __init__(self, config, current_client: str = ""):
         self.config = config
+        self.current_client = current_client
         # Choose the appropriate builder based on the current client
         self.refinement_widget = {"br": BrRefinementWidgetRequestManger(),
             "wdr_pa": WdrPaRefinementWidgetRequestManger()}.get(current_client, NoRefinementWidgetRequestManger())
@@ -119,8 +120,11 @@ class RecommendationController():
 
     def set_mode(self):
         # set model type: u2c or c2c
-
         self.model_config = [item for item in self.components["model_choice"].items() if item[1].value][0][0]
+        print("🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼")
+        print(self.components["model_choice"].items())
+        print(self.model_config)
+        print("🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼")
         chosen_model = self.components["model_choice"][self.model_config].value[0]
         # ToDo: Needs refactoring. Gets value 'c2c_config' from configuration file based on position, should be based on key
         self.model_type = [model_type for model_type in self.config[self.model_config] for model in
@@ -229,7 +233,6 @@ class RecommendationController():
         :return:found items in a list
         """
         item_hits, start_items = self._get_start_items(model_info)
-
         self.set_num_pages(item_hits)
         return self.get_reco_items_for_start_items_from_response(model_info, start_items)
 
@@ -274,7 +277,7 @@ class RecommendationController():
                 continue
         return [model_info["display_name"]], all_items, self.model_config
 
-    def _get_start_items_c2c(self, model: dict) -> tuple[int, list[ItemDto]]:
+    def _get_start_items_c2c_s2c(self, model: dict) -> tuple[int, list[ItemDto]]:
         """Gets search results based on selected model and active components
 
         First, gets the active components from registered components and checks these components
@@ -290,10 +293,15 @@ class RecommendationController():
         self._validate_input_data(active_components)
         accessor_method = self._get_data_accessor_method(active_components)
         accessor_values = [x.value for x in active_components]
+        provenance = (
+            constants.ITEM_PROVENANCE_C2C if self.model_type == constants.MODEL_TYPE_C2C else constants.ITEM_PROVENANCE_S2C)
+
         item_dto = dto_from_model(model=model, position=constants.ITEM_POSITION_START,
-                                  item_type=constants.ITEM_TYPE_CONTENT, provenance=constants.ITEM_PROVENANCE_C2C, )
+            item_type=constants.ITEM_TYPE_CONTENT, provenance=provenance, )
+
         accessor_values.insert(0, item_dto)
         accessor_values.append(self._get_current_filter_state("item_filter"))
+
         has_paging = [x.params.get("has_paging", False) for x in active_components]
         if any(has_paging):
             accessor_values.extend([((self.get_page_number() - 1) * self.get_num_items()), self.get_num_items(), ])
@@ -364,20 +372,20 @@ class RecommendationController():
         :param model: Config of models from the configuration yaml
         :return:
         """
-        if self.model_type == constants.MODEL_TYPE_C2C:
-            return self._get_start_items_c2c(model)
+        if self.model_type == constants.MODEL_TYPE_C2C or self.model_type == constants.MODEL_TYPE_S2C:
+            return self._get_start_items_c2c_s2c(model)
         else:
             return self._get_start_users_u2c(model)
 
     def _get_reco_items(self, start_item, model):
-        """Decides if C2C or U2C are used for the search query for the reco items
+        """Decides if C2C or U2C or S2C are used for the search query for the reco items
 
         :param start_item: The start item (reference item) for which reco items are searched
         :param model: Config of models from the configuration yaml
         :return:
         """
-        if self.model_type == constants.MODEL_TYPE_C2C:
-            return self._get_reco_items_c2c(start_item, model)
+        if self.model_type == constants.MODEL_TYPE_C2C or self.model_type == constants.MODEL_TYPE_S2C  :
+            return self._get_reco_items_c2c_s2c(start_item, model)
         else:
             return self._get_reco_items_u2c(start_item, model)
 
@@ -397,7 +405,7 @@ class RecommendationController():
             return radio_box_group.widget_instance
         return None
 
-    def _get_reco_items_c2c(self, start_item: ItemDto, model: dict):
+    def _get_reco_items_c2c_s2c(self, start_item: ItemDto, model: dict):
         """Gets recommended items based on the start item and filters
         :param start_item: The start item (reference item) for which reco items are searched
         :param model: Config of models from the configuration yaml
@@ -409,6 +417,9 @@ class RecommendationController():
 
         self.refinement_widget.prepare_request(reco_filter, start_item.id)
         self.reco_accessor.set_model_config(model)
+
+        #Add the client and make it WDR if it's WDR_PA
+        start_item.client = "WDR" if self.current_client == "wdr_pa" else self.current_client.upper()
 
         kidxs, nn_dists, oss_field, *rest = self.reco_accessor.get_k_NN(start_item, (self.num_NN + 1), reco_filter)
         utilities = rest[0] if rest else None
@@ -429,10 +440,16 @@ class RecommendationController():
         else:
             kidxs, nn_dists = self._align_kidxs_nn(start_item.id, kidxs, nn_dists)
 
-        item_dto = dto_from_model(model=model, position=constants.ITEM_POSITION_RECO,
-                                  item_type=constants.ITEM_TYPE_CONTENT, provenance=constants.ITEM_PROVENANCE_C2C, )
+        provenance = (
+            constants.ITEM_PROVENANCE_C2C if self.model_type == constants.MODEL_TYPE_C2C else constants.ITEM_PROVENANCE_S2C)
 
-        return (self.item_accessor.get_items_by_ids(item_dto, kidxs[: self.num_NN], constants.MODEL_TYPE_C2C)[0],
+        model_type = (
+            constants.MODEL_TYPE_C2C if self.model_type == constants.MODEL_TYPE_C2C else constants.MODEL_TYPE_S2C)
+
+        item_dto = dto_from_model(model=model, position=constants.ITEM_POSITION_RECO,
+            item_type=constants.ITEM_TYPE_CONTENT, provenance=provenance, )
+
+        return (self.item_accessor.get_items_by_ids(item_dto, kidxs[: self.num_NN], model_type)[0],
             nn_dists[: self.num_NN],)
 
     def _get_reco_items_u2c(self, start_item: ItemDto, model: dict):
@@ -552,6 +569,8 @@ class RecommendationController():
             return list(filter(lambda x: x.visible, self.components["user_choice"].values(), ))
         elif self.model_type == constants.MODEL_TYPE_C2C:
             return list(filter(lambda x: x.visible, self.components["item_choice"].values()))
+        elif self.model_type == constants.MODEL_TYPE_S2C:
+            return list(filter(lambda x: x.visible, self.components["search_choice"].values()))
         else:
             raise TypeError("Unknown model type [" + self.model_type + "]")
 

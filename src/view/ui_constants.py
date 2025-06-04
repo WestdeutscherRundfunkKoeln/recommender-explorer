@@ -43,6 +43,7 @@ MULTI_SELECT_PAGING = "has_paging"
 # Reset Button
 RESET_BUTTON_LABEL = "Auswahl zurücksetzen"
 RESET_IDENTIFIER_ITEM_CHOICE = "item_choice"
+RESET_IDENTIFIER_SEARCH_CHOICE = "search_choice"
 RESET_IDENTIFIER_MODEL_CHOICE = "model_choice"
 RESET_IDENTIFIER_ITEM_FILTER = "item_filter"
 RESET_IDENTIFIER_UPPER_ITEM_FILTER = "upper_item_filter"

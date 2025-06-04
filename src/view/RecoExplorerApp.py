@@ -76,12 +76,12 @@ class RecoExplorerApp:
         # reco items
         self.recos = []
 
-        # all the c2c and u2c models available in this app
+        # all the c2c and u2c and s2c models available in this app
         self.c2c_models = []
         self.c2c_model_default = []
         self.u2c_models = []
-
         self.s2c_models = []
+        self.s2c_model_default = []
 
         #
         self.navigational_components = {}
@@ -96,18 +96,15 @@ class RecoExplorerApp:
         self.page_size = self.define_page_size()
 
         # init some of the component values
-        self.set_c2c_model_definitions()
-        self.set_u2c_model_definitions()
-
-        self.set_s2c_model_definitions()
+        #self.set_c2c_model_definitions()
+        #self.set_u2c_model_definitions()
+        #self.set_s2c_model_definitions()
 
         self.url_parameter_text_field_mapping = {}
 
         self.chosen_accordion = ""
         self.previous_chosen_accordion = ""
         self.previous_block_list = []
-
-        self.chosen_model = ""
 
     def set_c2c_model_definitions(self):
         models = self.config[constants.MODEL_CONFIG_C2C][constants.MODEL_TYPE_C2C]
@@ -129,6 +126,8 @@ class RecoExplorerApp:
             models = self.config[constants.MODEL_CONFIG_S2C][constants.MODEL_TYPE_S2C]
             for model in models.keys():
                 self.s2c_models.append(model)
+                if models[model]["default"]:
+                    self.s2c_model_default.append(model)
         else:
             logger.error("s2c feature disabled")
 
@@ -140,7 +139,7 @@ class RecoExplorerApp:
 
     def define_model_selections(self):
         ## c2c selections
-        self.c2c_choice = pn.widgets.MultiSelect(name="", options=self.c2c_models, value=self.c2c_model_default)
+        self.c2c_choice = pn.widgets.MultiSelect(name="", options=self.c2c_models,)
         self.c2c_choice.params = {"label": constants.MODEL_CONFIG_C2C, "reset_to": self.c2c_model_default, }
         model_watcher = self.c2c_choice.param.watch(self.trigger_model_choice, "value", onlychanged=True)
         self.controller.register("model_choice", self.c2c_choice, model_watcher, self.trigger_model_choice)
@@ -153,7 +152,7 @@ class RecoExplorerApp:
 
 
         ## s2c selections
-        self.s2c_model_choice = pn.widgets.MultiSelect(name="", options=self.s2c_models, )
+        self.s2c_model_choice = pn.widgets.MultiSelect(name="", options=self.s2c_models,)
         self.s2c_model_choice.params = {"label": constants.MODEL_CONFIG_S2C, "reset_to": [], }
         model_watcher = self.s2c_model_choice.param.watch(self.trigger_model_choice, "value", onlychanged=True)
         self.controller.register("model_choice", self.s2c_model_choice, model_watcher, self.trigger_model_choice, )
@@ -197,11 +196,21 @@ class RecoExplorerApp:
         await self.get_items_with_parameters()
 
     async def trigger_model_choice(self, event):
-        logger.info(event)
-        self.render(self)
+        model_choice = self.controller.components["model_choice"]
+        event_value = event.new
+        if not event_value:
+            print("⚠️ Event value is empty — skipping reset.")
+        else:
+            for key, widget in model_choice.items():
+                if not hasattr(widget, 'value'):
+                    continue
+                if widget.value != event_value:
+                    self.controller.reset_component("model_choice", key, [])
+
+
         self.controller.reset_page_number()
         self.disablePageButtons()
-        await self.get_items_with_parameters()
+        #await self.get_items_with_parameters()
 
     async def trigger_model_choice_new(self, event):
         logger.info(event)
@@ -497,7 +506,7 @@ class RecoExplorerApp:
     def build_ui(self):
         # clear the nav controls
         self.config_based_nav_controls.clear()
-        self.controller.reset_all_components()
+        #self.controller.reset_all_components()
         self.main_content.clear()
 
         # Client
@@ -511,6 +520,7 @@ class RecoExplorerApp:
             self.config_based_nav_controls.append(client_choice)
 
     def add_blocks_to_navigation(self, active_accordion: str = ""):
+        #self.controller.reset_all_components()
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         # decide if this function was called by an accordion_with_cards widget or by the assembly function
         if active_accordion == "":
@@ -631,7 +641,6 @@ class RecoExplorerApp:
         try:
             models, items, config = await asyncio.to_thread(self.controller.get_items)
 
-
         except (EmptySearchError, ModelValidationError) as e:
             self.main_content.append(pn.pane.Alert(str(e), alert_type="warning"))
             return
@@ -658,6 +667,7 @@ class RecoExplorerApp:
         for idz, item_dto in enumerate(row):
             card = self.controller.get_item_viewer(item_dto, self)
             if self.controller.get_display_mode() == constants.DISPLAY_MODE_SINGLE:
+
                 displayed_card = card.draw(item_dto, idz, models[0], config, self.trigger_modal)
             else:
                 displayed_card = card.draw(item_dto, idz, models[idx], config, self.trigger_modal)
