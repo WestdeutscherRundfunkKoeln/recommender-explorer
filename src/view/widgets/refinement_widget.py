@@ -93,7 +93,7 @@ class RefinementWidget(pn.Column, UIWidget):
 
         return pn.Row(self.accordion_with_width,self.tooltip_widget)
 
-    async def update_buttons(self, event):
+    def update_buttons(self, event):
         """
         Updates the buttons based on the selected radio option.
         """
@@ -119,12 +119,12 @@ class RefinementWidget(pn.Column, UIWidget):
         self.alert.visible = False
 
         # Await the async call
-        await self.reco_explorer_app_instance.trigger_item_selection(event)
+        self.reco_explorer_app_instance.trigger_item_selection(event)
 
-    async def button_clicked(self, event):
+    def button_clicked(self, event):
         self.radio_box_group.params["direction"] = event.obj.name
 
-        await self.reco_explorer_app_instance.trigger_item_selection(event)
+        self.reco_explorer_app_instance.trigger_item_selection(event)
 
         self.radio_box_group.params["direction"] = ""
 

@@ -31,15 +31,15 @@ def test_widget_initial_state(widget):
 @pytest.mark.asyncio
 async def test_button_label_update(widget):
     refinement = get_widget_instance(widget)
-    await refinement.update_buttons(type('Event', (object,), {'new': DIVERSITY}))
+    refinement.update_buttons(type('Event', (object,), {'new': DIVERSITY}))
     assert refinement.btn1.name == "Weniger Diversität"
     assert refinement.btn2.name == "Mehr Diversität"
 
-    await refinement.update_buttons(type('Event', (object,), {'new': RECENCY}))
+    refinement.update_buttons(type('Event', (object,), {'new': RECENCY}))
     assert refinement.btn1.name == "Weniger Aktualität"
     assert refinement.btn2.name == "Mehr Aktualität"
 
-    await refinement.update_buttons(type('Event', (object,), {'new': "Unknown"}))
+    refinement.update_buttons(type('Event', (object,), {'new': "Unknown"}))
     assert refinement.btn1.name == "Ähnlicher"
     assert refinement.btn2.name == "Aktueller"
 
