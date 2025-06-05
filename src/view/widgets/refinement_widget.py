@@ -54,8 +54,8 @@ class RefinementWidget(pn.Column, UIWidget):
 
         self.radio_box_group.is_leaf_widget = True
 
-        self.btn1 = pn.widgets.Button(name='Ähnlicher', width=120)
-        self.btn2 = pn.widgets.Button(name='Aktueller', width=120)
+        self.btn1 = pn.widgets.Button(name='Ähnlicher', width=120, button_type='primary')
+        self.btn2 = pn.widgets.Button(name='Aktueller', width=120, button_type='primary')
 
         self.btn1.on_click(self.button_clicked)
         self.btn2.on_click(self.button_clicked)

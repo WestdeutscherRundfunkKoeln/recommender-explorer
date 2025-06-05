@@ -4,7 +4,7 @@ from model.rest.nn_seeker_rest import NnSeekerRest
 
 
 class NnSeekerPaServiceNews(NnSeekerRest):
-    def _get_request_params_c2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
+    def _get_request_params_c2c_s2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
         return {
             "referenceId": item.__getattribute__(oss_field),
             "reco": False,

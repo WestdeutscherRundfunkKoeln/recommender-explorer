@@ -96,9 +96,9 @@ class RecoExplorerApp:
         self.page_size = self.define_page_size()
 
         # init some of the component values
-        #self.set_c2c_model_definitions()
-        #self.set_u2c_model_definitions()
-        #self.set_s2c_model_definitions()
+        self.set_c2c_model_definitions()
+        self.set_u2c_model_definitions()
+        self.set_s2c_model_definitions()
 
         self.url_parameter_text_field_mapping = {}
 
@@ -520,7 +520,7 @@ class RecoExplorerApp:
             self.config_based_nav_controls.append(client_choice)
 
     def add_blocks_to_navigation(self, active_accordion: str = ""):
-        #self.controller.reset_all_components()
+        self.controller.reset_all_components()
         blocks_config = self.config[ui_constants.UI_CONFIG_BLOCKS]
         # decide if this function was called by an accordion_with_cards widget or by the assembly function
         if active_accordion == "":

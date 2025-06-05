@@ -121,10 +121,6 @@ class RecommendationController():
     def set_mode(self):
         # set model type: u2c or c2c
         self.model_config = [item for item in self.components["model_choice"].items() if item[1].value][0][0]
-        print("🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼")
-        print(self.components["model_choice"].items())
-        print(self.model_config)
-        print("🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼🌼")
         chosen_model = self.components["model_choice"][self.model_config].value[0]
         # ToDo: Needs refactoring. Gets value 'c2c_config' from configuration file based on position, should be based on key
         self.model_type = [model_type for model_type in self.config[self.model_config] for model in
@@ -633,6 +629,7 @@ class RecommendationController():
         for group_name, group_components in self.components.items():
             for component_label in group_components:
                 self.reset_component([group_name], component_label, to_value)
+        self.refinement_widget.reset_all(self._get_refinement_widget())
 
     def import_filter_rules(self):
         pass
