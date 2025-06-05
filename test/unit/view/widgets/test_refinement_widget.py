@@ -3,9 +3,8 @@ import panel as pn
 from view.widgets.refinement_widget import RefinementWidget, DIVERSITY, RECENCY
 
 class MockApp:
-    async def trigger_item_selection(self, event): pass
-    async def trigger_reco_filter_choice(self, *args): pass
-
+     def trigger_item_selection(self, event): pass
+     def trigger_reco_filter_choice(self, *args): pass
 class MockController:
     def register(self, *args): pass
 
@@ -28,8 +27,7 @@ def test_widget_initial_state(widget):
     assert refinement.btn1.name == "Ähnlicher"
     assert refinement.btn2.name == "Aktueller"
 
-@pytest.mark.asyncio
-async def test_button_label_update(widget):
+def test_button_label_update(widget):
     refinement = get_widget_instance(widget)
     refinement.update_buttons(type('Event', (object,), {'new': DIVERSITY}))
     assert refinement.btn1.name == "Weniger Diversität"
