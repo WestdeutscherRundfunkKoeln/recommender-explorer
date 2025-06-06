@@ -24,8 +24,8 @@ class RefinementWidget(pn.Column, UIWidget):
         # Create radio buttons
         self.radio_box_group = pn.widgets.RadioBoxGroup(
             #options=['Ähnlichkeit', 'Diversität', 'Aktualität'],
-            options=['Ähnlichkeit'],
-            value='Ähnlichkeit',  # Default value
+            options=['Verwandte Inhalte'],
+            value='Verwandte Inhalte',  # Default value
             name='refinement_widget',
         )
 
@@ -34,7 +34,7 @@ class RefinementWidget(pn.Column, UIWidget):
 
         self.radio_box_group.params = {
             "label": 'refinementType',  # must always be named like this to avoid errors in other parts of the code.
-            "reset_to": 'Ähnlichkeit',
+            "reset_to": 'Verwandte Inhalte',
             "direction": "",
             "switch_weights" : False
         }
@@ -111,7 +111,7 @@ class RefinementWidget(pn.Column, UIWidget):
         self.radio_box_group.params["direction"] = ""
         self.radio_box_group.params = {
             "label": 'refinementType',
-            "reset_to": 'Ähnlichkeit',
+            "reset_to": 'Verwandte Inhalte',
             "direction": "",
         }
 
@@ -134,7 +134,7 @@ class RefinementWidget(pn.Column, UIWidget):
         direction = self.radio_box_group.params["direction"]
 
         button_map = {
-            "Ähnlichkeit": {"Ähnlicher": self.btn1, "Aktueller": self.btn2},
+            "Verwandte Inhalte": {"Ähnlicher": self.btn1, "Aktueller": self.btn2},
             "Aktualität": {"Weniger Aktualität": self.btn1, "Mehr Aktualität": self.btn2},
             "Diversität": {"Weniger Diversität": self.btn1, "Mehr Diversität": self.btn2},
         }
