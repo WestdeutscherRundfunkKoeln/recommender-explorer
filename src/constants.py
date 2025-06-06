@@ -14,6 +14,7 @@ ITEM_TYPE_CONTENT = 'content'
 
 ITEM_PROVENANCE_U2C = 'u2c_models'
 ITEM_PROVENANCE_C2C = 'c2c_models'
+ITEM_PROVENANCE_S2C = 's2c_models'
 
 #
 # Model constants
@@ -21,9 +22,11 @@ ITEM_PROVENANCE_C2C = 'c2c_models'
 
 MODEL_TYPE_C2C = ITEM_PROVENANCE_C2C
 MODEL_TYPE_U2C = ITEM_PROVENANCE_U2C
+MODEL_TYPE_S2C = ITEM_PROVENANCE_S2C
 
 MODEL_CONFIG_C2C = 'c2c_config'
 MODEL_CONFIG_U2C = 'u2c_config'
+MODEL_CONFIG_S2C = 's2c_config'
 
 #
 # Display constants

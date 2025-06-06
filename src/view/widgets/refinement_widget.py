@@ -23,8 +23,9 @@ class RefinementWidget(pn.Column, UIWidget):
         """
         # Create radio buttons
         self.radio_box_group = pn.widgets.RadioBoxGroup(
-            options=['Ähnlichkeit', 'Diversität', 'Aktualität'],
-            value='Ähnlichkeit',  # Default value
+            #options=['Ähnlichkeit', 'Diversität', 'Aktualität'],
+            options=['Verwandte Inhalte'],
+            value='Verwandte Inhalte',  # Default value
             name='refinement_widget',
         )
 
@@ -33,7 +34,7 @@ class RefinementWidget(pn.Column, UIWidget):
 
         self.radio_box_group.params = {
             "label": 'refinementType',  # must always be named like this to avoid errors in other parts of the code.
-            "reset_to": 'Ähnlichkeit',
+            "reset_to": 'Verwandte Inhalte',
             "direction": "",
             "switch_weights" : False
         }
@@ -53,8 +54,8 @@ class RefinementWidget(pn.Column, UIWidget):
 
         self.radio_box_group.is_leaf_widget = True
 
-        self.btn1 = pn.widgets.Button(name='Ähnlicher', width=120)
-        self.btn2 = pn.widgets.Button(name='Aktueller', width=120)
+        self.btn1 = pn.widgets.Button(name='Ähnlicher', width=120, button_type='primary')
+        self.btn2 = pn.widgets.Button(name='Aktueller', width=120, button_type='primary')
 
         self.btn1.on_click(self.button_clicked)
         self.btn2.on_click(self.button_clicked)
@@ -92,7 +93,7 @@ class RefinementWidget(pn.Column, UIWidget):
 
         return pn.Row(self.accordion_with_width,self.tooltip_widget)
 
-    async def update_buttons(self, event):
+    def update_buttons(self, event):
         """
         Updates the buttons based on the selected radio option.
         """
@@ -110,7 +111,7 @@ class RefinementWidget(pn.Column, UIWidget):
         self.radio_box_group.params["direction"] = ""
         self.radio_box_group.params = {
             "label": 'refinementType',
-            "reset_to": 'Ähnlichkeit',
+            "reset_to": 'Verwandte Inhalte',
             "direction": "",
         }
 
@@ -118,12 +119,12 @@ class RefinementWidget(pn.Column, UIWidget):
         self.alert.visible = False
 
         # Await the async call
-        await self.reco_explorer_app_instance.trigger_item_selection(event)
+        self.reco_explorer_app_instance.trigger_item_selection(event)
 
-    async def button_clicked(self, event):
+    def button_clicked(self, event):
         self.radio_box_group.params["direction"] = event.obj.name
 
-        await self.reco_explorer_app_instance.trigger_item_selection(event)
+        self.reco_explorer_app_instance.trigger_item_selection(event)
 
         self.radio_box_group.params["direction"] = ""
 
@@ -133,7 +134,7 @@ class RefinementWidget(pn.Column, UIWidget):
         direction = self.radio_box_group.params["direction"]
 
         button_map = {
-            "Ähnlichkeit": {"Ähnlicher": self.btn1, "Aktueller": self.btn2},
+            "Verwandte Inhalte": {"Ähnlicher": self.btn1, "Aktueller": self.btn2},
             "Aktualität": {"Weniger Aktualität": self.btn1, "Mehr Aktualität": self.btn2},
             "Diversität": {"Weniger Diversität": self.btn1, "Mehr Diversität": self.btn2},
         }

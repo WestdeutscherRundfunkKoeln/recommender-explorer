@@ -5,6 +5,7 @@ from src.constants import (
     MODELS_KEY,
     C2C_MODELS_KEY,
     U2C_MODELS_KEY,
+    S2C_MODELS_KEY,
     CLUSTERING_MODELS_KEY
 )
 
@@ -58,6 +59,7 @@ def get_model_names(config: dict) -> list:
     for key, value in config[MODELS_KEY].items():
         model_names.extend(_extract_model_names(value, C2C_MODELS_KEY))
         model_names.extend(_extract_model_names(value, U2C_MODELS_KEY))
+        model_names.extend(_extract_model_names(value, S2C_MODELS_KEY))
     return model_names
 
 
@@ -109,17 +111,21 @@ def get_full_model_config(config: dict) -> dict:
     full_model_config = {}
     aggregated_c2c_models = {}
     aggregated_u2c_models = {}
+    aggregated_s2c_models = {}
     aggregated_cluster_models = {}
 
     for key, value in config[MODELS_KEY].items():
         _aggregate_models(value, C2C_MODELS_KEY, aggregated_c2c_models)
         _aggregate_models(value, U2C_MODELS_KEY, aggregated_u2c_models)
+        _aggregate_models(value, S2C_MODELS_KEY, aggregated_s2c_models)
         _aggregate_models(value, CLUSTERING_MODELS_KEY, aggregated_cluster_models)
 
     if aggregated_c2c_models:
         full_model_config[C2C_MODELS_KEY] = aggregated_c2c_models
     if aggregated_u2c_models:
         full_model_config[U2C_MODELS_KEY] = aggregated_u2c_models
+    if aggregated_s2c_models:
+        full_model_config[S2C_MODELS_KEY] = aggregated_s2c_models
     if aggregated_cluster_models:
         full_model_config[CLUSTERING_MODELS_KEY] = aggregated_cluster_models
 

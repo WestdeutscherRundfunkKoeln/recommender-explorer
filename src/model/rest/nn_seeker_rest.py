@@ -28,7 +28,7 @@ class NnSeekerRest(NnSeeker):
         self, item: ItemDto, k: int, nn_filter: dict[str, Any] | None
     ) -> tuple[list[str], list[float], Any, dict[Any, Any]]:
         return self._get_recos(
-            self._get_request_params_c2c, UnknownItemError, item, k, nn_filter
+            self._get_request_params_c2c_s2c, UnknownItemError, item, k, nn_filter
         )
 
     def get_recos_user(
@@ -142,7 +142,7 @@ class NnSeekerRest(NnSeeker):
     def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float], dict[Any, Any]]:
         raise NotImplementedError()
 
-    def _get_request_params_c2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
+    def _get_request_params_c2c_s2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
         raise NotImplementedError()
 
     def _get_request_params_u2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:

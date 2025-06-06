@@ -44,6 +44,9 @@
                       "$ref": "#/$defs/text_field"
                     },
                     {
+                      "$ref": "#/$defs/text_area_input"
+                    },
+                    {
                       "$ref": "#/$defs/date_time_picker"
                     },
                     {
@@ -378,6 +381,13 @@
                   "const": "model_choice_u2c"
                 }
               }
+            },
+            {
+              "properties": {
+                "register_as": {
+                  "const": "model_choice_s2c"
+                }
+              }
             }
           ]
         }
@@ -444,6 +454,12 @@
             "anyOf": [
               {
                 "$ref": "#/$defs/text_field"
+              },
+              {
+                "$ref": "#/$defs/accordion_with_cards"
+              },
+                            {
+                "$ref": "#/$defs/accordion"
               },
               {
                 "$ref": "#/$defs/text_area_input"
@@ -524,6 +540,9 @@
               "anyOf": [
                 {
                   "$ref": "#/$defs/accordion"
+                },
+                {
+                  "$ref": "#/$defs/accordion_with_cards"
                 },
                 {
                   "$ref": "#/$defs/text_field"

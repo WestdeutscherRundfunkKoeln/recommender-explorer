@@ -104,6 +104,7 @@ class MultiSelectionWidget(UIWidget):
             "upper_item_filter": UpperItemFilterWidget,
             "reco_filter": RecoFilterWidget,
             "model_choice_c2c": ModelChoiceWidgetC2C,
+            "model_choice_s2c": ModelChoiceWidgetS2C,
             "model_choice_u2c": ModelChoiceWidgetU2C,
             "user_choice": UserChoiceWidget,  # you have to build a class for this
             "reco_filter_u2c": RecoFilter_U2C_Widget,
@@ -381,6 +382,63 @@ class ModelChoiceWidgetC2C(MultiSelectionWidget):
             return
         return {**config, "options": options}
 
+class ModelChoiceWidgetS2C(MultiSelectionWidget):
+    MODEL_CONFIG_KEY = ("s2c_config", "s2c_models")
+    def create(self, config: dict[str, Any]) -> pn.widgets.MultiSelect | None:
+        """
+        Builds a multi select model choice widget based on the given config from config yaml.
+        A model choice widget is a standard multi select widget which gets registered as model_choice at the controller.
+
+        Args:
+            multi_select_config (config): config of a multi select from config yaml.
+
+        Returns:
+            multi_select_widget (widget): final model choice multi select widget built from given config
+        """
+
+        _config = (
+            config if "options" in config else self._read_options_from_config(config)
+        )
+        if not _config:
+            return
+
+        model_choice_widget = self.build_multi_select_widget(_config)
+
+        if not model_choice_widget:
+            return
+
+        model_watcher = model_choice_widget.param.watch(
+            self.reco_explorer_app_instance.trigger_model_choice,
+            "value",
+            onlychanged=True,
+        )
+        self.controller_instance.register(
+            "model_choice",
+            model_choice_widget,
+            model_watcher,
+            self.reco_explorer_app_instance.trigger_model_choice,
+        )
+
+        model_choice_widget.reset_identifier = c.RESET_IDENTIFIER_MODEL_CHOICE
+
+        return model_choice_widget
+
+    def _read_options_from_config(self, config) -> dict[str, Any] | None:
+        model_config = self.reco_explorer_app_instance.config.get(
+            self.MODEL_CONFIG_KEY[0], {}
+        ).get(self.MODEL_CONFIG_KEY[1], {})
+        if not model_config:
+            return
+
+        options = []
+        for name, params in model_config.items():
+            option = {"display_name": name}
+            if params.get("default", False):
+                option["default"] = True
+            options.append(option)
+        if not options:
+            return
+        return {**config, "options": options}
 
 class ModelChoiceWidgetU2C(ModelChoiceWidgetC2C):
     MODEL_CONFIG_KEY = ("u2c_config", "u2c_models")

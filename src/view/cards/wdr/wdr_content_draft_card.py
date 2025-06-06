@@ -90,6 +90,7 @@ class WDRContentDraftCard:
             """),
         ]
 
+
         return pn.Column(
             pn.Card(
                 styles={

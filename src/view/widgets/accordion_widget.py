@@ -41,7 +41,6 @@ class AccordionWidget(UIWidget):
 
         accordion_widget.active = [config.get(c.ACCORDION_ACTIVE_KEY, [])]
 
-
         accordion_widget.is_leaf_widget = False
         accordion_widget.hidden_label = config.get(
             c.ACCORDION_LABEL_KEY, c.FALLBACK_ACCORDION_LABEL_VALUE
@@ -179,17 +178,13 @@ class AccordionWidgetWithCards(AccordionWidget):
 
         active_list = config.get(c.ACCORDION_CARD_ACTIVE_KEY)
 
-
         accordion_widget_with_cards.max_width = c.ACCORDION_MAX_WIDTH
-
-
 
         if active_list is not None:
             if isinstance(active_list, list):
                 accordion_widget_with_cards.active = active_list
             else:
                 accordion_widget_with_cards.active = [active_list]
-
 
         # check if this accordion has a UI functionality, if so, assign a watcher to it
         ISUI = config.get(c.UI_ACC)
@@ -199,13 +194,13 @@ class AccordionWidgetWithCards(AccordionWidget):
             # Watch for changes to the active state
             accordion_widget_with_cards.param.watch(self.on_accordion_card_change, 'active', onlychanged=True)
 
-
         accordion_widget_with_cards.toggle = self.get_config_value(
             config, c.ACCORDION_CARD_TOGGLE_KEY, bool
         )
 
-        if isinstance(accordion_widget_with_cards.active, list) and len(accordion_widget_with_cards.active) > 1 and accordion_widget_with_cards.toggle:
-             raise Exception("Toggle can't be true with more than one active card")
+        if isinstance(accordion_widget_with_cards.active, list) and len(
+                accordion_widget_with_cards.active) > 1 and accordion_widget_with_cards.toggle:
+            raise Exception("Toggle can't be true with more than one active card")
 
         return accordion_widget_with_cards
 
@@ -237,5 +232,3 @@ class AccordionWidgetWithCards(AccordionWidget):
         State = str(event.new).strip("[]")
         State = State.replace(" ", "")
         self.reco_explorer_app_instance.add_blocks_to_navigation(State)
-
-

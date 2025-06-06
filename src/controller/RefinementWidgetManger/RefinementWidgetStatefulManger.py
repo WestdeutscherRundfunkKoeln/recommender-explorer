@@ -98,3 +98,8 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
             widget.btn1.disabled = False
         if hasattr(widget, "btn2"):
             widget.btn2.disabled = False
+
+    def reset_all(self,widget):
+        # gets triggered when we change the active accordion of a specific model type
+        self.reset()
+        self.reset_refinement_widget(widget)
