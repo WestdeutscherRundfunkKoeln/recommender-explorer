@@ -22,7 +22,7 @@ def get_widget_instance(widget):
 def test_widget_initial_state(widget):
     refinement = get_widget_instance(widget)
     radio = refinement.radio_box_group
-    assert radio.value == "Ähnlichkeit"
+    assert radio.value == "Verwandte Inhalte"
     assert isinstance(radio, pn.widgets.RadioBoxGroup)
     assert refinement.btn1.name == "Ähnlicher"
     assert refinement.btn2.name == "Aktueller"
