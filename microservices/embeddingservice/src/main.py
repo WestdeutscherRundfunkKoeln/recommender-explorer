@@ -38,7 +38,6 @@ def health_check():
 
 @router.post("/embedding")
 def get_embedding(data: EmbeddingRequest):
-    print(data)
     return text_embedder.embed_text(data.embedText, data.models, data.returnEmbedText)
 
 
