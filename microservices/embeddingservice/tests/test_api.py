@@ -127,7 +127,7 @@ def test_embedding__with_text_returned(test_client: TestClient):
         json={
             "embedText": "This is a test.",
             "models": [],
-            "return_embed_text": True,
+            "returnEmbedText": True,
         },
     )
 
@@ -158,7 +158,7 @@ def test_embedding__no_text_returned(test_client: TestClient):
         json={
             "embedText": "This is a test.",
             "models": [],
-            "return_embed_text": False,
+            "returnEmbedText": False,
         },
     )
 
