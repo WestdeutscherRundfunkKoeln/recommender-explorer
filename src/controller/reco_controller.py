@@ -64,7 +64,7 @@ class RecommendationController():
         self.user_cluster = []  # refactor once clustering endpoint is better
         self.config_MDP2 = EnvYAML("./config/mdp2_lookup.yaml")
 
-        self.mapping_type = {"Ähnlichkeit": "Semantic", "Diversität": "Diverse", "Aktualität": "Temporal"}
+        self.mapping_type = {"Verwandte Inhalte": "Semantic", "Diversität": "Diverse", "Aktualität": "Temporal"}
         self.mapping_direction = {"Ähnlicher": "more similar", "Aktueller": "more recent",
             "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
             "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"}

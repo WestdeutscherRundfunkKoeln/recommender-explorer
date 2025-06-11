@@ -23,7 +23,7 @@ class RefinementWidget(pn.Column, UIWidget):
         """
         # Create radio buttons
         self.radio_box_group = pn.widgets.RadioBoxGroup(
-            #options=['Ähnlichkeit', 'Diversität', 'Aktualität'],
+            #options=['Verwandte Inhalte', 'Diversität', 'Aktualität'],
             options=['Verwandte Inhalte'],
             value='Verwandte Inhalte',  # Default value
             name='refinement_widget',
