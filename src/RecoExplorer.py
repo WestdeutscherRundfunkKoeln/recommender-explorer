@@ -52,6 +52,8 @@ try:
         config["c2c_config"] = setup_configuration.model_config.c2c_config.to_dict()
     if setup_configuration.model_config.u2c_config:
         config["u2c_config"] = setup_configuration.model_config.u2c_config.to_dict()
+    if setup_configuration.model_config.s2c_config:
+        config["s2c_config"] = setup_configuration.model_config.s2c_config.to_dict()
     if setup_configuration.open_search_config.index:
         config["opensearch.index"] = setup_configuration.open_search_config.index
 

@@ -126,11 +126,31 @@ class U2CConfig:
         return result
 
 
+@dataclass
+class S2CConfig:
+    s2c_models: dict[str, ModelDetails]
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> 'S2CConfig':
+        s2c_models = {}
+        if 's2c_models' in data:
+            for model_key, model_data in data['s2c_models'].items():
+                s2c_models[model_key] = ModelDetails.from_dict(model_data)
+        return cls(s2c_models=s2c_models)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            's2c_models': {
+                key: vars(model) for key, model in self.s2c_models.items()
+            }
+        }
+
+
 
 @dataclass
 class ModelConfiguration:
     c2c_config: Optional[C2CConfig] = None
     u2c_config: Optional[U2CConfig] = None
+    s2c_config: Optional[S2CConfig] = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> 'ModelConfiguration':
@@ -144,6 +164,9 @@ class ModelConfiguration:
 
         if 'clustering_models' in data:
             config.clustering_config = U2CConfig.from_dict({'models': data['clustering_models']})
+
+        if 's2c_config' in data:
+            config.s2c_config = S2CConfig.from_dict(data['s2c_config'])
 
         return config
 
@@ -170,5 +193,13 @@ class ModelConfiguration:
                     key: {key: value for key, value in vars(model).items() if value is not None}
                     for key, model in self.u2c_config.clustering_models.items()
                 }
+
+        if self.s2c_config:
+            result['s2c_config'] = {
+                's2c_models': {
+                    key: {key: value for key, value in vars(model).items() if value is not None}
+                    for key, model in self.s2c_config.s2c_models.items()
+                }
+            }
 
         return result
