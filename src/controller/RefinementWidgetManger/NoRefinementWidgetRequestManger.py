@@ -18,3 +18,6 @@ class NoRefinementWidgetRequestManger(RefinementWidgetRequestManger):
 
     def get_weights_by_type(self):
         return {}  # No weights configured
+
+    def reset_all(self,widget):
+        pass

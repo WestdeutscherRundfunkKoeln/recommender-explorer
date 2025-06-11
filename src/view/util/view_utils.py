@@ -13,7 +13,7 @@ T = TypeVar("T")
 
 
 def get_first_widget_by_accessor_function(
-    widget: pn.viewable.Viewable, target_accessor: list[str]
+        widget: pn.viewable.Viewable, target_accessor: list[str]
 ) -> pn.viewable.Viewable | None:
     """
     This method searches for a widget using the provided target accessor function. It first checks if the widget is a nested widget by calling
@@ -28,19 +28,19 @@ def get_first_widget_by_accessor_function(
 
     def _widget_with_accessor(w):
         return (
-            hasattr(w, "params")
-            and "accessor" in w.params
-            and w.params["accessor"] in target_accessor
+                hasattr(w, "params")
+                and "accessor" in w.params
+                and w.params["accessor"] in target_accessor
         )
 
     return find_widget(widget, _widget_with_accessor)
 
 
 def collect_leaf_widgets(
-    widget: pn.viewable.Viewable,
-    layout_widget_types: tuple[
-        type[pn.layout.ListPanel] | type[pn.layout.base.NamedListPanel], ...
-    ],
+        widget: pn.viewable.Viewable,
+        layout_widget_types: tuple[
+            type[pn.layout.ListPanel] | type[pn.layout.base.NamedListPanel], ...
+        ],
 ) -> set[pn.viewable.Viewable]:
     """
     This method collects leaf widgets from a given widget.
@@ -60,7 +60,7 @@ def collect_leaf_widgets(
 
 
 def find_widget_by_name(
-    widget: pn.reactive.Reactive, target_name: str, return_parent: bool = False
+        widget: pn.reactive.Reactive, target_name: str, return_parent: bool = False
 ) -> pn.viewable.Viewable | None:
     """
     Gets a widget from a widget group (for example panels widgets box) and search it by given name (label).
@@ -108,7 +108,7 @@ def find_widget_by_type(
 
 
 def find_widget_by_type_and_label(
-    widget: pn.viewable.Viewable, widget_type: type[T], label: str
+        widget: pn.viewable.Viewable, widget_type: type[T], label: str
 ) -> T | None:
     """
     Finds all widget of a certain type with a certain label in a given widget collection.
@@ -121,17 +121,17 @@ def find_widget_by_type_and_label(
 
     def _predicate(w):
         return (
-            isinstance(w, widget_type)
-            and hasattr(w, "params")
-            and getattr(w, "params").get("label") == label
+                isinstance(w, widget_type)
+                and hasattr(w, "params")
+                and getattr(w, "params").get("label") == label
         )
 
     return cast(T | None, find_widget(widget, _predicate))
 
 
 def find_widget(
-    start_widget: pn.viewable.Viewable,
-    predicate: Callable[[pn.viewable.Viewable], bool],
+        start_widget: pn.viewable.Viewable,
+        predicate: Callable[[pn.viewable.Viewable], bool],
 ) -> pn.viewable.Viewable | None:
     """
     performs a breadth-first search on the widget tree starting at start_widget and returns the first widget for which the predicate is True.
@@ -150,8 +150,8 @@ def find_widget(
 
 
 def collect_widgets(
-    start_widget: pn.viewable.Viewable,
-    predicate: Callable[[pn.viewable.Viewable], bool],
+        start_widget: pn.viewable.Viewable,
+        predicate: Callable[[pn.viewable.Viewable], bool],
 ) -> set[pn.viewable.Viewable]:
     """
     performs a depth-first search on the widget tree starting at start_widget and returns all widgets for which the predicate is True.

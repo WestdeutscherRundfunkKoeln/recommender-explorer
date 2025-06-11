@@ -3,9 +3,8 @@ import panel as pn
 from view.widgets.refinement_widget import RefinementWidget, DIVERSITY, RECENCY
 
 class MockApp:
-    async def trigger_item_selection(self, event): pass
-    async def trigger_reco_filter_choice(self, *args): pass
-
+     def trigger_item_selection(self, event): pass
+     def trigger_reco_filter_choice(self, *args): pass
 class MockController:
     def register(self, *args): pass
 
@@ -23,23 +22,22 @@ def get_widget_instance(widget):
 def test_widget_initial_state(widget):
     refinement = get_widget_instance(widget)
     radio = refinement.radio_box_group
-    assert radio.value == "Ähnlichkeit"
+    assert radio.value == "Verwandte Inhalte"
     assert isinstance(radio, pn.widgets.RadioBoxGroup)
     assert refinement.btn1.name == "Ähnlicher"
     assert refinement.btn2.name == "Aktueller"
 
-@pytest.mark.asyncio
-async def test_button_label_update(widget):
+def test_button_label_update(widget):
     refinement = get_widget_instance(widget)
-    await refinement.update_buttons(type('Event', (object,), {'new': DIVERSITY}))
+    refinement.update_buttons(type('Event', (object,), {'new': DIVERSITY}))
     assert refinement.btn1.name == "Weniger Diversität"
     assert refinement.btn2.name == "Mehr Diversität"
 
-    await refinement.update_buttons(type('Event', (object,), {'new': RECENCY}))
+    refinement.update_buttons(type('Event', (object,), {'new': RECENCY}))
     assert refinement.btn1.name == "Weniger Aktualität"
     assert refinement.btn2.name == "Mehr Aktualität"
 
-    await refinement.update_buttons(type('Event', (object,), {'new': "Unknown"}))
+    refinement.update_buttons(type('Event', (object,), {'new': "Unknown"}))
     assert refinement.btn1.name == "Ähnlicher"
     assert refinement.btn2.name == "Aktueller"
 
