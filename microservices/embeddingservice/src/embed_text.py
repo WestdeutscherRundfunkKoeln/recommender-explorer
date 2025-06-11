@@ -170,7 +170,7 @@ class EmbedText:
             response[model] = "unknown model!"
             logger.warning("The model '%s' is not known in service config!", model)
 
-        logger.debug("Response: %s", json.dumps(response, indent=4, default=str))
+        logger.info("Response: %s", json.dumps(response, indent=4, default=str))
 
         return response
 
