@@ -3,7 +3,7 @@ import panel as pn
 from view.widgets.refinement_widget import RefinementWidget, DIVERSITY, RECENCY
 
 class MockApp:
-     def trigger_item_selection(self, event): pass
+     async def trigger_item_selection(self, event): pass
      def trigger_reco_filter_choice(self, *args): pass
 class MockController:
     def register(self, *args): pass
