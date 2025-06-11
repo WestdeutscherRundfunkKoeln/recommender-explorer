@@ -56,7 +56,6 @@ try:
         config["s2c_config"] = setup_configuration.model_config.s2c_config.to_dict()
     if setup_configuration.open_search_config.index:
         config["opensearch.index"] = setup_configuration.open_search_config.index
-
     getExplorerInstance(config_full_paths, config, client).server_doc()
 
 except ConfigError as e:

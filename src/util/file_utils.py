@@ -224,7 +224,8 @@ def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
             endpoint_config["s2c_config"] = {"s2c_models": endpoint_response["s2c_models"]}
 
         remote_setup_config = SetupConfiguration.from_dict(endpoint_config)
-        logger.info(f"Model Configuration and Opensearch Index from remote config: ", dataclasses.asdict(remote_setup_config))
+
+        logger.info(f"Model Configuration and Opensearch Index from remote config:", dataclasses.asdict(remote_setup_config))
 
         merged_config = SetupConfiguration(
             model_config=ModelConfiguration(

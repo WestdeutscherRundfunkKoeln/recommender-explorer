@@ -31,7 +31,7 @@ class TextAreaInputWidget(UIWidget):
             onlychanged=True,
         )
 
-        self.controller_instance.register("item_choice", text_area_input_widget)
+        self.controller_instance.register("search_choice", text_area_input_widget)
 
         url_parameter = config.get(c.TEXT_AREA_INPUT_URL_PARAMETER_KEY, None)
         if url_parameter:
@@ -41,7 +41,7 @@ class TextAreaInputWidget(UIWidget):
 
         text_area_input_widget.is_leaf_widget = True
 
-        text_area_input_widget.reset_identifier = c.RESET_IDENTIFIER_ITEM_CHOICE
+        text_area_input_widget.reset_identifier = c.RESET_IDENTIFIER_SEARCH_CHOICE
 
 
         return text_area_input_widget
