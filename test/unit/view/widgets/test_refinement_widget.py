@@ -26,18 +26,18 @@ def test_widget_initial_state(widget):
     assert isinstance(radio, pn.widgets.RadioBoxGroup)
     assert refinement.btn1.name == "Ähnlicher"
     assert refinement.btn2.name == "Aktueller"
-
-def test_button_label_update(widget):
+@pytest.mark.asyncio
+async def test_button_label_update(widget):
     refinement = get_widget_instance(widget)
-    refinement.update_buttons(type('Event', (object,), {'new': DIVERSITY}))
+    await refinement.update_buttons(type('Event', (object,), {'new': DIVERSITY}))
     assert refinement.btn1.name == "Weniger Diversität"
     assert refinement.btn2.name == "Mehr Diversität"
 
-    refinement.update_buttons(type('Event', (object,), {'new': RECENCY}))
+    await refinement.update_buttons(type('Event', (object,), {'new': RECENCY}))
     assert refinement.btn1.name == "Weniger Aktualität"
     assert refinement.btn2.name == "Mehr Aktualität"
 
-    refinement.update_buttons(type('Event', (object,), {'new': "Unknown"}))
+    await  refinement.update_buttons(type('Event', (object,), {'new': "Unknown"}))
     assert refinement.btn1.name == "Ähnlicher"
     assert refinement.btn2.name == "Aktueller"
 
