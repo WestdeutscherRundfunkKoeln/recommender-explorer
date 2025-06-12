@@ -23,7 +23,7 @@ jobs:
         stage: ${{ 
           fromJson(
             github.ref == 'refs/heads/main' && 
-            (inputs.stages_for_main || '["prod-wdr", "prod-atmt"]') || 
+            (inputs.stages_for_main || '["prod-br24","prod-wdr", "prod-atmt"]') || 
             github.ref == 'refs/heads/dev' && 
             (inputs.stages_for_dev || '["dev-all"]')
           ) 
