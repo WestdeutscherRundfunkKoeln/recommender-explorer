@@ -12,6 +12,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 from numpy import ndarray
 from sentence_transformers import SentenceTransformer
+import re
 
 from src.constants import (
     MODELS_KEY,
@@ -47,6 +48,14 @@ def download_model(
     shutil.unpack_archive(zip_path, local_path)
     logging.info("Download model %s to %s -> sucessfull", model_zip, local_path)
 
+def cut_to_full_sentence(
+        text: str,
+) -> str:
+    """
+    Cut off the text at the last full sentence.
+    """
+    match = re.search(r'[\.!?](?!.*[\.!?])', text)
+    return text[:match.end()].strip() if match else text.strip()
 
 class EmbedText:
     def __init__(self, config):
@@ -61,6 +70,7 @@ class EmbedText:
         self.model_configs = {}
         self.models = {}
         self.bucket = None
+        self.models_max_length = {}
 
         # Initialize the bucket for downloading models, if needed
         if sa := self.config.get("service_account"):
@@ -115,7 +125,10 @@ class EmbedText:
                 trust_remote_code=True,
             )
 
-    def embed_text(self, embed_text: str, models_to_use: list[str] | None):
+            self.models_max_length[model_config["model_name"]] = self.models[model_config["model_name"]].tokenizer.model_max_length
+
+
+    def embed_text(self, embed_text: str, models_to_use: list[str] | None, return_embed_text = False):
         response: dict[str, str | list[float]] = {
             "embedTextHash": sha256(embed_text.encode("utf-8")).hexdigest()
         }
@@ -127,9 +140,27 @@ class EmbedText:
             if model in self.models:
                 logger.info("Embedding text with model %s", model)
                 start_encode = datetime.datetime.now()
-                response[model] = cast(
-                    ndarray, self.models[model].encode(embed_text)
-                ).tolist()
+                
+                if return_embed_text:
+                    response[model] = dict()
+                    response[model]["embedded_text"] = cut_to_full_sentence(
+                            self.models[model].tokenizer.decode(
+                                self.models[model].tokenizer(
+                                    embed_text,
+                                    max_length=self.models_max_length[model],
+                                    truncation=True,
+                                    add_special_tokens=False
+                                )['input_ids']
+                            )
+                        )
+                    response[model]["embedding"] = cast(
+                        ndarray, self.models[model].encode(embed_text)
+                    ).tolist()
+                else:
+                    response[model] = cast(
+                        ndarray, self.models[model].encode(embed_text)
+                    ).tolist()
+
                 end_encode = datetime.datetime.now()
                 call_duration_encode = (
                     end_encode - start_encode
@@ -139,7 +170,7 @@ class EmbedText:
             response[model] = "unknown model!"
             logger.warning("The model '%s' is not known in service config!", model)
 
-        logger.debug("Response: %s", json.dumps(response, indent=4, default=str))
+        logger.info("Response: %s", json.dumps(response, indent=4, default=str))
 
         return response
 

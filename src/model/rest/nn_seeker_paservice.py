@@ -11,7 +11,7 @@ class NnSeekerPaService(NnSeekerRest):
 
         super().__init__(config)
 
-    def _get_request_params_c2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
+    def _get_request_params_c2c_s2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
         return {
             "configuration": self.__configuration_c2c,
             "assetId": item.__getattribute__(oss_field),

@@ -220,13 +220,18 @@ def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
             endpoint_config["u2c_config"] = endpoint_config.get("u2c_config", {})
             endpoint_config["u2c_config"]["clustering_models"] = endpoint_response["clustering_models"]
 
+        if "s2c_models" in endpoint_response:
+            endpoint_config["s2c_config"] = {"s2c_models": endpoint_response["s2c_models"]}
+
         remote_setup_config = SetupConfiguration.from_dict(endpoint_config)
-        logger.info(f"Model Configuration and Opensearch Index from remote config: ", dataclasses.asdict(remote_setup_config))
+
+        logger.info(f"Model Configuration and Opensearch Index from remote config:", dataclasses.asdict(remote_setup_config))
 
         merged_config = SetupConfiguration(
             model_config=ModelConfiguration(
                 c2c_config=local_setup_config.model_config.c2c_config or remote_setup_config.model_config.c2c_config,
-                u2c_config=local_setup_config.model_config.u2c_config or remote_setup_config.model_config.u2c_config
+                u2c_config=local_setup_config.model_config.u2c_config or remote_setup_config.model_config.u2c_config,
+                s2c_config=local_setup_config.model_config.s2c_config or remote_setup_config.model_config.s2c_config
             ),
             open_search_config=OpenSearchConfiguration(
                 index=local_setup_config.open_search_config.index or remote_setup_config.open_search_config.index
