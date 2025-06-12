@@ -1,6 +1,7 @@
 import pytest
 import panel as pn
 from view.widgets.refinement_widget import RefinementWidget, DIVERSITY, RECENCY
+from unittest.mock import AsyncMock
 
 class MockApp:
      async def trigger_item_selection(self, event): pass
@@ -16,7 +17,6 @@ def get_widget_instance(widget):
     # Get radio group from layout
     radio = widget[0][0][0][0]
     return radio.widget_instance  # Properly attached
-
 
 
 def test_widget_initial_state(widget):
@@ -61,3 +61,25 @@ def test_enable_all_buttons(widget):
     assert not refinement.btn1.disabled
     assert not refinement.btn2.disabled
     assert not refinement.alert.visible
+
+@pytest.mark.asyncio
+async def test_button_clicked_sets_and_resets_direction(widget):
+    refinement = get_widget_instance(widget)
+
+    # Replace the reco_explorer_app_instance with a mock that tracks calls
+    mock_app = MockApp()
+    mock_app.trigger_item_selection = AsyncMock()
+    refinement.reco_explorer_app_instance = mock_app
+
+    # Simulate a button click event with a name
+    event = type('Event', (object,), {'obj': type('Obj', (object,), {'name': 'Mehr Diversität'})})()
+
+    # Ensure direction is initially empty
+    assert refinement.radio_box_group.params["direction"] == ""
+
+    await refinement.button_clicked(event)
+
+    # Check that the direction was set and then reset
+    assert mock_app.trigger_item_selection.call_count == 1
+    mock_app.trigger_item_selection.assert_called_once_with(event)
+    assert refinement.radio_box_group.params["direction"] == ""

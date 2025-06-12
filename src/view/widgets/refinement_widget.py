@@ -121,10 +121,10 @@ class RefinementWidget(pn.Column, UIWidget):
         # Await the async call
         await self.reco_explorer_app_instance.trigger_item_selection(event)
 
-    def button_clicked(self, event):
+    async def button_clicked(self, event):
         self.radio_box_group.params["direction"] = event.obj.name
 
-        self.reco_explorer_app_instance.trigger_item_selection(event)
+        await self.reco_explorer_app_instance.trigger_item_selection(event)
 
         self.radio_box_group.params["direction"] = ""
 
