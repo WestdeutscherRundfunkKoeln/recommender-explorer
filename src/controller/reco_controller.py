@@ -627,6 +627,8 @@ class RecommendationController():
 
     def reset_all_components(self, to_value="default"):
         for group_name, group_components in self.components.items():
+            if group_name == "model_choice":
+                continue  # Skip resetting this group
             for component_label in group_components:
                 self.reset_component([group_name], component_label, to_value)
         self.refinement_widget.reset_all(self._get_refinement_widget())
