@@ -210,7 +210,7 @@ class RecoExplorerApp:
 
         self.controller.reset_page_number()
         self.disablePageButtons()
-        #await self.get_items_with_parameters()
+        await self.get_items_with_parameters()
 
     async def trigger_model_choice_new(self, event):
         logger.info(event)
