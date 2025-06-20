@@ -54,17 +54,21 @@ def load_and_preprocess_data(s3_bucket,
         sha256(text.encode("utf-8")).hexdigest() for text in df["embedText"]
     ]
 
-    df["subgenreCategoriesIds"] = df["subgenreCategories"]
-    df["thematicCategoriesIds"] = df["thematicCategories"]
+    #df["subgenreCategoriesIds"] = df["subgenreCategories"]
+    #df["thematicCategoriesIds"] = df["thematicCategories"]
 
     # df.loc['subgenreCategories'].apply([lambda catid: subgenre_lut[catid]] )
 
-    df["subgenreCategories"] = df.subgenreCategoriesIds.apply(
-        lambda row: [subgenre_lut[v] for v in row if subgenre_lut.get(v)]
-    )
-    df["thematicCategories"] = df.thematicCategoriesIds.apply(
-        lambda row: [thematic_lut[v] for v in row if thematic_lut.get(v)]
-    )
+    #df["subgenreCategories"] = df.subgenreCategoriesIds.apply(
+    #    lambda row: [subgenre_lut[v] for v in row if subgenre_lut.get(v)]
+    #)
+    #df["thematicCategories"] = df.thematicCategoriesIds.apply(
+    #    lambda row: [thematic_lut[v] for v in row if thematic_lut.get(v)]
+    #)
+
+    # Tobias - this should work
+    df["subgenreCategories"] = df["subgenreCategoriesTitle"]
+    df["thematicCategories"] = df["thematicCategoriesTitle"]
 
     # load and process show luts
     transposed = []
