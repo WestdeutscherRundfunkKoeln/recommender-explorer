@@ -329,3 +329,4 @@ if __name__ == "__main__":
     logger.info("Upload show luts to OSS idx [" + target_idx + ']')
     show_df = show_df[show_df['id'].notna()]
     upload_show_luts(show_df, oss_client, target_idx)
+    logger.info("Done indexing [" + target_idx + ']')
