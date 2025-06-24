@@ -17,7 +17,7 @@ from oss_utils import ModelConfig, Embedder, safe_value, get_approx_knn_mapping
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-SAMPLE_SIZE = 10000
+SAMPLE_SIZE = 1000
 
 def load_and_preprocess_data(s3_bucket,
                              s3_base_pa_data_filename,
@@ -163,6 +163,12 @@ def postprocess_data(df):
     if "editorialCategories" in df.columns:
         df["editorialCategories"].fillna('n/a', inplace=True)
 
+    if "isFamilyFriendly" in df.columns:
+        df["isFamilyFriendly"].fillna(1, inplace=True)
+
+    if "isChildContent" in df.columns:
+        df["isChildContent"].fillna(0, inplace=True)
+
     has_col_naval = df.isna().any()
     nacols = has_col_naval[has_col_naval == True].index
 
@@ -181,6 +187,10 @@ def delete_oss_index(client, idx_name):
         
         
 def filterKeys(document, keys):
+    for key in keys:
+        if key not in document:
+            logger.warning(f"Key {key} not found in document {document.get('externalid', 'unknown')}")
+            continue
     return {key: document[key] for key in keys}
 
 
@@ -326,7 +336,7 @@ if __name__ == "__main__":
     )
 
     target_idx = upload_data_oss(df, oss_client, embedding_field_names, embedding_sizes, index_prefix)
-    logger.info("Upload show luts to OSS idx [" + target_idx + ']')
-    show_df = show_df[show_df['id'].notna()]
-    upload_show_luts(show_df, oss_client, target_idx)
+    #logger.info("Upload show luts to OSS idx [" + target_idx + ']')
+    #show_df = show_df[show_df['id'].notna()]
+    #upload_show_luts(show_df, oss_client, target_idx)
     logger.info("Done indexing [" + target_idx + ']')
