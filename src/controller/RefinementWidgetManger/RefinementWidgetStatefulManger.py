@@ -68,10 +68,15 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
         for key in list(filter_state.keys()):
             if key != "refinementType" and not isinstance(filter_state[key], (dict, list)):
                 value = filter_state.pop(key)
+
+                # Special handling for "excludedIds" to always be a list
+                if key == "excludedIds":
+                    value = [value]
+
                 flat_keys[key] = value
 
         if flat_keys:
-            filter_state["filter"] = flat_keys
+            filter_state["filters"] = flat_keys
 
         return filter_state
 
