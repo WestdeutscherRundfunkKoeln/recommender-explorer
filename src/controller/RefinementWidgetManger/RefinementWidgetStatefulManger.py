@@ -14,7 +14,7 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
 
         if (refinement_type == self.previous_ref_value and
             current_ref_id == self.previous_ref_id and  "refinement" in reco_filter):
-            reco_filter["refinement"]["previous_external_ids"] = self.previous_external_ids
+            reco_filter["refinement"]["previousExternalIds"] = self.previous_external_ids
             reco_filter["utilities"] = self.utilities
 
 

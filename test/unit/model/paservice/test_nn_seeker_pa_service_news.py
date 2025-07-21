@@ -216,7 +216,7 @@ def test_get_k_NN_BR(mocker):
         nn_filter={
             "refinement": {
                 "direction": "more similar",
-                "previous_external_ids": [
+                "previousExternalIds": [
                     "test2",
                     "test1"
                 ]
@@ -250,7 +250,7 @@ def test_get_k_NN_BR(mocker):
         json={
             "refinement": {
                 "direction": "more similar",
-                "previous_external_ids": [
+                "previousExternalIds": [
                     "test2",
                     "test1",
                 ]
