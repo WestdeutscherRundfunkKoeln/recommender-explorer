@@ -17,7 +17,6 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
             reco_filter["refinement"]["previousExternalIds"] = self.previous_external_ids
             reco_filter["utilities"] = self.utilities
 
-
         elif (refinement_type == self.previous_ref_value and
             current_ref_id == self.previous_ref_id and self.utilities):
             reco_filter["utilities"] = self.utilities
@@ -68,11 +67,8 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
         for key in list(filter_state.keys()):
             if key != "refinementType" and not isinstance(filter_state[key], (dict, list)):
                 value = filter_state.pop(key)
-
-                # Special handling for "excludedIds" to always be a list
                 if key == "excludedIds":
-                    value = [value]
-
+                    value = [v.strip() for v in value.split(",") if v.strip()]
                 flat_keys[key] = value
 
         if flat_keys:
