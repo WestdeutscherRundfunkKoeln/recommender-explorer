@@ -575,13 +575,16 @@ class RecommendationController():
         for component in self.components[filter_group].values():
             # Skip non-refinementType components early
             if component.params["label"] != "refinementType":
-                filter_state[component.params["label"]] = component.value
+                label = component.params["label"]
+                value = component.value
+                if label == "excludedIds" and isinstance(value, str):
+                    filter_state[label] = [v.strip() for v in value.split(",") if v.strip()]
+                else:
+                    filter_state[label] = value
                 continue
-
             # Handle refinementType
             refinement_type = self.mapping_type.get(component.value, component.value)
             filter_state["refinementType"] = refinement_type  # Always added to top-level
-
             direction = component.params.get("direction", "")
             if direction:
                 mapped_direction = self.mapping_direction.get(direction, direction)

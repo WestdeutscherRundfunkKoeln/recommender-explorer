@@ -14,9 +14,8 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
 
         if (refinement_type == self.previous_ref_value and
             current_ref_id == self.previous_ref_id and  "refinement" in reco_filter):
-            reco_filter["refinement"]["previous_external_ids"] = self.previous_external_ids
+            reco_filter["refinement"]["previousExternalIds"] = self.previous_external_ids
             reco_filter["utilities"] = self.utilities
-
 
         elif (refinement_type == self.previous_ref_value and
             current_ref_id == self.previous_ref_id and self.utilities):
@@ -54,24 +53,26 @@ class RefinementWidgetStatefulManger(RefinementWidgetRequestManger, ABC):
                 weights.append({"type": key, "weight": value})
                 filter_state.pop(key, None)  # Remove after adding to weights
 
-        # Only add weights to filter_state if there are valid weights
         if weights:
             filter_state["weights"] = weights
-
-        # Remove keys with value 0 or ""
+        # Remove keys with value 0, "", or empty list
         for key in list(filter_state.keys()):
-            if filter_state[key] == 0 or filter_state[key] == "":
+            val = filter_state[key]
+            if val == 0 or val == "" or val == []:
                 filter_state.pop(key)
-
-        # Move remaining valid flat keys into "filter", removing them from top level
+        # Move remaining valid flat keys into "filters", removing them from top level
         flat_keys = {}
         for key in list(filter_state.keys()):
-            if key != "refinementType" and not isinstance(filter_state[key], (dict, list)):
-                value = filter_state.pop(key)
-                flat_keys[key] = value
-
+            val = filter_state[key]
+            # Exclude refinementType (keep it top-level)
+            if key == "refinementType":
+                continue
+            # Add keys whose values are NOT dict (already nested) into filters
+            # Include non-empty lists as well
+            if not isinstance(val, dict):
+                flat_keys[key] = filter_state.pop(key)
         if flat_keys:
-            filter_state["filter"] = flat_keys
+            filter_state["filters"] = flat_keys
 
         return filter_state
 
