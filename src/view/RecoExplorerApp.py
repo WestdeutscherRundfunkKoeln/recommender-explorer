@@ -208,14 +208,12 @@ class RecoExplorerApp:
             print("Event value is empty — skipping reset.")
             return
 
-        print(f"new model was selected: '{event_value}'")
-
         # Find the group where the new value belongs
         new_value_group = None
         for group_name, widget in model_choice.items():
             if hasattr(widget, 'options') and event_value in widget.options:
                 new_value_group = group_name
-                print(f"📌 Selected model belongs to group: {group_name}")
+                logger.info(f"📌 Selected model belongs to group: {group_name}")
                 break
 
         # Find the currently active group (any group with a non-empty value)
@@ -235,7 +233,7 @@ class RecoExplorerApp:
 
         # Proceed only if selection is within the same group as active
         if new_value_group and new_value_group == active_group:
-            print(f"✅ Selection changed within group '{new_value_group}' - updating mode and fetching items.")
+            logger.info(f"✅ Selection changed within group '{new_value_group}' - updating mode and fetching items.")
             self.controller.reset_page_number()
             self.disablePageButtons()
             await self.get_items_with_parameters()
