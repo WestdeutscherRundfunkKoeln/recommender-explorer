@@ -197,20 +197,49 @@ class RecoExplorerApp:
 
     async def trigger_model_choice(self, event):
         model_choice = self.controller.components["model_choice"]
-        event_value = event.new
-        if not event_value:
-            print("⚠️ Event value is empty — skipping reset.")
+
+        # Safely extract event_value from event.new
+        if isinstance(event.new, list):
+            event_value = event.new[0] if event.new else None
         else:
-            for key, widget in model_choice.items():
-                if not hasattr(widget, 'value'):
-                    continue
-                if widget.value != event_value:
-                    self.controller.reset_component("model_choice", key, [])
+            event_value = event.new
 
+        if not event_value:
+            print("Event value is empty — skipping reset.")
+            return
 
-        self.controller.reset_page_number()
-        self.disablePageButtons()
-        #await self.get_items_with_parameters()
+        # Find the group where the new value belongs
+        new_value_group = None
+        for group_name, widget in model_choice.items():
+            if hasattr(widget, 'options') and event_value in widget.options:
+                new_value_group = group_name
+                logger.info(f"📌 Selected model belongs to group: {group_name}")
+                break
+
+        # Find the currently active group (any group with a non-empty value)
+        active_group = None
+        for group_name, widget in model_choice.items():
+            if hasattr(widget, 'value') and widget.value:
+                active_group = group_name
+                print(f"📍 Currently active group: {group_name}")
+                break
+
+        # Reset groups other than the new value’s group
+        for group_name, widget in model_choice.items():
+            if not hasattr(widget, 'value'):
+                continue
+            if group_name != new_value_group:
+                self.controller.reset_component("model_choice", group_name, [])
+
+        # Proceed only if selection is within the same group as active
+        if new_value_group and new_value_group == active_group:
+            logger.info(f"✅ Selection changed within group '{new_value_group}' - updating mode and fetching items.")
+            self.controller.reset_page_number()
+            self.disablePageButtons()
+            await self.get_items_with_parameters()
+        else:
+            print(
+                f"🚫 Selection switched groups (from '{active_group}' to '{new_value_group}') — skipping reset and fetching.")
 
     async def trigger_model_choice_new(self, event):
         logger.info(event)

@@ -269,7 +269,6 @@ class UserChoiceWidget(MultiSelectionWidget):
             multi_select_widget (widget): final model choice multi select widget built from given config
         """
         user_choice_widget = self.build_multi_select_widget(config)
-        user_choice_widget.value = [user_choice_widget.options[0]]
 
         if not user_choice_widget:
             return
