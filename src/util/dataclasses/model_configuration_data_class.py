@@ -16,9 +16,9 @@ class ModelDetails:
     display_name: str
     handler: str
     endpoint: str
-    clients_endpoint : str
     content_type: str
     display_in_reco_explorer: bool
+    clients_endpoint : Optional[str] = None
     default: Optional[bool] = False
     model_name: Optional[str] = None
     model_path: Optional[str] = None
