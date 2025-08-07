@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, Any
 
 
+
 class ModelValidationError(Exception):
     def __init__(self, errors: list[str], model_name: str = "unknown"):
         self.errors = errors
@@ -15,6 +16,7 @@ class ModelDetails:
     display_name: str
     handler: str
     endpoint: str
+    clients_endpoint : str
     content_type: str
     display_in_reco_explorer: bool
     default: Optional[bool] = False
@@ -57,6 +59,7 @@ class ModelDetails:
             display_name=data.get('display_name', 'Unknown Model Name'),
             handler=data.get('handler', ''),
             endpoint=data.get('endpoint', ''),
+            clients_endpoint=data.get('clients_endpoint',''),
             content_type=data.get('content_type', ''),
             default=data.get('default', False),
             model_name=get_optional_str('model_name'),

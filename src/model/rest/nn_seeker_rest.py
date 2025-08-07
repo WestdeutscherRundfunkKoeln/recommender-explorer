@@ -1,28 +1,23 @@
 import json
 import logging
 from typing import Any, Callable
-from urllib3 import PoolManager, Retry
 from dto.item import ItemDto
 from dto.user_item import UserItemDto
 from exceptions.item_not_found_error import UnknownItemError
 from exceptions.user_not_found_error import UnknownUserError
 from model.nn_seeker import NnSeeker
 from util.dto_utils import get_primary_idents
+from model.rest.nn_seeker_paservice_request_helper import RequestHelper
 
 logger = logging.getLogger(__name__)
 
 RequestParamsBuilder = Callable[[ItemDto, str], dict[str, Any]]
 
-class NnSeekerRest(NnSeeker):
+class NnSeekerRest(NnSeeker, RequestHelper):
     def __init__(self, config, max_num_neighbours=16):
-        self.__max_num_neighbours = max_num_neighbours
-        self.__retry_connection = 5
-        self.__retry_reads = 2
-        self.__retry_redirects = 5
-        self.__backoff_factor = 0.1
-        self._model_props = {}
-        self._endpoint: str = ""
+        RequestHelper.__init__(self)
         self.__config = config
+        self.__max_num_neighbours = max_num_neighbours
 
     def get_k_NN(
         self, item: ItemDto, k: int, nn_filter: dict[str, Any] | None
@@ -52,7 +47,9 @@ class NnSeekerRest(NnSeeker):
         _, oss_field = get_primary_idents(self.__config)
 
         params = self._build_request(request_params_builder, item, oss_field, nn_filter)
-        status, pa_recos = self._post_2_endpoint(params)
+        status, data_str = self.post(json_body=params)
+        pa_recos = json.loads(data_str)
+
         # TODO - add better status and error handling
         if status != 200:
             raise unknown_item_exception(
@@ -66,30 +63,6 @@ class NnSeekerRest(NnSeeker):
         recomm_content_ids, nn_dists, utilities = result
 
         return recomm_content_ids, nn_dists, oss_field , utilities
-
-    def _post_2_endpoint(self, post_params):
-        retries = Retry(
-            connect=self.__retry_connection,
-            read=self.__retry_reads,
-            redirect=self.__retry_redirects,
-            backoff_factor=self.__backoff_factor,
-        )
-        http = PoolManager(retries=retries)
-
-        logger.info(
-            "calling [" + self._endpoint + "] with params " + json.dumps(post_params, indent=4)
-        )
-
-        response = http.request(
-            "POST", self._endpoint, json=post_params, headers=self._get_headers()
-        )
-        status_code = response.status
-        data = json.loads(response.data.decode("utf-8"))
-
-        logger.info("Got status code [" + str(status_code) + "] and data: ")
-        logger.info(data)
-
-        return status_code, data
 
     def _build_request(
         self,
@@ -134,8 +107,7 @@ class NnSeekerRest(NnSeeker):
         return result
 
     def set_model_config(self, model_config):
-        self._endpoint = model_config["endpoint"]
-        self._model_props = model_config["properties"]
+        RequestHelper.set_model_config(self, model_config, endpoint_key="endpoint")
 
 
     @staticmethod

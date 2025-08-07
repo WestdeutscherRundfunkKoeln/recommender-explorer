@@ -205,6 +205,8 @@ def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
 
     try:
         endpoint_response = _get_model_config_from_endpoint(config)
+
+
         endpoint_config = {}
 
         if "oss_index" in endpoint_response:
