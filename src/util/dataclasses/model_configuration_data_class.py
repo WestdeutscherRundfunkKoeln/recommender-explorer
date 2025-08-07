@@ -59,7 +59,7 @@ class ModelDetails:
             display_name=data.get('display_name', 'Unknown Model Name'),
             handler=data.get('handler', ''),
             endpoint=data.get('endpoint', ''),
-            clients_endpoint=data.get('clients_endpoint',''),
+            clients_endpoint=data.get('clients_endpoint'),
             content_type=data.get('content_type', ''),
             default=data.get('default', False),
             model_name=get_optional_str('model_name'),
