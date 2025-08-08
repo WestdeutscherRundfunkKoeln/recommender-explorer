@@ -1,8 +1,6 @@
 import json
-
 import pytest
 from urllib3 import HTTPResponse
-
 from src.constants import ITEM_POSITION_START
 from src.dto.content_item import ContentItemDto
 from src.dto.user_item import UserItemDto
@@ -64,6 +62,7 @@ def test_get_k_NN(mocker):
     )
     nn_seeker = NnSeekerPaService(TEST_CONFIG)
     nn_seeker.set_model_config(TEST_MODEL_CONFIG_C2C)
+
 
     ids, scores, oss_field, utilities = nn_seeker.get_k_NN(
         ContentItemDto("test", "test", "test", externalid="test"), 3, {}

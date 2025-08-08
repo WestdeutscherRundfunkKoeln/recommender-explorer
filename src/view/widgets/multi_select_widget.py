@@ -1,9 +1,9 @@
 from typing import Any
-
 import panel as pn
 from view import ui_constants as c
 from view.widgets.widget import UIWidget
 from view.util.view_utils import find_widget_by_name
+
 
 
 class MultiSelectionWidget(UIWidget):
@@ -38,6 +38,7 @@ class MultiSelectionWidget(UIWidget):
                 for option in multi_select_config[c.MULTI_SELECT_DICTIONARY_OPTIONS_KEY]
                 for k, v in option.items()
             }, []
+
         elif c.MULTI_SELECT_OPTIONS_DEFAULT_FUNCTION_KEY in multi_select_config:
             modified_list = list(
                 filter(
@@ -48,6 +49,13 @@ class MultiSelectionWidget(UIWidget):
                 )
             )
             return modified_list, [] if modified_list else []
+
+        # fetches clients from an api
+        elif multi_select_config.get(c.MULTI_SELECT_OPTIONS_CLIENTS_FUNCTION_KEY) == "clients":
+            option_default = [multi_select_config.get(c.MULTI_SELECT_DEFAULT_OPTION_KEY, [c.MULTI_SELECT_OPTIONS_CLIENTS_DEFAULT])]
+            option_list = self.controller_instance.get_pa_clients()
+            return [c.MULTI_SELECT_OPTIONS_CLIENTS_DEFAULT] + option_list, option_default
+
         return [], []
 
     def build_multi_select_widget(self, config) -> pn.widgets.MultiSelect | None:
@@ -77,6 +85,20 @@ class MultiSelectionWidget(UIWidget):
             name=multi_select_name,
             width=c.FILTER_WIDTH,
         )
+
+        def _all_default_handler(event):
+            new_value = event.new
+            alle_selected = "Alle" in new_value
+
+            if alle_selected:
+                multi_select_widget.value = ["Alle"]
+            else:
+                # Remove "Alle" if other values selected
+                if "Alle" in multi_select_widget.value:
+                    new_val = [val for val in new_value if val != "Alle"]
+                    multi_select_widget.value = new_val
+
+        multi_select_widget.param.watch(_all_default_handler, "value", onlychanged=True)
 
         multi_select_widget.params = {
             "label": multi_select_label,
@@ -462,7 +484,8 @@ class RecoFilterWidget(MultiSelectionWidget):
         if (reco_filter_widget is None) or not reco_filter_label:
             return
 
-        reco_filter_widget.params = {"label": reco_filter_label, "reset_to": []}
+        if reco_filter_label != "clients":
+            reco_filter_widget.params = {"label": reco_filter_label, "reset_to": []}
 
         reco_filter_watcher = reco_filter_widget.param.watch(
             self.trigger_multi_select_reco_filter_choice,
