@@ -132,6 +132,9 @@ class RecommendationController():
 
         self.selected_models = self.components["model_choice"][self.model_config].value
         self.initial_model_info = self.config[self.model_config][self.model_type][self.selected_models[0]]
+        print("*************")
+        print(self.initial_model_info)
+        print("*************8")
 
         ## set display type, single or multi
         if len(self.components["model_choice"][self.model_config].value) > 1:
@@ -580,14 +583,14 @@ class RecommendationController():
         filter_state = collections.defaultdict(dict)
 
         for component in self.components[filter_group].values():
-            label = component.params.get("label", "")
+            label = component.params.get("label", None)
             value = component.value
 
             if label == "refinementType":
                 refinement_type = self.mapping_type.get(value, value)
                 filter_state["refinementType"] = refinement_type
 
-                direction = component.params.get("direction", "")
+                direction = component.params.get("direction", None)
                 if direction:
                     mapped_direction = self.mapping_direction.get(direction, direction)
                     refinement_direction = self.refinement_widget.map_refinement_direction(mapped_direction)
@@ -683,6 +686,6 @@ class RecommendationController():
 
     def get_pa_clients(self):
         self.set_mode()
-        client = NnSeekerPaServiceClients(self.config, self.initial_model_info)
+        client = NnSeekerPaServiceClients(self.initial_model_info)
         clients = client.get_clients()
         return  clients

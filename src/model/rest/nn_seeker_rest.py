@@ -8,14 +8,16 @@ from exceptions.user_not_found_error import UnknownUserError
 from model.nn_seeker import NnSeeker
 from util.dto_utils import get_primary_idents
 from model.rest.nn_seeker_paservice_request_helper import RequestHelper
+from typing import Union
+
 
 logger = logging.getLogger(__name__)
 
 RequestParamsBuilder = Callable[[ItemDto, str], dict[str, Any]]
 
-class NnSeekerRest(NnSeeker, RequestHelper):
+class NnSeekerRest(NnSeeker):
     def __init__(self, config, max_num_neighbours=16):
-        RequestHelper.__init__(self)
+        self.request_helper = RequestHelper()
         self.__config = config
         self.__max_num_neighbours = max_num_neighbours
 
@@ -39,7 +41,7 @@ class NnSeekerRest(NnSeeker, RequestHelper):
     def _get_recos(
         self,
         request_params_builder: RequestParamsBuilder,
-        unknown_item_exception: type[UnknownItemError] | type[UnknownUserError],
+        unknown_item_exception: Union[type[UnknownItemError], type[UnknownUserError]],
         item: ItemDto,
         k: int,
         nn_filter: dict[str, Any] | None,
@@ -47,13 +49,13 @@ class NnSeekerRest(NnSeeker, RequestHelper):
         _, oss_field = get_primary_idents(self.__config)
 
         params = self._build_request(request_params_builder, item, oss_field, nn_filter)
-        status, data_str = self.post(json_body=params)
+        status, data_str = self.request_helper.post(json_body=params)
         pa_recos = json.loads(data_str)
 
         # TODO - add better status and error handling
         if status != 200:
             raise unknown_item_exception(
-                self._endpoint,
+                self.request_helper._endpoint,
                 item.__getattribute__(oss_field),
                 {},
             )
@@ -107,8 +109,8 @@ class NnSeekerRest(NnSeeker, RequestHelper):
         return result
 
     def set_model_config(self, model_config):
-        RequestHelper.set_model_config(self, model_config, endpoint_key="endpoint")
-
+        self.request_helper.set_model_config(model_config, endpoint_key="endpoint")
+        self._model_props = self.request_helper.get_model_props()
 
     @staticmethod
     def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float], dict[Any, Any]]:
