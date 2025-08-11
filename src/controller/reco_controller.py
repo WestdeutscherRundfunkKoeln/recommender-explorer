@@ -1,5 +1,6 @@
 from controller.RefinementWidgetManger.BrRefinementWidgetRequestManger import BrRefinementWidgetRequestManger
 from controller.RefinementWidgetManger.WdrRefinementWidgetRequestManger import WdrRefinementWidgetRequestManger
+from controller.RefinementWidgetManger.M14RefinementWidgetRequestManger import M14RefinementWidgetRequestManger
 from controller.RefinementWidgetManger.NoRefinementWidgetRequestManger import NoRefinementWidgetRequestManger
 from model.rest.nn_seeker_paservice_clients import NnSeekerPaServiceClients
 import logging
@@ -36,7 +37,7 @@ class RecommendationController():
         self.config = config
         self.current_client = current_client
         # Choose the appropriate builder based on the current client
-        self.refinement_widget = {"br": BrRefinementWidgetRequestManger(),
+        self.refinement_widget = {"br": BrRefinementWidgetRequestManger(), "m14": M14RefinementWidgetRequestManger(),
             "wdr": WdrRefinementWidgetRequestManger()}.get(current_client,NoRefinementWidgetRequestManger())
 
         self.item_accessor = BaseDataAccessorOpenSearch(config)
@@ -132,9 +133,6 @@ class RecommendationController():
 
         self.selected_models = self.components["model_choice"][self.model_config].value
         self.initial_model_info = self.config[self.model_config][self.model_type][self.selected_models[0]]
-        print("*************")
-        print(self.initial_model_info)
-        print("*************8")
 
         ## set display type, single or multi
         if len(self.components["model_choice"][self.model_config].value) > 1:

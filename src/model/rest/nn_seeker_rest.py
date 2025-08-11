@@ -49,8 +49,7 @@ class NnSeekerRest(NnSeeker):
         _, oss_field = get_primary_idents(self.__config)
 
         params = self._build_request(request_params_builder, item, oss_field, nn_filter)
-        status, data_str = self.request_helper.post(json_body=params)
-        pa_recos = json.loads(data_str)
+        status, data = self.request_helper.post(json_body=params)
 
         # TODO - add better status and error handling
         if status != 200:
@@ -60,7 +59,7 @@ class NnSeekerRest(NnSeeker):
                 {},
             )
 
-        result = self._parse_response(pa_recos)
+        result = self._parse_response(data)
 
         recomm_content_ids, nn_dists, utilities = result
 

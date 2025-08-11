@@ -36,28 +36,22 @@ class RequestHelper:
 
     def get(self, endpoint: str | None = None, headers: dict | None = None):
         endpoint = self._endpoint if endpoint is None else endpoint
-        print("last")
-        print(endpoint)
-        print("last")
         headers = self.get_headers() if headers is None else headers
         logger.info(f"GET call to [{endpoint}]")
         response = self._http.request("GET", endpoint, headers=headers)
         status = response.status
-        data = response.data.decode("utf-8")
+        data = json.loads(response.data.decode("utf-8"))
         logger.info(f"Got status {status} with data: {data}")
-        data_str = json.loads(data)
-        return status, data_str
+        return status, data
 
     def post(self, endpoint: str | None = None, headers: dict | None = None, json_body: dict | None = None):
-        import json
-
         endpoint = endpoint or self._endpoint
         headers = headers or self.get_headers()
         json_body = json_body or {}
         logger.info(f"POST call to [{endpoint}] with body {json.dumps(json_body)}")
         response = self._http.request("POST", endpoint, headers=headers, json=json_body)
         status = response.status
-        data = response.data.decode("utf-8")
+        data = json.loads(response.data.decode("utf-8"))
         logger.info(f"Got status {status} with data: {data}")
         return status, data
 
