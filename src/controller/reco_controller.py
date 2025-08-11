@@ -1,6 +1,5 @@
 from controller.RefinementWidgetManger.BrRefinementWidgetRequestManger import BrRefinementWidgetRequestManger
 from controller.RefinementWidgetManger.WdrRefinementWidgetRequestManger import WdrRefinementWidgetRequestManger
-from controller.RefinementWidgetManger.M14RefinementWidgetRequestManger import M14RefinementWidgetRequestManger
 from controller.RefinementWidgetManger.NoRefinementWidgetRequestManger import NoRefinementWidgetRequestManger
 from model.rest.nn_seeker_paservice_clients import NnSeekerPaServiceClients
 import logging
@@ -37,7 +36,7 @@ class RecommendationController():
         self.config = config
         self.current_client = current_client
         # Choose the appropriate builder based on the current client
-        self.refinement_widget = {"br": BrRefinementWidgetRequestManger(), "m14": M14RefinementWidgetRequestManger(),
+        self.refinement_widget = {"br": BrRefinementWidgetRequestManger(),
             "wdr": WdrRefinementWidgetRequestManger()}.get(current_client,NoRefinementWidgetRequestManger())
 
         self.item_accessor = BaseDataAccessorOpenSearch(config)
