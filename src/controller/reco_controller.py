@@ -1,6 +1,7 @@
 from controller.RefinementWidgetManger.BrRefinementWidgetRequestManger import BrRefinementWidgetRequestManger
 from controller.RefinementWidgetManger.WdrRefinementWidgetRequestManger import WdrRefinementWidgetRequestManger
 from controller.RefinementWidgetManger.NoRefinementWidgetRequestManger import NoRefinementWidgetRequestManger
+from model.rest.nn_seeker_paservice_clients import NnSeekerPaServiceClients
 import logging
 import copy
 import collections
@@ -36,7 +37,7 @@ class RecommendationController():
         self.current_client = current_client
         # Choose the appropriate builder based on the current client
         self.refinement_widget = {"br": BrRefinementWidgetRequestManger(),
-            "wdr": WdrRefinementWidgetRequestManger()}.get(current_client, NoRefinementWidgetRequestManger())
+            "wdr": WdrRefinementWidgetRequestManger()}.get(current_client,NoRefinementWidgetRequestManger())
 
         self.item_accessor = BaseDataAccessorOpenSearch(config)
         if constants.MODEL_CONFIG_U2C in config:
@@ -68,6 +69,9 @@ class RecommendationController():
         self.mapping_direction = {"Ähnlicher": "more similar", "Aktueller": "more recent",
             "Weniger Diversität": "less diverse", "Mehr Diversität": "more diverse",
             "Weniger Aktualität": "less recent", "Mehr Aktualität": "more recent"}
+
+        self.selected_models = []
+        self.initial_model_info = []
 
         if not isinstance(self.num_NN, int):
             raise ConfigError(
@@ -125,6 +129,9 @@ class RecommendationController():
         # ToDo: Needs refactoring. Gets value 'c2c_config' from configuration file based on position, should be based on key
         self.model_type = [model_type for model_type in self.config[self.model_config] for model in
             self.config[self.model_config][model_type] if model == chosen_model][0]
+
+        self.selected_models = self.components["model_choice"][self.model_config].value
+        self.initial_model_info = self.config[self.model_config][self.model_type][self.selected_models[0]]
 
         ## set display type, single or multi
         if len(self.components["model_choice"][self.model_config].value) > 1:
@@ -201,23 +208,22 @@ class RecommendationController():
         :return:
         """
         self.set_mode()
-        selected_models = self.components["model_choice"][self.model_config].value
 
-        if not selected_models:
+        if not self.selected_models:
             raise ModelValidationError("Start by selecting one or more models!", {})
 
         if self.get_display_mode() == constants.DISPLAY_MODE_SINGLE:
-            model_info = self.config[self.model_config][self.model_type][selected_models[0]]
+            model_info = self.config[self.model_config][self.model_type][self.selected_models[0]]
             self.set_model_and_strategy(model_info)
             return self.get_items_by_strategy_and_model(model_info)
         else:
             res = []
-            for model in selected_models:
+            for model in self.selected_models:
                 model_info = self.config[self.model_config][self.model_type][model]
                 self.set_model_and_strategy(model_info)
                 _, items, _ = self.get_items_by_strategy_and_model(model_info)
                 res.append(items[0])
-            return list(selected_models), res, self.model_config
+            return list(self.selected_models), res, self.model_config
 
     def get_items_by_strategy_and_model(self, model_info: dict) -> tuple[list, list[list], str]:
         """
@@ -572,29 +578,34 @@ class RecommendationController():
 
     def _get_current_filter_state(self, filter_group):
         filter_state = collections.defaultdict(dict)
+
         for component in self.components[filter_group].values():
-            # Skip non-refinementType components early
-            if component.params["label"] != "refinementType":
-                label = component.params["label"]
-                value = component.value
-                if label == "excludedIds" and isinstance(value, str):
-                    filter_state[label] = [v.strip() for v in value.split(",") if v.strip()]
-                else:
-                    filter_state[label] = value
+            label = component.params.get("label", None)
+            value = component.value
+
+            if label == "refinementType":
+                refinement_type = self.mapping_type.get(value, value)
+                filter_state["refinementType"] = refinement_type
+
+                direction = component.params.get("direction", None)
+                if direction:
+                    mapped_direction = self.mapping_direction.get(direction, direction)
+                    refinement_direction = self.refinement_widget.map_refinement_direction(mapped_direction)
+                    filter_state["refinement"] = {"direction": refinement_direction}
                 continue
-            # Handle refinementType
-            refinement_type = self.mapping_type.get(component.value, component.value)
-            filter_state["refinementType"] = refinement_type  # Always added to top-level
-            direction = component.params.get("direction", "")
-            if direction:
-                mapped_direction = self.mapping_direction.get(direction, direction)
-                refinement_direction = self.refinement_widget.map_refinement_direction(mapped_direction)
-                filter_state["refinement"] = {"direction": refinement_direction}
 
-        # Use the strategy to restructure the filter state
-        filter_state = self.refinement_widget.restructure_filter_state(filter_state)
+            # Special case: clients with "Alle"
+            if label == "clients" and isinstance(value, list) and "Alle" in value:
+                value = [opt for opt in component.options if opt != "Alle"]
 
-        return filter_state
+            # Special case: excludedIds
+            if label == "excludedIds" and isinstance(value, str):
+                value = [v.strip() for v in value.split(",") if v.strip()]
+
+            # Normal case
+            filter_state[label] = value
+
+        return self.refinement_widget.restructure_filter_state(filter_state)
 
     def _get_model_type_by_model_key(self, model_key):
         for ctype in [constants.MODEL_CONFIG_C2C, constants.MODEL_CONFIG_U2C]:
@@ -668,3 +679,10 @@ class RecommendationController():
                 else:
                     pass
             return ""
+
+
+    def get_pa_clients(self):
+        self.set_mode()
+        client = NnSeekerPaServiceClients(self.initial_model_info)
+        clients = client.get_clients()
+        return  clients
