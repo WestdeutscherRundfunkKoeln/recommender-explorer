@@ -99,7 +99,6 @@ class MultiSelectionWidget(UIWidget):
             multi_select_widget (widget): final widget built from given config
         """
         multi_select_register_value = config.get(c.MULTI_SELECT_REGISTER_AS_KEY, "")
-        multi_select_label = config.get(c.MULTI_SELECT_LABEL_KEY, "")
 
         registered_multi_select_widget = {
             "item_filter": ItemFilterWidget,
