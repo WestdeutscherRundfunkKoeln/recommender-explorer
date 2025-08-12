@@ -101,19 +101,17 @@ class MultiSelectionWidget(UIWidget):
         multi_select_register_value = config.get(c.MULTI_SELECT_REGISTER_AS_KEY, "")
         multi_select_label = config.get(c.MULTI_SELECT_LABEL_KEY, "")
 
-        if multi_select_register_value == "reco_filter" and multi_select_label == "clients":
-            registered_multi_select_widget = ClinetsWidget
-        else:
-            registered_multi_select_widget = {
-                "item_filter": ItemFilterWidget,
-                "upper_item_filter": UpperItemFilterWidget,
-                "reco_filter": RecoFilterWidget,
-                "model_choice_c2c": ModelChoiceWidgetC2C,
-                "model_choice_s2c": ModelChoiceWidgetS2C,
-                "model_choice_u2c": ModelChoiceWidgetU2C,
-                "user_choice": UserChoiceWidget,  # you have to build a class for this
-                "reco_filter_u2c": RecoFilter_U2C_Widget,
-            }.get(multi_select_register_value)
+        registered_multi_select_widget = {
+            "item_filter": ItemFilterWidget,
+            "clients_filter": ClientsWidget,
+            "upper_item_filter": UpperItemFilterWidget,
+            "reco_filter": RecoFilterWidget,
+            "model_choice_c2c": ModelChoiceWidgetC2C,
+            "model_choice_s2c": ModelChoiceWidgetS2C,
+            "model_choice_u2c": ModelChoiceWidgetU2C,
+            "user_choice": UserChoiceWidget,  # you have to build a class for this
+            "reco_filter_u2c": RecoFilter_U2C_Widget,
+        }.get(multi_select_register_value)
 
         if multi_select_register_value is None:
             return
@@ -531,7 +529,7 @@ class UpperItemFilterWidget(MultiSelectionWidget):
             )
         )
 
-class ClinetsWidget(RecoFilterWidget):
+class ClientsWidget(RecoFilterWidget):
     def get_multi_select_options(
         self, multi_select_config
     ) -> tuple[list[str] | dict[str, str], list[str]]:
@@ -545,24 +543,24 @@ class ClinetsWidget(RecoFilterWidget):
         return  [], []
 
     def create(self, config: dict[str, Any]) -> pn.widgets.MultiSelect | None:
-        widget = super().create(config)
-        if widget is None:
+        clients_filter_widget = super().create(config)
+        if clients_filter_widget is None:
             return None
 
-        reco_filter_label = config.get(c.MULTI_SELECT_LABEL_KEY)
-        widget.params = {"label": reco_filter_label,"reset_to":[c.MULTI_SELECT_OPTIONS_CLIENTS_DEFAULT]}
+        clients_filter_label = config.get(c.MULTI_SELECT_LABEL_KEY)
+        clients_filter_widget.params = {"label": clients_filter_label,"reset_to":[c.MULTI_SELECT_OPTIONS_CLIENTS_DEFAULT]}
 
         def _all_default_handler(event):
             new_value = event.new
             alle_selected = "Alle" in new_value
 
             if alle_selected:
-                widget.value = ["Alle"]
+                clients_filter_widget.value = ["Alle"]
             else:
-                if "Alle" in widget.value:
+                if "Alle" in clients_filter_widget.value:
                     new_val = [val for val in new_value if val != "Alle"]
-                    widget.value = new_val
+                    clients_filter_widget.value = new_val
 
-        widget.param.watch(_all_default_handler, "value", onlychanged=True)
+        clients_filter_widget.param.watch(_all_default_handler, "value", onlychanged=True)
 
-        return widget
+        return clients_filter_widget
