@@ -1,0 +1,153 @@
+ui_config:
+    title: Unified Sophora Recommender Explorer
+    logo: https://www.subshell.com/img/decorations/deco-sophora-logo.svg
+    header_background: '#001E46'
+    blocks:
+        - label: Modelle wählen
+          components:
+            - type: accordion_with_cards
+              toggle: True
+              ui_acc: True
+              active: 0
+              content:
+                - type: accordion
+                  label: Content-2-Content
+                  active: 0
+                  toggle: True
+                  content:
+                    - type: multi_select
+                      tooltip: Modell das für die Embedding-Generierung verwendet wurde.
+                      label: c2c_config
+                      register_as: model_choice_c2c
+                - type: accordion
+                  label: Search-2-Content
+                  content:
+                    - type: multi_select
+                      tooltip: Modell das für die Embedding-Generierung verwendet wurde.
+                      label: s2c_config
+                      register_as: model_choice_s2c
+
+        - label: Suche
+          linkto: "0"
+          components:
+            - type: radio_box
+              label: Radio Box
+              options:
+                External ID:
+                  - type: text_field
+                    placeholder: External ID
+                    url_parameter: externalId
+                    validator_function: _check_text
+                    accessor_function: get_item_by_crid
+                    visible: True
+                Datum:
+                  - type: date_time_quick_select
+                    label: heute
+                    start_picker_label: startdateinput
+                    end_picker_label: enddateinput
+                  - type: date_time_quick_select
+                    label: gestern
+                    start_picker_label: startdateinput
+                    end_picker_label: enddateinput
+                    start_delta_days: 1
+                    end_delta_days: 1
+                  - type: date_time_quick_select
+                    label: letzten 7 Tage
+                    start_picker_label: startdateinput
+                    end_picker_label: enddateinput
+                    start_delta_days: 7
+                  - type: date_time_quick_select
+                    label: letzten 30 Tage
+                    start_picker_label: startdateinput
+                    end_picker_label: enddateinput
+                    start_delta_days: 30
+                  - type: date_time_quick_select
+                    label: letzten 90 Tage
+                    start_picker_label: startdateinput
+                    end_picker_label: enddateinput
+                    start_delta_days: 90
+                  - name: Startdatum
+                    type: date_time_picker
+                    label: startdateinput
+                    validator: _check_date
+                    accessor_function: get_items_by_date
+                  - name: Enddatum
+                    type: date_time_picker
+                    label: enddateinput
+                    validator: _check_date
+                    accessor_function: get_items_by_date
+
+        - label: Mit Freitext suchen
+          linkto: "1"
+          components:
+            - type: text_area_input
+              url_parameter: textsuche
+              label: ""
+              placeholder: Text eingeben...
+
+
+        - label: Empfehlungstyp beeinflussen
+          components:
+            - type: refinement_widget
+
+
+        -   label: Dokumentenfilter
+            components:
+                -   type: slider
+                    name: Audiobeiträge
+                    start: 0.0
+                    end: 10.0
+                    step: 1.0
+                    label: audio
+                    component_group: reco_filter
+                    tooltip: Mit 10 werden nur Audios gesucht. (Die Summe der Slider muss immer 10 ergeben)
+                -   type: slider
+                    name: Videobeiträge
+                    start: 0.0
+                    end: 10.0
+                    step: 1.0
+                    label: video
+                    component_group: reco_filter
+                    tooltip: Mit 10 werden nur Videos gesucht. (Die Summe der Slider muss immer 10 ergeben)
+                -   type: slider
+                    name: Beiträge
+                    start: 0.0
+                    end: 10.0
+                    step: 1.0
+                    label: beitrag
+                    component_group: reco_filter
+                    tooltip: Mit 10 werden nur Beiträge gesucht. (Die Summe der Slider muss immer 10 ergeben)
+
+        -   label: Längenfilter
+            components:
+                -   type: slider
+                    name: Länge
+                    start: 0.0
+                    end: 50.0
+                    step: 0.25
+                    unit: x
+                    label: maxDurationFactor
+                    component_group: reco_filter
+        -   label: Blacklist
+            components:
+                -   type: text_field
+                    placeholder: id1,id2,...
+                    label: excludedIds
+                    component_group: reco_filter
+                    tooltip: kommaseparierte Liste mit External IDs, die im Ergebnis nicht erscheinen sollen (Teaser-Doppler-Ausschluss)
+                    visible: True
+
+
+
+    custom_css:
+        '""
+        #header .app-header .title {
+            padding-left: 0;
+        }
+        a.navbar-brand {
+            margin-right: 0
+        }
+        a.navbar-brand img.app-logo {
+            padding-right: 0
+        }
+        ""'

@@ -1,0 +1,23 @@
+display_name: Unified Sophora
+
+opensearch:
+    host: $OPENSEARCH_HOST|search-ard-reco-oss-r2nlc4k2ti2gwprolhcsxqcooe.eu-central-1.es.amazonaws.com
+    port: $OPENSEARCH_PORT|443
+    user: $OPENSEARCH_USER|ard-reco-oss-read-only
+    pass: $OPENSEARCH_PASS
+    use_ssl: true
+    field_mapping:
+        "created": "availableFrom"
+        "createdFormatted": "availableFrom"
+        "showTitle": "showTitel"
+        "crid": "externalid"
+        "duration": "duration"
+    primary_field: "crid"
+
+ingest:
+    api_key: $API_KEY
+    base_url_embedding: $BASE_URL_EMBEDDING
+
+model_config_key: us
+
+ui_config: ui_config_us.yaml
