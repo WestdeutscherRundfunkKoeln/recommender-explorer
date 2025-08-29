@@ -10,3 +10,5 @@ pytest-asyncio
 httpx==0.27.2
 jsonschema
 pydantic
+qdrant-client
+pyfarmhash==0.4.0
