@@ -1,10 +1,9 @@
+import farmhash
+import pytest
 from qdrant_client import QdrantClient
 from testcontainers.qdrant import QdrantContainer
-import pytest
-import farmhash
 
 from src.dto.content_item import ContentItemDto
-from src.dto.item import ItemDto
 from src.model.qdrant.nn_seeker_qdrant import QdrantNNSeeker
 
 
