@@ -2,6 +2,7 @@ from typing import Any
 
 import farmhash
 from qdrant_client import QdrantClient
+from qdrant_client.http import models
 
 from dto.item import ItemDto
 from src.model.nn_seeker import NnSeeker
@@ -24,32 +25,40 @@ class QdrantNNSeeker(NnSeeker):
     def get_k_NN(
         self, item: ItemDto, k: int, nn_filter: dict[str, Any]
     ) -> tuple[list[str], list, str]:
-        assert self._collection_name is not None, (
-            "Collection name must be set before querying"
-        )
+        if not self._collection_name:
+            raise ValueError("Collection name must be set before querying")
         qdrant_id = farmhash.fingerprint64(item.id)
         search_result = self._client.query_points(
             collection_name=self._collection_name,
             query=qdrant_id,
             limit=k,
-            filter=self._build_filter(nn_filter),
+            query_filter=self._build_filter(nn_filter),
         )
+        assert all(
+            item.payload and "content_id" in item.payload
+            for item in search_result.points
+        ), "payload does not contain content_id"
         return (
-            [str(item.id) for item in search_result.points],
+            [item.payload["content_id"] for item in search_result.points],
             [item.score for item in search_result.points],
             "",
         )
 
-    def _build_filter(self, nn_filter: dict[str, Any]) -> dict[str, Any]:
-        filter = {"must": []}
+    def _build_filter(self, nn_filter: dict[str, Any]) -> models.Filter:
+        filter = models.Filter(must=[])
         for key, value in nn_filter.items():
             match value:
                 case list():
-                    filter["must"].append({"key": key, "match": {"any": value}})
+                    filter.must.append(
+                        models.FieldCondition(key=key, match=models.MatchAny(any=value))
+                    )
                 case _:
-                    filter["must"].append({"key": key, "match": {"value": value}})
-
+                    filter.must.append(
+                        models.FieldCondition(
+                            key=key, match=models.MatchValue(value=value)
+                        )
+                    )
         return filter
 
     def set_model_config(self, model_config) -> None:
-        self._collection_name = model_config["endpoint"].remove("qdrant://")
+        self._collection_name = model_config["endpoint"].replace("qdrant://", "")
