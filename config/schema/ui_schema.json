@@ -357,6 +357,10 @@
           "type": "string",
           "description": "Key of the default option."
         },
+        "clients_option": {
+          "type": "string",
+          "description": "Dynamic options key loaded from PA endpoint (clients filter)."
+        },
         "tooltip": {
           "type": "string",
           "description": "Tooltip of the multi_select."
@@ -386,6 +390,13 @@
               "properties": {
                 "register_as": {
                   "const": "model_choice_s2c"
+                }
+              }
+            },
+            {
+              "properties": {
+                "register_as": {
+                  "const": "clients_filter"
                 }
               }
             }
