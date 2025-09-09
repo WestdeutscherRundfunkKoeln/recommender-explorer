@@ -374,14 +374,22 @@ There are multiple kinds of option definitions you can configure. Multi Select O
 
       option_default: 'categoriesAtoC'
 
-#### Default Options
+#### Clients Filter
 
 - When in a multi select config the key is named: **clients_option**, it means that the options are defined.
 - Clients options are not defined in the config. Instead, the controller which will all options from the respective PA endpoint. This key has to be defined before, so that this method can work.
 - The Multiselect must be registered as "clients_filter" in order to apply the right logic.
+- The label of the multi_select label is the term of the filter in the endpoint so here it has to be "clients"
 - A clients option config with x options could look like this:
 
-      clients_option: 'clients'
+          - label: Seitenfilter
+              components:
+              -   type: multi_select
+                  tooltip: Seite hier auswählen
+                  label: clients
+                  register_as: clients_filter
+                  clients_option: clients
+
 
 
 ### <a id="multi-select-filter-headline-link"></a>Multi Select Widget as a Filter
