@@ -8,6 +8,9 @@ from exceptions.user_not_found_error import UnknownUserError
 from model.nn_seeker import NnSeeker
 from model.rest.nn_seeker_paservice_request_helper import RequestHelper
 from util.dto_utils import get_primary_idents
+from model.rest.nn_seeker_paservice_request_helper import RequestHelper
+from typing import Union
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +18,10 @@ RequestParamsBuilder = Callable[[ItemDto, str], dict[str, Any]]
 
 
 class NnSeekerRest(NnSeeker):
-    def __init__(self, config):
+    def __init__(self, config, max_num_neighbours=16):
         self.request_helper = RequestHelper()
         self.__config = config
+        self.__max_num_neighbours = max_num_neighbours
 
     def get_k_NN(
         self, item: ItemDto, k: int, nn_filter: dict[str, Any] | None
@@ -119,4 +123,3 @@ class NnSeekerRest(NnSeeker):
 
     def _get_request_params_u2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
         raise NotImplementedError()
-
