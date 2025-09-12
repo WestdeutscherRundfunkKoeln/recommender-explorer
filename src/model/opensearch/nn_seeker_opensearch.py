@@ -99,12 +99,6 @@ class NnSeekerOpenSearch(NnSeeker):
 
         return recomm_content_ids, nn_dists, "id"
 
-    def get_max_num_neighbours(self, content_id):
-        return self.__max_num_neighbours
-
-    def set_max_num_neighbours(self, num_neighbours):
-        self.__max_num_neighbours = num_neighbours
-
     def __get_nn_by_embedding(
         self, embedding: list[float], k: int, filter_criteria: dict[str, Any]
     ) -> tuple[list[str], list[float]]:
@@ -207,10 +201,17 @@ class NnSeekerOpenSearch(NnSeeker):
 
         logger.info(query)
         response = self.client.search(body=query, index=self.target_idx_name)
-        first_hit_source = response.get("hits", {}).get("hits", [{}])[0].get("_source", {})
+        first_hit_source = (
+            response.get("hits", {}).get("hits", [{}])[0].get("_source", {})
+        )
         if self.embedding_field_name not in first_hit_source:
             raise UnknownItemEmbeddingError(
-                'Item with primary id [' + content_id + '] does not have embedding for [' + self.embedding_field_name + ']', {}
+                "Item with primary id ["
+                + content_id
+                + "] does not have embedding for ["
+                + self.embedding_field_name
+                + "]",
+                {},
             )
 
         return first_hit_source.get(self.embedding_field_name)
@@ -227,7 +228,12 @@ class NnSeekerOpenSearch(NnSeeker):
 
         if self.embedding_field_name not in response:
             raise UnknownItemEmbeddingError(
-                'Text [' + text_to_embed + '] does not have embedding for [' + self.embedding_field_name + ']', {}
+                "Text ["
+                + text_to_embed
+                + "] does not have embedding for ["
+                + self.embedding_field_name
+                + "]",
+                {},
             )
 
         return response[self.embedding_field_name]
@@ -254,7 +260,6 @@ class NnSeekerOpenSearch(NnSeeker):
             if isinstance(value, list):
                 value = value[0]
             action, actor = label.split("_")
-
 
             match action:
                 case "termfilter":

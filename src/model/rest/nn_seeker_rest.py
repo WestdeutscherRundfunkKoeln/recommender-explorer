@@ -1,11 +1,12 @@
-import json
 import logging
-from typing import Any, Callable
+from typing import Any, Callable, Union
+
 from dto.item import ItemDto
 from dto.user_item import UserItemDto
 from exceptions.item_not_found_error import UnknownItemError
 from exceptions.user_not_found_error import UnknownUserError
 from model.nn_seeker import NnSeeker
+from model.rest.nn_seeker_paservice_request_helper import RequestHelper
 from util.dto_utils import get_primary_idents
 from model.rest.nn_seeker_paservice_request_helper import RequestHelper
 from typing import Union
@@ -14,6 +15,7 @@ from typing import Union
 logger = logging.getLogger(__name__)
 
 RequestParamsBuilder = Callable[[ItemDto, str], dict[str, Any]]
+
 
 class NnSeekerRest(NnSeeker):
     def __init__(self, config, max_num_neighbours=16):
@@ -34,9 +36,6 @@ class NnSeekerRest(NnSeeker):
         return self._get_recos(
             self._get_request_params_u2c, UnknownUserError, user, n_recos, nn_filter
         )
-
-    def get_max_num_neighbours(self, content_idx):
-        return self.__max_num_neighbours
 
     def _get_recos(
         self,
@@ -63,7 +62,7 @@ class NnSeekerRest(NnSeeker):
 
         recomm_content_ids, nn_dists, utilities = result
 
-        return recomm_content_ids, nn_dists, oss_field , utilities
+        return recomm_content_ids, nn_dists, oss_field, utilities
 
     def _build_request(
         self,
@@ -112,10 +111,14 @@ class NnSeekerRest(NnSeeker):
         self._model_props = self.request_helper.get_model_props()
 
     @staticmethod
-    def _parse_response(response: dict[str, Any]) -> tuple[list[str], list[float], dict[Any, Any]]:
+    def _parse_response(
+        response: dict[str, Any],
+    ) -> tuple[list[str], list[float], dict[Any, Any]]:
         raise NotImplementedError()
 
-    def _get_request_params_c2c_s2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
+    def _get_request_params_c2c_s2c(
+        self, item: ItemDto, oss_field: str
+    ) -> dict[str, Any]:
         raise NotImplementedError()
 
     def _get_request_params_u2c(self, item: ItemDto, oss_field: str) -> dict[str, Any]:
