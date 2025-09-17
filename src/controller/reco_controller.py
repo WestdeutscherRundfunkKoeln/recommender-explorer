@@ -28,6 +28,7 @@ from exceptions.user_not_found_error import UnknownUserError
 from exceptions.item_not_found_error import UnknownItemError
 from exceptions.embedding_not_found_error import UnknownItemEmbeddingError
 from exceptions.empty_search_error import EmptySearchError
+from src.model.base_data_accessor import BaseDataAccessor
 from util.postprocessing import FilterPostproc
 from util.dto_utils import (
     update_from_props,
@@ -60,7 +61,7 @@ class RecommendationController:
             "m14": M14RefinementWidgetRequestManger(),
         }.get(current_client, NoRefinementWidgetRequestManger())
 
-        self.item_accessor = BaseDataAccessorOpenSearch(config)
+        self.item_accessor: BaseDataAccessor = BaseDataAccessorOpenSearch(config)
         if constants.MODEL_CONFIG_U2C in config:
             self.user_cluster_accessor = ClusteringModelClient(config)
         else:

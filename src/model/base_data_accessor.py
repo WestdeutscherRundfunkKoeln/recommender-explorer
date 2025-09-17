@@ -1,27 +1,19 @@
 from abc import ABC, abstractmethod
+from typing import Collection
+
+from dto.item import ItemDto
+
 
 class BaseDataAccessor(ABC):
-    
     @abstractmethod
-    def get_items_by_ids( self, ids ):
-        pass
-    
-    @abstractmethod
-    def get_item_by_crid( self, crid ):
-        pass
-    
-    @abstractmethod
-    def get_items_by_date(self, start_date, end_date, offset = 0, size = -1):
+    def get_items_by_ids(self, item: ItemDto, ids: Collection[str]) -> list[ItemDto]:
         pass
 
     @abstractmethod
-    def get_items_date_range_limits( self ):
+    def get_primary_key_by_field(self, item_ident, field):
         pass
 
     @abstractmethod
-    def get_top_k_vals_for_column( self, column, k):
+    def get_unique_vals_for_column(self, column, sort=True):
         pass
-    
-    @abstractmethod
-    def get_unique_vals_for_column( self, column, sort=True):
-        pass
+
