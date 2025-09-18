@@ -50,7 +50,7 @@ class WDRContentCard:
                        <strong>Datentyp:</strong> {content_dto.type.title()} {self.type_icon.get(content_dto.type, "")} <br>
                        <strong>Datum:</strong> {formatted_date}<br>
                        <strong>Strukturpfad:</strong> {content_dto.structurePath}<br>
-                       <strong>External ID:</strong> {content_dto.externalid}<br>
+                       <strong>External ID:</strong> {content_dto.externalId}<br>
                        <strong>Themen:</strong> {", ".join(set(content_dto.thematicCategories))}<br>
                        <strong>Keywords:</strong> {", ".join(set(content_dto.keywords))}<br>
                        <strong>Sophora ID:</strong> <a href=https://{content_dto.domain}{content_dto.structurePath}/{content_dto.cmsId}.html>{content_dto.cmsId}</a><br>
