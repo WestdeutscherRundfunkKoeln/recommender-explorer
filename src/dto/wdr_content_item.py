@@ -14,7 +14,7 @@ class WDRContentItemDto(ItemDto):
     embedText: str = ""
     embedTextHash: str = ""
     episodeNumber: str = ""
-    externalid: str = ""
+    externalId: str = ""
     firstPublicationDate: str = ""
     fskAgeRating: str = ""
     geoAvailability: str = ""
