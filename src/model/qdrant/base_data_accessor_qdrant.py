@@ -1,8 +1,9 @@
 import copy
-from typing import Collection
+from typing import Any, Collection
 
 import farmhash
 from qdrant_client import QdrantClient
+from qdrant_client.http.models import FieldCondition, Filter, MatchValue, Record
 
 from src.dto.item import ItemDto
 from src.model.base_data_accessor import BaseDataAccessor
@@ -30,9 +31,28 @@ class BaseDataAccessorQdrant(BaseDataAccessor):
 
     def get_items_by_ids(self, item: ItemDto, ids: Collection[str]) -> list[ItemDto]:
         fingerprints = [farmhash.fingerprint64(id) for id in ids]
-        records = self._client.retrieve(
+        response = self._client.retrieve(
             collection_name=self._collection_name, ids=fingerprints, with_payload=True
         )
+        return self.__get_items_from_response(item, response)
+
+    def _get_item_by_column_value(self, item: ItemDto, column: str, value: Any):
+        response = self._scroll_points_by_column_value(column, value)
+        return self.__get_items_from_response(item, response)
+
+    def _scroll_points_by_column_value(self, column: str, value: Any, limit=1):
+        return self._client.scroll(
+            collection_name=self._collection_name,
+            scroll_filter=Filter(
+                must=FieldCondition(key=column, match=MatchValue(value=value))
+            ),
+            limit=limit,
+            with_payload=True,
+        )
+
+    def __get_items_from_response(
+        self, item: ItemDto, records: Collection[Record]
+    ) -> list[ItemDto]:
         return [
             update_from_props(
                 copy.copy(item),
@@ -42,8 +62,34 @@ class BaseDataAccessorQdrant(BaseDataAccessor):
             for record in records
         ]
 
-    def get_primary_key_by_field(self, item_ident, field):
-        pass
+    def get_primary_key_by_field(self, item_ident: str, field: str):
+        response = self._scroll_points_by_column_value(field, item_ident)
+        return response.payload["content_id"]
 
-    def get_unique_vals_for_column(self, column, sort=True):
-        pass
+    def get_unique_vals_for_column(self, column, sort=True, limit=1000):
+        vals = set()
+        offset = 0
+
+        while len(vals) < limit:
+            response = self._client.scroll(
+                collection_name=self._collection_name,
+                offset=offset,
+                limit=limit,
+                with_payload=[column],
+            )
+
+            if not response:
+                break
+
+            for record in response:
+                if len(vals) >= limit:
+                    break
+                if record and record.payload and column in record.payload:
+                    vals.add(record.payload[column])
+
+            offset += limit
+
+        result = list(vals)
+        return sorted(result) if sort else result
+
+    def get_item_by_urn(self, item: ItemDto, urn: str) -> list[ItemDto]: ...

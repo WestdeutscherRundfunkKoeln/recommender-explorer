@@ -15,7 +15,7 @@ def test_qdrant_nn_seeker_get_k_NN(qdrant_client: QdrantClient):
     nn_seeker = QdrantNNSeeker(qdrant_client)
     nn_seeker.set_model_config({"endpoint": f"qdrant://{COLLECTION_NAME}"})
     ids, scores, id_field = nn_seeker.get_k_NN(
-        item=item, k=2, nn_filter={"field1": "test", "field2": "test"}
+        item=item, k=2, nn_filter={"field1": "test1", "field2": "test2"}
     )
 
     assert ids == ["test2", "test3"]
@@ -32,5 +32,5 @@ def test_qdrant_nn_seeker_no_collection_set(qdrant_client: QdrantClient):
     nn_seeker = QdrantNNSeeker(qdrant_client)
     with pytest.raises(ValueError):
         nn_seeker.get_k_NN(
-            item=item, k=2, nn_filter={"field1": "test", "field2": "test"}
+            item=item, k=2, nn_filter={"field1": "test1", "field2": "test2"}
         )

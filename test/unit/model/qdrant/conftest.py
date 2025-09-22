@@ -29,27 +29,27 @@ def setup_qdrant_collection(qdrant_client: QdrantClient):
         {
             "id": farmhash.fingerprint64("test1"),
             "vector": [0.1, 0.2, 0.3, 0.4],
-            "payload": {"content_id": "test1", "field1": "test", "field2": "test"},
+            "payload": {"content_id": "test1", "field1": "test1", "field2": "test2"},
         },
         {
             "id": farmhash.fingerprint64("test2"),
             "vector": [0.2, 0.3, 0.4, 0.5],
-            "payload": {"content_id": "test2", "field1": "test", "field2": "test"},
+            "payload": {"content_id": "test2", "field1": "test1", "field2": "test2"},
         },
         {
             "id": farmhash.fingerprint64("test3"),
             "vector": [0.3, 0.4, 0.5, 0.6],
-            "payload": {"content_id": "test3", "field1": "test", "field2": "test"},
+            "payload": {"content_id": "test3", "field1": "test1", "field2": "test2"},
         },
         {
             "id": farmhash.fingerprint64("test4"),
             "vector": [0.4, 0.5, 0.6, 0.7],
-            "payload": {"content_id": "test4", "field1": "test"},
+            "payload": {"content_id": "test4", "field1": "test1"},
         },
         {
             "id": farmhash.fingerprint64("test5"),
             "vector": [0.5, 0.6, 0.7, 0.8],
-            "payload": {"content_id": "test5", "field2": "test"},
+            "payload": {"content_id": "test5", "field2": "test2"},
         },
     ]
     qdrant_client.upsert(collection_name=COLLECTION_NAME, points=points)
