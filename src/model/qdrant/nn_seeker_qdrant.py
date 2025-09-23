@@ -5,7 +5,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
 from dto.item import ItemDto
-from src.model.nn_seeker import NnSeeker
+from model.nn_seeker import NnSeeker
 
 
 class QdrantNNSeeker(NnSeeker):

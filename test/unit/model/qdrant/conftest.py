@@ -29,17 +29,32 @@ def setup_qdrant_collection(qdrant_client: QdrantClient):
         {
             "id": farmhash.fingerprint64("test1"),
             "vector": [0.1, 0.2, 0.3, 0.4],
-            "payload": {"content_id": "test1", "field1": "test1", "field2": "test2"},
+            "payload": {
+                "content_id": "test1",
+                "field1": "test1",
+                "field2": "test2",
+                "field3": "test1",
+            },
         },
         {
             "id": farmhash.fingerprint64("test2"),
             "vector": [0.2, 0.3, 0.4, 0.5],
-            "payload": {"content_id": "test2", "field1": "test1", "field2": "test2"},
+            "payload": {
+                "content_id": "test2",
+                "field1": "test1",
+                "field2": "test2",
+                "field3": "test2",
+            },
         },
         {
             "id": farmhash.fingerprint64("test3"),
             "vector": [0.3, 0.4, 0.5, 0.6],
-            "payload": {"content_id": "test3", "field1": "test1", "field2": "test2"},
+            "payload": {
+                "content_id": "test3",
+                "field1": "test1",
+                "field2": "test2",
+                "field3": "test3",
+            },
         },
         {
             "id": farmhash.fingerprint64("test4"),
