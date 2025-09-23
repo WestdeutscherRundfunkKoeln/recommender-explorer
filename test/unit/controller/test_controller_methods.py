@@ -8,6 +8,15 @@ from src.controller.reco_controller import RecommendationController
 def controller() -> RecommendationController:
     controller = RecommendationController(
         config={
+            "opensearch": {
+                "user": "test",
+                "pass": "test",
+                "host": "test",
+                "port": "8080",
+                "index": "test",
+                "use_ssl": True,
+                "field_mapping": {},
+            },
             "opensearch.user": "test",
             "opensearch.pass": "test",
             "opensearch.host": "test",
@@ -16,7 +25,7 @@ def controller() -> RecommendationController:
             "opensearch.use_ssl": True,
             "opensearch.field_mapping": {},
         },
-        current_client = "wdr"
+        current_client="wdr",
     )
     controller.model_type = constants.MODEL_TYPE_C2C
     MockComponent = namedtuple("component", ["visible"])
