@@ -6,7 +6,7 @@ from opensearchpy import OpenSearch, RequestsHttpConnection
 from model.base_data_accessor import BaseDataAccessor
 from exceptions.empty_search_error import EmptySearchError
 from dto.item import ItemDto
-from util.dto_utils import update_from_props
+from util.dto_utils import update_from_props, get_primary_idents
 
 # loggin preference
 logger = logging.getLogger(__name__)
@@ -81,6 +81,24 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
             "hits": {"hits": response_mget["docs"], "total": {"value": len(ids)}}
         }
         return self.__get_items_from_response(item, response)
+
+    def _get_item_by_column_value(self, item: ItemDto, column: str, value: str):
+        oss_col = column + ".keyword"
+        query = {
+            "size": 10,  # duplicate crids max occur in data, return max 10
+            "_source": {"exclude": "embedding"},
+            "query": {
+                "match": {oss_col: value},
+            },
+        }
+        logger.info(query)
+        response = self.client.search(body=query, index=self.target_idx_name)
+        return self.__get_items_from_response(item, response)
+
+    def get_item_by_urn(self, item: ItemDto, urn: str):
+        urn = urn.strip()
+        _, prim_val = get_primary_idents(self.config)
+        return self._get_item_by_column_value(item=item, column=prim_val, value=urn)
 
     def get_top_k_vals_for_column(self, column, k) -> list:
         # apply field mapping if defined

@@ -1,8 +1,16 @@
+import collections
+import copy
+import datetime
+import importlib
+import logging
+import math
+import re
+
+from envyaml import EnvYAML
+
+import constants
 from controller.RefinementWidgetManger.BrRefinementWidgetRequestManger import (
     BrRefinementWidgetRequestManger,
-)
-from controller.RefinementWidgetManger.WdrRefinementWidgetRequestManger import (
-    WdrRefinementWidgetRequestManger,
 )
 from controller.RefinementWidgetManger.M14RefinementWidgetRequestManger import (
     M14RefinementWidgetRequestManger,
@@ -10,35 +18,30 @@ from controller.RefinementWidgetManger.M14RefinementWidgetRequestManger import (
 from controller.RefinementWidgetManger.NoRefinementWidgetRequestManger import (
     NoRefinementWidgetRequestManger,
 )
-from model.rest.nn_seeker_paservice_clients import NnSeekerPaServiceClients
-import logging
-import copy
-import collections
-import datetime
-import math
-import re
-import importlib
-import constants
-from model.sagemaker.clustering_model_client import ClusteringModelClient
-from model.opensearch.base_data_accessor_opensearch import BaseDataAccessorOpenSearch
+from controller.RefinementWidgetManger.WdrRefinementWidgetRequestManger import (
+    WdrRefinementWidgetRequestManger,
+)
+from dto.item import ItemDto
+from dto.user_item import UserItemDto
 from exceptions.config_error import ConfigError
 from exceptions.date_validation_error import DateValidationError
-from exceptions.model_validation_error import ModelValidationError
-from exceptions.user_not_found_error import UnknownUserError
-from exceptions.item_not_found_error import UnknownItemError
 from exceptions.embedding_not_found_error import UnknownItemEmbeddingError
 from exceptions.empty_search_error import EmptySearchError
-from src.model.base_data_accessor import BaseDataAccessor
-from util.postprocessing import FilterPostproc
+from exceptions.item_not_found_error import UnknownItemError
+from exceptions.model_validation_error import ModelValidationError
+from exceptions.user_not_found_error import UnknownUserError
+from model.base_data_accessor import BaseDataAccessor
+from model.opensearch.base_data_accessor_opensearch import BaseDataAccessorOpenSearch
+from model.qdrant.base_data_accessor_qdrant import BaseDataAccessorQdrant
+from model.rest.nn_seeker_paservice_clients import NnSeekerPaServiceClients
+from model.sagemaker.clustering_model_client import ClusteringModelClient
 from util.dto_utils import (
-    update_from_props,
     dto_from_classname,
     dto_from_model,
     get_primary_idents,
+    update_from_props,
 )
-from dto.user_item import UserItemDto
-from dto.item import ItemDto
-from envyaml import EnvYAML
+from util.postprocessing import FilterPostproc
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +64,7 @@ class RecommendationController:
             "m14": M14RefinementWidgetRequestManger(),
         }.get(current_client, NoRefinementWidgetRequestManger())
 
-        self.item_accessor: BaseDataAccessor = BaseDataAccessorOpenSearch(config)
+        self.item_accessor: BaseDataAccessor = self._build_accessor(config)
         if constants.MODEL_CONFIG_U2C in config:
             self.user_cluster_accessor = ClusteringModelClient(config)
         else:
@@ -113,6 +116,13 @@ class RecommendationController:
             )
         else:
             self.num_NN = min(self.num_NN, 20)
+
+    def _build_accessor(self, config) -> BaseDataAccessor:
+        if "opensearch" in config:
+            return BaseDataAccessorOpenSearch(config)
+        if "qdrant" in config:
+            return BaseDataAccessorQdrant.from_config(config)
+        raise ValueError("neither opensearch or qdrant config can be found!")
 
     def register(self, component_group, component, watcher=None, callback=None):
         self.components[component_group][component.params["label"]] = component
