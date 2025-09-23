@@ -38,7 +38,7 @@ class BaseDataAccessorQdrant(BaseDataAccessor):
         return self.__get_items_from_response(item, response)
 
     def _get_item_by_column_value(self, item: ItemDto, column: str, value: Any):
-        response = self._scroll_points_by_column_value(column, value)
+        response, _ = self._scroll_points_by_column_value(column, value)
         return self.__get_items_from_response(item, response)
 
     def _scroll_points_by_column_value(self, column: str, value: Any, limit=1):
@@ -98,4 +98,5 @@ class BaseDataAccessorQdrant(BaseDataAccessor):
         result = list(vals)
         return sorted(result) if sort else result
 
-    def get_item_by_urn(self, item: ItemDto, urn: str) -> list[ItemDto]: ...
+    def get_item_by_urn(self, item: ItemDto, urn: str) -> list[ItemDto]:
+        return self._get_item_by_column_value(item, "urn", urn)

@@ -13,6 +13,7 @@ from test.unit.model.qdrant.conftest import COLLECTION_NAME
 class TestData(ItemDto):
     field1: str = ""
     field0: str = ""
+    urn: str = ""
 
     @property
     def viewer(self) -> str:
@@ -28,8 +29,8 @@ def test_get_items_by_ids(qdrant_client: QdrantClient):
         TestData("test", "test", "test"), ["test1", "test2"]
     )
     assert items == [
-        TestData("test", "test", "test", field1="test1"),
-        TestData("test", "test", "test", field1="test1"),
+        TestData("test", "test", "test", field1="test1", urn="urn1"),
+        TestData("test", "test", "test", field1="test1", urn="urn2"),
     ]
 
 
@@ -60,8 +61,8 @@ def test_get_items_by_ids_with_field_mapping(qdrant_client: QdrantClient):
         TestData("test", "test", "test"), ["test1", "test2"]
     )
     assert items == [
-        TestData("test", "test", "test", field1="test1", field0="test2"),
-        TestData("test", "test", "test", field1="test1", field0="test2"),
+        TestData("test", "test", "test", field1="test1", field0="test2", urn="urn1"),
+        TestData("test", "test", "test", field1="test1", field0="test2", urn="urn2"),
     ]
 
 
@@ -88,8 +89,11 @@ def test_get_unique_vals_for_column(qdrant_client: QdrantClient):
     accessor = BaseDataAccessorQdrant(
         qdrant_client, collection_name=COLLECTION_NAME, field_mapping={}
     )
-    vals = accessor.get_unique_vals_for_column("field3")
+    vals = accessor.get_unique_vals_for_column("field3", sort=False)
     assert set(vals) == {"test1", "test2", "test3"}
+
+    vals = accessor.get_unique_vals_for_column("field3", sort=True)
+    assert vals == ["test1", "test2", "test3"]
 
     vals = accessor.get_unique_vals_for_column("field1")
     assert set(vals) == {"test1"}
@@ -101,3 +105,11 @@ def test_get_unique_vals_for_column_unknown_field(qdrant_client: QdrantClient):
     )
     vals = accessor.get_unique_vals_for_column("unknown")
     assert set(vals) == set()
+
+
+def test_get_item_by_urn(qdrant_client: QdrantClient):
+    accessor = BaseDataAccessorQdrant(
+        qdrant_client, collection_name=COLLECTION_NAME, field_mapping={}
+    )
+    result = accessor.get_item_by_urn(TestData("test", "test", "test"), "urn1")
+    assert result == [TestData("test", "test", "test", field1="test1", urn="urn1")]
