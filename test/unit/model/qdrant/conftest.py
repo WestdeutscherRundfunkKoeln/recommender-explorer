@@ -32,9 +32,12 @@ def setup_qdrant_collection(qdrant_client: QdrantClient):
             "payload": {
                 "content_id": "test1",
                 "urn": "urn1",
+                "crid": "crid1",
+                "cmsId": "cmsId1",
                 "field1": "test1",
                 "field2": "test2",
                 "field3": "test1",
+                "availableFrom": "2023-01-08T10:49:00Z",
             },
         },
         {
@@ -43,9 +46,12 @@ def setup_qdrant_collection(qdrant_client: QdrantClient):
             "payload": {
                 "content_id": "test2",
                 "urn": "urn2",
+                "crid": "crid2",
+                "cmsId": "cmsId2",
                 "field1": "test1",
                 "field2": "test2",
                 "field3": "test2",
+                "availableFrom": "2023-02-08T10:49:00Z",
             },
         },
         {
@@ -54,20 +60,36 @@ def setup_qdrant_collection(qdrant_client: QdrantClient):
             "payload": {
                 "content_id": "test3",
                 "urn": "urn3",
+                "crid": "crid2",
+                "cmsId": "cmsId3",
                 "field1": "test1",
                 "field2": "test2",
                 "field3": "test3",
+                "availableFrom": "2023-03-08T10:49:00Z",
             },
         },
         {
             "id": farmhash.fingerprint64("test4"),
             "vector": [0.4, 0.5, 0.6, 0.7],
-            "payload": {"content_id": "test4", "urn": "urn4", "field1": "test1"},
+            "payload": {
+                "content_id": "test4",
+                "urn": "urn4",
+                "crid": "crid4",
+                "cmsId": "cmsId4",
+                "field1": "test1",
+                "availableFrom": "2023-04-08T10:49:00Z",
+            },
         },
         {
             "id": farmhash.fingerprint64("test5"),
             "vector": [0.5, 0.6, 0.7, 0.8],
-            "payload": {"content_id": "test5", "urn": "urn5", "field2": "test2"},
+            "payload": {
+                "content_id": "test5",
+                "urn": "urn5",
+                "cmsId": "cmsId5",
+                "field2": "test2",
+                "availableFrom": "2023-05-08T10:49:00Z",
+            },
         },
     ]
     qdrant_client.upsert(collection_name=COLLECTION_NAME, points=points)
