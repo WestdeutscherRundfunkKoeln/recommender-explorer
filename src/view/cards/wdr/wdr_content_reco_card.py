@@ -124,7 +124,7 @@ class WDRContentRecoCard(WDRContentCard):
             self.config, model_config, content_dto, model
         )
         click_handler = create_click_handler(
-            content_dto.externalid,
+            content_dto.externalId,
             self.reco_explorer_app_instance.config_based_nav_controls,
         )
         insert_id_button_widget = insert_id_button(click_handler)
