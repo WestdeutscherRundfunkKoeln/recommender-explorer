@@ -44,7 +44,9 @@ class BaseDataAccessorQdrant(BaseDataAccessor):
             field_mapping=config["qdrant.field_mapping"],
         )
 
-    def get_items_by_ids(self, item: ItemDto, ids: Collection[str]) -> list[ItemDto]:
+    def get_items_by_ids(
+        self, item: ItemDto, ids: Collection[str], provenance="c2c_models"
+    ) -> list[ItemDto]:
         fingerprints = [farmhash.fingerprint64(id) for id in ids]
         response = self._client.retrieve(
             collection_name=self._collection_name, ids=fingerprints, with_payload=True
@@ -163,7 +165,6 @@ class BaseDataAccessorQdrant(BaseDataAccessor):
             )
             start_date, end_date = end_date, start_date
 
-        print(item_filter)
         filters = [
             FieldCondition(key=column, match=MatchValue(value=value))
             for column, value in item_filter.items()
