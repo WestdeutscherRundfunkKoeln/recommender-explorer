@@ -39,21 +39,21 @@ def validate_schema(schema_path: str, config: dict[str, Any]) -> None:
     raise err
 
 
+def _wrap_ui_config(ui: dict[str, Any]) -> dict[str, Any]:
+    """Wrap inline UI config to match ui_schema.json, which expects a top-level 'ui_config' key."""
+    return {"ui_config": ui}
+
+
 def load_ui_config(config: dict[str, Any], config_path: pathlib.Path) -> dict[str, Any]:
     ui_config = config.get("ui_config")
-    if not ui_config:
-        print("No ui_config found in config")
-        return {}
+    if ui_config is None:
+        raise ValidationError("Missing required key 'ui_config' in config (legacy file-path format is no longer supported)")
 
-    if isinstance(ui_config, dict):
-        return ui_config
+    if not isinstance(ui_config, dict):
+        raise ValidationError("'ui_config' must be an object with the inline UI configuration (legacy string path is not supported)")
 
-    ui_config_path = config_path.parent / ui_config
-    return (
-        EnvYAML(ui_config_path, flatten=False).export()
-        if isinstance(ui_config, str)
-        else {"ui_config": ui_config}
-    )
+    # Inline ui_config (only valid format now)
+    return _wrap_ui_config(ui_config)
 
 
 if __name__ == "__main__":

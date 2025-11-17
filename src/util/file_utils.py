@@ -3,19 +3,17 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any
 
-import httpx
 from envyaml import EnvYAML
 
 import constants
-import dataclasses
 
 from exceptions.config_error import ConfigError
 from view import ui_constants
-from util.dataclasses.setup_configuration_data_class import SetupConfiguration
-from util.dataclasses.model_configuration_data_class import ModelConfiguration
-from util.dataclasses.opensearch_configuration_data_class import OpenSearchConfiguration
+from util.s3_utils import (
+    download_s3_object_to_temp,
+    list_s3_objects,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +24,82 @@ def get_all_config_files(path) -> list:
     return all_configs
 
 
+def _process_s3_config_item(item: str) -> list[Path]:
+    """
+    Process an S3 URI and download matching configuration files.
+
+    :param item: S3 URI (specific object or prefix)
+    :return: List of downloaded file paths
+    :raises Exception: If no configuration files are found
+    """
+    matches = list_s3_objects(item, pattern="config_*.yaml")
+    if not matches:
+        if item.lower().endswith(".yaml"):
+            matches = [item]
+        else:
+            raise Exception(
+                f"No configuration files matched under {item}. Ensure keys are named like 'config_<client>.yaml'."
+            )
+
+    downloaded_paths = []
+    for uri in matches:
+        tmp = download_s3_object_to_temp(uri)
+        downloaded_paths.append(tmp)
+    return downloaded_paths
+
+
+def _process_local_config_item(item: str) -> list[Path]:
+    """
+    Process a local file path or directory and collect configuration files.
+
+    :param item: Local file path or directory
+    :return: List of configuration file paths
+    :raises Exception: If the path does not exist
+    """
+    item_path = Path(item)
+    if item_path.is_dir():
+        return [f for f in sorted(item_path.glob("config_*.yaml"))]
+    elif item_path.is_file():
+        return [item_path]
+    else:
+        raise ConfigError(
+            f"Config path not found: {item}. Provide an existing local file/dir or an s3:// URI."
+        )
+
+
+def _extract_client_name_from_path(path: Path) -> str:
+    """
+    Extract client name from a configuration file path.
+
+    :param path: Configuration file path
+    :return: Client name extracted from the path or filename
+    """
+    try:
+        return get_client_from_path(full_path=str(path))
+    except ConfigError:
+        return os.path.splitext(os.path.basename(str(path)))[0]
+
+
 def get_configs_from_arg(arg: str) -> tuple[str, Path, dict[str, Path]]:
-    config_paths = arg.removeprefix("config=").split(",")
-    for config_path in config_paths:
-        if not os.path.isfile(config_path):
-            raise Exception("Config file not found at path [" + config_path + "]")
-    kv_pairs = [
-        (get_client_from_path(config_path), Path(config_path))
-        for config_path in config_paths
+    config_args = arg.removeprefix("config=").split(",")
+
+    collected_paths: list[Path] = []
+
+    for item in filter(None, (x.strip() for x in config_args)):
+        if item.startswith("s3://"):
+            collected_paths.extend(_process_s3_config_item(item=item))
+        else:
+           collected_paths.extend(_process_local_config_item(item=item))
+
+    if not collected_paths:
+        raise ConfigError("No configuration files resolved from provided inputs.")
+
+    key_valuev_pairs = [
+        (_extract_client_name_from_path(path=path), path)
+        for path in collected_paths
     ]
-    return *kv_pairs[0], dict(kv_pairs)
+
+    return *key_valuev_pairs[0], dict(key_valuev_pairs)
 
 
 def get_config_from_search(
@@ -58,7 +122,7 @@ def get_client_from_path(full_path):
     if match:
         return match.group(1)
     else:
-        raise Exception("Client could not be matched from path [" + full_path + "]")
+        raise ConfigError("Client could not be matched from path [" + full_path + "]")
 
 
 def get_client_ident_from_search(search: str) -> str | None:
@@ -76,179 +140,21 @@ def get_client_options(all_configs: dict[str, str]) -> dict[str, str]:
 
 
 def load_config(full_path: Path) -> dict[str, str]:
+    """
+    Load configuration strictly from the provided YAML file.
+    External UI config files referenced by a string path are no longer supported.
+    The UI configuration must be embedded inline under the `ui_config` key.
+    """
     config = EnvYAML(full_path).export()
+    # Warn if a legacy path-based UI config is provided
+    ui_cfg = config.get(ui_constants.UI_CONFIG_KEY)
+    if isinstance(ui_cfg, str):
+        logger.warning(
+            "Ignoring external UI config file reference '%s'. Inline UI config under 'ui_config' must be provided.",
+            ui_cfg,
+        )
 
-    return load_ui_config(config, full_path)
-
-
-def load_ui_config(config: dict[str, str], full_path: Path) -> dict[str, str]:
-    ui_config_path = config.get(ui_constants.UI_CONFIG_KEY)
-
-    if not ui_config_path:
-        logger.warning("UI config not found in config file %s.", full_path)
-        return config
-
-    if isinstance(ui_config_path, dict):
-        logger.warning("UI config seems to be defined inline")
-        return config
-
-    full_ui_config_path = Path(full_path.parent, ui_config_path)
-    if not full_ui_config_path.exists():
-        logger.warning("UI config file at %s not found.", full_ui_config_path)
-        return config
-
-    ui_config = EnvYAML(full_ui_config_path, include_environment=False).export()
-    config.update(ui_config)
     return config
-
-
-def load_deployment_version_config(config: dict[str, str]) -> dict[str, str]:
-    """
-    This method updates the provided configuration dictionary with the deployment version information
-    from the "version_information.yaml" file located at "config/wdr/version_information.yaml".
-    This file gets added by the build pipeline. The updated configuration dictionary is then returned.
-
-    :param config: A dictionary containing the current configuration.
-    :return: A dictionary containing the updated configuration with the deployment version information.
-    """
-    version_config = {}
-    try:
-        version_config = EnvYAML(
-            "config/wdr/version_information.yaml", include_environment=False
-        ).export()
-    except FileNotFoundError:
-        logger.info("No version information yaml found. Only used for dev environment")
-
-    config.update(version_config)
-    return config
-
-def _construct_endpoint_url(base_url: str, model_config_key: str | None) -> str:
-    """
-    Constructs a complete endpoint URL for fetching model configuration. The URL
-    constructed depends on the presence of a specific model configuration key. If
-    the key is provided, the function includes it in the endpoint URL. Otherwise,
-    it defaults to the URL for retrieving all model configurations.
-
-    :param base_url: The base URL of the API.
-    :type base_url: str
-    :param model_config_key: The key identifying the specific model configuration.
-        If None, fetches all configurations.
-    :type model_config_key: str | None
-    :return: The complete endpoint URL.
-    :rtype: str
-    """
-    if model_config_key:
-        logger.info("Fetching model configuration for specified key: %s", model_config_key)
-        return f"{base_url}/model_config/{model_config_key}"
-    else:
-        logger.info("Fetching all model configurations.")
-        return f"{base_url}/model_config"
-
-
-def _get_model_config_from_endpoint(config: dict[str, str]) -> dict[str, Any]:
-    """
-    Fetches the model configuration from a remote API endpoint using the provided
-    configuration dictionary. This function verifies the input configuration for
-    required keys, constructs the endpoint URL, and performs an HTTP GET request
-    to retrieve the model configuration. Any issues during the HTTP request or
-    JSON parsing will result in a custom `ConfigError` being raised with specific
-    details.
-
-    :param config: A dictionary containing configuration data, primarily including
-        keys related to the API such as "ingest" with sub-keys "base_url_embedding"
-        for the base URL and "api_key" for the authentication key.
-    :type config: dict[str, str]
-
-    :return: A dictionary representing the JSON response of the API, containing the
-        model configuration details.
-    :rtype: dict[str, Any]
-
-    :raises ConfigError: Raises a `ConfigError` if mandatory keys ("base_url_embedding",
-        "api_key") are missing in the provided configuration or if any error occurs
-        during the HTTP request to the endpoint (e.g., timeout, HTTP error, or
-        JSON decoding failure).
-    """
-    ingest_config = config.get("ingest", {})
-    base_url = ingest_config.get("base_url_embedding")
-    api_key = ingest_config.get("api_key")
-    if not base_url or not api_key:
-        raise ConfigError("Missing base URL or API key in configuration.",{})
-
-    endpoint_url = _construct_endpoint_url(base_url, config.get("model_config_key"))
-
-    try:
-        response = httpx.get(
-            endpoint_url,
-            timeout=10,
-            headers={"x-api-key": api_key}
-        )
-        return response.json()
-    except httpx.TimeoutException:
-        raise ConfigError(
-            "Request to endpoint timed out. Check the network or server status.",
-            {"timeout": True}
-        )
-    except httpx.HTTPError as e:
-        raise ConfigError(
-            f"Request failed with status code {e.response.status_code}: {e.response.text}",
-            {"status_code": e.response.status_code, "details": e.response.text}
-        )
-    except ValueError as e:
-        raise ConfigError(
-            f"Failed to parse the JSON response: {str(e)}",
-            {"response_text": response.text}
-        )
-
-def load_model_configuration(config: dict[str, Any]) -> SetupConfiguration:
-    local_setup_config = SetupConfiguration.from_dict(config)
-    logger.info(f"Model Configuration and Opensearch Index from local config: ",dataclasses.asdict(local_setup_config))
-
-    try:
-        endpoint_response = _get_model_config_from_endpoint(config)
-
-
-        endpoint_config = {}
-
-        if "oss_index" in endpoint_response:
-            endpoint_config["opensearch"] = {"index": endpoint_response["oss_index"]}
-
-        if "c2c_models" in endpoint_response:
-            endpoint_config["c2c_config"] = {"c2c_models": endpoint_response["c2c_models"]}
-
-        if "u2c_models" in endpoint_response:
-            endpoint_config["u2c_config"] = {"u2c_models": endpoint_response["u2c_models"]}
-
-        if "clustering_models" in endpoint_response:
-            endpoint_config["u2c_config"] = endpoint_config.get("u2c_config", {})
-            endpoint_config["u2c_config"]["clustering_models"] = endpoint_response["clustering_models"]
-
-        if "s2c_models" in endpoint_response:
-            endpoint_config["s2c_config"] = {"s2c_models": endpoint_response["s2c_models"]}
-
-        remote_setup_config = SetupConfiguration.from_dict(endpoint_config)
-
-        logger.info(f"Model Configuration and Opensearch Index from remote config:", dataclasses.asdict(remote_setup_config))
-
-        merged_config = SetupConfiguration(
-            model_config=ModelConfiguration(
-                c2c_config=local_setup_config.model_config.c2c_config or remote_setup_config.model_config.c2c_config,
-                u2c_config=local_setup_config.model_config.u2c_config or remote_setup_config.model_config.u2c_config,
-                s2c_config=local_setup_config.model_config.s2c_config or remote_setup_config.model_config.s2c_config
-            ),
-            open_search_config=OpenSearchConfiguration(
-                index=local_setup_config.open_search_config.index or remote_setup_config.open_search_config.index
-            )
-        )
-        logger.info(f"Model Configuration and Opensearch Index from merged config: ", dataclasses.asdict(merged_config))
-
-        return merged_config
-
-    except ConfigError as e:
-        logger.warning(f"Failed to fetch configuration from endpoint: {e.message}. Using local configuration only.")
-        return local_setup_config
-    except Exception as e:
-        logger.warning(f"Unexpected error while fetching remote configuration: {str(e)}. Using local configuration only.")
-        return local_setup_config
 
 
 

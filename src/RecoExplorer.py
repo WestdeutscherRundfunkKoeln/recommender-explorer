@@ -8,8 +8,6 @@ from util.file_utils import (
     get_config_from_search,
     get_configs_from_arg,
     load_config,
-    load_deployment_version_config,
-    load_model_configuration,
 )
 from view.RecoExplorerApp import RecoExplorerApp
 
@@ -25,10 +23,21 @@ def getExplorerInstance(
 
 
 #
-# start like so: panel serve RecoExplorer.py --args config=<path_to_my_config.yaml>
-#
+# Start like so: panel serve src/RecoExplorer.py --args config=<path>
+# <path> can be one or more of:
+#  - s3://bucket/key.yaml
+#  - s3://bucket/ (loads all config_*.yaml in bucket)
+#  - local YAML file path
+#  - local directory containing config_*.yaml
 if not len(sys.argv[1:]):
-    exit("Unable to start Reco Explorer - no config was passed.")
+    import os
+    logger.info("No config passed, trying to read from CONFIG_URI")
+    env_uri = os.getenv("CONFIG_URI")
+    logger.info(f"CONFIG_URI={env_uri}")
+    if env_uri:
+        sys.argv.append(f"config={env_uri}")
+    else:
+        exit("Unable to start Reco Explorer - no config was passed. Provide --args config=<s3://...|/local/path> or set CONFIG_URI.")
 
 try:
     client, config_full_path, config_full_paths = get_configs_from_arg(sys.argv[1])
@@ -40,22 +49,10 @@ try:
             client, config_full_path = search
 
     config = load_config(config_full_path)
-    config = load_deployment_version_config(config)
     config["reco_explorer_url_base"] = pn.state.location.href.replace(
         pn.state.location.search, ""
     )
 
-    setup_configuration = load_model_configuration(config)
-
-    if setup_configuration.model_config.c2c_config:
-        print(setup_configuration.model_config.c2c_config.to_dict())
-        config["c2c_config"] = setup_configuration.model_config.c2c_config.to_dict()
-    if setup_configuration.model_config.u2c_config:
-        config["u2c_config"] = setup_configuration.model_config.u2c_config.to_dict()
-    if setup_configuration.model_config.s2c_config:
-        config["s2c_config"] = setup_configuration.model_config.s2c_config.to_dict()
-    if setup_configuration.open_search_config.index:
-        config["opensearch.index"] = setup_configuration.open_search_config.index
     getExplorerInstance(config_full_paths, config, client).server_doc()
 
 except ConfigError as e:
