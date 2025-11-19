@@ -49,7 +49,7 @@ jobs:
     needs: unit_tests
     strategy:
       matrix:
-        instance: ${{ fromJSON(((github.ref == 'refs/heads/main') || (github.base_ref == 'main')) && vars.PROD_INSTANCES_JSON || ((github.ref == 'refs/heads/dev') || (github.base_ref == 'dev')) && vars.DEV_INSTANCES_JSON || '[]') }}
+        instance: ${{ fromJSON(((github.ref == 'refs/heads/main') || (github.base_ref == 'main')) && vars.PROD_INSTANCES_JSON || ((github.ref == 'refs/heads/dev') || (github.base_ref == 'dev')) && vars.DEV_INSTANCES_JSON || '["dummy"]') }}
     if: >-
       (github.event_name == 'pull_request' && (github.base_ref == 'dev' || github.base_ref == 'main')) ||
       (github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'))
