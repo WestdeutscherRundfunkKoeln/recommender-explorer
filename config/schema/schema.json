@@ -290,15 +290,7 @@
       "type": "string"
     },
     "ui_config": {
-      "oneOf": [
-        {
-          "type": "string",
-          "pattern": "^.*\\.yaml$"
-        },
-        {
-          "type": "object"
-        }
-      ]
+      "type": "object"
     }
   },
   "required": [

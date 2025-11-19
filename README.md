@@ -16,16 +16,6 @@ Key architectural components of the application are:
 
 It roughly follows the [MVC pattern](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller)
 
-### Set up Opensearch connectivity
-
-Recommender Explorer uses OpenSearch for metadata and vector storage. In order to a run a development instance of Recommender Explorer, you have to expose two variables to your environment:
-
-```
-OPENSEARCH_PASS=******
-OPENSEARCH_HOST=******
-```
-in order to gain access to your OpenSearch instance. 
-
 ### Set up AWS connectivity
 
 Recommender Explorer requires AWS connectivity for models hosted in Sagemaker. Follow the instructions [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) in order to set up AWS connectivity for your development environment.
@@ -44,25 +34,23 @@ pip3 install -r requirements.txt
 ```
 
 #### Adapt the configuration file
-Copy the file <local_path>/config/config_template.yaml to </path/to/your_config_file.yaml> and configure your model endpoints and mappings accordingly. 
-```scripts/validate.py --config </path/to/your_config_file.yaml>```
+The App needs a configuration yaml file to run. These files are stored in S3 Buckets. You will need a aws user profile installed that can access these buckets to run the app locally.
+When you have a aws profile configured that can access the buckets you can either use the makefile tasks to fetch configs from that bucket and pass these files as arguments to the panel start command:
+```serve src/RecoExplorer.py --autoreload --show --args config=<path_to_config_file>```
+or you can just define a env var CONFIG_URI and start the app without any args. It will fetch the configuration files itself.
 
-### Start Recommender Explorer in development mode
-```scripts/run.sh -c </path/to/your_config_file.yaml>```
+### Get the config files from the bucket
+```make get-config```
+
+### Push the config files to the bucket
+```make push-config```
 
 ### Run tests
-```pytest --config=</path/to/your_config_file.yaml>```
+```make test```
 
-### Build deployable Docker image
-```docker build --no-cache -t reco_explorer:0.1 . ```
+### Build and run Docker image (dev stage)
+```make run-docker```
 
-### Run Docker image
-```docker run --env OPENSEARCH_PASS="<YOUR_OPENSEARCH_PW>" --env AWS_ACCESS_KEY_ID="<YOUR_AWS_KEY_ID>" --env AWS_SECRET_ACCESS_KEY="<YOUR_AWS_SECRET>" --env AWS_DEFAULT_REGION="eu-central-1"   --rm -it -p 8080:80 --name recoxplorer reco_explorer:0.1```
-
-### Run microservices locally
-To run the backend services and opensearch locally just execute:
-```docker-compose up```
-If you have a specific mapping definition you might need to change the corresponding environment variable in the docker-compose.yaml.
 
 ### Run linter/formatter
 - Install the pre-commit package using pip: ```pip install pre-commit```
@@ -70,30 +58,46 @@ If you have a specific mapping definition you might need to change the correspon
 - To run the formatter on all files, execute ```pre-commit run --all-files```
 - To run the formatter on specific files, execute ```pre-commit run --files <FILENAME>```
 
-## How to contribute
 
-Recommender Explorer as a whole is distributed under the MIT license. You are welcome to contribute code in order to fix bugs or to implement new features. 
+# CI/CD: Main GitHub Actions workflow
 
-There are three important things to know:
+This repository ships with a single main workflow at .github/workflows/main.yml that runs tests, validates configuration files, and deploys the service to AWS ECS. Below is a short overview of how it works and how to extend it.
 
-1. You must be aware and agree to a Contributors License Agreement (CLA) before you can contribute. However, if your contribution constitutes as a small code contribution, you do not need a CLA. Our CLAs are largely derived from the ones used by Apache Software Foundation (https://www.apache.org/licenses/contributor-agreements.html)
-2. There are several requirements regarding code style, quality, and product standards which need to be met (we also have to follow them). 
-3. Not all proposed contributions can be accepted. Some features may e.g. just fit a third-party add-on better. The code must fit the overall direction of Recommender Explorer and really improve it. The more effort you invest, the better you should clarify in advance whether the contribution fits: the best way would be to just open an issue to discuss the feature you plan to implement (make it clear you intend to contribute).
+What triggers the workflow
+- push on branches: dev, main
+- pull_request targeting: dev, main
+- Concurrency is enabled so only one run per ref is active at a time.
 
-### Process of a contribution
+Central configuration
+- The workflow defines instance matrices at the top as environment variables to keep targets in one place:
+  - DEV_INSTANCES_JSON: ["dev-all"]
+  - PROD_INSTANCES_JSON: ["prod-m14","prod-wdr"]
+- It also defines paths to the JSON schemas used for config validation.
 
-- Make sure the change would be welcome (e.g. a bugfix or a useful feature); best do so by proposing it in a GitHub issue on our repository. Also check for similar issues that might already be present. 
-- Create a branch forking the Recommender Explorer repository and do your change
-- Commit and push your changes on that branch
-- In the commit message, describe the problem you fix with this change.
-- Describe the effect that this change has from a user's point of view.
-- Describe the technical details of what you changed. It is important to describe the change in a most understandable way so the reviewer is able to verify that the code is behaving as you intend it to.
-- If your change fixes an issue reported at GitHub, add the following line to the commit message:
-Fixes #(issueNumber)
-- Create a Pull Request
-- Wait for our code review and approval, possibly enhancing your change on request
-- Once the change has been approved we will inform you in a comment
-- We will close the pull request, feel free to delete the now obsolete branch
+Jobs
+- unit_tests
+  - Sets up Python 3.10, installs requirements.txt, runs unit tests in test/unit, and uploads a JUnit report artifact.
+
+- validate_configs
+  - Runs after unit_tests on both push and PR events for dev/main.
+  - Uses a matrix of instances derived from the branch:
+    - dev branch → instances from DEV_INSTANCES_JSON
+    - main branch → instances from PROD_INSTANCES_JSON
+  - For each instance, it resolves the S3 prefix from secrets, downloads config_*.yaml files, and validates each file against config/schema/schema.json and config/schema/ui_schema.json using scripts/validate.py.
+
+- build_and_deploy
+  - Runs only on push events to dev or main, after validate_configs.
+  - Builds and pushes a Docker image to ECR for each matrix instance, tagging as:
+    - <instance>-<short_sha>
+    - <instance>-latest
+  - Performs a quick smoke test (panel --version) on the freshly built image.
+  - Fetches the current ECS task definition, renders a new definition with the new image, and deploys it to the appropriate ECS service/cluster. Waits for service stability.
+
+How instances and secrets are wired
+- The instance list is chosen automatically based on the branch. Per-instance settings (ECR repo, ECS task/service/cluster, container name, and S3 config prefix) are resolved via case blocks that reference repository secrets, for example:
+  - dev-all → ECR_REPOSITORY_DEV_ALL, ECS_TASK_DEFINITION_NAME_DEV_ALL, ECS_SERVICE_DEV_ALL, ECS_CLUSTER_DEV_ALL, CONTAINER_NAME_DEV_ALL, CONFIG_URI_DEV_ALL
+  - prod-m14 → corresponding PROD_M14 secrets
+  - prod-wdr → corresponding PROD_WDR secrets
 
 
 # RecoExplorer UI Configuration
@@ -761,3 +765,120 @@ DTO. The custom Item Accessor needs to be implemented and attached to the model 
 This Accessor Class will need all accessor_methods which are defined for the widgets (which get the raw response from your service of choice) and a function
 get_ items_from_response() which will take the raw (for example json response) and create item Dtos from the items in the response. You wont have to do more,
 When the ContentItemDto and the Resulting Cards are defined correctly, the Reco Explorer should now work with the custom Service (Response)
+
+
+
+## CI/CD: GitHub Actions Workflow
+
+This project uses a GitHub Actions workflow defined at `.github/workflows/main.yml` to run tests, validate configuration files, build and push Docker images, and deploy to AWS ECS.
+
+### High-level flow
+- On any push (any branch) and on pull requests to `main` or `dev`:
+  1) Run unit tests.
+- On pull requests targeting `main` or `dev`, and on pushes to `main` or `dev`:
+  2) Validate instance-specific app configurations pulled from S3 against the JSON schemas in `config/schema/`.
+- On pushes to `main` or `dev` only:
+  3) Build a Docker image per target instance, push it to Amazon ECR, update the ECS task definition image, and deploy the ECS service.
+
+### Jobs
+1) unit_tests
+- Always runs on push (any branch) and on PRs to `main`/`dev`.
+- Steps:
+  - Checkout repository
+  - Setup Python 3.10 with pip cache
+  - Install dependencies from `requirements.txt`
+  - Run unit tests: `pytest test/unit --doctest-modules --junitxml=junit/test-results.xml`
+
+2) build_and_validate_matrix
+- Runs after `unit_tests` and only when the event is a PR to `dev`/`main` or a push to `dev`/`main`.
+- Matrix selection (instances per branch/target):
+  - `main` → `prod-m14`, `prod-wdr`
+  - `dev` → `dev-all`
+- Steps (per matrix instance):
+  - Checkout repository
+  - Setup Python 3.10; install dependencies
+  - Configure AWS credentials
+  - Resolve the S3 prefix for the selected instance
+  - Download config files (`config_*.yaml`) from the resolved S3 prefix into `ci/configs/`
+  - Validate each file with `scripts/validate.py` using `config/schema/schema.json` and `config/schema/ui_schema.json`
+  - Build Docker image locally with two tags: `${instance}-${shortSHA}` and `${instance}-latest`
+  - Quick smoke test by running `panel --version` inside the built image
+  - On push events (not on PRs):
+    - Resolve ECR repo, ECS task definition name, service, cluster, and container name for the instance
+    - Login to ECR
+    - Tag and push the image to ECR with both tags
+    - Fetch the current ECS task definition
+    - Render a new task definition with the fresh image for the appropriate container
+    - Deploy the updated task definition to the ECS service and wait for service stability
+
+### Triggers and conditions
+- Workflow triggers:
+  - `push`: all branches
+  - `pull_request`: branches `main`, `dev`
+- Additional job-level conditions ensure that build/publish/deploy only occur on pushes to `main`/`dev`, while validation runs for PRs targeting `main`/`dev` as well.
+
+### Required secrets and parameters
+The workflow expects these GitHub repository secrets to be configured:
+
+- General
+  - `AWS_REGION`
+  - If NOT using GitHub OIDC and assuming a role, you may alternatively supply long‑lived keys (not recommended):
+    - `AWS_ACCESS_KEY_ID`
+    - `AWS_SECRET_ACCESS_KEY`
+    - `AWS_SESSION_TOKEN` (if using temporary credentials)
+
+- S3 config prefixes (used to download instance configs)
+  - `S3_PREFIX_DEV_ALL`
+  - `S3_PREFIX_PROD_M14`
+  - `S3_PREFIX_PROD_WDR`
+
+- ECR/ECS (per instance)
+  - For `dev-all`:
+    - `ECR_REPOSITORY_DEV_ALL`
+    - `ECS_TASK_DEFINITION_NAME_DEV_ALL`
+    - `ECS_SERVICE_DEV_ALL`
+    - `ECS_CLUSTER_DEV_ALL`
+    - `CONTAINER_NAME_DEV_ALL`
+  - For `prod-m14`:
+    - `ECR_REPOSITORY_PROD_M14`
+    - `ECS_TASK_DEFINITION_NAME_PROD_M14`
+    - `ECS_SERVICE_PROD_M14`
+    - `ECS_CLUSTER_PROD_M14`
+    - `CONTAINER_NAME_PROD_M14`
+  - For `prod-wdr`:
+    - `ECR_REPOSITORY_PROD_WDR`
+    - `ECS_TASK_DEFINITION_NAME_PROD_WDR`
+    - `ECS_SERVICE_PROD_WDR`
+    - `ECS_CLUSTER_PROD_WDR`
+    - `CONTAINER_NAME_PROD_WDR`
+
+Note: If you prefer GitHub OIDC for AWS instead of long‑lived access keys, you can switch `configure-aws-credentials` to assume a role via `role-to-assume` and add workflow `permissions: { id-token: write, contents: read }`.
+
+### Branch-to-instance mapping
+- PRs:
+  - PR to `main` → validate `prod-m14` and `prod-wdr`
+  - PR to `dev`  → validate `dev-all`
+- Pushes:
+  - Push to `main` → validate and deploy `prod-m14` and `prod-wdr`
+  - Push to `dev`  → validate and deploy `dev-all`
+
+### Runtime configuration at deploy time (CONFIG_URI)
+- At runtime, the app requires a configuration source. In production, this is provided via the environment variable `CONFIG_URI` on the ECS Task Definition (per instance).
+- The CI workflow validates configs from S3 but does not inject the runtime config; it only updates the image. Ensure `CONFIG_URI` is set in the task definition for each instance.
+- Suggested values per instance:
+  - `dev-all` → `s3://dev-all-reco-explorer-configuration/`
+  - `prod-m14` → `s3://prod-m14-reco-explorer-configuration/`
+  - `prod-wdr` → `s3://prod-wdr-reco-explorer-configuration/`
+
+How to set it in AWS Console:
+- ECS → Task Definitions → select your task family (e.g., `reco-explorer-app-dev-all`) → Create new revision → Container → Environment variables → Add `CONFIG_URI` with the value above → Create.
+- Update the service to use the new task definition revision.
+
+
+Note: The workflow includes a pre-deploy safety check that fails the deploy if `CONFIG_URI` is missing in the container's environment or `secrets`. Set org/repo variable `SKIP_CONFIG_URI_CHECK=true` to bypass in emergencies (not recommended).
+
+
+### Extending or adjusting the workflow
+- To add a new instance, create corresponding secrets for S3/ECR/ECS and extend the instance switch statements (`Resolve S3 prefix` and `Resolve deployment settings`).
+- To adjust branch mapping, modify the `if:` conditions and/or the matrix include logic in `main.yml`.
+- To speed up builds, consider switching to `docker/build-push-action@v6` with layer caching (`cache-from/cache-to`) and using GitHub OIDC for AWS.

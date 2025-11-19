@@ -2,60 +2,195 @@ name: Main Workflow
 
 on:
   push:
-    branches: 
-      - '*'
+    branches: ["main", "dev"]
   pull_request:
-    branches:
-      - 'main'
-      - 'dev'
+    branches: ["main", "dev"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  SCHEMA_FILE: config/schema/schema.json
+  UI_SCHEMA_FILE: config/schema/ui_schema.json
 
 jobs:
   unit_tests:
     name: unit_tests
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python 
-        uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-  
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-    
-      - name: Run all unit tests
-        run: |
-            pytest test/unit --doctest-modules --junitxml=junit/test-results.xml
+      - name: Run unit tests
+        run: pytest test/unit --doctest-modules --junitxml=junit/test-results.xml
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ github.job }}
+          path: junit/test-results.xml
 
-  
-  #Build Images (not publish) on pull to dev & main
-  docker_build:
-    name: docker_build
+
+  validate_configs:
+    name: validate_configs
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && (github.base_ref == 'dev' || github.base_ref == 'main')
-
+    needs: unit_tests
+    strategy:
+      matrix:
+        instance: ${{ fromJSON(((github.ref == 'refs/heads/main') || (github.base_ref == 'main')) && vars.PROD_INSTANCES_JSON || ((github.ref == 'refs/heads/dev') || (github.base_ref == 'dev')) && vars.DEV_INSTANCES_JSON || '["dummy"]') }}
+    if: >-
+      (github.event_name == 'pull_request' && (github.base_ref == 'dev' || github.base_ref == 'main')) ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'))
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build Docker Images 
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Resolve S3 prefix from Parameter Store
+        id: s3
+        shell: bash
         run: |
-          docker build --file ./microservices/ingestservice/docker/Dockerfile ./microservices/ingestservice
-          echo "ingest service image build OK"
-          docker build --file ./microservices/searchservice/docker/Dockerfile ./microservices/searchservice
-          echo "search service image build OK"
-          docker build --file ./microservices/embeddingservice/docker/Dockerfile ./microservices/embeddingservice
-          echo "embedding service image build OK"
+          case "${{ matrix.instance }}" in
+            dev-all)  
+              param_name="/reco-explorer/dev-all/config/dev-all-config-uri" 
+              ;;
+            prod-m14) 
+              param_name="/reco-explorer/dev-all/config/prod-m14-config-uri"
+              ;;
+            prod-wdr) 
+              param_name="/reco-explorer/dev-all/config/prod-wdr-config-uri"
+              ;;
+            *) 
+              echo "Unknown instance '${{ matrix.instance }}'" >&2 
+              exit 1 
+              ;;
+          esac
+          
+          prefix=$(aws ssm get-parameter --name "$param_name" --query Parameter.Value --output text --region "${{ secrets.AWS_REGION }}")
+          
+          echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
+      - name: Download configs
+        run: |
+          mkdir -p ci/configs
+          aws s3 cp --recursive "${{ steps.s3.outputs.prefix }}" ci/configs/ --exclude "*" --include "config_*.yaml"
+      - name: Validate configs
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(ci/configs/config_*.yaml)
+          [ ${#files[@]} -gt 0 ] || { echo "No config files found" >&2; exit 1; }
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          for f in "${files[@]}"; do
+            echo "Validating $f"
+            python scripts/validate.py --config "$f" --schema "$SCHEMA_FILE" --ui_schema "$UI_SCHEMA_FILE"
+          done
+
+
+  build_and_deploy:
+    name: build_and_deploy
+    runs-on: ubuntu-latest
+    needs: validate_configs
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    env:
+      SKIP_CONFIG_URI_CHECK: ${{ vars.SKIP_CONFIG_URI_CHECK }}
+    strategy:
+      matrix:
+        instance: ${{ fromJSON(github.ref == 'refs/heads/dev' && vars.DEV_INSTANCES_JSON || vars.PROD_INSTANCES_JSON) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python (for smoke test)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Resolve deployment settings
+        id: deploy
+        shell: bash
+        run: |
+          echo "ecr_repository=${{ env.ECR_REPOSITORY }}" >> "$GITHUB_OUTPUT"
+          echo "ecs_cluster=${{ env.ECS_CLUSTER }}" >> "$GITHUB_OUTPUT"
+          
+          case "${{ matrix.instance }}" in
+            dev-all)
+              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ env.ECS_SERVICE_DEV_ALL }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ env.CONTAINER_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT" ;;
+            prod-m14)
+              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ env.ECS_SERVICE_PROD_M14 }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ env.CONTAINER_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT" ;;
+            prod-wdr)
+              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ env.ECS_SERVICE_PROD_WDR }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ env.CONTAINER_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT" ;;
+            *) echo "Unknown instance" >&2 ; exit 1 ;;
+          esac
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: true
+      - name: Compute image tags
+        id: tags
+        shell: bash
+        run: |
+          sha_short="${GITHUB_SHA::7}"
+          echo "tag=${{ matrix.instance }}-${sha_short}" >> "$GITHUB_OUTPUT"
+          echo "tag_latest=${{ matrix.instance }}-latest" >> "$GITHUB_OUTPUT"
+      - name: Build and push image (with cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ steps.deploy.outputs.ecr_repository }}:${{ steps.tags.outputs.tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ steps.deploy.outputs.ecr_repository }}:${{ steps.tags.outputs.tag_latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Quick smoke test (panel version)
+        run: docker run --rm ${{ steps.login-ecr.outputs.registry }}/${{ steps.deploy.outputs.ecr_repository }}:${{ steps.tags.outputs.tag }} panel --version
+      - name: Fetch current task definition
+        id: fetch-task-def
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "${{ steps.deploy.outputs.ecs_task_definition_name }}" \
+            --region "${{ secrets.AWS_REGION }}" \
+            --query 'taskDefinition' > task-definition.json
+      - name: Render new task definition
+        id: task-def-update
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./task-definition.json
+          container-name: ${{ steps.deploy.outputs.container_name }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ steps.deploy.outputs.ecr_repository }}:${{ steps.tags.outputs.tag }}
+      - name: Deploy service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def-update.outputs.task-definition }}
+          service: ${{ steps.deploy.outputs.ecs_service }}
+          cluster: ${{ steps.deploy.outputs.ecs_cluster }}
+          wait-for-service-stability: true
