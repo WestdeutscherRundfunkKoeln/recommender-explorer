@@ -17,8 +17,6 @@ permissions:
 env:
   SCHEMA_FILE: config/schema/schema.json
   UI_SCHEMA_FILE: config/schema/ui_schema.json
-  DEV_INSTANCES_JSON: '["dev-all"]'
-  PROD_INSTANCES_JSON: '["prod-m14","prod-wdr"]'
 
 jobs:
   unit_tests:
@@ -51,7 +49,7 @@ jobs:
     needs: unit_tests
     strategy:
       matrix:
-        instance: ${{ fromJSON(((github.ref == 'refs/heads/main') || (github.base_ref == 'main')) && env.PROD_INSTANCES_JSON || ((github.ref == 'refs/heads/dev') || (github.base_ref == 'dev')) && env.DEV_INSTANCES_JSON || '[]') }}
+        instance: ${{ fromJSON(((github.ref == 'refs/heads/main') || (github.base_ref == 'main')) && vars.PROD_INSTANCES_JSON || ((github.ref == 'refs/heads/dev') || (github.base_ref == 'dev')) && vars.DEV_INSTANCES_JSON || '[]') }}
     if: >-
       (github.event_name == 'pull_request' && (github.base_ref == 'dev' || github.base_ref == 'main')) ||
       (github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'))
@@ -62,16 +60,29 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - name: Resolve S3 prefix
+      - name: Resolve S3 prefix from Parameter Store
         id: s3
         shell: bash
         run: |
           case "${{ matrix.instance }}" in
-            dev-all)  echo "prefix=${{ secrets.CONFIG_URI_DEV_ALL }}"  >> "$GITHUB_OUTPUT" ;;
-            prod-m14) echo "prefix=${{ secrets.CONFIG_URI_PROD_M14 }}" >> "$GITHUB_OUTPUT" ;;
-            prod-wdr) echo "prefix=${{ secrets.CONFIG_URI_PROD_WDR }}" >> "$GITHUB_OUTPUT" ;;
-            *) echo "Unknown instance '${{ matrix.instance }}'" >&2 ; exit 1 ;;
+            dev-all)  
+              param_name="/reco-explorer/dev-all/config/dev-all-config-uri" 
+              ;;
+            prod-m14) 
+              param_name="/reco-explorer/dev-all/config/prod-m14-config-uri"
+              ;;
+            prod-wdr) 
+              param_name="/reco-explorer/dev-all/config/prod-wdr-config-uri"
+              ;;
+            *) 
+              echo "Unknown instance '${{ matrix.instance }}'" >&2 
+              exit 1 
+              ;;
           esac
+          
+          prefix=$(aws ssm get-parameter --name "$param_name" --query Parameter.Value --output text --region "${{ secrets.AWS_REGION }}")
+          
+          echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
       - name: Download configs
         run: |
           mkdir -p ci/configs
@@ -100,7 +111,7 @@ jobs:
       SKIP_CONFIG_URI_CHECK: ${{ vars.SKIP_CONFIG_URI_CHECK }}
     strategy:
       matrix:
-        instance: ${{ fromJSON(github.ref == 'refs/heads/dev' && env.DEV_INSTANCES_JSON || env.PROD_INSTANCES_JSON) }}
+        instance: ${{ fromJSON(github.ref == 'refs/heads/dev' && vars.DEV_INSTANCES_JSON || vars.PROD_INSTANCES_JSON) }}
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -119,25 +130,22 @@ jobs:
         id: deploy
         shell: bash
         run: |
+          echo "ecr_repository=${{ env.ECR_REPOSITORY }}" >> "$GITHUB_OUTPUT"
+          echo "ecs_cluster=${{ env.ECS_CLUSTER }}" >> "$GITHUB_OUTPUT"
+          
           case "${{ matrix.instance }}" in
             dev-all)
-              echo "ecr_repository=${{ secrets.ECR_REPOSITORY_DEV_ALL }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_task_definition_name=${{ secrets.ECS_TASK_DEFINITION_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_service=${{ secrets.ECS_SERVICE_DEV_ALL }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_cluster=${{ secrets.ECS_CLUSTER_DEV_ALL }}" >> "$GITHUB_OUTPUT"
-              echo "container_name=${{ secrets.CONTAINER_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT" ;;
+              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ env.ECS_SERVICE_DEV_ALL }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ env.CONTAINER_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT" ;;
             prod-m14)
-              echo "ecr_repository=${{ secrets.ECR_REPOSITORY_PROD_M14 }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_task_definition_name=${{ secrets.ECS_TASK_DEFINITION_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_service=${{ secrets.ECS_SERVICE_PROD_M14 }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_cluster=${{ secrets.ECS_CLUSTER_PROD_M14 }}" >> "$GITHUB_OUTPUT"
-              echo "container_name=${{ secrets.CONTAINER_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT" ;;
+              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ env.ECS_SERVICE_PROD_M14 }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ env.CONTAINER_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT" ;;
             prod-wdr)
-              echo "ecr_repository=${{ secrets.ECR_REPOSITORY_PROD_WDR }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_task_definition_name=${{ secrets.ECS_TASK_DEFINITION_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_service=${{ secrets.ECS_SERVICE_PROD_WDR }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_cluster=${{ secrets.ECS_CLUSTER_PROD_WDR }}" >> "$GITHUB_OUTPUT"
-              echo "container_name=${{ secrets.CONTAINER_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT" ;;
+              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ env.ECS_SERVICE_PROD_WDR }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ env.CONTAINER_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT" ;;
             *) echo "Unknown instance" >&2 ; exit 1 ;;
           esac
       - name: Login to Amazon ECR

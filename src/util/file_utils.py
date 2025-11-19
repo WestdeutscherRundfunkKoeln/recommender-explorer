@@ -33,16 +33,18 @@ def _process_s3_config_item(item: str) -> list[Path]:
     :raises Exception: If no configuration files are found
     """
     matches = list_s3_objects(item, pattern="config_*.yaml")
-    if not matches:
-        if item.lower().endswith(".yaml"):
-            matches = [item]
-        else:
-            raise Exception(
-                f"No configuration files matched under {item}. Ensure keys are named like 'config_<client>.yaml'."
-            )
+    is_direct_yaml_file = item.lower().endswith(".yaml")
+
+    s3_uris_to_download = matches if matches else ([item] if is_direct_yaml_file else [])
+
+    if not s3_uris_to_download:
+        raise Exception(
+            f"No configuration files matched under {item}. "
+            f"Ensure keys are named like 'config_<client>.yaml'."
+        )
 
     downloaded_paths = []
-    for uri in matches:
+    for uri in s3_uris_to_download:
         tmp = download_s3_object_to_temp(uri)
         downloaded_paths.append(tmp)
     return downloaded_paths
