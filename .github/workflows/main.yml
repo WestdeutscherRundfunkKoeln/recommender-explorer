@@ -129,22 +129,22 @@ jobs:
         id: deploy
         shell: bash
         run: |
-          echo "ecr_repository=${{ env.ECR_REPOSITORY }}" >> "$GITHUB_OUTPUT"
-          echo "ecs_cluster=${{ env.ECS_CLUSTER }}" >> "$GITHUB_OUTPUT"
+          echo "ecr_repository=${{ vars.ECR_REPOSITORY }}" >> "$GITHUB_OUTPUT"
+          echo "ecs_cluster=${{ vars.ECS_CLUSTER }}" >> "$GITHUB_OUTPUT"
           
           case "${{ matrix.instance }}" in
             dev-all)
-              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_service=${{ env.ECS_SERVICE_DEV_ALL }}" >> "$GITHUB_OUTPUT"
-              echo "container_name=${{ env.CONTAINER_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT" ;;
+              echo "ecs_task_definition_name=${{ vars.ECS_TASK_DEFINITION_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ vars.ECS_SERVICE_DEV_ALL }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ vars.CONTAINER_NAME_DEV_ALL }}" >> "$GITHUB_OUTPUT" ;;
             prod-m14)
-              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_service=${{ env.ECS_SERVICE_PROD_M14 }}" >> "$GITHUB_OUTPUT"
-              echo "container_name=${{ env.CONTAINER_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT" ;;
+              echo "ecs_task_definition_name=${{ vars.ECS_TASK_DEFINITION_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ vars.ECS_SERVICE_PROD_M14 }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ vars.CONTAINER_NAME_PROD_M14 }}" >> "$GITHUB_OUTPUT" ;;
             prod-wdr)
-              echo "ecs_task_definition_name=${{ env.ECS_TASK_DEFINITION_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT"
-              echo "ecs_service=${{ env.ECS_SERVICE_PROD_WDR }}" >> "$GITHUB_OUTPUT"
-              echo "container_name=${{ env.CONTAINER_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT" ;;
+              echo "ecs_task_definition_name=${{ vars.ECS_TASK_DEFINITION_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT"
+              echo "ecs_service=${{ vars.ECS_SERVICE_PROD_WDR }}" >> "$GITHUB_OUTPUT"
+              echo "container_name=${{ vars.CONTAINER_NAME_PROD_WDR }}" >> "$GITHUB_OUTPUT" ;;
             *) echo "Unknown instance" >&2 ; exit 1 ;;
           esac
       - name: Login to Amazon ECR
