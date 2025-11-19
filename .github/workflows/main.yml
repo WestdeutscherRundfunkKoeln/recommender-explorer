@@ -54,6 +54,23 @@ jobs:
       (github.event_name == 'pull_request' && (github.base_ref == 'dev' || github.base_ref == 'main')) ||
       (github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'))
     steps:
+
+      - name: Debug GitHub OIDC Token Claims
+        run: |
+          echo "GitHub Repository: ${{ github.repository }}"
+          echo "GitHub Ref: ${{ github.ref }}"
+          echo "Expected sub claim: repo:${{ github.repository }}:ref:${{ github.ref }}"
+          echo "Role ARN (masked): ${ROLE:0:30}..."
+          echo "AWS Region: ${{ secrets.AWS_REGION }}"
+        env:
+          ROLE: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - uses: actions/checkout@v4
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
