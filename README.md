@@ -1,3 +1,5 @@
+# This repository is now closed
+
 # Recommender Explorer
 
 Recommender Explorer is a GUI based tool for evaluating and testing content-2-content and user-2-content recommendations. Users can select the start-content by various means (date-range, url, user-cluster, id) and manipulate the generated recommendations with filter and ranking widgets. It's also possible to compare the results of different models and algorithms side-by-side. In addition, Recommender Explorer contains a number of microservices, which can be used to ingest and embed items into an OpenSearch index.
@@ -882,3 +884,4 @@ Note: The workflow includes a pre-deploy safety check that fails the deploy if `
 - To add a new instance, create corresponding secrets for S3/ECR/ECS and extend the instance switch statements (`Resolve S3 prefix` and `Resolve deployment settings`).
 - To adjust branch mapping, modify the `if:` conditions and/or the matrix include logic in `main.yml`.
 - To speed up builds, consider switching to `docker/build-push-action@v6` with layer caching (`cache-from/cache-to`) and using GitHub OIDC for AWS.
+
