@@ -13,7 +13,7 @@ from exceptions.empty_search_error import EmptySearchError
 from dto.item import ItemDto
 from util.dto_utils import update_from_props, get_primary_idents
 
-#loggin preference
+# loggin preference
 logger = logging.getLogger(__name__)
 
 
@@ -239,7 +239,7 @@ class BaseDataAccessorOpenSearch(BaseDataAccessor):
         :return: List of item dtos, total items count
         """
         total_items = response["hits"]["total"]["value"]
-        #items = [x["_source"] for x in response["hits"]["hits"]]
+        # items = [x["_source"] for x in response["hits"]["hits"]]
         items = []
         for x in response["hits"]["hits"]:
             if "_source" in x:
